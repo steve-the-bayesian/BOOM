@@ -56,6 +56,19 @@ namespace BOOM {
         return proxy_models_[index].get();
       }
 
+      Matrix series_specific_forecast(
+          RNG &rng,
+          int horizon,
+          const std::vector<Vector> &series_specific_final_state) {
+        int nseries = proxy_models_.size();
+        Matrix forecast(nseries, horizon, 0.0);
+        for (int j = 0; j < nseries; ++j) {
+          forecast.row(j) += proxy_models_[j]->simulate_state_contribution_forecast(
+              rng, horizon, series_specific_final_state[j]);
+        }
+        return forecast;
+      }
+
       const PROXY *series_specific_model(int index) const {
         return proxy_models_[index].get();
       }

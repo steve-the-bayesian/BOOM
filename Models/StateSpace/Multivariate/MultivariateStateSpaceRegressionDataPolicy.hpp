@@ -53,7 +53,8 @@ namespace BOOM {
       call_observers();
     }
 
-    // Add a data point to the model, adjusting
+    // Add a data point to the model, adjusting time_dimension_, observed_, and
+    // data_indices_ as needed.
     void add_data(const Ptr<DATA_TYPE> &data_point) {
       time_dimension_ = std::max<int>(time_dimension_,
                                       1 + data_point->timestamp());
@@ -144,6 +145,22 @@ namespace BOOM {
       return ConstVectorView(response_workspace_);
     }
 
+    // Args:
+    //   time:  The time point of the desired observation.
+    //   state_manager: Contains the state model objects required to do the
+    //     adjustment.
+    //   observation_model: Contains the model objects required to compute the
+    //     regression component.
+    //   observation_coefficients: The matrix of coefficients relating the
+    //     shared state component to the observed data.
+    //   shared_state:  The matrix of shared state values.
+    //
+    // Returns:
+    //   A ConstVectorView containing the values of each time series at a given
+    //   time point, after "adjusting" them by subtracting off unwanted factors.
+    //
+    //   The dimension of the returned value is the number of series with observed
+    //   values at the specified time point.
     template <class STATE_MANAGER, class OBSERVATION_MODEL>
     ConstVectorView adjusted_observation(
         int time,
@@ -172,6 +189,17 @@ namespace BOOM {
 
     void unset_workspace() {
       adjusted_data_workspace_.unset();
+    }
+
+    // Add the data from 'rhs' to the data from the current model.
+    void combine_data(const MultivariateStateSpaceRegressionDataPolicy &rhs) {
+      if (rhs.nseries_ != nseries_) {
+        report_error("Data can only be combined from models with the "
+                     "same number of series");
+      }
+      for (const auto &el : rhs.raw_data_) {
+        add_data(el);
+      }
     }
 
    private:

@@ -1,4 +1,7 @@
+// Copyright 2022 Steven L. Scott.  All Rights Reserved.
+
 // Copyright 2018 Google LLC. All Rights Reserved.
+
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -68,6 +71,18 @@ namespace BOOM {
       Ptr<DoubleModel> prior_;
     };
 
+    Vector draw_beta_full_conditional_impl(const Ptr<MvnBase> &coefficient_prior,
+                                         const WeightedRegSuf &suf,
+                                         double sigsq,
+                                         RNG &rng) {
+      SpdMatrix Precision = coefficient_prior->siginv() + suf.xtx() / sigsq;
+      Vector scaled_mean =
+          coefficient_prior->siginv() * coefficient_prior->mu()
+          + suf.xty() / sigsq;
+      return rmvn_suf_mt(rng, Precision, scaled_mean);
+    }
+
+
   }  // namespace
 
   TRegressionSampler::TRegressionSampler(
@@ -131,14 +146,12 @@ namespace BOOM {
   //    where V^{-1} = Ominv + X'WX/sigsq
   //    beta_tilde = V * (Ominv * b + X'Wy/sigsq)
   void TRegressionSampler::draw_beta_full_conditional() {
-    SpdMatrix Vinv =
-        coefficient_prior_->siginv() +
-        complete_data_sufficient_statistics_.xtx() / model_->sigsq();
-    Vector Vinv_beta_tilde =
-        coefficient_prior_->siginv() * coefficient_prior_->mu() +
-        complete_data_sufficient_statistics_.xty() / model_->sigsq();
-    Vector beta = rmvn_suf_mt(rng(), Vinv, Vinv_beta_tilde);
-    model_->set_Beta(beta);
+    model_->set_Beta(
+        draw_beta_full_conditional_impl(
+            coefficient_prior_,
+            complete_data_sufficient_statistics_,
+            model_->sigsq(),
+            rng()));
   }
 
   // p(1/sigsq) \propto (1/sigsq)^(df/2 - 1) * exp(-ss/2  * ss)
@@ -179,6 +192,67 @@ namespace BOOM {
 
   void TRegressionSampler::fix_latent_data(bool fixed) {
     latent_data_is_fixed_ = fixed;
+  }
+
+  //===========================================================================
+  namespace {
+    using CDSRPS = CompleteDataStudentRegressionPosteriorSampler;
+  }  // namespace
+
+  CDSRPS::CompleteDataStudentRegressionPosteriorSampler(
+      CompleteDataStudentRegressionModel *model,
+      const Ptr<MvnBase> &coefficient_prior,
+      const Ptr<GammaModelBase> &residual_precision_prior,
+      const Ptr<DoubleModel> &tail_thickness_prior,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        coefficient_prior_(coefficient_prior),
+        residual_precision_prior_(residual_precision_prior),
+        tail_thickness_prior_(tail_thickness_prior),
+        sigsq_sampler_(residual_precision_prior_),
+        nu_observed_data_sampler_(TRegressionLogPosterior(
+            model_, tail_thickness_prior), false, 1.0, &rng())
+  {
+    nu_observed_data_sampler_.set_lower_limit(0.0);
+  }
+
+  void CDSRPS::draw() {
+    if (model_->latent_data_disabled()) {
+      model_->impute_latent_data(rng());
+    }
+    draw_beta_full_conditional();
+    draw_sigsq_full_conditional();
+    draw_nu_given_observed_data();
+  }
+
+  double CDSRPS::logpri() const {
+    double ans = tail_thickness_prior_->logp(model_->nu());
+    ans += sigsq_sampler_.log_prior(model_->sigsq());
+    ans += coefficient_prior_->logp(model_->Beta());
+    return ans;
+  }
+
+  void CDSRPS::draw_beta_full_conditional() {
+    model_->set_Beta(
+        draw_beta_full_conditional_impl(
+            coefficient_prior_,
+            *(model_->suf()),
+            model_->sigsq(),
+            rng()));
+  }
+
+  void CDSRPS::draw_sigsq_full_conditional() {
+    const WeightedRegSuf &suf(*model_->suf());
+    double sigsq = sigsq_sampler_.draw(
+        rng(), suf.n(), suf.weighted_sum_of_squared_errors(
+            model_->Beta()));
+    model_->set_sigsq(sigsq);
+  }
+
+  void CDSRPS::draw_nu_given_observed_data() {
+    double nu = nu_observed_data_sampler_.draw(model_->nu());
+    model_->set_nu(nu);
   }
 
 }  // namespace BOOM

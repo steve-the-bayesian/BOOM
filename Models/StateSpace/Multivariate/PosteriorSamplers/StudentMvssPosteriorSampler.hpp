@@ -26,7 +26,7 @@
 namespace BOOM {
 
   class StudentMvssPosteriorSampler
-      : public MultivariateStateSpaceModelSampler {
+      : public PosteriorSampler {
    public:
     StudentMvssPosteriorSampler(
         StudentMvssRegressionModel *model,
@@ -34,15 +34,18 @@ namespace BOOM {
 
     StudentMvssPosteriorSampler * clone_to_new_host(Model *new_host) const override;
 
-    void impute_nonstate_latent_data() override {
+    void draw() override;
+    double logpri() const override {
+      return negative_infinity();
+    }
+
+    void impute_nonstate_latent_data() {
       model_->impute_student_weights(rng());
     }
 
-    void clear_complete_data_sufficient_statistics();
-
    private:
     StudentMvssRegressionModel *model_;
-    TDataImputer data_imputer_;
+    bool latent_data_initialized_;
   };
 
 

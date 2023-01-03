@@ -89,11 +89,8 @@ namespace BOOM {
     Matrix forecast(nseries(), horizon, 0.0);
     // Add series specific component.
     if (has_series_specific_state()) {
-      for (int j = 0; j < nseries(); ++j) {
-        forecast.row(j) += state_manager_.series_specific_model(
-            j)->simulate_state_contribution_forecast(
-                rng, horizon, series_specific_final_state[j]);
-      }
+      forecast += state_manager_.series_specific_forecast(
+          rng, horizon, series_specific_final_state);
     }
 
     // Add shared state component.
@@ -140,8 +137,15 @@ namespace BOOM {
     this->add_data(Ptr<MultivariateTimeSeriesRegressionData>(dp));
   }
 
-  void MSSRM::combine_data(const Model &, bool) {
-    report_error("'combine_data' cannot be called for time series models.");
+  void MSSRM::combine_data(const Model &rhs, bool) {
+    const MultivariateStateSpaceRegressionModel *other_model =
+        dynamic_cast<const MultivariateStateSpaceRegressionModel *>(&rhs);
+    if (other_model) {
+      data_policy_.combine_data(other_model->data_policy_);
+    } else {
+      report_error("rhs could not be cast to "
+                   "MultivariateStateSpaceRegressionModel.");
+    }
   }
 
   void MSSRM::clear_data() {

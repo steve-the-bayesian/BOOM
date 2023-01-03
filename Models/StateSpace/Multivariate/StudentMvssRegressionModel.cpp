@@ -18,6 +18,7 @@
 
 #include "Models/StateSpace/Multivariate/StudentMvssRegressionModel.hpp"
 #include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
@@ -62,26 +63,52 @@ namespace BOOM {
     return const_cast<StudentMvssRegressionModel *>(this);
   }
 
-  Matrix simulate_forecast(
+  Matrix StudentMvssRegressionModel::simulate_forecast(
       RNG &rng,
       const Matrix &forecast_predictors,
       const Vector &final_shared_state,
       const std::vector<Vector> &series_specific_final_state) {
+    int horizon = forecast_predictors.nrow() / nseries();
+    if (horizon * nseries() != forecast_predictors.nrow()) {
+      report_error("The number of rows in forecast_predictors must be an integer "
+                   "multiple of the number of series.");
+    }
 
-    /////////////////////////
-    /////////////////////////
-    /////////////////////////
-    /////////////////////////
-    /////////////////////////
-    /////////////////////////
-    /////////////////////////
-    return Matrix(0, 0);
+    Matrix forecast(nseries(), horizon, 0.0);
+    if (has_series_specific_state()) {
+      forecast += state_manager_.series_specific_forecast(
+          rng, horizon, series_specific_final_state);
+    }
+
+    // Add shared state component.
+    int time = 0;
+    Vector state = final_shared_state;
+    Selector fully_observed(nseries(), true);
+    int t0 = time_dimension();
+    for (int t = 0; t < horizon; ++t) {
+      advance_to_timestamp(rng, time, state, t, t);
+      forecast.col(t) += *observation_coefficients(time + t0, fully_observed) * state;
+    }
+
+    // Add regression component and residual error.
+    int index = 0;
+    for (int t = 0; t < horizon; ++t) {
+      for (int series = 0; series < nseries(); ++series) {
+        const TRegressionModel *obs_model = observation_model()->model(series);
+        forecast(series, t) += obs_model->predict(forecast_predictors.row(index))
+            + rt_mt(rng, obs_model->nu()) * obs_model->sigma();
+      }
+    }
+    return forecast;
+
   }
 
+  //---------------------------------------------------------------------------
   DiagonalMatrix StudentMvssRegressionModel::observation_variance(int t) const {
     return observation_variance(t, dummy_selector_);
   }
 
+  //---------------------------------------------------------------------------
   DiagonalMatrix StudentMvssRegressionModel::observation_variance(
       int t, const Selector &observed) const {
     Vector diagonal_elements(observed.nvars());
@@ -93,8 +120,21 @@ namespace BOOM {
     return DiagonalMatrix(diagonal_elements);
   }
 
+  //---------------------------------------------------------------------------
+  double StudentMvssRegressionModel::single_observation_variance(
+      int time, int series) const {
+    const Selector &observed(observed_status(time));
+    int I = observed.expanded_index(series);
+    if (time > 0 && time < time_dimension()) {
+      return observation_model()->model(I)->sigsq() /
+          data_policy_.data_point(I, time)->weight();
+    } else {
+      return observation_model()->model(I)->residual_variance();
+    }
+  }
+
   void StudentMvssRegressionModel::impute_student_weights(RNG &rng) {
-    TDataImputer data_imputer;
+    TDataImputer imputer;
     for (size_t time = 0; time < time_dimension(); ++time) {
       const Selector &observed(observed_status(time));
 
@@ -115,26 +155,11 @@ namespace BOOM {
 
         double residual = time_series_residual
             - obs_model->predict(data_point->x());
-        double weight = data_imputer.impute(
+        double weight = imputer.impute(
             rng, residual, obs_model->sigma(), obs_model->nu());
         data_point->set_weight(weight);
       }
     }
-
-    for (size_t i = 0; i < data_policy_.total_sample_size(); ++i) {
-      // StudentData *data_point = data_policy_.data_point(i).get();
-      ////////////////////////////////////
-      ////////////////////////////////////
-      ////////////////////////////////////
-      ////////////////////////////////////
-      ////////////////////////////////////
-      ////////////////////////////////////
-    }
-  }
-
-  double StudentMvssRegressionModel::adjusted_observation(
-      int series, int time) const {
-    return adjusted_observation(time)[series];
   }
 
   ConstVectorView StudentMvssRegressionModel::adjusted_observation(
@@ -205,15 +230,11 @@ namespace BOOM {
         double regression_contribution = observed_data(series, time)
             - shared_state_contribution[series]
             - state_manager_.series_specific_state_contribution(series, time);
-        ////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////
-        //
-        // The model won't work until the following bug gets fixed.  TRegression
-        // does not have sufficient statistics
-        //
-        // observation_model_->model(series)->suf()->add_mixture_data(
-        //     regression_contribution, data_point->x(), 1.0);
+        CompleteDataStudentRegressionModel *obs_model =
+            observation_model_->model(series);
+        obs_model->add_data(regression_contribution,
+                            data_point->x(),
+                            data_point->weight());
       }
     }
   }

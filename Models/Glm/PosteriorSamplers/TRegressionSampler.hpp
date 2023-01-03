@@ -115,6 +115,40 @@ namespace BOOM {
     bool latent_data_is_fixed_;
   };
 
+
+  //===========================================================================
+
+  class CompleteDataStudentRegressionPosteriorSampler
+      : public PosteriorSampler {
+   public:
+    CompleteDataStudentRegressionPosteriorSampler(
+        CompleteDataStudentRegressionModel *model,
+        const Ptr<MvnBase> &coefficient_prior,
+        const Ptr<GammaModelBase> &residual_precision_prior,
+        const Ptr<DoubleModel> &tail_thickness_prior,
+        RNG &seeding_rng = GlobalRng::rng);
+
+    void draw() override;
+    double logpri() const override;
+
+    void draw_beta_full_conditional();
+    void draw_sigsq_full_conditional();
+    void draw_nu_given_observed_data();
+
+    void set_sigma_upper_limit(double max_sigma) {
+      sigsq_sampler_.set_sigma_max(max_sigma);
+    }
+
+   private:
+    CompleteDataStudentRegressionModel *model_;
+    Ptr<MvnBase> coefficient_prior_;
+    Ptr<GammaModelBase> residual_precision_prior_;
+    Ptr<DoubleModel> tail_thickness_prior_;
+
+    GenericGaussianVarianceSampler sigsq_sampler_;
+    ScalarSliceSampler nu_observed_data_sampler_;
+  };
+
 }  // namespace BOOM
 
 #endif  //  BOOM_TREGRESSION_SAMPLER_HPP_

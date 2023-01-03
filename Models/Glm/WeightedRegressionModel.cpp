@@ -155,7 +155,7 @@ namespace BOOM {
     sumlogw_ = sum_log_weights;
     sym_ = true;
   }
-  
+
   //------------------------------------------------------------
 
   void WRS::add_data(const Vector &x, double y, double w) {
@@ -166,6 +166,14 @@ namespace BOOM {
     xtwx_.add_outer(x, w, false);
     xtwy_.axpy(x, w * y);
     sym_ = false;
+  }
+
+  void WRS::remove_data(const Vector &x, double y, double w) {
+    // All the sums can be deprecated by calling add_data with -w for a weight,
+    // but this adds 1 to n_.  We need to remove that 1, and 1 more for the data
+    // point we're deleting.
+    add_data(x, y, -w);
+    n_ -= 2;
   }
 
   void WRS::clear() {
