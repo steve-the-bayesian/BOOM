@@ -121,7 +121,8 @@ namespace BOOM {
    public:
     CompleteDataStudentRegressionModel(int xdim)
         : TRegressionModel(xdim),
-          suf_(new WeightedRegSuf(xdim))
+          suf_(new WeightedRegSuf(xdim)),
+          latent_data_disabled_(false)
     {}
 
     CompleteDataStudentRegressionModel(
@@ -147,6 +148,12 @@ namespace BOOM {
     void add_data(const Ptr<Data> &dp) override {
       Ptr<RegressionData> reg_data = dp.dcast<RegressionData>();
       add_data(reg_data);
+    }
+
+    void add_data(const Ptr<RegressionData> &dp, double weight) {
+      suf_->add_data(dp->x(), dp->y(), weight);
+      weights_.push_back(weight);
+      DataPolicy::add_data(dp);
     }
 
     void add_data(RegressionData *dp) override {

@@ -264,7 +264,7 @@ namespace BOOM {
       TRegressionModel(rhs),
       suf_(rhs.suf_->clone()),
       weights_(rhs.weights_),
-      latent_data_disabled_(false)
+      latent_data_disabled_(rhs.latent_data_disabled_)
   {}
 
   CompleteDataStudentRegressionModel * CDSRM::clone() const {
