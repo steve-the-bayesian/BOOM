@@ -137,8 +137,8 @@ namespace BOOM {
             RListIoManager *subordinate_io_manager =
                 subordinate_model_io->subordinate_io_manager(i);
             StateModelFactory series_state_factory(subordinate_io_manager);
-            ProxyScalarStateSpaceModel *subordinate_model =
-                model_->series_specific_model(i).get();
+            ProxyScalarStateSpaceModel<MultivariateStateSpaceRegressionModel>
+                *subordinate_model = model_->series_specific_model(i);
 
             series_state_factory.AddState(
                 subordinate_model, r_subordinate_state_specification);
@@ -329,7 +329,7 @@ namespace BOOM {
         }
         for (int i = 0; i < Rf_length(r_prior); ++i) {
           BOOM::RInterface::SetRegressionSampler(
-              model_->observation_model()->model(i).get(),
+              model_->observation_model()->model(i),
               VECTOR_ELT(r_prior, i));
         }
 
