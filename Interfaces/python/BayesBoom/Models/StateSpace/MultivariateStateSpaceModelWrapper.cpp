@@ -406,7 +406,7 @@ namespace BayesBoom {
                Vector adjusted_observation(response.size());
                for (int i = 0; i < which_series.nvars(); ++i) {
                  int I = which_series.expanded_index(i);
-                 const RegressionModel *reg(model.observation_model()->model(I).get());
+                 const RegressionModel *reg(model.observation_model()->model(I));
                  adjusted_observation[i] =
                      response[i] - reg->predict(predictors.row(i));
 
