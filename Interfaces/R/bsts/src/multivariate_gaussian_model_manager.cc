@@ -100,10 +100,16 @@ namespace BOOM {
       CreateBareModel(r_data_list_or_model_object, r_prior, r_options, io_manager);
       ConditionallyIndependentSharedStateModelFactory
           shared_state_model_factory(nseries_, io_manager);
+      std::vector<Ptr<UnivParams>> residual_variance_parameters;
+      for (int i = 0; i < model_->nseries(); ++i) {
+        residual_variance_parameters.push_back(
+            model_->observation_model()->model(i)->Sigsq_prm());
+      }
       shared_state_model_factory.AddState(
           model_->state_models(),
           model_.get(),
           r_shared_state_specification,
+          residual_variance_parameters,
           "");
       shared_state_model_factory.SaveFinalState(model_.get(), &final_state());
 
