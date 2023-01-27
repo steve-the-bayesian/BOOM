@@ -26,8 +26,12 @@ namespace {
     Array empty;
     EXPECT_EQ(0, empty.ndim());
 
+    EXPECT_TRUE(empty.empty());
+
     std::vector<int> dim = {2, 4, 3};
     Array array(dim, 0.0);
+    EXPECT_FALSE(array.empty());
+
     EXPECT_EQ(array.ndim(), 3);
     EXPECT_EQ(array.dim()[0], dim[0]);
     EXPECT_EQ(array.dim()[1], dim[1]);
