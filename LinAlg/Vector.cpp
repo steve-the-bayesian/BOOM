@@ -1019,7 +1019,7 @@ namespace BOOM {
     double real_index = quantile * max_index;
     double index = lround(floor(real_index));
     double fraction = real_index - index;
-    if (fraction > (1.0 / n)) {
+    if (fraction > std::min<double>(0.01, (1.0 / n))) {
       // In this case real_index is between two integers, which means it can't
       // be max_index.  Return an interpolated average of the lower and upper
       // values.
