@@ -43,6 +43,10 @@ namespace BOOM {
     double df_error, df_model, df_total;
     double F, p_value;
     std::ostream &display(std::ostream &out) const;
+
+    double Rsquare() const {
+      return SSM / SST;
+    }
   };
 
   std::ostream &operator<<(std::ostream &out, const AnovaTable &tab);
