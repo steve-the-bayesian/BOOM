@@ -207,8 +207,8 @@ namespace BOOM {
   //     the test to pass.
   //
   // Returns:
-  //   true if the R^2 between 'truth' and the median of 'draws' exceeds the
-  //   specified threshold.  Returns false otherwise.
+  //   true if the R^2 between 'truth' and the median of 'draws' equals or
+  //   exceeds the specified threshold.  Returns false otherwise.
   bool CheckTrend(const Matrix &draws, const Vector &truth, double r2_threshold);
 
   //===========================================================================
