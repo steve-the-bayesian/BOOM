@@ -45,7 +45,7 @@ namespace BoomStateSpaceTesting {
         : sample_size_(sample_size),
           test_size_(test_size),
           state(nfactors, sample_size + test_size),
-          observation_coefficients(nseries, xdim),
+          observation_coefficients(nseries, nfactors),
           regression_coefficients(nseries, xdim),
           predictors(sample_size + test_size, xdim),
           response(sample_size + test_size, nseries),
@@ -86,10 +86,11 @@ namespace BoomStateSpaceTesting {
       build_model(residual_sd, df);
     }
 
+    // Simulate state from a multivariate local level model.
     void simulate_state() {
       double factor_sd = 1.0;
       for (int factor = 0; factor < nfactors(); ++factor) {
-        state(factor, 0) = rnorm() - 35;
+        state(factor, 0) = rnorm();
         for (int time = 1; time < sample_size_ + test_size_; ++time) {
           state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
         }
@@ -132,11 +133,17 @@ namespace BoomStateSpaceTesting {
         spikes.push_back(spike->clone());
       }
 
+      std::vector<Ptr<UnivParams>> sigsq_params;
+      for (int i = 0; i < nseries(); ++i) {
+        sigsq_params.push_back(model->observation_model()->model(i)->Sigsq_prm());
+      }
+
       NEW(ConditionallyIndependentSharedLocalLevelPosteriorSampler,
           state_model_sampler)(
               state_model.get(),
               std::vector<Ptr<MvnBase>>(nseries(), slab),
-              spikes);
+              spikes,
+              sigsq_params);
       state_model->set_method(state_model_sampler);
       state_model->set_initial_state_mean(state.col(0));
       state_model->set_initial_state_variance(SpdMatrix(nfactors(), 1.0));
@@ -146,7 +153,7 @@ namespace BoomStateSpaceTesting {
     void set_observation_model_sampler(double residual_sd, double df) {
       for (int i = 0; i < nseries(); ++i) {
         Vector beta_prior_mean(xdim(), 0.0);
-        SpdMatrix beta_precision(xdim(), 1.0);
+        SpdMatrix beta_precision(xdim(), .0001);
         NEW(MvnModel, beta_prior)(beta_prior_mean, beta_precision, true);
         NEW(ChisqModel, residual_precision_prior)(1.0, square(residual_sd));
         NEW(UniformModel, tail_thickness_prior)(1.0, 100.0);
@@ -155,7 +162,7 @@ namespace BoomStateSpaceTesting {
             beta_prior,
             residual_precision_prior,
             tail_thickness_prior);
-        regression_sampler->set_sigma_upper_limit(1.0);
+        regression_sampler->set_sigma_upper_limit(100.0);
         model->observation_model()->model(i)->set_method(regression_sampler);
       }
       NEW(IndependentGlmsPosteriorSampler<CompleteDataStudentRegressionModel>,

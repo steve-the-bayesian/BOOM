@@ -125,12 +125,15 @@ namespace BOOM {
       int time, int series) const {
     const Selector &observed(observed_status(time));
     int I = observed.expanded_index(series);
-    if (time > 0 && time < time_dimension()) {
-      return observation_model()->model(I)->sigsq() /
+    double ans = negative_infinity();
+    ///// should time be > 0 or >= 0????
+    if (time >= 0 && time < time_dimension()) {
+      ans = observation_model()->model(I)->sigsq() /
           data_policy_.data_point(I, time)->weight();
     } else {
-      return observation_model()->model(I)->residual_variance();
+      ans = observation_model()->model(I)->residual_variance();
     }
+    return ans;
   }
 
   void StudentMvssRegressionModel::impute_student_weights(RNG &rng) {
@@ -139,7 +142,8 @@ namespace BOOM {
       const Selector &observed(observed_status(time));
 
       // state_contribution contains the contribution from the shared state to
-      // each observed data value.  Its index runs from 0 to observed.nvars().
+      // each observed data value.  Its index runs from 0 to the number of
+      // observed time series (i.e. observed.nvars()).
       Vector shared_state_contribution =
           *observation_coefficients(time, observed) * shared_state(time);
 
@@ -232,8 +236,12 @@ namespace BOOM {
             - state_manager_.series_specific_state_contribution(series, time);
         CompleteDataStudentRegressionModel *obs_model =
             observation_model_->model(series);
-        obs_model->add_data(regression_contribution,
-                            data_point->x(),
+
+        // There is an optimization opportunity here, because the regression
+        // data point is reallocated every time.
+        obs_model->add_data(new RegressionData(
+                              new UnivData(regression_contribution),
+                              data_point->Xptr()),
                             data_point->weight());
       }
     }

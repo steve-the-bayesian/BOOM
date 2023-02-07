@@ -245,6 +245,7 @@ namespace BOOM {
     // Impute both the shared and series-specific state, each conditional on the
     // other.
     void impute_state(RNG &rng) override {
+      MultivariateStateSpaceModelBase::resize_state();
       impute_student_weights(rng);
       impute_shared_state_given_series_state(rng);
       impute_series_state_given_shared_state(rng);

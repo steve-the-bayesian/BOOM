@@ -305,9 +305,10 @@ namespace BOOM {
     if (nrow(shared_state_) != state_dimension() ||
         ncol(shared_state_) != time_dimension()) {
       shared_state_.resize(state_dimension(), time_dimension());
-    }
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      state_model(s)->observe_time_dimension(time_dimension());
+
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_time_dimension(time_dimension());
+      }
     }
   }
 
