@@ -26,6 +26,13 @@ namespace BOOM {
     class AdjustedDataWorkspace {
      public:
 
+      AdjustedDataWorkspace()
+          : adjusted_data_workspace_(),
+            workspace_current_(false),
+            workspace_time_index_(-1),
+            workspace_status_(WorkspaceStatus::UNSET)
+      {}
+
       template <class DATA_POLICY, class STATE_MANAGER, class OBSERVATION_MODEL>
       void isolate_shared_state(int time,
                                 const DATA_POLICY &data_policy,

@@ -119,7 +119,7 @@ namespace BOOM {
       : public TRegressionModel,
         public LatentVariableModel {
    public:
-    CompleteDataStudentRegressionModel(int xdim)
+    explicit CompleteDataStudentRegressionModel(int xdim)
         : TRegressionModel(xdim),
           suf_(new WeightedRegSuf(xdim)),
           latent_data_disabled_(false)

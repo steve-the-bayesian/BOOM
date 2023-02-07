@@ -125,7 +125,7 @@ namespace BOOM {
       int time, int series) const {
     const Selector &observed(observed_status(time));
     int I = observed.expanded_index(series);
-    double ans = negative_infinity();
+    double ans;
     ///// should time be > 0 or >= 0????
     if (time >= 0 && time < time_dimension()) {
       ans = observation_model()->model(I)->sigsq() /

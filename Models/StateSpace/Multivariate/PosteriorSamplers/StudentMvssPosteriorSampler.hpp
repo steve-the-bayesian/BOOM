@@ -28,7 +28,7 @@ namespace BOOM {
   class StudentMvssPosteriorSampler
       : public PosteriorSampler {
    public:
-    StudentMvssPosteriorSampler(
+    explicit StudentMvssPosteriorSampler(
         StudentMvssRegressionModel *model,
         RNG &seeding_rng = GlobalRng::rng);
 

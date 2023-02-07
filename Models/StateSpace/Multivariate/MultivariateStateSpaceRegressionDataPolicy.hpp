@@ -36,7 +36,7 @@ namespace BOOM {
    public:
     typedef DATA_TYPE DataType;
 
-    MultivariateStateSpaceRegressionDataPolicy(int nseries)
+    explicit MultivariateStateSpaceRegressionDataPolicy(int nseries)
         : nseries_(nseries),
           time_dimension_(0),
           missing_()
