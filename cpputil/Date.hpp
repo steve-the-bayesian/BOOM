@@ -21,6 +21,7 @@
 #define BOOM_DATE_HPP
 
 #include <string>
+#include <ctime>
 #include "uint.hpp"
 #include <ctime>
 
