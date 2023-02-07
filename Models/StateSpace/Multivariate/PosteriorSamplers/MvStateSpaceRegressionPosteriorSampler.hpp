@@ -50,7 +50,7 @@ namespace BOOM {
     bool latent_data_initialized_;
 
     // A stub for when non-gaussian data becomes supported.
-    void impute_nonstate_latent_data() {}
+    virtual void impute_nonstate_latent_data() {}
   };
 
 }  // namespace BOOM

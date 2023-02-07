@@ -217,10 +217,6 @@ namespace BOOM {
     void observe_fixed_state();
 
    private:
-    // The state models for DIRM do not require complete data, so overriding
-    // this with a no-op.
-    void impute_missing_observations(int t, RNG &rng) override {}
-
     // Reimplements the logic in the base class, but optimized for the scalar
     // observation variance.
     Vector simulate_fake_observation(RNG &rng, int t) override;

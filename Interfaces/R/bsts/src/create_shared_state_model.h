@@ -80,6 +80,7 @@ namespace BOOM {
       void AddState(SharedStateModelVector &state_models,
                     CIMSSMB *model,
                     SEXP r_shared_state_specification,
+                    const std::vector<Ptr<UnivParams>> &residual_variance_parameters,
                     const std::string &prefix = "");
 
       // Save the final state (i.e. at time T) of the model for use with
@@ -118,6 +119,7 @@ namespace BOOM {
       Ptr<SharedStateModel> CreateSharedStateModel(
           CIMSSMB *model,
           SEXP r_state_component,
+          const std::vector<Ptr<UnivParams>> &residual_variance_parameters,
           const std::string &prefix);
 
 
@@ -125,6 +127,7 @@ namespace BOOM {
       Ptr<SharedStateModel> CreateSharedLocalLevel(
           SEXP r_state_component,
           CIMSSMB *model,
+          const std::vector<Ptr<UnivParams>> &residual_variance_parameters,
           const std::string &prefix);
     };
 

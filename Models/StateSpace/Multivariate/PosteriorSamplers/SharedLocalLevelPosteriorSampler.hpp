@@ -114,12 +114,19 @@ namespace BOOM {
     //   spikes: Prior distribution on the conditionally nonzero part of the
     //     observation coefficients.  One element for each potentially observed
     //     time series.
+    //   sigsq: A vector of UnivParams pointers containing the residual
+    //     variances from the host model.  If the host model is a mixture of
+    //     Gaussians (e.g. probit, logit, T, Poisson, etc) then these "residual
+    //     variances" are either dummy values (probably 1.0) or they contain
+    //     pointers to the host model and can generate appropriate values on the
+    //     fly.
     //   seeding_rng: The random number generator used to seed the RNG for the
     //     PosteriorSampler object.
     ConditionallyIndependentSharedLocalLevelPosteriorSampler(
         ConditionallyIndependentSharedLocalLevelStateModel *model,
         const std::vector<Ptr<MvnBase>> &slabs,
         const std::vector<Ptr<VariableSelectionPrior>> &spikes,
+        const std::vector<Ptr<UnivParams>> &sigsq,
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
@@ -139,6 +146,8 @@ namespace BOOM {
 
     // There is one element of samplers_ for each time series.
     std::vector<SpikeSlabSampler> samplers_;
+
+    std::vector<Ptr<UnivParams>> sigsq_;
   };
 
 }  // namespace BOOM

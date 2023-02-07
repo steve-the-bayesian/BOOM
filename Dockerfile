@@ -1,4 +1,4 @@
-# Use this base image from dockerhub.  This image is set up with the miniman
+# Use this base image from dockerhub.  This image is set up with the minimal
 # linux environment to support manylinux distribution.
 FROM quay.io/pypa/manylinux2010_x86_64
 

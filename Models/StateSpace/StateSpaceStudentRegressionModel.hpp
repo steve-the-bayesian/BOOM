@@ -59,6 +59,8 @@ namespace BOOM {
       double adjusted_observation(const GlmCoefs &coefficients) const;
       double sum_of_weights() const;
 
+      // The contribution to this data point from the state models.  The
+      // remaining contribution is from the regression model (plus noise).
       double state_model_offset() const { return state_model_offset_; }
       void set_state_model_offset(double offset);
 
@@ -77,6 +79,7 @@ namespace BOOM {
     };
   }  // namespace StateSpace
 
+  //===========================================================================
   class StateSpaceStudentRegressionModel
       : public StateSpaceNormalMixture,
         public IID_DataPolicy<StateSpace::AugmentedStudentRegressionData>,

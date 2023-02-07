@@ -50,6 +50,8 @@ namespace BOOM {
 
     WeightedRegSuf(const WeightedRegSuf &rhs) = default;
     WeightedRegSuf(WeightedRegSuf &&rhs) = default;
+    WeightedRegSuf & operator=(const WeightedRegSuf &rhs) = default;
+    WeightedRegSuf & operator=(WeightedRegSuf &&rhs) = default;
 
     WeightedRegSuf *clone() const override;
 
@@ -72,6 +74,7 @@ namespace BOOM {
 
     void Update(const WeightedRegressionData &) override;
     void add_data(const Vector &x, double y, double w);
+    void remove_data(const Vector &x, double y, double w);
 
     void clear() override;
     virtual uint size() const;                      // dimension of beta

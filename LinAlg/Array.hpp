@@ -51,6 +51,8 @@ namespace BOOM {
 
     double operator[](const std::vector<int> &index) const;
 
+    bool empty() const;
+
     int ndim() const { return dims_.size(); }
     int dim(int i) const { return dims_[i]; }
     const std::vector<int> &dim() const { return dims_; }

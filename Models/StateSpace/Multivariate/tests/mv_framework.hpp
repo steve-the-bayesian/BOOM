@@ -136,15 +136,18 @@ namespace BoomStateSpaceTesting {
       NEW(MvnModel, slab)(Vector(nfactors(), 0.0), SpdMatrix(nfactors(), 1.0));
       NEW(VariableSelectionPrior, spike)(nfactors(), 1.0);
       std::vector<Ptr<VariableSelectionPrior>> spikes;
+      std::vector<Ptr<UnivParams>> sigsq_params;
       for (int i = 0; i < nseries(); ++i) {
         spikes.push_back(spike->clone());
+        sigsq_params.push_back(model->observation_model()->model(i)->Sigsq_prm());
       }
 
       NEW(ConditionallyIndependentSharedLocalLevelPosteriorSampler,
           state_model_sampler)(
               state_model.get(),
               std::vector<Ptr<MvnBase>>(nseries(), slab),
-              spikes);
+              spikes,
+              sigsq_params);
       state_model->set_method(state_model_sampler);
       state_model->set_initial_state_mean(state.col(0));
       state_model->set_initial_state_variance(SpdMatrix(nfactors(), 1.0));
@@ -158,7 +161,7 @@ namespace BoomStateSpaceTesting {
         NEW(MvnModel, beta_prior)(beta_prior_mean, beta_precision, true);
         NEW(ChisqModel, residual_precision_prior)(1.0, square(residual_sd));
         NEW(RegressionSemiconjugateSampler, regression_sampler)(
-            model->observation_model()->model(i).get(),
+            model->observation_model()->model(i),
             beta_prior, residual_precision_prior);
         regression_sampler->set_sigma_max(1.0);
         model->observation_model()->model(i)->set_method(regression_sampler);
