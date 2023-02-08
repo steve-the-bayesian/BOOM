@@ -59,12 +59,12 @@ namespace BOOM {
   Matrix quantile(const Matrix &data,
                   const Vector &target_quantiles);
 
-  double median(const ConstVectorView &data) {
+  inline double median(const ConstVectorView &data) {
     return quantile(data, .5);
   }
 
   // Return the column-by-column median of 'data'.
-  Vector median(const Matrix &data) {
+  inline Vector median(const Matrix &data) {
     return quantile(data, 0.5);
   }
 
