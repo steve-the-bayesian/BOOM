@@ -32,7 +32,8 @@ namespace BayesBoom {
              "    stationary process is desired.\n"
              "  sigma:  The residual standard deviation.")
         .def_property_readonly(
-            "mean", &NonzeroMeanAr1Model::mu, "The long run mean of the process.")
+            "mean", &NonzeroMeanAr1Model::mu,
+            "The long run mean of the process.")
         .def_property_readonly(
             "ar1", &NonzeroMeanAr1Model::phi, "The Ar1 coefficient.")
         .def_property_readonly(

@@ -30,7 +30,7 @@ namespace BayesBoom {
              "Args:\n\n"
              "  dim:  The dimension of the data to be modeled.\n"
              "  concentration_parameter:  The concentration parameter of "
-             "the Dirichlet process.  Smaller values lead to fewer clusters.\n" )
+             "the Dirichlet process.  Smaller values lead to fewer clusters.\n")
         .def_property_readonly(
             "number_of_clusters",
             [](const DirichletProcessMvnModel &model) {
@@ -78,7 +78,8 @@ namespace BayesBoom {
         .def("__repr__",
              [](const DirichletProcessMvnModel &model) {
                std::ostringstream out;
-               out << "A BOOM DirichletProcessMvnModel of dimension " << model.dim()
+               out << "A BOOM DirichletProcessMvnModel of dimension "
+                   << model.dim()
                    << " with concentration parameter " << model.alpha()
                    << ".\n";
                return out.str();
@@ -96,7 +97,10 @@ namespace BayesBoom {
                const Ptr<WishartModel> &precision_base_measure,
                RNG &seeding_rng) {
               return new DirichletProcessMvnCollapsedGibbsSampler(
-                  &model, mean_base_measure, precision_base_measure, seeding_rng);
+                  &model,
+                  mean_base_measure,
+                  precision_base_measure,
+                  seeding_rng);
             }),
              py::arg("model"),
              py::arg("mean_base_measure"),

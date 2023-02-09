@@ -42,7 +42,8 @@ namespace BayesBoom {
             [](const StateModelBase &state_model) {
               return state_model.state_dimension();
             },
-            "The number of dimensions that this state model adds to the state vector.")
+            "The number of dimensions that this state model adds to "
+            "the state vector.")
         .def_property_readonly(
             "state_error_dimension",
             [](const StateModelBase &state_model) {
@@ -473,7 +474,8 @@ namespace BayesBoom {
                model->set_initial_state_mean(initial_state_mean);
              })
         .def("set_initial_state_variance",
-             [] (TrigStateModel *model, const SpdMatrix &initial_state_variance) {
+             [] (TrigStateModel *model,
+                 const SpdMatrix &initial_state_variance) {
                model->set_initial_state_variance(initial_state_variance);
              })
         ;
@@ -626,7 +628,8 @@ namespace BayesBoom {
             "Mean of the state at time 0.")
         .def_property_readonly(
             "initial_state_variance",
-            [](GeneralSeasonalLLT &model) {return model.initial_state_variance();},
+            [](GeneralSeasonalLLT &model) {
+              return model.initial_state_variance();},
             "Variance of the state at time 0.")
         .def("set_initial_state_mean",
              [](GeneralSeasonalLLT &model, const Vector &mean) {
@@ -721,7 +724,8 @@ namespace BayesBoom {
             [] (GeneralSeasonalLLT *model,
                 const std::vector<Ptr<WishartModel>> &priors,
                 RNG &seeding_rng) {
-              return new GeneralSeasonalLLTPosteriorSampler(model, priors, seeding_rng);
+              return new GeneralSeasonalLLTPosteriorSampler(
+                  model, priors, seeding_rng);
             }),
              py::arg("model"),
              py::arg("priors"),
@@ -842,7 +846,8 @@ namespace BayesBoom {
 
     py::class_<LastWeekdayInMonthHoliday,
                OrdinaryAnnualHoliday,
-               Ptr<LastWeekdayInMonthHoliday>>(boom, "LastWeekdayInMonthHoliday")
+               Ptr<LastWeekdayInMonthHoliday>>(
+                   boom, "LastWeekdayInMonthHoliday")
         .def(py::init(
             [] (int day, int month, int days_before, int days_after) {
               return new LastWeekdayInMonthHoliday(
@@ -886,7 +891,8 @@ namespace BayesBoom {
 
     py::class_<USDaylightSavingsTimeBegins,
                OrdinaryAnnualHoliday,
-               Ptr<USDaylightSavingsTimeBegins>>(boom, "USDaylightSavingsTimeBegins")
+               Ptr<USDaylightSavingsTimeBegins>>(
+                   boom, "USDaylightSavingsTimeBegins")
         .def(py::init(
             [] (int days_before, int days_after) {
               return new USDaylightSavingsTimeBegins(days_before, days_after);
@@ -895,7 +901,8 @@ namespace BayesBoom {
 
     py::class_<USDaylightSavingsTimeEnds,
                OrdinaryAnnualHoliday,
-               Ptr<USDaylightSavingsTimeEnds>>(boom, "USDaylightSavingsTimeEnds")
+               Ptr<USDaylightSavingsTimeEnds>>(
+                   boom, "USDaylightSavingsTimeEnds")
         .def(py::init(
             [] (int days_before, int days_after) {
               return new USDaylightSavingsTimeEnds(days_before, days_after);

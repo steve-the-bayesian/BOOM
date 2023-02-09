@@ -29,20 +29,25 @@ namespace BayesBoom {
                const std::vector<Vector> &atoms,
                int xdim,
                BOOM::RNG &seeding_rng) {
-              return new MvRegCopulaDataImputer(num_clusters, atoms, xdim, seeding_rng);
+              return new MvRegCopulaDataImputer(num_clusters, atoms,
+                                                xdim, seeding_rng);
             }),
              py::arg("num_clusters"),
              py::arg("atoms"),
              py::arg("xdim"),
              py::arg("seeding_rng") = BOOM::GlobalRng::rng,
              "Args:\n"
-             "  num_clusters:  The number of clusters in the patern matching model \n"
+             "  num_clusters:  The number of clusters in the patern "
+             "matching model \n"
              "    that handles data errors. \n"
-             "  atoms: A collection of Vectors (or 1-d numpy arrays) containing \n"
-             "    values that will receive special modeling treatment.  One entry is\n"
-             "    needed for each variable.  An entry can be the empty Vector. \n"
+             "  atoms: A collection of Vectors (or 1-d numpy arrays) "
+             "containing \n"
+             "    values that will receive special modeling treatment.  "
+             "One entry is\n"
+             "    needed for each variable.  An entry can be the empty "
+             "Vector. \n"
              "  xdim:  The dimension of the predictor variable.\n"
-             "  seeding_rng:  A boom random number generator used to seed the \n"
+             "  seeding_rng:  A boom random number generator used to seed the\n"
              "    RNG in this object.")
         .def("add_data",
              [](MvRegCopulaDataImputer &imputer,
@@ -64,7 +69,8 @@ namespace BayesBoom {
               Matrix ans = imputer.regression()->Beta();
               return ans;
             },
-            "The matrix of regression coefficients.  Rows correspond to Y (output).\n"
+            "The matrix of regression coefficients.  Rows correspond to "
+            "Y (output).\n"
             "Columns correspond to X (input).  Coefficients represent the \n"
             "relationship between X and the copula transform of Y.")
         .def_property_readonly(
@@ -91,7 +97,8 @@ namespace BayesBoom {
              },
              "The marginal probability that each atom is the 'truth'.")
         .def("atom_error_probs",
-             [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
+             [](const MvRegCopulaDataImputer &imputer, int cluster,
+                int variable_index) {
                return imputer.atom_error_probs(cluster, variable_index);
              },
              "The marginal probability that each atom is the 'truth'.")
@@ -100,8 +107,8 @@ namespace BayesBoom {
              "Set default priors on everything.")
         .def("set_default_regression_prior",
              &MvRegCopulaDataImputer::set_default_regression_prior,
-             "Set a 'nearly flat' prior on the regression coefficients and residual "
-             "variance.")
+             "Set a 'nearly flat' prior on the regression coefficients and "
+             "residual variance.")
         .def("set_default_prior_for_mixing_weights",
              &MvRegCopulaDataImputer::set_default_prior_for_mixing_weights)
         .def("set_atom_prior",
@@ -111,12 +118,18 @@ namespace BayesBoom {
                imputer.set_atom_prior(prior_counts, variable_index);
              },
              "Args:\n"
-             "  prior_counts: Vector of prior counts indicating the likelihood \n"
-             "    that each atom is the true value.  Negative counts indicate\n"
-             "    an a-priori assertion that the level cannot be the true value.\n"
-             "    The size of the vector must be one larger than the number of \n"
-             "    atoms, with the final element corresponding to the continuous atom.\n"
-             "  variable_index:  Index of the variable to which the prior refers.\n")
+             "  prior_counts: Vector of prior counts indicating the "
+             "likelihood \n"
+             "    that each atom is the true value.  Negative counts "
+             "indicate\n"
+             "    an a-priori assertion that the level cannot be the "
+             "true value.\n"
+             "    The size of the vector must be one larger than the "
+             "number of \n"
+             "    atoms, with the final element corresponding to the "
+             "continuous atom.\n"
+             "  variable_index:  Index of the variable to which the prior "
+             "refers.\n")
         .def("set_atom_error_prior",
              [](MvRegCopulaDataImputer &imputer,
                 const Matrix &prior_counts,
@@ -161,7 +174,8 @@ namespace BayesBoom {
         ;
 
     //==========================================================================
-    py::class_<MixedDataImputer, Ptr<MixedDataImputer>>(boom, "MixedDataImputer")
+    py::class_<MixedDataImputer, Ptr<MixedDataImputer>>(
+        boom, "MixedDataImputer")
         .def(py::init(
             [](int num_clusters,
                const DataTable &table,
@@ -176,7 +190,8 @@ namespace BayesBoom {
              "Args:\n"
              "  num_clusters:  The number of clusters in the patern matching\n"
              "    model that handles data errors. \n"
-             "  atoms: A collection of Vectors (or 1-d numpy arrays) containing\n"
+             "  atoms: A collection of Vectors (or 1-d numpy arrays) "
+             "containing\n"
              "    values that will receive special modeling treatment.  One \n"
              "    entry is needed for each numeric variable.  An entry can be\n"
              "    the empty Vector. \n"
@@ -228,7 +243,7 @@ namespace BayesBoom {
              "  residual_variance_guess:  A ydim-by-ydim matrix containing \n"
              "    a guess at the residual variance matrix.\n"
              "  residual_variance_weight: The number of observations of \n"
-             "    weight assigned to 'residual_variance_guess'.  This number \n"
+             "    weight assigned to 'residual_variance_guess'.  This number\n"
              "    must be ydim or larger for the prior to be proper.")
         .def("set_atom_prior",
              [](MixedDataImputer &imp,
@@ -240,11 +255,16 @@ namespace BayesBoom {
                }
              },
              "Args:\n"
-             "  prior_counts: Vector of prior counts indicating the likelihood \n"
-             "    that each atom is the true value.  Negative counts indicate\n"
-             "    an a-priori assertion that the level cannot be the true value.\n"
-             "    The size of the vector must be one larger than the number of \n"
-             "    atoms, with the final element corresponding to the continuous atom.\n"
+             "  prior_counts: Vector of prior counts indicating the "
+             "likelihood \n"
+             "    that each atom is the true value.  Negative counts "
+             "indicate\n"
+             "    an a-priori assertion that the level cannot be the "
+             "true value.\n"
+             "    The size of the vector must be one larger than the "
+             "number of \n"
+             "    atoms, with the final element corresponding to the "
+             "continuous atom.\n"
              "  which_numeric_variable:  Index of the numeric variable the \n"
              "    prior describes.  For purposes of this function numeric \n"
              "    variables are indexed 0, 1, 2, ... regardless of whether \n"
@@ -273,7 +293,8 @@ namespace BayesBoom {
              [](MixedDataImputer &imputer, DataTable &table, int burn) {
                std::vector<Ptr<MixedImputation::CompleteData>> rows;
                for (int i = 0; i < table.nrow(); ++i) {
-                 rows.push_back(new MixedImputation::CompleteData(table.row(i)));
+                 rows.push_back(
+                     new MixedImputation::CompleteData(table.row(i)));
                }
                for (int i = 0; i < burn; ++i) {
                  imputer.impute_data_set(rows);
@@ -315,7 +336,8 @@ namespace BayesBoom {
               Matrix ans = imputer.numeric_data_model()->Beta();
               return ans;
             },
-            "The matrix of regression coefficients.  Rows correspond to Y (output).\n"
+            "The matrix of regression coefficients.  Rows correspond to "
+            "Y (output).\n"
             "Columns correspond to X (input).  Coefficients represent the \n"
             "relationship between X and the copula transform of Y.")
         .def("set_coefficients",
@@ -399,7 +421,8 @@ namespace BayesBoom {
                const DataTable &table,
                const std::vector<Vector> &atoms,
                RNG &rng = GlobalRng::rng) {
-              return new MixedDataImputerWithErrorCorrection(num_clusters, table, atoms, rng);
+              return new MixedDataImputerWithErrorCorrection(
+                  num_clusters, table, atoms, rng);
             }),
              py::arg("num_clusters"),
              py::arg("table"),
@@ -408,14 +431,16 @@ namespace BayesBoom {
              "Args:\n"
              "  num_clusters:  The number of clusters in the patern matching\n"
              "    model that handles data errors. \n"
-             "  atoms: A collection of Vectors (or 1-d numpy arrays) containing\n"
+             "  atoms: A collection of Vectors (or 1-d numpy arrays) "
+             "containing\n"
              "    values that will receive special modeling treatment.  One \n"
              "    entry is needed for each numeric variable.  An entry can be\n"
              "    the empty Vector. \n"
              "  seeding_rng:  A boom random number generator used to seed the\n"
              "    RNG in this object.")
         .def("set_mixing_weight_prior",
-             [](MixedDataImputerWithErrorCorrection &imp, const Vector &prior_counts) {
+             [](MixedDataImputerWithErrorCorrection &imp,
+                const Vector &prior_counts) {
                NEW(MultinomialDirichletSampler, sampler)(
                    imp.mixing_distribution().get(),
                    prior_counts,
@@ -472,11 +497,15 @@ namespace BayesBoom {
                }
              },
              "Args:\n"
-             "  prior_counts: Vector of prior counts indicating the likelihood \n"
+             "  prior_counts: Vector of prior counts indicating the "
+             "likelihood \n"
              "    that each atom is the true value.  Negative counts indicate\n"
-             "    an a-priori assertion that the level cannot be the true value.\n"
-             "    The size of the vector must be one larger than the number of \n"
-             "    atoms, with the final element corresponding to the continuous atom.\n"
+             "    an a-priori assertion that the level cannot be the "
+             "true value.\n"
+             "    The size of the vector must be one larger than the number "
+             "of \n"
+             "    atoms, with the final element corresponding to the "
+             "continuous atom.\n"
              "  which_numeric_variable:  Index of the numeric variable the \n"
              "    prior describes.  For purposes of this function numeric \n"
              "    variables are indexed 0, 1, 2, ... regardless of whether \n"
@@ -503,7 +532,8 @@ namespace BayesBoom {
              "    missing.\n" )
 
         .def("set_level_prior",
-             [](MixedDataImputerWithErrorCorrection &imp, const Vector &counts, int which_cat) {
+             [](MixedDataImputerWithErrorCorrection &imp,
+                const Vector &counts, int which_cat) {
                for (int i = 0; i < imp.nclusters(); ++i) {
                  imp.row_model(i)->categorical_model(which_cat)->
                      set_conjugate_prior_for_levels(counts);
@@ -521,7 +551,8 @@ namespace BayesBoom {
              "    any intervening numeric variables." )
 
         .def("set_level_observation_prior",
-             [](MixedDataImputerWithErrorCorrection &imp, const Matrix &counts, int which_cat) {
+             [](MixedDataImputerWithErrorCorrection &imp,
+                const Matrix &counts, int which_cat) {
                for (int i = 0; i < imp.nclusters(); ++i) {
                  imp.row_model(i)->categorical_model(which_cat)->
                      set_conjugate_prior_for_observations(counts);
@@ -545,10 +576,12 @@ namespace BayesBoom {
              &MixedDataImputerWithErrorCorrection::sample_posterior,
              "Take one MCMC draw from the posterior distribution.")
         .def("impute_data_set",
-             [](MixedDataImputerWithErrorCorrection &imputer, DataTable &table, int burn) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                DataTable &table, int burn) {
                std::vector<Ptr<MixedImputation::CompleteData>> rows;
                for (int i = 0; i < table.nrow(); ++i) {
-                 rows.push_back(new MixedImputation::CompleteData(table.row(i)));
+                 rows.push_back(
+                     new MixedImputation::CompleteData(table.row(i)));
                }
                for (int i = 0; i < burn; ++i) {
                  imputer.impute_data_set(rows);
@@ -576,18 +609,21 @@ namespace BayesBoom {
             "numeric and categorical data.  The dimension of the categorical\n"
             "data after a dummy variable expansion.")
         .def_property_readonly(
-            "ydim", &MixedDataImputerWithErrorCorrection::ydim, "Number of numeric columns.")
+            "ydim", &MixedDataImputerWithErrorCorrection::ydim,
+            "Number of numeric columns.")
         .def_property_readonly(
             "coefficients",
             [](MixedDataImputerWithErrorCorrection &imputer) {
               Matrix ans = imputer.numeric_data_model()->Beta();
               return ans;
             },
-            "The matrix of regression coefficients.  Rows correspond to Y (output).\n"
+            "The matrix of regression coefficients.  Rows correspond to "
+            "Y (output).\n"
             "Columns correspond to X (input).  Coefficients represent the \n"
             "relationship between X and the copula transform of Y.")
         .def("set_coefficients",
-             [](MixedDataImputerWithErrorCorrection &imputer, const Matrix &coefficients) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                const Matrix &coefficients) {
                imputer.numeric_data_model()->set_Beta(coefficients);
              },
              py::arg("coefficients"),
@@ -603,7 +639,8 @@ namespace BayesBoom {
             },
             "The residual variance matrix on the transformed (copula) scale.")
         .def("set_residual_variance",
-             [](MixedDataImputerWithErrorCorrection &imputer, const SpdMatrix &residual_variance) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                const SpdMatrix &residual_variance) {
                imputer.numeric_data_model()->set_Sigma(residual_variance);
              },
              py::arg("residual_variance"),
@@ -617,7 +654,8 @@ namespace BayesBoom {
             },
             "The mixing weights of the row-level mixture. ")
         .def("atom_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int numeric_index) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int numeric_index) {
                return imputer.row_model(cluster)->numeric_model(
                    numeric_index)->atom_probs();
              },
@@ -631,13 +669,15 @@ namespace BayesBoom {
              "    This index counts from 0 and ignores any intervening \n"
              "    categorical variables. ")
         .def("set_atom_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int numeric_index,
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int numeric_index,
                 const Vector &atom_probs) {
                imputer.row_model(cluster)->numeric_model(
                    numeric_index)->set_atom_probs(atom_probs);
              })
         .def("atom_error_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int numeric_index) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int numeric_index) {
                return imputer.row_model(cluster)->numeric_model(
                    numeric_index)->atom_error_probs();
              },
@@ -651,14 +691,16 @@ namespace BayesBoom {
              "    This index counts from 0 and ignores any intervening \n"
              "    categorical variables. ")
         .def("set_atom_error_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int numeric_index,
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int numeric_index,
                 const Matrix &atom_error_probs) {
                imputer.row_model(cluster)->numeric_model(
                    numeric_index)->set_atom_error_probs(
                        atom_error_probs);
              })
         .def("level_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int cat_index) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int cat_index) {
                return imputer.row_model(cluster)->categorical_model(
                    cat_index)->level_probs();
              },
@@ -672,13 +714,15 @@ namespace BayesBoom {
              "    This index counts from 0 and ignores any intervening \n"
              "    categorical variables. ")
         .def("set_level_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int cat_index,
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int cat_index,
                 const Vector &level_probs) {
                return imputer.row_model(cluster)->categorical_model(
                    cat_index)->set_level_probs(level_probs);
              })
         .def("level_observation_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int cat_index) {
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int cat_index) {
                return imputer.row_model(cluster)->categorical_model(
                    cat_index)->level_observation_probs();
              },
@@ -692,7 +736,8 @@ namespace BayesBoom {
              "    This index counts from 0 and ignores any intervening \n"
              "    categorical variables. ")
         .def("set_level_observation_probs",
-             [](MixedDataImputerWithErrorCorrection &imputer, int cluster, int cat_index,
+             [](MixedDataImputerWithErrorCorrection &imputer,
+                int cluster, int cat_index,
                 const Matrix &level_observation_probs) {
                return imputer.row_model(cluster)->categorical_model(
                    cat_index)->set_level_observation_probs(

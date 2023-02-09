@@ -53,7 +53,8 @@ namespace BayesBoom {
                CatKeyBase,
                Ptr<FixedSizeIntCatKey>>(
         boom, "FixedSizeIntCatKey")
-        .def(py::init([](int max_levels) {return new FixedSizeIntCatKey(max_levels);}))
+        .def(py::init([](int max_levels) {
+          return new FixedSizeIntCatKey(max_levels);}))
         ;
 
     py::class_<CatKey,

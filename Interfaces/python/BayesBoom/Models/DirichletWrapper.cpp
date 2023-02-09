@@ -41,7 +41,8 @@ namespace BayesBoom {
 
     py::class_<DirichletModel,
                PriorPolicy,
-               BOOM::Ptr<DirichletModel>>(boom, "DirichletModel", py::multiple_inheritance())
+               BOOM::Ptr<DirichletModel>>(boom, "DirichletModel",
+                                          py::multiple_inheritance())
         .def(py::init(
             [](const Vector &prior_counts) {
               return new DirichletModel(prior_counts);

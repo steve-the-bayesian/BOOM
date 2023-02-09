@@ -106,16 +106,18 @@ namespace BayesBoom {
           "  data: a boom.Vector containing the data values."
           )
         .def("sample_posterior", &GaussianModel::sample_posterior)
-        .def_property_readonly("mean_parameter",
-                               [] (const GaussianModel &model) {
-                                 return model.Mu_prm();
-                               },
-                               "The parameter object representing the model variance.")
-        .def_property_readonly("sigsq_parameter",
-                               [] (const GaussianModel &model) {
-                                 return model.Sigsq_prm();
-                               },
-                               "The parameter object representing the model variance.")
+        .def_property_readonly(
+            "mean_parameter",
+            [] (const GaussianModel &model) {
+              return model.Mu_prm();
+            },
+            "The parameter object representing the model variance.")
+        .def_property_readonly(
+            "sigsq_parameter",
+            [] (const GaussianModel &model) {
+              return model.Sigsq_prm();
+            },
+            "The parameter object representing the model variance.")
         .def("__repr__", [](const Ptr<GaussianModel> &model) {
             std::ostringstream out;
             out << "A BOOM Gaussian model with mean " << model->mu()
@@ -209,7 +211,8 @@ namespace BayesBoom {
 
     py::class_<ZeroMeanGaussianConjSampler,
                PosteriorSampler,
-               Ptr<ZeroMeanGaussianConjSampler>>(boom, "ZeroMeanGaussianConjSampler")
+               Ptr<ZeroMeanGaussianConjSampler>>(
+                   boom, "ZeroMeanGaussianConjSampler")
         .def(py::init(
             [] (ZeroMeanGaussianModel &model,
                 GammaModelBase &siginv_prior,
@@ -240,7 +243,8 @@ namespace BayesBoom {
               return sampler.sigma_prior_guess();
             })
         .def_property_readonly(
-            "sigma_prior_sample_size", [](ZeroMeanGaussianConjSampler &sampler) {
+            "sigma_prior_sample_size",
+            [](ZeroMeanGaussianConjSampler &sampler) {
               return sampler.sigma_prior_sample_size();
             })
         ;

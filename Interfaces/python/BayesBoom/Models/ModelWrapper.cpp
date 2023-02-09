@@ -80,9 +80,10 @@ namespace BayesBoom {
              "epsilon as its convergence criterion.")
         .def_property_readonly(
             "can_find_posterior_mode",
-            [](const PosteriorModeModel &model) {return model.can_find_posterior_mode();},
-            "True iff the model has been assigned a PosteriorSampmler capable of "
-            "finding its posterior mode.")
+            [](const PosteriorModeModel &model) {
+              return model.can_find_posterior_mode();},
+            "True iff the model has been assigned a PosteriorSampmler "
+            "capable of finding its posterior mode.")
         ;
 
     py::class_<PosteriorSampler, Ptr<PosteriorSampler>>(
@@ -98,8 +99,10 @@ namespace BayesBoom {
              },
              py::arg("sampler"),
              "Set 'sampler' as a posteriors sampling method.  More than one\n"
-             "sampler can be set for the model (e.g. one for the mean and one \n"
-             "for the variance).  If multiple samplers are present then each is \n"
+             "sampler can be set for the model (e.g. one for the mean and "
+             "one \n"
+             "for the variance).  If multiple samplers are present then "
+             "each is \n"
              "called every time 'sample_posterior' is invoked.\n"
              )
         .def("sample_posterior", &PriorPolicy::sample_posterior,

@@ -13,7 +13,8 @@ namespace BayesBoom {
 
     py::class_<UniformModel,
                DiffDoubleModel,
-               BOOM::Ptr<UniformModel>>(boom, "UniformModel", py::multiple_inheritance())
+               BOOM::Ptr<UniformModel>>(
+                   boom, "UniformModel", py::multiple_inheritance())
         .def(py::init<double, double>(),
              py::arg("lo"),
              py::arg("hi"),
