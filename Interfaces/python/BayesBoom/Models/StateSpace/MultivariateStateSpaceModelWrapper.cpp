@@ -489,8 +489,8 @@ namespace BayesBoom {
         ;
 
     py::class_<StudentMvssRegressionModel,
-               Model,
                ConditionallyIndependentMultivariateStateSpaceModelBase,
+               PriorPolicy,
                BOOM::Ptr<StudentMvssRegressionModel>>(
                    boom,
                    "StudentMvssRegressionModel",
@@ -563,11 +563,11 @@ namespace BayesBoom {
              "Args:\n"
              "  state_model:  A SharedStateModel object defining an element of"
              " state.\n")
-        .def("set_method",
-             [](StudentMvssRegressionModel &model,
-                PosteriorSampler *sampler) {
-               model.set_method(Ptr<PosteriorSampler>(sampler));
-             })
+        // .def("set_method",
+        //      [](StudentMvssRegressionModel &model,
+        //         PosteriorSampler *sampler) {
+        //        model.set_method(Ptr<PosteriorSampler>(sampler));
+        //      })
         .def_property_readonly(
             "regression_coefficients",
             [](const StudentMvssRegressionModel &model) {
@@ -594,6 +594,16 @@ namespace BayesBoom {
               return ans;
             },
             "The Vector of reisidual standard deviation parameters.")
+        .def_property_readonly(
+            "tail_thickness",
+            [](const StudentMvssRegressionModel &model) {
+              Vector ans(model.nseries());
+              for (int i = 0; i < ans.size(); ++i) {
+                ans[i] = model.observation_model()->model(i)->nu();
+              }
+              return ans;
+            },
+            "The Vector of tail thickness parameter values (nu).")
         .def_property_readonly(
             "observation_model",
             [](const StudentMvssRegressionModel &model) {
@@ -674,6 +684,26 @@ namespace BayesBoom {
              "  residual_sd:  The scalar valued residual standard deviation "
              "for a single model.\n"
              "  which_model: The (integer) index of the model to update.\n")
+        .def("set_tail_thickness",
+             [](StudentMvssRegressionModel &model,
+                const Vector &tail_thickness_parameters) {
+               if (tail_thickness_parameters.size() != model.nseries()) {
+                 std::ostringstream err;
+                 err << "The model describes " << model.nseries()
+                     << " series but the input vector has "
+                     << tail_thickness_parameters.size() << " entries.";
+                 report_error(err.str());
+               }
+               for (int i = 0; i < tail_thickness_parameters.size(); ++i) {
+                 model.observation_model()->model(i)->set_nu(
+                     tail_thickness_parameters[i]);
+               }
+             },
+             "Args:\n\n"
+             "  tail_thickness_parameters:  A boom.Vector containing the tail "
+             "thickness parameters (nu).  There is one element for each series"
+             " in the model."
+             )
         .def("update_state_distribution",
              [](StudentMvssRegressionModel &model,
                 int time,
