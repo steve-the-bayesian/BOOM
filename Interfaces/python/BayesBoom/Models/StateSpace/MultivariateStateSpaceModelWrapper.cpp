@@ -555,6 +555,20 @@ namespace BayesBoom {
              "variables to use for each observation.\n\n"
              "Effect:\n"
              "  The model object is populated with the supplied data.\n")
+        .def("observed_data",
+             [](const StudentMvssRegressionModel &model,
+                int series, int time) {
+               return model.observed_data(series, time);
+             },
+             py::arg("series"),
+             py::arg("time"),
+             "Args:\n\n"
+             "  series:  The model series for which a data point is desired.\n"
+             "  time:  The time point at which the data point is desired.\n"
+             "\n"
+             "Returns:\n"
+             "  The time series value for the requested series at the requested "
+             "time.\n")
         .def("add_state",
              [](StudentMvssRegressionModel &model,
                 SharedStateModel &state_model) {
