@@ -114,10 +114,19 @@ namespace BOOM {
     Vector diagonal_elements(observed.nvars());
     for (int i = 0; i < observed.nvars(); ++i) {
       int I = observed.expanded_index(i);
-      diagonal_elements[i] = observation_model()->model(I)->sigsq() /
-          data_policy_.data_point(I, t)->weight();
+      diagonal_elements[i] = observation_model()->model(I)->sigsq()
+          / data_policy_.data_point(I, t)->weight();
     }
     return DiagonalMatrix(diagonal_elements);
+  }
+
+  Vector
+  StudentMvssRegressionModel::observation_variance_parameter_values() const {
+    Vector ans(nseries());
+    for (int i = 0; i < nseries(); ++i) {
+      ans[i] = observation_model()->model(i)->sigsq();
+    }
+    return ans;
   }
 
   //---------------------------------------------------------------------------

@@ -195,6 +195,11 @@ namespace BOOM {
     }
   }
 
+  Vector MSSRM::observation_variance_parameter_values() const {
+    update_observation_variance();
+    return observation_variance_.diag();
+  }
+
   Matrix MSSRM::state_contributions(int which_state_model) const {
     return state_manager_.state_contributions(which_state_model, this);
   }

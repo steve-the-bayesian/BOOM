@@ -527,6 +527,13 @@ namespace BOOM {
                                   bool update_sufficient_statistics,
                                   Vector *gradient);
 
+    // For models that have a "sigma_squared" parameter (like Gaussian and
+    // Student T), the return value is a series-specific sigma squared's.
+    //
+    // For models that don't have natural scale parameters (e.g. Poisson, logit,
+    // probit), the return value is a vector of 1's.
+    virtual Vector observation_variance_parameter_values() const = 0;
+
     // Update the complete data sufficient statistics for the observation model
     // based on the posterior distribution of the observation model error term
     // at time t.

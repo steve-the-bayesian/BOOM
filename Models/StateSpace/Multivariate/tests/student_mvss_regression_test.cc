@@ -59,6 +59,7 @@ namespace BoomStateSpaceTesting {
     return ans;
   }
 
+  //===========================================================================
   class McmcStorage {
    public:
 
@@ -97,16 +98,19 @@ namespace BoomStateSpaceTesting {
       fully_observed_ = Selector(nseries, true);
     }
 
+    //---------------------------------------------------------------------------
     // The number of factors in the local level state model.
     int nfactors() const {
       return factor_draws_.size();
     }
 
+    //---------------------------------------------------------------------------
     // The number of time series in the model.
     int nseries() const {
       return fully_observed_.nvars_possible();
     }
 
+    //---------------------------------------------------------------------------
     // The number of time points in the training data.
     int sample_size() const {
       if (factor_draws_.empty()) {
@@ -116,11 +120,13 @@ namespace BoomStateSpaceTesting {
       }
     }
 
+    //---------------------------------------------------------------------------
     // The number of time points in the holdout data.
     int test_size() const {
       return prediction_draws_.empty() ? 0 : prediction_draws_.dim(2);
     }
 
+    //---------------------------------------------------------------------------
     // Store the results of the most recent MCMC draw.
     //
     // Args:
@@ -152,6 +158,7 @@ namespace BoomStateSpaceTesting {
           sqrt(model->state_error_variance(2)->dense().diag());
     }
 
+    //---------------------------------------------------------------------------
     // Store a draw from the posterior predictive distribution.
     // Args:
     //   model:  The model making the prediction.
@@ -170,6 +177,7 @@ namespace BoomStateSpaceTesting {
             gather_state_specific_final_state(*model));
     }
 
+    //---------------------------------------------------------------------------
     void test_residual_sd(const Vector &residual_sd_vector) {
       std::ofstream(prefix_ + "residual_sd.draws") << residual_sd_vector << "\n"
                                                    << residual_sd_draws_;
@@ -180,6 +188,7 @@ namespace BoomStateSpaceTesting {
       EXPECT_TRUE(status.ok) << "Problem with residual sd draws." << status;
     }
 
+    //---------------------------------------------------------------------------
     void test_tail_thickness(const Vector &tail_thickness_vector) {
       ofstream(prefix_ + "tail_thickness.draws") << tail_thickness_vector << "\n"
                                                  << tail_thickness_draws_;
@@ -187,6 +196,7 @@ namespace BoomStateSpaceTesting {
       EXPECT_TRUE(status.ok) << "Problem with tail thickness draws." << status;
     }
 
+    //---------------------------------------------------------------------------
     void test_factors_and_state_contributions(const StudentTestFramework &sim) {
       // Factor draws are not identified.  Factors * observation coefficients is
       // identified.
@@ -231,6 +241,7 @@ namespace BoomStateSpaceTesting {
       }
     }
 
+    //---------------------------------------------------------------------------
     void print_regression_coefficients(const StudentTestFramework &sim) {
       for (int series = 0; series < nseries(); ++series) {
         std::ostringstream reg_fname;
@@ -243,11 +254,13 @@ namespace BoomStateSpaceTesting {
       }
     }
 
+    //---------------------------------------------------------------------------
     void print_innovation_sd_draws() {
       std::ofstream(prefix_ + "state_error_sd_mcmc_draws.out")
           << Vector(nfactors(), 1.0) << "\n" << innovation_sd_draws_;
     }
 
+    //---------------------------------------------------------------------------
     void print_prediction_draws(const StudentTestFramework &sim) {
       ofstream prediction_out(prefix_ + "prediction.draws");
       prediction_out << ConstSubMatrix(sim.response,
@@ -314,6 +327,20 @@ namespace BoomStateSpaceTesting {
     EXPECT_DOUBLE_EQ(1.0, data_point.weight());
     data_point.set_weight(1.2);
     EXPECT_DOUBLE_EQ(1.2, data_point.weight());
+
+    int xdim = 3;
+    int nseries = 2;
+    int nfactors = 1;
+    int sample_size = 200;
+    int test_size = 20;
+    double residual_sd = .1;
+    double tail_thickness = 3.0;
+    StudentTestFramework sim(xdim, nseries, nfactors, sample_size,
+                             test_size, residual_sd, tail_thickness);
+
+    EXPECT_EQ(sim.model->time_dimension(), sample_size);
+    EXPECT_DOUBLE_EQ(sim.model->observed_data(1, 4),
+                     sim.response(4, 1));
   }
 
   //===========================================================================

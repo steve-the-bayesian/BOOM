@@ -215,7 +215,10 @@ namespace BOOM {
     // observed_[t] indicates which time series are observed at time t.
     std::vector<Selector> observed_;
 
+    // missing_ is the value that gets returned if the requested data point does
+    // not exist.  It points to nullptr.
     Ptr<DATA_TYPE> missing_;
+
     // Every funtion in this vector will be called whenever data is added or
     // cleared.
     std::vector<std::function<void(void)>> data_change_observers_;
