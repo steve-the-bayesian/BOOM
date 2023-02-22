@@ -241,6 +241,30 @@ namespace BayesBoom {
              "variables to use for each observation.\n\n"
              "Effect:\n"
              "  The model object is populated with the supplied data.\n")
+        .def("series",
+             [](const MultivariateStateSpaceRegressionModel &model, int series) {
+               int max_time = model.time_dimension();
+               Vector values;
+               Selector inclusion(max_time, false);
+               for (int t = 0; t < max_time; ++t) {
+                 if (model.observed_status(t)[series]) {
+                   values.push_back(model.observed_data(series, t));
+                   inclusion.add(t);
+                 }
+               }
+               return std::make_pair(values, inclusion);
+             },
+             py::arg("series"),
+             "Return one of the the observed time series in the training data."
+             "\n"
+             "Args:\n\n"
+             "  series:  The integer index of the time series to be returned."
+             "\n\n"
+             "Returns:\n"
+             "  A pair.  The first element is the Vector of observed values "
+             "from the requested series.  The second is a Selector indicating "
+             "which time periods (from 0.. time_dimension - 1) are held in "
+             "the Vector.\n")
         .def("add_state",
              [](MultivariateStateSpaceRegressionModel &model,
                 SharedStateModel &state_model) {
@@ -569,6 +593,30 @@ namespace BayesBoom {
              "Returns:\n"
              "  The time series value for the requested series at the requested "
              "time.\n")
+        .def("series",
+             [](const StudentMvssRegressionModel &model, int series) {
+               int max_time = model.time_dimension();
+               Vector values;
+               Selector inclusion(max_time, false);
+               for (int t = 0; t < max_time; ++t) {
+                 if (model.observed_status(t)[series]) {
+                   values.push_back(model.observed_data(series, t));
+                   inclusion.add(t);
+                 }
+               }
+               return std::make_pair(values, inclusion);
+             },
+             py::arg("series"),
+             "Return one of the the observed time series in the training data."
+             "\n"
+             "Args:\n\n"
+             "  series:  The integer index of the time series to be returned."
+             "\n\n"
+             "Returns:\n"
+             "  A pair.  The first element is the Vector of observed values "
+             "from the requested series.  The second is a Selector indicating "
+             "which time periods (from 0.. time_dimension - 1) are held in "
+             "the Vector.\n")
         .def("add_state",
              [](StudentMvssRegressionModel &model,
                 SharedStateModel &state_model) {
