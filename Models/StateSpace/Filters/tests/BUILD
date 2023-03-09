@@ -41,6 +41,18 @@ cc_test(
 )
 
 cc_test(
+    name = "sparse_vector_test",
+    size = "small",
+    srcs = ["sparse_vector_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "sparse_matrix_test",
     size = "small",
     srcs = ["sparse_matrix_test.cc"],

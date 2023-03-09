@@ -454,6 +454,14 @@ namespace BOOM {
   class BlockDiagonalMatrixBlock : public SparseMatrixBlock {
    public:
     BlockDiagonalMatrixBlock() : dim_(0) {}
+    explicit BlockDiagonalMatrixBlock(
+        const std::vector<Ptr<SparseMatrixBlock>> &blocks)
+        : dim_(0) {
+      for (const auto &block : blocks) {
+        add_block(block);
+      }
+    }
+
     BlockDiagonalMatrixBlock(const BlockDiagonalMatrixBlock &rhs);
     BlockDiagonalMatrixBlock(BlockDiagonalMatrixBlock &&rhs) = default;
     BlockDiagonalMatrixBlock *clone() const override;
@@ -2147,6 +2155,13 @@ namespace BOOM {
   // A matrix formed by stacking a set of GlmCoefs.
   class StackedRegressionCoefficients : public SparseMatrixBlock {
    public:
+    StackedRegressionCoefficients() {}
+
+    explicit StackedRegressionCoefficients(
+        const std::vector<Ptr<GlmCoefs>> &rows)
+        : coefficients_(rows)
+    {}
+
     StackedRegressionCoefficients *clone() const override;
 
     void add_row(const Ptr<GlmCoefs> &beta);

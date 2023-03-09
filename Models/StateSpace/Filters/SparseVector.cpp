@@ -24,6 +24,7 @@
 namespace BOOM {
 
   typedef SparseVectorReturnProxy SVRP;
+  typedef SparseVectorViewReturnProxy SVVRP;
   typedef std::map<int, double>::iterator It;
   typedef std::map<int, double>::const_iterator Cit;
 
@@ -37,12 +38,34 @@ namespace BOOM {
   }
 
   SVRP::operator double() const { return value_; }
+  //======================================================================
+
+  SVVRP::SparseVectorViewReturnProxy(
+      int position_in_view, double value, SparseVectorView *view)
+      : position_in_base_vector_(position_in_view + view->start_),
+        value_(value),
+        v_(view) {}
+
+  SVVRP &SVVRP::operator=(double x) {
+    v_->base_vector_->elements_[position_in_base_vector_] = x;
+    value_ = x;
+
+    if (position_in_base_vector_ < v_->begin_->first) {
+      v_->begin_ = v_->base_vector_->elements_.find(position_in_base_vector_);
+      v_->cbegin_ = v_->begin_;
+    }
+
+    if (position_in_base_vector_ > v_->end_->first) {
+      v_->end_ = v_->base_vector_->elements_.find(position_in_base_vector_);
+      v_->cend_ = v_->end_;
+    }
+    return *this;
+  }
+
+  SVVRP::operator double() const {return value_;}
 
   //======================================================================
-  SparseVector::SparseVector(int n) : size_(n) {
-    if (n < 0) {
-      report_error("SparseVector initialized with a negative size.");
-    }
+  SparseVector::SparseVector(size_t n) : size_(n) {
     size_ = n;
   }
 
@@ -51,8 +74,6 @@ namespace BOOM {
       elements_[i] = dense[i];
     }
   }
-
-  int SparseVector::size() const { return size_; }
 
   SparseVector &SparseVector::concatenate(const SparseVector &rhs) {
     for (Cit it = rhs.elements_.begin(); it != rhs.elements_.end(); ++it) {
@@ -104,22 +125,28 @@ namespace BOOM {
     return ans;
   }
 
-  template <class VEC>
-  double do_dot(const VEC &v, const std::map<int, double> &m, int size) {
+  template <class VEC, class ITERATOR>
+  double do_dot(const VEC &v, ITERATOR begin, ITERATOR end, int size) {
     if (v.size() != size) {
       std::ostringstream err;
       err << "incompatible vector in SparseVector dot product: \n"
           << "dense vector: " << v << "\n";
-      for (const auto &el : m) {
-        err << "sparse[" << el.first << "] = " << el.second << "\n";
+      for (ITERATOR it = begin; it != end; ++it) {
+        err << "sparse[" << it->first << "] = " << it->second << "\n";
       }
       report_error(err.str());
     }
     double ans = 0;
-    for (Cit it = m.begin(); it != m.end(); ++it)
+    for (ITERATOR it = begin; it != end; ++it)
       ans += it->second * v[it->first];
     return ans;
   }
+
+  template <class VEC>
+  double do_dot(const VEC &v, const std::map<int, double> &m, int size) {
+    return do_dot(v, m.begin(), m.end(), size);
+  }
+
   double SparseVector::dot(const Vector &v) const {
     return do_dot(v, elements_, size_);
   }
@@ -229,6 +256,163 @@ namespace BOOM {
     out << z[0];
     for (int i = 1; i < n; ++i) out << " " << z[i];
     return out;
+  }
+
+  //===========================================================================
+  SparseVectorView::SparseVectorView(
+      SparseVector *base_vector,
+      size_t start,
+      size_t size)
+      : base_vector_(base_vector),
+        start_(start),
+        size_(size)
+  {}
+
+  double SparseVectorView::operator[](int n) const {
+    return (*base_vector_)[start_ + n];
+  }
+
+  SparseVectorViewReturnProxy SparseVectorView::operator[](int n) {
+    return SparseVectorViewReturnProxy(
+        n, (*base_vector_)[start_ + n], this);
+  }
+
+  SparseVectorView &SparseVectorView::operator*=(double x) {
+    for (auto it = begin(); it != end(); ++it) {
+      it->second *= x;
+    }
+    return *this;
+  }
+
+  SparseVectorView &SparseVectorView::operator/=(double x) {
+    for (auto it = begin(); it != end(); ++it) {
+      it->second /= x;
+    }
+    return *this;
+  }
+
+  double SparseVectorView::sum() const {
+    double ans = 0;
+    for (auto it = begin(); it != end(); ++it) {
+      ans += it->second;
+    }
+    return ans;
+  }
+
+  double SparseVectorView::dot(const Vector &x) const {
+    return do_dot(x, begin(), end(), size());
+  }
+
+  double SparseVectorView::dot(const VectorView &x) const {
+    return do_dot(x, begin(), end(), size());
+  }
+
+  double SparseVectorView::dot(const ConstVectorView &x) const {
+    return do_dot(x, begin(), end(), size());
+  }
+
+  bool SparseVectorView::operator==(const SparseVector &rhs) const {
+    return (size() == rhs.size() && std::equal(
+        begin(),
+        end(),
+        rhs.begin(),
+        [this](const std::pair<int, double> &lhs,
+                 const std::pair<int, double> &rhs) {
+          return lhs.second == rhs.second && lhs.first == rhs.first + this->start_;
+        }));
+  }
+
+  bool SparseVectorView::operator==(const SparseVectorView &rhs) const {
+    return size() == rhs.size() && std::equal(begin(), end(), rhs.begin());
+  }
+
+  void SparseVectorView::add_this_to(Vector &x, double weight) const {
+    if (x.size() != size_) {
+      ostringstream err;
+      err << "SparseVectorView::add_this_to called with incompatible x:" << endl
+          << "this->size() = " << size_ << endl
+          << "x.size()     = " << x.size() << endl;
+      report_error(err.str());
+    }
+    for (auto it = begin(); it != end(); ++it) {
+      x[position_in_view(it->first)] += weight * it->second;
+    }
+  }
+
+  void SparseVectorView::add_this_to(VectorView x, double weight) const {
+    if (x.size() != size_) {
+      ostringstream err;
+      err << "SparseVectorView::add_this_to called with incompatible x:" << endl
+          << "this->size() = " << size_ << endl
+          << "x.size()     = " << x.size() << endl;
+      report_error(err.str());
+    }
+    for (auto it = begin(); it != end(); ++it) {
+      x[position_in_view(it->first)] += weight * it->second;
+    }
+  }
+
+  void SparseVectorView::add_outer_product(SpdMatrix &m, double scale) const {
+    for (auto row_it = begin(); row_it != end(); ++row_it) {
+      int I = position_in_view(row_it->first);
+      for (auto col_it = begin(); col_it != end(); ++col_it) {
+        int J = position_in_view(col_it->first);
+        m(I, J) += row_it->second * col_it->second * scale;
+      }
+    }
+  }
+
+  double SparseVectorView::sandwich(const SpdMatrix &P) const {
+    double ans = 0;
+    for (auto row_it = begin(); row_it != end(); ++row_it) {
+      int i = position_in_view(row_it->first);
+      double xi = row_it->second;
+      for (auto col_it = begin(); col_it != end(); ++col_it) {
+        int j = position_in_view(col_it->first);
+        int xj = col_it->second;
+        double increment = xi * xj * P(i, j);
+        if (j == i) {
+          ans += increment;
+          break;
+        }
+        ans += 2 * increment;
+      }
+    }
+    return ans;
+  }
+
+  Matrix SparseVectorView::outer_product_transpose(
+      const Vector &x, double scale) const {
+    Matrix ans(x.size(), this->size(), 0.0);
+    for (auto it = begin(); it != end(); ++it) {
+      int j = position_in_view(it->first);
+      ans.col(j) = x * (it->second * scale);
+    }
+    return ans;
+  }
+
+  Vector SparseVectorView::dense() const {
+    Vector ans(size(), 0.0);
+    for (auto it = begin(); it != end(); ++it) {
+      ans[position_in_view(it->first)] = it->second;
+    }
+    return ans;
+  }
+
+  std::map<int, double>::iterator SparseVectorView::begin() {
+    return begin_;
+  }
+
+  std::map<int, double>::const_iterator SparseVectorView::begin() const{
+    return cbegin_;
+  }
+
+  std::map<int, double>::iterator SparseVectorView::end() {
+    return end_;
+  }
+
+  std::map<int, double>::const_iterator SparseVectorView::end() const {
+    return cend_;
   }
 
 }  // namespace BOOM
