@@ -1333,6 +1333,38 @@ namespace BOOM {
 
   //----------- changing Matrix size and layout -------------
 
+  Matrix rbind(const std::vector<Matrix> &input) {
+    int nrow = 0;
+    int ncol = -1;
+    for (size_t i = 0; i < input.size(); ++i) {
+      nrow += input[i].nrow();
+      if (ncol == -1) {
+        ncol = input[i].ncol();
+      } else {
+        if (ncol != input[i].ncol()) {
+          std::ostringstream err;
+          err << "rbind requires all inputs to have the same "
+              << "number of columns.  Input "
+              << i
+              << " had " <<  input[i].ncol()
+              << " columns but preceding entries had "
+              << ncol << ".";
+          report_error(err.str());
+        }
+      }
+    }
+
+    Matrix ans(nrow, ncol);
+    int row_offset = 0;
+    for (size_t i = 0; i < input.size(); ++i) {
+      SubMatrix view(ans, row_offset, row_offset + input[i].nrow() - 1,
+                     0, ncol - 1);
+      view = input[i];
+      row_offset += input[i].nrow();
+    }
+    return ans;
+  }
+
   Matrix rbind(const Matrix &m1, const Matrix &m2) {
     Matrix tmp(m1);
     return tmp.rbind(m2);

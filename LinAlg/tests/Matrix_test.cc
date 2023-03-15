@@ -547,4 +547,54 @@ namespace {
 
   }
 
+  TEST_F(MatrixTest, RbindTest) {
+    Matrix A(2, 3);
+    Matrix B(4, 3);
+    A.randomize();
+    B.randomize();
+
+    Matrix bound = rbind(A, B);
+    EXPECT_EQ(bound.nrow(), 2 + 4);
+    EXPECT_EQ(bound.ncol(), 3);
+
+    for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_DOUBLE_EQ(bound(i, j), A(i, j));
+      }
+    }
+
+    for (int i = 0; i < 4; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_DOUBLE_EQ(bound(i + 2, j), B(i, j));
+      }
+    }
+
+    Matrix C(3, 3);
+    C.randomize();
+    std::vector<Matrix> inputs = {A, B, C};
+    bound = rbind(inputs);
+    EXPECT_EQ(bound.nrow(), 4 + 2 + 3);
+    EXPECT_EQ(bound.ncol(), 3);
+
+    for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_DOUBLE_EQ(bound(i, j), A(i, j));
+      }
+    }
+
+    for (int i = 0; i < 4; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_DOUBLE_EQ(bound(i + 2, j), B(i, j));
+      }
+    }
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_DOUBLE_EQ(bound(i + 6, j), C(i, j));
+      }
+    }
+
+
+  }
+
 }  // namespace

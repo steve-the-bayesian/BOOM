@@ -527,6 +527,7 @@ namespace BOOM {
   inline double sum(const Matrix &M) { return M.sum(); }
   inline double det(const Matrix &M) { return M.det(); }
 
+  Matrix rbind(const std::vector<Matrix> &input);
   Matrix rbind(const Matrix &m1, const Matrix &m2);
   Matrix rbind(const Vector &v, const Matrix &m);
   Matrix rbind(const Matrix &m, const Vector &v);
