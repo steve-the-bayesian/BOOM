@@ -243,4 +243,22 @@ namespace BOOM {
     return ((t % duration_) == 0);
   }
 
+  //===========================================================================
+  Matrix simulate_seasonal_state(const Vector &initial_pattern, double sd, int time) {
+    Vector pattern = initial_pattern - mean(initial_pattern);
+    int nseasons = pattern.size();
+    Vector state = ConstVectorView(pattern, 1);
+
+    SeasonalStateSpaceMatrix transition(nseasons);
+
+    Matrix ans(nseasons - 1, time);
+    ans.col(0) = state;
+    for (int i = 0; i < time; ++i) {
+      state[0] += rnorm(0, sd);
+      ans.col(i) = state;
+      state = transition * state;
+    }
+    return ans;
+  }
+
 }  // namespace BOOM

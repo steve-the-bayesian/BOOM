@@ -115,8 +115,8 @@ namespace BOOM {
     explicit SeasonalStateModel(int nseasons, int season_duration = 1);
     SeasonalStateModel *clone() const override;
 
-    // If the time series does not start at t0 then you establish the
-    // time of the first observation with this function.
+    // If the time series does not start at t0 = 0 then call this function to
+    // establish the time of the first observation.
     void set_time_of_first_observation(int t0);
 
     // Returns true if period t is in a different season than period t-1.
@@ -149,6 +149,20 @@ namespace BOOM {
    private:
     Date t0_;
   };
+
+  //===========================================================================
+  // Args:
+  //   initial_pattern: A vector of length 'nseasons'.  The function subtracts
+  //     the mean of this vector and removes the initial element to generate the
+  //     state at time 0.
+  //   sd:  The standard deviation of the scalar innovations.
+  //   time:  The number of time periods to simulate.
+  //
+  // Returns:
+  //   A matrix with 'nseasons' - 1 rows and 'time' columns.  Row 0 of the
+  //   matrix contains the seasonal pattern.  Subsequent rows contains lags.
+  Matrix simulate_seasonal_state(
+      const Vector &initial_pattern, double sd, int time);
 
 }  // namespace BOOM
 

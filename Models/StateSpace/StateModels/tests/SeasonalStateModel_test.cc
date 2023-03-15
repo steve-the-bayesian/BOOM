@@ -298,6 +298,21 @@ namespace {
   }
 
   //===========================================================================
+  TEST_F(SeasonalTest, FakeDataSimulationTest) {
+    int nseasons = 8;
+    Vector pattern(nseasons);
+    pattern.randomize();
+    Matrix full_state = simulate_seasonal_state(pattern, .01, 100);
+    std::ofstream out("simulated_state.out");
+    out << full_state;
+
+    int time = 37;
+    for (int i = 1; i < nseasons - 1; ++i) {
+      EXPECT_DOUBLE_EQ(full_state(i, time),
+                       full_state(0, time - i));
+    }
+  }
+  //===========================================================================
   TEST_F(SeasonalTest, Framework) {
     double true_sigma_obs = 1.2;
     StateSpaceTestFramework state_space(true_sigma_obs);
