@@ -1,6 +1,7 @@
 COPTS = [
     "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
+    "-fmax-errors=5",
 ]
 
 SANITIZERS = [
@@ -13,9 +14,9 @@ SANITIZERS = [
 cc_library(
     name = "mv_statespace_test_framework",
     hdrs = [
-    	 "mv_framework.hpp",
-    	 "student_regression_framework.hpp",
-	 ],
+        "mv_framework.hpp",
+        "student_regression_framework.hpp",
+    ],
     visibility = ["//visibility:public"],
     deps = ["//:boom"],
 )

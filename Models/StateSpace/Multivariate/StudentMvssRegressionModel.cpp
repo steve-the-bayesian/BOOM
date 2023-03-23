@@ -145,6 +145,16 @@ namespace BOOM {
     return ans;
   }
 
+  double StudentMvssRegressionModel::weight(int time, int dim) const {
+    const Ptr<StudentMultivariateTimeSeriesRegressionData> &data_point(
+        data_policy_.data_point(dim, time));
+    if (!data_point) {
+      return negative_infinity();
+    } else {
+      return data_point->weight();
+    }
+  }
+
   void StudentMvssRegressionModel::impute_student_weights(RNG &rng) {
     TDataImputer imputer;
     for (size_t time = 0; time < time_dimension(); ++time) {

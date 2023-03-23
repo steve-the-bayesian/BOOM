@@ -491,7 +491,8 @@ namespace BOOM {
   };
   //===========================================================================
   // A rectangular matrix formed by stacking a collection of sparse matrices
-  // with the same number of columns.
+  // with the same number of columns.  This is notionally equivalent to R's
+  // "rbind".
   class StackedMatrixBlock : public SparseMatrixBlock {
    public:
     StackedMatrixBlock() : nrow_(0), ncol_(0) {}
@@ -529,6 +530,76 @@ namespace BOOM {
     int nrow_, ncol_;
   };
 
+  //====================================================================== A
+  // A SparseKalmanMatrix made of blocks that form vertical strips (analogous to
+  // cbind in R):  [B1 B2 B3...].
+  class SideStackedMatrixBlock : public SparseMatrixBlock {
+   public:
+    SideStackedMatrixBlock() : ncol_(0) {}
+    SideStackedMatrixBlock(const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
+      assign(blocks);
+    }
+
+    SideStackedMatrixBlock(const SideStackedMatrixBlock &rhs) {
+      assign(rhs.blocks_);
+    }
+
+    SideStackedMatrixBlock(SideStackedMatrixBlock &&rhs) = default;
+
+    SideStackedMatrixBlock * clone() const override;
+
+    SideStackedMatrixBlock & operator=(const SideStackedMatrixBlock &rhs) {
+      if (&rhs != this) {
+        clear();
+        assign(rhs.blocks_);
+      }
+      return *this;
+    }
+
+    SideStackedMatrixBlock & operator=(SideStackedMatrixBlock &&rhs) = default;
+
+    int nrow() const override {
+      return blocks_.empty() ? 0 : blocks_[0]->nrow();
+    }
+
+    int ncol() const override { return ncol_; }
+
+    void clear() {
+      blocks_.clear();
+      ncol_ = 0;
+    }
+
+    void add_block(const Ptr<SparseMatrixBlock> &block);
+
+    Vector operator*(const Vector &v) const override;
+    Vector operator*(const VectorView &v) const override;
+    Vector operator*(const ConstVectorView &v) const override;
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView ans) const override;
+    void add_to_block(SubMatrix block) const override;
+
+    Vector Tmult(const ConstVectorView &v) const override;
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    // P += *this
+    Matrix &add_to(Matrix &P) const override;
+    SubMatrix add_to_submatrix(SubMatrix P) const override;
+
+   private:
+    void assign(const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
+      ncol_ = 0;
+      for (const auto &block : blocks) {
+        add_block(block);
+      }
+    }
+
+    int ncol_;
+    std::vector<Ptr<SparseMatrixBlock>> blocks_;
+  };
   //======================================================================
   // The LocalLinearTrendMatrix is
   //  1 1
@@ -2213,6 +2284,8 @@ namespace BOOM {
     // Start off with an empty matrix.  Use add_block() to add blocks
     // Adds a block to the block diagonal matrix
     BlockDiagonalMatrix();
+    explicit BlockDiagonalMatrix(
+        const std::vector<Ptr<SparseMatrixBlock>> &blocks);
     BlockDiagonalMatrix(const BlockDiagonalMatrix &rhs);
     BlockDiagonalMatrix & operator=(const BlockDiagonalMatrix &rhs);
 
@@ -2283,40 +2356,6 @@ namespace BOOM {
     // col_boundaries_[i] contains the one-past-the-end position of the upper
     // column boundary of block i.
     std::vector<int> col_boundaries_;
-  };
-  //============================================================================
-  // A SparseKalmanMatrix made of blocks that form vertical strips (analogous to
-  // cbind in R):  [B1 B2 B3...].
-  class SparseVerticalStripMatrix : public SparseKalmanMatrix {
-   public:
-    SparseVerticalStripMatrix() : ncol_(0) {}
-    int nrow() const override {
-      return blocks_.empty() ? 0 : blocks_[0]->nrow();
-    }
-    int ncol() const override { return ncol_; }
-
-    void clear() {
-      blocks_.clear();
-      ncol_ = 0;
-    }
-
-    void add_block(const Ptr<SparseMatrixBlock> &block);
-
-    Vector operator*(const Vector &v) const override;
-    Vector operator*(const VectorView &v) const override;
-    Vector operator*(const ConstVectorView &v) const override;
-
-    Vector Tmult(const ConstVectorView &v) const override;
-    SpdMatrix inner() const override;
-    SpdMatrix inner(const ConstVectorView &weights) const override;
-
-    // P += *this
-    Matrix &add_to(Matrix &P) const override;
-    SubMatrix add_to_submatrix(SubMatrix P) const override;
-
-   private:
-    int ncol_;
-    std::vector<Ptr<SparseMatrixBlock>> blocks_;
   };
 
   //===========================================================================

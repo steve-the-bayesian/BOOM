@@ -28,6 +28,7 @@
 #include "Models/Policies/PriorPolicy.hpp"
 
 #include "Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp"
+#include "Models/StateSpace/Multivariate/StateModels/ObservationParameterManager.hpp"
 
 namespace BOOM {
 
@@ -113,10 +114,6 @@ namespace BOOM {
     SpdMatrix initial_state_variance() const override;
     void set_initial_state_variance(const SpdMatrix &v);
 
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now) override;
-
     //--------------------------------------------------------------------------
     // Tools for working with the EM algorithm and numerical optimization.
     // These are not currently implemented.
@@ -130,10 +127,13 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     // Methods intended for use with the posterior samplers managing this model.
-
     Ptr<ZeroMeanGaussianModel> innovation_model(int i) {
       return innovation_models_[i];
     }
+    const Ptr<ZeroMeanGaussianModel> innovation_model(int i) const {
+      return innovation_models_[i];
+    }
+
 
     // Convert the regression coefficients linking the state to the observation
     // equation so that they are lower triangular.  That is, in the equation y =
@@ -144,6 +144,10 @@ namespace BOOM {
    protected:
     void clear_state_transition_data();
     virtual void initialize_model_matrices();
+
+    void observe_state_transition(const ConstVectorView &then,
+                                  const ConstVectorView &now,
+                                  int time_now);
 
    private:
     // The innovation models describe the movement of the individual factors
@@ -163,12 +167,6 @@ namespace BOOM {
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
     Matrix initial_state_variance_cholesky_;
-
-    // Args:
-    //   residual_y: The observed data, after having
-    virtual void record_observed_data_given_state(const Vector &residual_y,
-                                                  const ConstVectorView &now,
-                                                  int time_now) = 0;
   };
 
   //===========================================================================
@@ -199,6 +197,7 @@ namespace BOOM {
 
     Ptr<SparseMatrixBlock> observation_coefficients(
         int t, const Selector &observed) const override;
+
     int nseries() const override;
 
     ConditionallyIndependentMultivariateStateSpaceModelBase *
@@ -211,43 +210,33 @@ namespace BOOM {
       return host_;
     }
 
-    Ptr<GlmCoefs> raw_observation_coefficients(int i) {
-      return raw_observation_coefficients_[i];
+    Ptr<GlmCoefs> raw_observation_coefficients(int series) {
+      return observation_parameter_manager_.coefs(series);
     }
 
-    const Ptr<GlmCoefs> raw_observation_coefficients(int i) const {
-      return raw_observation_coefficients_[i];
+    const Ptr<GlmCoefs> raw_observation_coefficients(int series) const {
+      return observation_parameter_manager_.coefs(series);
     }
 
-    const Ptr<WeightedRegSuf>& suf(int i) const {
-      return sufficient_statistics_[i];
+    Ptr<WeightedRegSuf> suf(int series) {
+      return observation_parameter_manager_.suf(series);
     }
+
+    const Ptr<WeightedRegSuf> suf(int series) const {
+      return observation_parameter_manager_.suf(series);
+    }
+
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
+                       int time_now) override;
 
    private:
-    void record_observed_data_given_state(const Vector &residual_y,
-                                          const ConstVectorView &now,
-                                          int time_now) override;
-
     void ensure_observation_coefficients_current() const;
     void set_observation_coefficients_observer();
 
     ConditionallyIndependentMultivariateStateSpaceModelBase *host_;
 
-    // raw_observation_coefficients_[i] contains the observation coefficients
-    // for time series i on the shared state factors.
-    std::vector<Ptr<GlmCoefs>> raw_observation_coefficients_;
-
-    // Sufficient statistics for the model.  These get recorded when we
-    // record_observed_data_given_state, and set to zero when we call
-    // clear_data.
-    //
-    // Each element contains X'X and X'y for each series, where X is the time
-    // series of factors.  If every observation is present at every time point
-    // then all the X'X entries will be the same, but if some series are
-    // partially observed then they will have different X'X entries, so we need
-    // a series-by-series
-    std::vector<Ptr<WeightedRegSuf>> sufficient_statistics_;
-
+    ObservationParameterManager observation_parameter_manager_;
     mutable Ptr<DenseMatrix> observation_coefficients_;
     mutable bool observation_coefficients_current_;
   };
@@ -282,16 +271,16 @@ namespace BOOM {
         int t, const Selector &observed) const override;
     int nseries() const override {return host_->nseries();}
 
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
+                       int time_now) override;
+
    private:
     // Helper functions to be called in the constructor.
     void initialize_observation_coefficient_matrix();
     void set_observation_coefficients_observer();
     void set_param_policy();
     void sync_observation_coefficients();
-
-    void record_observed_data_given_state(const Vector &residual_y,
-                                          const ConstVectorView &now,
-                                          int time_now) override;
 
     // The host is the model object in which *this is a state component.  The
     // host is needed for this model to properly implement observe_state,

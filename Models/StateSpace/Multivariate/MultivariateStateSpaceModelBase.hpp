@@ -509,6 +509,18 @@ namespace BOOM {
     // series-specific state.
     virtual double single_observation_variance(int t, int dim) const = 0;
 
+    // Args:
+    //   time:  The requested time point.
+    //   dim:  The index of the time series.
+    //
+    // Returns:
+    //   The weight associated with a particular series at a given time point,
+    //   when the model is a mixture of normals.  This function assumes that
+    //   data imputation step has been run previously to assign the weight.  The
+    //   weight would typically be stored in the data object for that time
+    //   point.
+    virtual double weight(int time, int dim) const = 0;
+
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.

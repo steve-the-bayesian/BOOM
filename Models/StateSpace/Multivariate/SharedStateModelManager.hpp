@@ -122,7 +122,7 @@ namespace BOOM {
 
       Ptr<SparseKalmanMatrix> observation_coefficients(
           int t, const Selector &observed) const {
-        NEW(StackedMatrixBlock, ans)();
+        NEW(SideStackedMatrixBlock, ans)();
         for (int s = 0; s < shared_state_models_.size(); ++s) {
           ans->add_block(shared_state_models_[s]->observation_coefficients(
               t, observed));

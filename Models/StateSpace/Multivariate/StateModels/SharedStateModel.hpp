@@ -1,5 +1,5 @@
-# ifndef BOOM_STATE_SPACE_SHARED_STATE_MODEL_HPP_
-# define BOOM_STATE_SPACE_SHARED_STATE_MODEL_HPP_
+#ifndef BOOM_STATE_SPACE_SHARED_STATE_MODEL_HPP_
+#define BOOM_STATE_SPACE_SHARED_STATE_MODEL_HPP_
 
 /*
   Copyright (C) 2005-2021 Steven L. Scott
@@ -20,7 +20,10 @@
 */
 
 #include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
 
 namespace BOOM {
   // State models for dynamic factor models and similar multivariate time series
@@ -42,7 +45,6 @@ namespace BOOM {
         int t, const Selector &observed) const = 0;
   };
 
-}
+}  // namespace BOOM
 
-
-# endif //  BOOM_STATE_SPACE_SHARED_STATE_MODEL_HPP_
+#endif //  BOOM_STATE_SPACE_SHARED_STATE_MODEL_HPP_

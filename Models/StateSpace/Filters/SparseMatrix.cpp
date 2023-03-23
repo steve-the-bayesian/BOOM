@@ -1856,6 +1856,16 @@ namespace BOOM {
   //======================================================================
   BlockDiagonalMatrix::BlockDiagonalMatrix() : nrow_(0), ncol_(0) {}
 
+  BlockDiagonalMatrix::BlockDiagonalMatrix(
+      const std::vector<Ptr<SparseMatrixBlock>> &blocks)
+      : nrow_(0),
+        ncol_(0)
+  {
+    for (const auto &block : blocks) {
+      add_block(block);
+    }
+  }
+
   BlockDiagonalMatrix::BlockDiagonalMatrix(const BlockDiagonalMatrix &rhs)
       : nrow_(0),
         ncol_(0)
@@ -2239,22 +2249,34 @@ namespace BOOM {
   //===========================================================================
   namespace {
     template <class VECTOR>
-    Vector block_multiply_impl(
-        const std::vector<Ptr<SparseMatrixBlock>> &blocks, const VECTOR &rhs) {
-      Vector ans(blocks.back()->nrow(), 0.0);
+    void block_multiply_and_add_into_view(
+        VectorView lhs,
+        const std::vector<Ptr<SparseMatrixBlock>> &blocks,
+        const VECTOR &rhs) {
       int start = 0;
       for (int i = 0; i < blocks.size(); ++i) {
         int ncol = blocks[i]->ncol();
-        blocks[i]->multiply_and_add(VectorView(ans),
+        blocks[i]->multiply_and_add(lhs,
                                     ConstVectorView(rhs, start, ncol));
         start += ncol;
       }
+    }
+
+    template <class VECTOR>
+    Vector block_multiply_impl(
+        const std::vector<Ptr<SparseMatrixBlock>> &blocks, const VECTOR &rhs) {
+      Vector ans(blocks.back()->nrow(), 0.0);
+      block_multiply_and_add_into_view(VectorView(ans), blocks, rhs);
       return ans;
     }
 
   }  // namespace
 
-  void SparseVerticalStripMatrix::add_block(
+  SideStackedMatrixBlock * SideStackedMatrixBlock::clone() const {
+    return new SideStackedMatrixBlock(*this);
+  }
+
+  void SideStackedMatrixBlock::add_block(
       const Ptr<SparseMatrixBlock> &block) {
     if (!blocks_.empty() && block->nrow() != blocks_.back()->nrow()) {
       report_error("All blocks must have the same number of rows");
@@ -2263,32 +2285,62 @@ namespace BOOM {
     ncol_ += block->ncol();
   }
 
-  Vector SparseVerticalStripMatrix::operator*(const Vector &v) const {
+  Vector SideStackedMatrixBlock::operator*(const Vector &v) const {
     check_can_multiply(v.size());
     return block_multiply_impl(blocks_, v);
   }
-  Vector SparseVerticalStripMatrix::operator*(const VectorView &v) const {
+  Vector SideStackedMatrixBlock::operator*(const VectorView &v) const {
     check_can_multiply(v.size());
     return block_multiply_impl(blocks_, v);
   }
-  Vector SparseVerticalStripMatrix::operator*(const ConstVectorView &v) const {
+  Vector SideStackedMatrixBlock::operator*(const ConstVectorView &v) const {
     check_can_multiply(v.size());
     return block_multiply_impl(blocks_, v);
   }
 
-  Vector SparseVerticalStripMatrix::Tmult(const ConstVectorView &v) const {
-    check_can_Tmult(v.size());
-    Vector ans(ncol());
+  void SideStackedMatrixBlock::multiply(
+      VectorView lhs, const ConstVectorView &rhs) const {
+    lhs = 0.0;
+    multiply_and_add(lhs, rhs);
+  }
+
+  void SideStackedMatrixBlock::multiply_and_add(
+      VectorView lhs, const ConstVectorView &rhs) const {
+    check_can_multiply(rhs.size());
+    block_multiply_and_add_into_view(lhs, blocks_, rhs);
+  }
+
+  void SideStackedMatrixBlock::Tmult(VectorView lhs, const ConstVectorView &rhs) const {
+    check_can_Tmult(rhs.size());
+    lhs = 0.0;
     int start = 0;
     for (int i = 0; i < blocks_.size(); ++i) {
       int dim = blocks_[i]->ncol();
-      blocks_[i]->Tmult(VectorView(ans, start, dim), v);
+      blocks_[i]->Tmult(VectorView(lhs, start, dim), rhs);
       start += dim;
     }
+  }
+
+  void SideStackedMatrixBlock::multiply_inplace(VectorView ans) const {
+    report_error("Only square matrices can multiply inplace.");
+  }
+
+  void SideStackedMatrixBlock::add_to_block(SubMatrix block) const {
+    check_can_add(block);
+    int start = 0;
+    for (const auto &sparse_block : blocks_) {
+      SubMatrix view(block, 0, nrow() - 1, start, start);
+      sparse_block->add_to_block(view);
+    }
+  }
+
+  Vector SideStackedMatrixBlock::Tmult(const ConstVectorView &rhs) const {
+    Vector ans(ncol());
+    this->Tmult(VectorView(ans), rhs);
     return ans;
   }
 
-  SpdMatrix SparseVerticalStripMatrix::inner() const {
+  SpdMatrix SideStackedMatrixBlock::inner() const {
     SpdMatrix ans(ncol(), 0.0);
     std::vector<Matrix> dense_blocks;
     dense_blocks.reserve(blocks_.size());
@@ -2313,7 +2365,7 @@ namespace BOOM {
     return ans;
   }
 
-  SpdMatrix SparseVerticalStripMatrix::inner(
+  SpdMatrix SideStackedMatrixBlock::inner(
       const ConstVectorView &weights) const {
     SpdMatrix ans(ncol(), 0.0);
     std::vector<Matrix> dense_blocks;
@@ -2341,7 +2393,7 @@ namespace BOOM {
     return ans;
   }
 
-  Matrix &SparseVerticalStripMatrix::add_to(Matrix &P) const {
+  Matrix &SideStackedMatrixBlock::add_to(Matrix &P) const {
     check_can_add(P.nrow(), P.ncol());
     int start_column = 0;
     for (int i = 0; i < blocks_.size(); ++i) {
@@ -2353,7 +2405,7 @@ namespace BOOM {
     return P;
   }
 
-  SubMatrix SparseVerticalStripMatrix::add_to_submatrix(SubMatrix P) const {
+  SubMatrix SideStackedMatrixBlock::add_to_submatrix(SubMatrix P) const {
     check_can_add(P.nrow(), P.ncol());
     int start_column = 0;
     for (int i = 0; i < blocks_.size(); ++i) {

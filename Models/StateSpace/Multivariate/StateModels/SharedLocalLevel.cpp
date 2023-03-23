@@ -194,40 +194,13 @@ namespace BOOM {
   //   now: The portion of the state vector associated with this object at time
   //     point time_now.
   //   time_now:  The index of the current time point.
-  void SLLSMB::observe_state(const ConstVectorView &then,
-                            const ConstVectorView &now,
-                            int time_now) {
+  void SLLSMB::observe_state_transition(const ConstVectorView &then,
+                                        const ConstVectorView &now,
+                                        int time_now) {
     for (int i = 0; i < innovation_models_.size(); ++i) {
       double diff = now[i] - then[i];
       innovation_models_[i]->suf()->update_raw(diff);
     }
-
-    // Residual y is the residual remaining after the other state components
-    // have made their contributions.
-    //
-    // This logic assumes that
-    //   (1) the state of the model has been set,
-    //   (2) any missing values have been imputed, and
-    //   (3) any other additive effects (e.g. regression effects) have been
-    //       subtracted off.
-    //     Selector fully_observed(host()->state_dimension(), true);
-    const Selector &observed(host()->observed_status(time_now));
-
-    // Subtract off the effect of other state models (or regression models), and
-    // add in the effect of this one, so that the only effect present is from
-    // this state model and random error.
-    //
-    // The first "state" calculation below uses the full state vector.  The
-    // second uses 'now' which is a subset.
-    Vector residual_y =
-        host()->adjusted_observation(time_now)
-        - (*host()->observation_coefficients(time_now, observed)
-           * host()->shared_state(time_now))
-        + (*observation_coefficients(time_now, observed)) * now;
-
-    // The concrete child classes will record residual_y in the manner specific
-    // to their coefficient models.
-    record_observed_data_given_state(residual_y, now, time_now);
   }
 
   //===========================================================================
@@ -272,12 +245,6 @@ namespace BOOM {
 
   GSLLSM * GSLLSM::clone() const { return new GSLLSM(*this); }
 
-  void GSLLSM::record_observed_data_given_state(const Vector &residual_y,
-                                                const ConstVectorView &now,
-                                                int time_now) {
-    coefficient_model_->suf()->update_raw_data(residual_y, now, 1.0);
-  }
-
   Ptr<SparseMatrixBlock> GSLLSM::observation_coefficients(
       int t, const Selector &observed) const {
     if (observed.nvars() == observed.nvars_possible()) {
@@ -320,6 +287,13 @@ namespace BOOM {
     }
   }
 
+  void GSLLSM::observe_state(const ConstVectorView &then,
+                             const ConstVectorView &now,
+                             int time_now) {
+    observe_state_transition(then, now, time_now);
+    // compute and record residual y.
+  }
+
 
   //===========================================================================
   namespace {
@@ -332,17 +306,11 @@ namespace BOOM {
       int nseries)
       : SharedLocalLevelStateModelBase(number_of_factors, nseries),
         host_(host),
+        observation_parameter_manager_(host->nseries(), number_of_factors),
         observation_coefficients_(new DenseMatrix(Matrix(
             nseries, number_of_factors))),
         observation_coefficients_current_(false)
   {
-    Vector all_ones(number_of_factors, 1.0);
-    for (int i = 0; i < nseries; ++i) {
-      // The observation coefficents for series i.
-      NEW(GlmCoefs, series_observation_coefficients)(all_ones, true);
-      raw_observation_coefficients_.push_back(series_observation_coefficients);
-      sufficient_statistics_.push_back(new WeightedRegSuf(number_of_factors));
-    }
     set_observation_coefficients_observer();
   }
 
@@ -350,28 +318,19 @@ namespace BOOM {
       const CindSLLM &rhs):
       SharedLocalLevelStateModelBase(rhs),
       host_(rhs.host_),
+      observation_parameter_manager_(rhs.observation_parameter_manager_),
       observation_coefficients_(new DenseMatrix(
           rhs.observation_coefficients_->matrix())),
       observation_coefficients_current_(false)
   {
-    for (const auto &el : rhs.raw_observation_coefficients_) {
-      raw_observation_coefficients_.push_back(el->clone());
-    }
-
-    for (const auto &el : rhs.sufficient_statistics_) {
-      sufficient_statistics_.push_back(el->clone());
-    }
     set_observation_coefficients_observer();
   }
-
 
   CindSLLM * CindSLLM::clone() const {return new CindSLLM(*this);}
 
   void CindSLLM::clear_data() {
     clear_state_transition_data();
-    for (auto &el : sufficient_statistics_) {
-      el->clear();
-    }
+    observation_parameter_manager_.clear_sufficient_statistics();
   }
 
   int CindSLLM::nseries() const {
@@ -393,26 +352,36 @@ namespace BOOM {
     if (!observation_coefficients_current_) {
       Matrix coefficients(nseries(), number_of_factors());
       for (int i = 0; i < nseries(); ++i) {
-        coefficients.row(i) = raw_observation_coefficients_[i]->Beta();
+        coefficients.row(i) = raw_observation_coefficients(i)->Beta();
       }
       observation_coefficients_->set(coefficients);
       observation_coefficients_current_ = true;
     }
   }
 
-  void CindSLLM::record_observed_data_given_state(const Vector &residual_y,
-                                                  const ConstVectorView &now,
-                                                  int time_now) {
-    const Selector &observed(host_->observed_status(time_now));
-    for (int i = 0; i < residual_y.size(); ++i) {
-      int I = observed.dense_index(i);
-      sufficient_statistics_[I]->add_data(now, residual_y[i], 1.0);
+
+  void CindSLLM::observe_state(const ConstVectorView &then,
+                               const ConstVectorView &now,
+                               int time_now) {
+    observe_state_transition(then, now, time_now);
+
+    // Observe the part of the state associated with the observation
+    // coefficients.
+    Vector residual_y = observation_parameter_manager_.compute_residual(
+        now, time_now, host(), this);
+    const Selector &observed(host()->observed_status(time_now));
+    for (int i = 0; i < observed.nvars(); ++i) {
+      int series = observed.expanded_index(i);
+      suf(series)->add_data(
+          now,
+          residual_y[i],
+          host()->weight(time_now, series));
     }
   }
 
   void CindSLLM::set_observation_coefficients_observer() {
-    for (int i = 0; i < raw_observation_coefficients_.size(); ++i) {
-      raw_observation_coefficients_[i]->add_observer(
+    for (int i = 0; i < nseries(); ++i) {
+      raw_observation_coefficients(i)->add_observer(
           this,
           [this]() {
             this->observation_coefficients_current_ = false;

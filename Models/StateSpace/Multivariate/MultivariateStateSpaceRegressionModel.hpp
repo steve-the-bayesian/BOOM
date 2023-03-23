@@ -343,6 +343,10 @@ namespace BOOM {
       return observation_model_->model(dim)->sigsq();
     }
 
+    double weight(int time, int dim) const override {
+      return 1.0;
+    }
+
     Proxy *series_specific_model(int index) {
       return state_manager_.series_specific_model(index);
     }

@@ -42,7 +42,8 @@ namespace BOOM {
 
   SVVRP::SparseVectorViewReturnProxy(
       int position_in_view, double value, SparseVectorView *view)
-      : position_in_base_vector_(position_in_view + view->start_),
+      : position_in_base_vector_(
+            view->position_in_base_vector(position_in_view)),
         value_(value),
         v_(view) {}
 
@@ -59,6 +60,30 @@ namespace BOOM {
       v_->end_ = v_->base_vector_->elements_.find(position_in_base_vector_);
       v_->cend_ = v_->end_;
     }
+    return *this;
+  }
+
+  SVVRP &SVVRP::operator+=(double increment) {
+    v_->base_vector_->elements_[position_in_base_vector_] += increment;
+    value_ += increment;
+    return *this;
+  }
+
+  SVVRP &SVVRP::operator-=(double decrement) {
+    v_->base_vector_->elements_[position_in_base_vector_] -= decrement;
+    value_ -= decrement;
+    return *this;
+  }
+
+  SVVRP &SVVRP::operator*=(double scale) {
+    v_->base_vector_->elements_[position_in_base_vector_] *= scale;
+    value_ *= scale;
+    return *this;
+  }
+
+  SVVRP &SVVRP::operator/=(double scale) {
+    v_->base_vector_->elements_[position_in_base_vector_] /= scale;
+    value_ /= scale;
     return *this;
   }
 
@@ -262,19 +287,23 @@ namespace BOOM {
   SparseVectorView::SparseVectorView(
       SparseVector *base_vector,
       size_t start,
-      size_t size)
+      size_t size,
+      int stride)
       : base_vector_(base_vector),
         start_(start),
-        size_(size)
-  {}
+        size_(size),
+        stride_(stride)
+  {
+    initialize_iterators();
+  }
 
   double SparseVectorView::operator[](int n) const {
-    return (*base_vector_)[start_ + n];
+    return (*base_vector_)[position_in_base_vector(n)];
   }
 
   SparseVectorViewReturnProxy SparseVectorView::operator[](int n) {
     return SparseVectorViewReturnProxy(
-        n, (*base_vector_)[start_ + n], this);
+        n, (*base_vector_)[position_in_base_vector(n)], this);
   }
 
   SparseVectorView &SparseVectorView::operator*=(double x) {
@@ -311,19 +340,29 @@ namespace BOOM {
     return do_dot(x, begin(), end(), size());
   }
 
-  bool SparseVectorView::operator==(const SparseVector &rhs) const {
-    return (size() == rhs.size() && std::equal(
-        begin(),
-        end(),
-        rhs.begin(),
-        [this](const std::pair<int, double> &lhs,
-                 const std::pair<int, double> &rhs) {
-          return lhs.second == rhs.second && lhs.first == rhs.first + this->start_;
-        }));
-  }
+  // bool SparseVectorView::operator==(const SparseVector &rhs) const {
+  //   return (size() == rhs.size() && std::equal(
+  //       begin(),
+  //       end(),
+  //       rhs.begin(),
+  //       [this](std::pair<int, double> &lhs,
+  //              std::pair<int, double> &rhs) {
+  //         return lhs.second == rhs.second && lhs.first == rhs.first + this->start_;
+  //       }));
+  // }
 
   bool SparseVectorView::operator==(const SparseVectorView &rhs) const {
-    return size() == rhs.size() && std::equal(begin(), end(), rhs.begin());
+    if (size() != rhs.size()) {
+      return false;
+    } else {
+      auto rhs_it = rhs.begin();
+      for (auto it = begin(); it != end(); ++it, ++rhs_it) {
+        if ((it->first != rhs_it->first) || (it->second != rhs_it->second)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   void SparseVectorView::add_this_to(Vector &x, double weight) const {
@@ -399,20 +438,33 @@ namespace BOOM {
     return ans;
   }
 
-  std::map<int, double>::iterator SparseVectorView::begin() {
+  SparseVectorViewIterator SparseVectorView::begin() {
     return begin_;
   }
 
-  std::map<int, double>::const_iterator SparseVectorView::begin() const{
+  SparseVectorViewConstIterator SparseVectorView::begin() const{
     return cbegin_;
   }
 
-  std::map<int, double>::iterator SparseVectorView::end() {
+  SparseVectorViewIterator SparseVectorView::end() {
     return end_;
   }
 
-  std::map<int, double>::const_iterator SparseVectorView::end() const {
+  SparseVectorViewConstIterator SparseVectorView::end() const {
     return cend_;
+  }
+
+  void SparseVectorView::initialize_iterators() {
+    size_t start = position_in_base_vector(0);
+    size_t final = position_in_base_vector(size() - 1);
+    begin_ = base_vector_->elements_.lower_bound(start);
+    begin_.set_stride(stride_);
+    end_ = base_vector_->elements_.upper_bound(final);
+    end_.set_stride(stride_);
+    cbegin_ = begin_;
+    cbegin_.set_stride(stride_);
+    cend_ = end_;
+    cend_.set_stride(stride_);
   }
 
 }  // namespace BOOM

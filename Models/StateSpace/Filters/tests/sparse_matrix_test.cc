@@ -538,8 +538,8 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
-  TEST_F(SparseMatrixTest, SparseVerticalStripMatrixTest) {
-    SparseVerticalStripMatrix sparse;
+  TEST_F(SparseMatrixTest, SideStackedMatrixBlockTest) {
+    SideStackedMatrixBlock sparse;
     int nrows = 8;
     SparseVector trend(2);
     EXPECT_EQ(2, trend.size());

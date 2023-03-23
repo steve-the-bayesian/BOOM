@@ -146,7 +146,7 @@ namespace BOOM {
 
   Ptr<SparseKalmanMatrix> DIRM::observation_coefficients(
       int t, const Selector &) const {
-    NEW(SparseVerticalStripMatrix, ans)();
+    NEW(SideStackedMatrixBlock, ans)();
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
     for (int s = 0; s < number_of_state_models(); ++s) {
       ans->add_block(state_models_[s]->observation_coefficients(t, data_point));
