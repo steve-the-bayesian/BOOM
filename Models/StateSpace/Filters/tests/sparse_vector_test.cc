@@ -138,6 +138,11 @@ namespace {
     EXPECT_DOUBLE_EQ(view[2], base[5]);
     EXPECT_DOUBLE_EQ(view[3], base[7]);
 
+    EXPECT_EQ(view.position_in_view(1), 0);
+    EXPECT_EQ(view.position_in_view(3), 1);
+    EXPECT_EQ(view.position_in_view(5), 2);
+    EXPECT_EQ(view.position_in_view(7), 3);
+
     view[2] *= 3.0;
     EXPECT_DOUBLE_EQ(base[5], 2.4 * 3.0);
     EXPECT_DOUBLE_EQ(view[2], 2.4 * 3.0);
@@ -170,5 +175,11 @@ namespace {
     }
     EXPECT_EQ(pos.size(), 3) << "\n" << to_string(pos) << to_string(dense);
 
+    Vector dense_target = Vector{0.0, 1.8, 2.4 * 3.0, 19.4};
+
+    EXPECT_TRUE(VectorEquals(view.dense(), dense_target))
+        << "\n"
+        << "view.dense() = " << view.dense() << "\n"
+        << "target       = " << dense_target << "\n";
   }
 }  // namespace

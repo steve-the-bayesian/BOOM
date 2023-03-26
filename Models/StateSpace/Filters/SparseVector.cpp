@@ -292,7 +292,11 @@ namespace BOOM {
       : base_vector_(base_vector),
         start_(start),
         size_(size),
-        stride_(stride)
+        stride_(stride),
+        begin_(this),
+        end_(this),
+        cbegin_(this),
+        cend_(this)
   {
     initialize_iterators();
   }
@@ -457,14 +461,10 @@ namespace BOOM {
   void SparseVectorView::initialize_iterators() {
     size_t start = position_in_base_vector(0);
     size_t final = position_in_base_vector(size() - 1);
-    begin_ = base_vector_->elements_.lower_bound(start);
-    begin_.set_stride(stride_);
-    end_ = base_vector_->elements_.upper_bound(final);
-    end_.set_stride(stride_);
+    begin_.set_underlying_iterator(base_vector_->elements_.lower_bound(start));
+    end_.set_underlying_iterator(base_vector_->elements_.upper_bound(final));
     cbegin_ = begin_;
-    cbegin_.set_stride(stride_);
     cend_ = end_;
-    cend_.set_stride(stride_);
   }
 
 }  // namespace BOOM

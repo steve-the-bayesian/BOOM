@@ -1,6 +1,9 @@
+// Copyright 2022-2023 Steven L. Scott
+
 // Copyright 2018 Google LLC. All Rights Reserved.
+
 /*
-  Copyright (C) 2005-2010 Steven L. Scott
+  Copyright (C) 2005-2018 Steven L. Scott
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -151,20 +154,21 @@ namespace BOOM {
 
   //===========================================================================
 
+  // An iterator over the nonzero elements in a SparseVectorView.  The iterator
+  // class is
   template <class BASE_ITERATOR>
   class SparseVectorViewIteratorImpl {
    public:
     typedef BASE_ITERATOR BaseIterator;
     typedef typename BaseIterator::value_type value_type;
 
-    SparseVectorViewIteratorImpl() {}
+    SparseVectorViewIteratorImpl(const SparseVectorView *host)
+        : host_(host) {}
 
-    SparseVectorViewIteratorImpl(BaseIterator begin, int stride);
-
-    SparseVectorViewIteratorImpl & operator=(const SparseVectorViewIteratorImpl &rhs) {
+    SparseVectorViewIteratorImpl & operator=(
+        const SparseVectorViewIteratorImpl &rhs) {
       if (&rhs != this) {
         underlying_itertator_ = rhs.underlying_itertator_;
-        stride_ = rhs.stride_;
       }
       return *this;
     }
@@ -173,8 +177,11 @@ namespace BOOM {
     SparseVectorViewIteratorImpl & operator=(
         const SparseVectorViewIteratorImpl<OTHER_ITERATOR> &rhs) {
       underlying_itertator_ = rhs.base();
-      stride_ = rhs.stride();
       return *this;
+    }
+
+    void set_underlying_iterator(const BaseIterator &it) {
+      underlying_itertator_ = it;
     }
 
     SparseVectorViewIteratorImpl & operator=(const BaseIterator &it) {
@@ -182,68 +189,64 @@ namespace BOOM {
       return *this;
     }
 
-    void set_stride(int stride) {
-      stride_ = stride;
-    }
-
     bool operator==(const SparseVectorViewIteratorImpl &rhs) const {
       return underlying_itertator_ == rhs.underlying_itertator_
-          && stride_ == rhs.stride_;
+          && stride() == rhs.stride();
     }
 
     bool operator!=(const SparseVectorViewIteratorImpl &rhs) const {
       return underlying_itertator_ != rhs.underlying_itertator_
-          || stride_ != rhs.stride_;
+          || stride() != rhs.stride();
     }
 
     SparseVectorViewIteratorImpl &operator++() {
-      advance_underlying_iterator(stride_);
+      advance_underlying_iterator(stride());
       return *this;
     }
 
     SparseVectorViewIteratorImpl operator++(int) {
       SparseVectorViewIteratorImpl ans(*this);
-      advance_underlying_iterator(stride_);
+      advance_underlying_iterator(stride());
       return ans;
     }
 
     SparseVectorViewIteratorImpl operator--() {
-      advance_underlying_iterator(-stride_);
+      advance_underlying_iterator(-stride());
       return *this;
     }
 
     SparseVectorViewIteratorImpl operator--(int) {
       SparseVectorViewIteratorImpl ans(*this);
-      advance_underlying_iterator(-stride_);
+      advance_underlying_iterator(-stride());
       return ans;
     }
 
-    // SparseVectorViewIteratorImpl operator+=(int n) {
-    //   advance_underlying_iterator(n * stride_);
-    //   return *this;
-    // }
+    SparseVectorViewIteratorImpl operator+=(int n) {
+      advance_underlying_iterator(n * stride());
+      return *this;
+    }
 
-    // SparseVectorViewIteratorImpl operator-=(int n) {
-    //   underlying_itertator_ -= n * stride_;
-    //   return *this;
-    // }
+    SparseVectorViewIteratorImpl operator-=(int n) {
+      advance_underlying_iterator(-n * stride());
+      return *this;
+    }
 
-    // SparseVectorViewIteratorImpl operator+(int n) {
-    //   SparseVectorViewIteratorImpl ans(*this);
-    //   ans += n;
-    //   return ans;
-    // }
+    SparseVectorViewIteratorImpl operator+(int n) {
+      SparseVectorViewIteratorImpl ans(*this);
+      ans += n;
+      return ans;
+    }
 
-    // SparseVectorViewIteratorImpl operator-(int n) {
-    //   SparseVectorViewIteratorImpl ans(*this);
-    //   ans -= n;
-    //   return ans;
-    // }
+    SparseVectorViewIteratorImpl operator-(int n) {
+      SparseVectorViewIteratorImpl ans(*this);
+      ans -= n;
+      return ans;
+    }
 
     std::ptrdiff_t operator-(const SparseVectorViewIteratorImpl &rhs) const {
-      assert(stride_ == rhs.stride_);
-      return pos() > rhs.pos() ? (pos() - rhs.pos()) / stride_
-          : (rhs.pos() - pos()) / stride_;
+      assert(stride() == rhs.stride());
+      return pos() > rhs.pos() ? (pos() - rhs.pos()) / stride()
+          : (rhs.pos() - pos()) / stride();
     }
 
     BaseIterator &operator->() {
@@ -278,7 +281,7 @@ namespace BOOM {
       return pos() >= rhs.pos();
     }
 
-    int stride() const {return stride_;}
+    int stride() const;
 
     const BaseIterator &base() const {return underlying_itertator_;}
     BaseIterator &base() {return underlying_itertator_;}
@@ -287,43 +290,26 @@ namespace BOOM {
 
     // Return true iff the 'pos' argument is an integer that would be hit by
     // moving an integer number of strides from begin_.
-    bool included_position(int pos) const {
-      int delta = pos - begin_;
-      return (delta >= 0) && (delta % stride() == 0) && (delta < end_);
-    }
+    bool included_position(int base_position) const;
 
     // Move the underlying iterator forward by 'nsteps'.  This can be a
     // backwards move if nsteps < 0.
-    void advance_underlying_iterator(bool forward) {
-      if (forward) {
-        while(true) {
-          ++underlying_itertator_;
-          if (underlying_itertator_ == end_) {
-            return;
-          }
-        }
-      } else {
-        while(true) {
-          --underlying_itertator_;
-          if (underlying_itertator_->first <= begin_) {
-            return;
-          }
-        }
-      }
-    }
+    void advance_underlying_iterator(bool forward);
 
+    // The position of the iterator in the base vector (the SparseVector object
+    // to which the SparseVectorView refers.)
     int64_t pos() const {return underlying_itertator_->first;}
 
     //---------------------------------------------------------------------------
     // Data section
     //---------------------------------------------------------------------------
 
-    // The underlying_itertator_ points to elements in the original
-    // SparseVector.
+    // The underlying_itertator_ points to elements in the map contained by the
+    // original SparseVector.
     BaseIterator underlying_itertator_;
 
-    //
-    const SparseVectorView *view_;
+    // The view that owns this iterator.
+    const SparseVectorView *host_;
   };
 
   using SparseVectorViewIterator = SparseVectorViewIteratorImpl<
@@ -336,12 +322,22 @@ namespace BOOM {
   // SparseConstVectorView at some point.
   class SparseVectorView {
    public:
+    // Args:
+    //   base_vector:  The SparseVector into which this is a view.
+    //   start: The index of the initial element in the SparseVector.  This may
+    //     be a structually zero element.
+    //   size: The notional size of the view to create.  The is the number of
+    //     elements (including the structural zeros) in the "vector".
+    //   stride: The number of steps between included elements.  Typically
+    //     'stride' will be 1, but if it is 2 then every other element is
+    //     selected.  If 3 then every third element, etc.
     SparseVectorView(SparseVector *base_vector,
                      size_t start,
                      size_t size,
                      int stride);
 
     size_t size() const {return size_;}
+    int stride() const {return stride_;}
     double operator[](int n) const;
     SparseVectorViewReturnProxy operator[](int n);
     SparseVectorView &operator*=(double x);
@@ -376,19 +372,22 @@ namespace BOOM {
     SparseVectorViewConstIterator begin() const;
     SparseVectorViewConstIterator end() const;
 
-   private:
-    // set begin_ and end_ to the first and last relevant values in elements_
-    void initialize_iterators();
-
     // Return the index of the base vector corresponding to the notional
     // position in the view.
-    size_t position_in_base_vector(int view_position) const {
+    size_t position_in_base_vector(int64_t view_position) const {
       return start_ + view_position * stride_;
     }
 
-    size_t position_in_view(int base_position) const {
-      return base_position - start_;
+    size_t position_in_view(int64_t base_position) const {
+      int64_t delta = base_position - start_;
+      int64_t pos = delta / stride_;
+      int64_t remainder = delta % stride_;
+      return remainder == 0 ? pos : -1;
     }
+
+   private:
+    // set begin_ and end_ to the first and last relevant values in elements_
+    void initialize_iterators();
 
     void ensure_begin_valid() const;
     void ensure_end_valid() const;
@@ -421,6 +420,49 @@ namespace BOOM {
     SparseVectorViewConstIterator cbegin_;
     SparseVectorViewConstIterator cend_;
   };
+
+
+  template <class BASE_ITERATOR>
+  int SparseVectorViewIteratorImpl<BASE_ITERATOR>::stride() const {
+    return host_->stride();
+  }
+
+  template <class BASE_ITERATOR>
+  bool SparseVectorViewIteratorImpl<BASE_ITERATOR>::included_position(
+      int base_position) const {
+    // The logic for 'before_end' and 'after_begin' must handle the possibility
+    // that the 'one past the end' map iterator might have an index value less
+    // than zero.
+    bool before_end = host_->end()->first > 0 ?
+        base_position < host_->end()->first : base_position >= 0;
+    bool after_begin = base_position < 0 || base_position > host_->begin()->first;
+    return after_begin && before_end
+        && (base_position - host_->begin()->first) % host_->stride() == 0;
+  }
+
+
+  template <class BASE_ITERATOR>
+  void SparseVectorViewIteratorImpl<BASE_ITERATOR>::advance_underlying_iterator(
+      bool forward) {
+    if (forward) {
+      while(true) {
+        ++underlying_itertator_;
+        if (included_position(underlying_itertator_->first)
+            || underlying_itertator_ == host_->end().base()) {
+          return;
+        }
+      }
+    } else {
+      while(true) {
+        --underlying_itertator_;
+        if (underlying_itertator_->first <= host_->position_in_base_vector(0)) {
+          return;
+        }
+      }
+    }
+  }
+
+
 
 }  // namespace BOOM
 
