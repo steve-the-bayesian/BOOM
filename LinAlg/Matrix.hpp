@@ -535,6 +535,7 @@ namespace BOOM {
   Matrix rbind(double x, const Matrix &m);
   Matrix rbind(const Matrix &m, double x);
 
+  Matrix cbind(const std::vector<Matrix> &input);
   Matrix cbind(const Matrix &m1, const Matrix &m2);
   Matrix cbind(const Vector &v, const Matrix &m);
   Matrix cbind(const Matrix &m, const Vector &v);

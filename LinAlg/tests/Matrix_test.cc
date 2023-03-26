@@ -547,6 +547,54 @@ namespace {
 
   }
 
+  TEST_F(MatrixTest, CbindTest) {
+    Matrix A(3, 2);
+    Matrix B(3, 3);
+    A.randomize();
+    B.randomize();
+
+    Matrix bound = cbind(A, B);
+    EXPECT_EQ(bound.nrow(), 3);
+    EXPECT_EQ(bound.ncol(), 5);
+    for (int i = 0; i < A.nrow(); ++i) {
+      for (int j = 0; j < A.ncol(); ++j) {
+        EXPECT_DOUBLE_EQ(A(i, j), bound(i, j));
+      }
+    }
+
+    for (int i = 0; i < B.nrow(); ++i) {
+      for (int j = 0; j < B.ncol(); ++j) {
+        EXPECT_DOUBLE_EQ(B(i, j), bound(i, j + 2));
+      }
+    }
+
+    Matrix C(3, 4);
+    C.randomize();
+
+    std::vector<Matrix> input = {A, B, C};
+    bound = cbind(input);
+    EXPECT_EQ(bound.nrow(), 3);
+    EXPECT_EQ(bound.ncol(), 2 + 3 + 4);
+
+    for (int i = 0; i < A.nrow(); ++i) {
+      for (int j = 0; j < A.ncol(); ++j) {
+        EXPECT_DOUBLE_EQ(A(i, j), bound(i, j));
+      }
+    }
+
+    for (int i = 0; i < B.nrow(); ++i) {
+      for (int j = 0; j < B.ncol(); ++j) {
+        EXPECT_DOUBLE_EQ(B(i, j), bound(i, j + 2));
+      }
+    }
+
+    for (int i = 0; i < C.nrow(); ++i) {
+      for (int j = 0; j < C.ncol(); ++j) {
+        EXPECT_DOUBLE_EQ(C(i, j), bound(i, j + 2 + 3));
+      }
+    }
+  }
+
   TEST_F(MatrixTest, RbindTest) {
     Matrix A(2, 3);
     Matrix B(4, 3);
