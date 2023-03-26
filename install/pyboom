@@ -173,3 +173,8 @@ fi
 echo "======================================================================"
 echo "To publish to pypi:"
 echo "twine upload dist/BayesBoom-VERSION.*"
+echo "======================================================================"
+echo "To build manylinux wheel:"
+echo "docker build -t pyboom ."
+echo "docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-*-cp36-cp36m-manylinux2010_x86_64.whl /export/."
+echo "The built wheel will be in /tmp"
