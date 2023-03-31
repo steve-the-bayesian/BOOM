@@ -465,6 +465,16 @@ namespace {
     EXPECT_DOUBLE_EQ(M(3, 2), B(1, 0));
     EXPECT_DOUBLE_EQ(M(3, 3), B(1, 1));
     EXPECT_DOUBLE_EQ(M(3, 4), B(1, 2));
+
+    std::vector<Matrix> blocks = {A, B};
+    Matrix M1 = block_diagonal(blocks);
+    EXPECT_TRUE(MatrixEquals(M, M1));
+
+    Matrix C(7, 3);
+    M = block_diagonal(M, C);
+    blocks.push_back(C);
+    M1 = block_diagonal(blocks);
+    EXPECT_TRUE(MatrixEquals(M, M1));
   }
 
   TEST_F(MatrixTest, InnerProduct) {

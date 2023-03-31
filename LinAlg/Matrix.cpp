@@ -1559,6 +1559,29 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix block_diagonal(const std::vector<Matrix> &blocks) {
+    int nr = 0;
+    int nc = 0;
+    for (const auto &block : blocks) {
+      nr += block.nrow();
+      nc += block.ncol();
+    }
+
+    Matrix ans(nr, nc, 0.0);
+    int row_offset = 0;
+    int col_offset = 0;
+    for (const auto &block : blocks) {
+      for (int i = 0; i < block.nrow(); ++i) {
+        for (int j = 0; j < block.ncol(); ++j) {
+          ans(i + row_offset, j + col_offset) = block(i, j);
+        }
+      }
+      row_offset += block.nrow();
+      col_offset += block.ncol();
+    }
+    return ans;
+  }
+
   // ------------- lower triangular functions --------------
 
   Vector Lmult(const Matrix &L, const Vector &y) {

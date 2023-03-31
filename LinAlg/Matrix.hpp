@@ -561,8 +561,10 @@ namespace BOOM {
   // A      Rect
   // Rect^T B
 
+  // Create a block diagonal matrix from the given blocks.  The blocks need not
+  // be square.
   Matrix block_diagonal(const Matrix &A, const Matrix &B);
-  // A and B both square
+  Matrix block_diagonal(const std::vector<Matrix> &blocks);
 
   //---------------------------------------------------------------------------
   // Routines for lower triangluar matrices.
