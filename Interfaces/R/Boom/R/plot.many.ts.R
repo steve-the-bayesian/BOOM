@@ -78,7 +78,7 @@ PlotManyTs <- function (x, type = "l", gap = 0, boxes = TRUE, truth = NULL,
     nc <- ceiling(nx/nr)
   }
   indx <- thin * (1:floor(nrow(x)/thin))
-  x <- x[indx, ]
+  x <- x[indx, , drop = FALSE]
   nobs <- length(indx)
   if (is.null(color)) {
     color <- rep("black", nx)
