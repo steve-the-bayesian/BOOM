@@ -25,33 +25,63 @@
 
 namespace BOOM {
 
-  // A "multivariate regression" formed by a sequence of independent scalar
-  // regression models.  The models must all have the same predictor dimension,
-  // but are otherwise unconstrained.
-  class IndependentRegressionModels
+  //===========================================================================
+  // A "multivariate GLM" formed by a sequence of independent generalized linear
+  // models.  The models must all have the same predictor dimension, but are
+  // otherwise unconstrained.
+  template <class GLM>
+  class IndependentGlms
       : public CompositeParamPolicy,
         public NullDataPolicy,
         public PriorPolicy,
         public PosteriorModeModel {
    public:
-    IndependentRegressionModels(int xdim, int ydim);
-    IndependentRegressionModels(const IndependentRegressionModels &rhs);
-
-    IndependentRegressionModels *clone() const override {
-      return new IndependentRegressionModels(*this);
+    IndependentGlms(int xdim, int ydim)
+    {
+      models_.reserve(ydim);
+      for (int i = 0; i < ydim; ++i) {
+        NEW(GLM, model)(xdim);
+        ParamPolicy::add_model(model);
+        models_.push_back(model);
+      }
     }
 
-    int xdim() const {return models_[0]->xdim();}
+    IndependentGlms(const IndependentGlms &rhs)
+        : Model(rhs),
+          CompositeParamPolicy(rhs),
+          NullDataPolicy(rhs),
+          PriorPolicy(rhs)
+    {
+      models_.reserve(rhs.ydim());
+      for (int i = 0; i < rhs.models_.size(); ++i) {
+        models_.push_back(rhs.models_[i]->clone());
+        ParamPolicy::add_model(models_.back());
+      }
+    }
+
+    IndependentGlms * clone() const override {
+      return new IndependentGlms(*this);
+    }
+
+    int xdim() const {return models_.empty() ? 0 : models_[0]->xdim();}
     int ydim() const {return models_.size();}
 
-    void clear_data() override;
+    void clear_data() override {
+      DataPolicy::clear_data();
+      for (auto &el : models_) {
+        el->clear_data();
+      }
+    }
 
-    Ptr<RegressionModel> model(int i) {return models_[i];}
-    const Ptr<RegressionModel> model(int i) const {return models_[i];}
+    GLM *model(int i) { return models_[i].get(); }
+    const GLM *model(int i) const { return models_[i].get(); }
 
    private:
-    std::vector<Ptr<RegressionModel>> models_;
+    std::vector<Ptr<GLM>> models_;
   };
+
+  // IndependentRegressionModels needs to be kept here for legacy reasons.
+  using IndependentRegressionModels = IndependentGlms<RegressionModel>;
 
 }  // namespace BOOM
 

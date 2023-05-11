@@ -24,7 +24,8 @@ namespace BayesBoom {
         .def(py::init(
             [](const std::vector<Ptr<BetaBinomialModel>> &components,
                const Ptr<MultinomialModel> &mixing_distribution) {
-              return new BetaBinomialMixtureModel(components, mixing_distribution);
+              return new BetaBinomialMixtureModel(
+                  components, mixing_distribution);
             }),
              py::arg("components"),
              py::arg("mixing_distribution"),

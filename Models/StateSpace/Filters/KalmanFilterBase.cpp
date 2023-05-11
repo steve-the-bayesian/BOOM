@@ -82,6 +82,26 @@ namespace BOOM {
     return ans;
   }
 
+  double KalmanFilterBase::compute_log_likelihood() {
+    if (status_ == NOT_CURRENT) {
+      clear_loglikelihood();
+      // Some optimizers need to compute log likelihood by trying various
+      // combinations of parameter values.  If those parameter values result in
+      // NaN's or Inf's (e.g. because of a negative variance) then code down the
+      // stack will throw an exception.  This function is the right place to
+      // catch that exception and just return negative infinity.
+      try {
+        // If the update() call succeeds it will set the status to CURRENT.
+        update();
+      } catch (...) {
+        log_likelihood_ = negative_infinity();
+        status_ = NOT_CURRENT;
+      }
+    }
+    return log_likelihood_;
+  }
+
+
   void KalmanFilterBase::clear_loglikelihood() {
     log_likelihood_ = 0;
     status_ = NOT_CURRENT;

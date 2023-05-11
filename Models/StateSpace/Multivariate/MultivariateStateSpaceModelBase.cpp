@@ -59,6 +59,7 @@ namespace BOOM {
       report_error("Still need top implement MultivariateStateSpaceModelBase::operator=");
       shared_state_ = rhs.shared_state_;
       state_is_fixed_ = rhs.state_is_fixed_;
+      show_warnings_ = rhs.show_warnings_;
     }
     return *this;
   }
@@ -304,9 +305,10 @@ namespace BOOM {
     if (nrow(shared_state_) != state_dimension() ||
         ncol(shared_state_) != time_dimension()) {
       shared_state_.resize(state_dimension(), time_dimension());
-    }
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      state_model(s)->observe_time_dimension(time_dimension());
+
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_time_dimension(time_dimension());
+      }
     }
   }
 
@@ -433,12 +435,12 @@ namespace BOOM {
     Kalman::ConditionallyIndependentMarginalDistribution &marg(get_filter()[t]);
     // Some syntactic sugar to make later formulas easier to read.  These are
     // bad variable names, but they match the math in Durbin and Koopman.
-    const DiagonalMatrix H = observation_variance(t);
+    const Selector &observed(observed_status(t));
+    const DiagonalMatrix H = observation_variance(t, observed);
     const Vector &v(marg.prediction_error());
 
     Ptr<SparseKalmanMatrix> Finv = marg.sparse_forecast_precision();
-    Ptr<SparseMatrixProduct> K(marg.sparse_kalman_gain(
-        observed_status(t), Finv));
+    Ptr<SparseMatrixProduct> K(marg.sparse_kalman_gain(observed, Finv));
 
     Vector observation_error_mean = H * (*Finv * v - *K * r);
     Vector observation_error_variance =

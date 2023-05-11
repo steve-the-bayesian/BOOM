@@ -113,6 +113,41 @@ class TestIdentityEncoder(unittest.TestCase):
         self.assertTrue(np.allclose(output, encoder2.encode(x)))
 
 
+class TestMissingDummyEncoder(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_numeric(self):
+        base = R.IdentityEncoder("Blah")
+        encoder = R.MissingDummyEncoder(base)
+        self.assertEqual(encoder.variable_name, "Blah")
+
+        x = np.array([1, 2, np.NaN, 3])
+        foo = encoder.encode(x)
+        self.assertEqual(foo.shape, (4, 2))
+        self.assertTrue(np.allclose(foo[:, 0], np.array([0, 0, 1, 0])))
+        self.assertTrue(np.allclose(foo[:, 1], np.array([1, 2, 0, 3])))
+
+        y = np.array([1, 2, 3])
+        bar = encoder.encode(y)
+        self.assertEqual(bar.shape, (3, 2))
+        self.assertTrue(np.allclose(bar[:, 0], np.array([0, 0, 0])))
+        self.assertTrue(np.allclose(bar[:, 1], np.array([1, 2, 3])))
+
+    def test_categorical(self):
+        base = R.EffectEncoder("Stooges", ["Larry", "Moe", "Curly"])
+        encoder = R.MissingDummyEncoder(base)
+        x = np.array(["Larry", "Curly", np.NaN, "Moe"], dtype=object)
+        foo = encoder.encode(x)
+        self.assertEqual(foo.shape, (4, 3))
+        self.assertTrue(np.allclose(
+            foo,
+            np.array([[0, 1, 0],
+                      [0, -1, -1],
+                      [1, 0, 0],
+                      [0, 0, 1]])))
+
+
 class TestSuccessEncoder(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)

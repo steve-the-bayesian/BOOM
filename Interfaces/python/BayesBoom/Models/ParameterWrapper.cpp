@@ -64,7 +64,8 @@ namespace BayesBoom {
              "Create an SpdParams from a variance or precision matrix.\n\n"
              "Args:\n"
              "  V: SpdMatrix.  The initial value of the parameter.\n"
-             "  ivar:  If True then V is a precision matrix.  If False then V is a variance.")
+             "  ivar:  If True then V is a precision matrix.  If False then "
+             "V is a variance.")
         .def("set_var",
              [](SpdParams &prm, const SpdMatrix &value) {
                prm.set_var(value);

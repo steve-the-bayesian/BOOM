@@ -24,9 +24,10 @@
 
 namespace BOOM {
 
-  // A posterior sampler for IndependentRegressionModels.  All work is deferred
-  // to the posterior samplers assigned to the subordinate models.
-  class IndependentRegressionModelsPosteriorSampler
+  // All work is deferred to the posterior samplers assigned to the subordinate
+  // models.
+  template <class GLM>
+  class IndependentGlmsPosteriorSampler
       : public PosteriorSampler {
    public:
     // Args:
@@ -34,8 +35,8 @@ namespace BOOM {
     //     its own posterior samplers assigned.
     //   seeding_rng: The random number generator used to seed the RNG owned by
     //     this posterior sampler.
-    explicit IndependentRegressionModelsPosteriorSampler(
-        IndependentRegressionModels *model,
+    explicit IndependentGlmsPosteriorSampler(
+        IndependentGlms<GLM> *model,
         RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
           model_(model)
@@ -71,8 +72,12 @@ namespace BOOM {
     }
 
    private:
-    IndependentRegressionModels *model_;
+    IndependentGlms<GLM> *model_;
   };
+
+  // The special case of GLM == RegressionModel is needed for legacy reasons.
+  using IndependentRegressionModelsPosteriorSampler
+  = IndependentGlmsPosteriorSampler<RegressionModel>;
 
 }  // namespace BOOM
 

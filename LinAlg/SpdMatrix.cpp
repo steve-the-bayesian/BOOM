@@ -72,7 +72,9 @@ namespace BOOM {
 
   SpdMatrix::SpdMatrix(const Matrix &A, bool check) : Matrix(A) {
     if (check) {
-      double d = A.distance_from_symmetry();
+      double d;
+      uint imax, jmax;
+      std::tie(d, imax, jmax) = A.distance_from_symmetry();
       if (d > .5) {
         std::ostringstream err;
         err << "Non-symmetric matrix passed to SpdMatrix constructor."
@@ -126,7 +128,9 @@ namespace BOOM {
   }
 
   SpdMatrix &SpdMatrix::operator=(const Matrix &rhs) {
-    double d = rhs.distance_from_symmetry();
+    double d;
+    uint imax, jmax;
+    std::tie(d, imax, jmax) = rhs.distance_from_symmetry();
     if (d > .5) {
       report_error("Argument to SpdMatrix is non-symmetric.");
     }

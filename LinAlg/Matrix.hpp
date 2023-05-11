@@ -20,6 +20,7 @@
 #define BOOM_NEWLA_MATRIX_HPP
 #include <iosfwd>
 #include <vector>
+#include <tuple>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 
@@ -110,7 +111,7 @@ namespace BOOM {
     // relative to the average absolute magnitude of the elements in the matrix.
     // The distance is taken to be zero if all elements are zero, and infinity
     // if the matrix is not square.
-    double distance_from_symmetry() const;
+    std::tuple<double, uint, uint> distance_from_symmetry() const;
     bool is_sym(double tol = 1.0e-4) const;
     bool same_dim(const Matrix &A) const;
     bool is_square() const;
@@ -501,6 +502,13 @@ namespace BOOM {
   Matrix matmultT(const Matrix &A, const Matrix &B);  // A B^T
   Vector matmult(const Vector &v, const Matrix &m);   // v^T m
   Vector matmult(const Matrix &m, const Vector &v);   // m * v
+
+  // The distance from A to B defined as |a-b| /2(|a| + |b|), element-wise, max
+  // over elements.
+  double relative_distance(const Matrix &A, const Matrix &B);
+
+  // As above, but i, j return the indices of the max element.
+  double relative_distance(const Matrix &A, const Matrix &B, int &i, int &j);
 
   //    Vector operator*(const Vector &v, const Matrix &m);
   Vector operator*(const Vector &v, const Matrix &m);

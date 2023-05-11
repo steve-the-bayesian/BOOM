@@ -37,15 +37,13 @@ namespace BOOM {
     return err.str();
   }
 
-  namespace {
-    bool covers(const ConstVectorView &draws, double value, double confidence) {
-      double alpha = 1 - confidence;
-      Vector sorted = sort(draws);
-      double lower = sorted_vector_quantile(sorted, alpha / 2);
-      double upper = sorted_vector_quantile(sorted, 1 - (alpha / 2));
-      return value >= lower && value <= upper;
-    }
-  }  // namespace
+  bool covers(const ConstVectorView &draws, double value, double confidence) {
+    double alpha = 1 - confidence;
+    Vector sorted = sort(draws);
+    double lower = sorted_vector_quantile(sorted, alpha / 2);
+    double upper = sorted_vector_quantile(sorted, 1 - (alpha / 2));
+    return value >= lower && value <= upper;
+  }
 
   CheckMatrixStatus CheckMcmcMatrix(
       const Matrix &draws,
@@ -90,47 +88,6 @@ namespace BOOM {
     return status;
   }
 
-  std::string CheckStochasticProcess(const Matrix &draws,
-                                     const Vector &truth,
-                                     double confidence,
-                                     double sd_ratio_threshold,
-                                     double coverage_fraction,
-                                     const std::string &filename) {
-    ostringstream err;
-    Matrix centered_draws = draws;
-    double number_covering = 0;
-    for (int i = 0; i < ncol(centered_draws); ++i) {
-      centered_draws.col(i) -= truth[i];
-      number_covering += covers(draws.col(i), truth[i], confidence);
-    }
-    number_covering /=  ncol(draws);
-    if (number_covering < coverage_fraction) {
-      err << "fewer than half the intervals covered the true value.  "
-          << "Coverage fraction = " << number_covering << "."
-          << std::endl;
-    }
-
-    Vector means = mean(centered_draws);
-    double truth_sd = sd(truth);
-    double residual_sd = sd(means);
-
-    if (residual_sd / truth_sd > sd_ratio_threshold) {
-      err << "The standard deviation of the centered draws (centered "
-          << "around true values) is " << residual_sd << ". \n"
-          << "The standard deviation of the true function is "
-          << truth_sd << ".\n"
-          << "The ratio is " << residual_sd / truth_sd
-          << " which exceeds the testing threshold of "
-          << sd_ratio_threshold << "." << std::endl;
-    }
-
-    std::string ans = err.str();
-    if (ans != "") {
-      std::ofstream error_file(filename);
-      error_file << truth << std::endl << draws;
-    }
-    return ans;
-  }
 
 
   std::string CheckWithinRage(const Matrix &draws, const Vector &lo,

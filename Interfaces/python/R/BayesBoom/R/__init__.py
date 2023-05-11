@@ -53,6 +53,7 @@ from .encoding import (
     OneHotEncoder,
     IdentityEncoder,
     InteractionEncoder,
+    MissingDummyEncoder,
     SuccessEncoder,
     SuccessEncoderJsonEncoder,
     SuccessEncoderJsonDecoder,

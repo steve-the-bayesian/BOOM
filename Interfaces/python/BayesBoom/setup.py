@@ -3,7 +3,6 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 from glob import glob
-import distutils.ccompiler
 
 # Bump the major version when making backwards incompatible changes.
 MAJOR = 0
@@ -12,7 +11,7 @@ MAJOR = 0
 MINOR = 1
 
 # Bump the patch version when making bug fixes.
-PATCH = 8
+PATCH = 11
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -301,7 +300,7 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
 
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
     # parallel code
-    nthreads = 16  # number of parallel compilations
+    nthreads = 64  # number of parallel compilations
     import multiprocessing.pool
 
     def _single_compile(obj):
@@ -323,7 +322,7 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
     return objects
 
 
-distutils.ccompiler.CCompiler.compile = parallelCCompile
+setuptools.distutils.ccompiler.CCompiler.compile = parallelCCompile
 # End of parallel compile "monkey patch"
 # ---------------------------------------------------------------------------
 
@@ -336,7 +335,6 @@ ext_modules = [
         '_boom',
         sources=boom_sources,
         depends=boom_headers,
-        headers=boom_headers,
         include_dirs=[
             "./BayesBoom/boom",
             # Path to pybind11 headers

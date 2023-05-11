@@ -239,12 +239,20 @@ namespace BOOM {
   uint Matrix::nrow() const { return nr_; }
   uint Matrix::ncol() const { return nc_; }
 
-  double Matrix::distance_from_symmetry() const {
-    if (nr_ != nc_) return infinity();
+  std::tuple<double, uint, uint> Matrix::distance_from_symmetry() const {
+    if (nr_ != nc_) {
+      return std::tuple<double, uint, uint>(infinity(), 0, 0);
+    }
     double num = 0, denom = 0;
+    uint imax = 0, jmax = 0;
     for (uint i = 0; i < nr_; ++i) {
       for (uint j = 0; j < i; ++j) {
-        num = std::max<double>(num, fabs(unchecked(i, j) - unchecked(j, i)));
+        double crit = fabs(unchecked(i, j) - unchecked(j, i));
+        if (crit > num) {
+          num = crit;
+          imax = i;
+          jmax = j;
+        }
         denom += fabs(unchecked(i, j)) + fabs(unchecked(j, i));
       }
       // Include the diagonal when figuring the average size of the matrix
@@ -256,13 +264,42 @@ namespace BOOM {
     // The denominator can't be less than zero, but I don't want actual equality
     // here.
     if (denom <= 0.0) {
-      return 0;
+      return std::tuple<double, uint, uint>(0.0, 0, 0);
     }
-    return num / denom;
+    return std::tuple<double, uint, uint>(num / denom, imax, jmax);
+  }
+
+  double relative_distance(const Matrix &A, const Matrix &B, int &imax, int &jmax) {
+    if (A.nrow() != B.nrow() || A.ncol() != B.ncol()) {
+      return infinity();
+    }
+    imax = jmax = -1;
+    double max_distance = negative_infinity();
+    for (int i = 0; i < A.nrow(); ++i) {
+      for (int j = 0; j < A.ncol(); ++j) {
+        double num = fabs(A(i, j) - B(i, j));
+        double denom = fabs(A(i, j)) + fabs(B(i, j));
+        double crit = denom <= 0 ? 0.0 : .5 * num / denom;
+        if (crit > max_distance) {
+          imax = i;
+          jmax = j;
+          max_distance = crit;
+        }
+      }
+    }
+    return max_distance;
+  }
+
+  double relative_distance(const Matrix &A, const Matrix &B) {
+    int imax = -1, jmax = -1;
+    return relative_distance(A, B, imax, jmax);
   }
 
   bool Matrix::is_sym(double tol) const {
-    return distance_from_symmetry() < tol;
+    double dist;
+    uint imax, jmax;
+    std::tie(dist, imax, jmax) = distance_from_symmetry();
+    return dist < tol;
   }
 
   bool Matrix::same_dim(const Matrix &A) const {

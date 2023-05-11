@@ -383,6 +383,69 @@ register_encoding_json_encoder(
 
 
 # ===========================================================================
+class MissingDummyEncoder(MainEffectEncoder):
+    def __init__(self, base_encoder: MainEffectEncoder):
+        self._base = base_encoder
+
+    @property
+    def dim(self):
+        return self._base.dim + 1
+
+    def encode(self, x):
+        """
+        X is a numpy array of dtype either 'float' or 'object'.  If x is float then
+        """
+        missing = pd.isna(x)
+        sample_size = len(x)
+        ans = np.zeros((sample_size, self.dim))
+        ans[~missing, 1:] = self._base.encode(x[~missing])
+        ans[missing, 0] = 1
+        return ans
+
+    @property
+    def variable_name(self):
+        return self._base.variable_name
+
+    @property
+    def required_variables(self):
+        return self._base.required_variables
+
+    def encodes(self, vname):
+        return self._base.encodes(vname)
+
+    @property
+    def encoded_variable_names(self):
+        return ["Missing Dummy for " +
+                self.variable_name] + self._base.encoded_variable_names
+
+
+class MissingDummyEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        base_encoder = MainEffectEncoderJsonEncoder()
+        payload = {
+            "base": base_encoder.default(obj._base)
+        }
+        return payload
+
+
+class MissingDummyEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        base_decoder = MainEffectEncoderJsonDecoder()
+        return MissingDummyEncoder(base_decoder.decode_from_dict(
+            payload["base"]))
+
+
+register_encoding_json_encoder(
+    "MissingDummyEncoder",
+    MissingDummyEncoderJsonEncoder,
+    MissingDummyEncoderJsonDecoder)
+
+
+# ===========================================================================
 class SuccessEncoder(MainEffectEncoder):
     def __init__(self, variable_name, success_values):
         """
@@ -500,6 +563,8 @@ class InteractionEncoder(Encoder):
     def encodes(self, vname):
         return self._encoder1.encodes(vname) or self._encoder2.encodes(vname)
 
+    def __repr__(self):
+        return f"Interaction between {self._encoder1} and {self._encoder2}."
 
 class InteractionEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -632,6 +697,11 @@ class DatasetEncoder(Encoder):
             start += enc.dim
         return affected_indices, main_effect_indices
 
+    def __repr__(self):
+        ans = "A DatasetEncoder managing: \n"
+        for enc in self._encoders:
+            ans += str(enc) + "\n"
+        return ans
 
 class DatasetEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):

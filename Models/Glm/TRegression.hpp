@@ -21,6 +21,7 @@
 #define BOOM_T_REGRESSION_HPP
 
 #include "Models/Glm/Glm.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/ParamPolicy_3.hpp"
@@ -35,9 +36,10 @@ namespace BOOM {
         public ParamPolicy_3<GlmCoefs, UnivParams, UnivParams>,
         public IID_DataPolicy<RegressionData>,
         public PriorPolicy,
-        public NumOptModel {
+        public NumOptModel
+  {
    public:
-    explicit TRegressionModel(uint p);  // dimension of beta
+    explicit TRegressionModel(uint xdim);  // dimension of beta
     TRegressionModel(const Vector &b, double Sigma, double nu = 30);
     TRegressionModel(const Matrix &X, const Vector &y);
     TRegressionModel *clone() const override;
@@ -58,6 +60,17 @@ namespace BOOM {
 
     const double &nu() const;
     void set_nu(double Nu);
+
+    // The variance of the T distribution with 'nu' degrees of freedom and
+    // scatter parameter 'sigma'.
+    double residual_variance() const {
+      double nu = this->nu();
+      if (nu > 2.0) {
+        return sigsq() * nu / (nu - 2.0);
+      } else {
+        return infinity();
+      }
+    }
 
     // The argument to Loglike is a vector containing the included
     // regression coefficients, followed by the residual 'dispersion'
@@ -97,6 +110,97 @@ namespace BOOM {
     // Return the observed data log likelihood given the new
     // parameters.
     double MStep(const WeightedRegSuf &suf);
+  };
+
+  //===========================================================================
+  // A TRegressionModel that is an explicit mixture of normals.
+
+  class CompleteDataStudentRegressionModel
+      : public TRegressionModel,
+        public LatentVariableModel {
+   public:
+    explicit CompleteDataStudentRegressionModel(int xdim)
+        : TRegressionModel(xdim),
+          suf_(new WeightedRegSuf(xdim)),
+          latent_data_disabled_(false)
+    {}
+
+    CompleteDataStudentRegressionModel(
+        const CompleteDataStudentRegressionModel &rhs);
+    CompleteDataStudentRegressionModel(
+        CompleteDataStudentRegressionModel &&rhs) = default;
+    CompleteDataStudentRegressionModel &operator=(
+        CompleteDataStudentRegressionModel &&rhs) = default;
+
+    CompleteDataStudentRegressionModel * clone() const override;
+
+    void clear_data() override {
+      TRegressionModel::clear_data();
+      suf_->clear();
+      weights_.clear();
+    }
+
+    void add_data(double y, const Vector &x, double weight) {
+      suf_->add_data(x, y, weight);
+      weights_.push_back(weight);
+    }
+
+    void add_data(const Ptr<Data> &dp) override {
+      Ptr<RegressionData> reg_data = dp.dcast<RegressionData>();
+      add_data(reg_data);
+    }
+
+    void add_data(const Ptr<RegressionData> &dp, double weight) {
+      suf_->add_data(dp->x(), dp->y(), weight);
+      weights_.push_back(weight);
+      DataPolicy::add_data(dp);
+    }
+
+    void add_data(RegressionData *dp) override {
+      add_data(Ptr<RegressionData>(dp));
+    }
+
+    void add_data(const Ptr<RegressionData> &dp) override {
+      TRegressionModel::add_data(dp);
+      weights_.push_back(1.0);
+      suf_->add_data(dp->x(), dp->y(), weights_.back());
+    }
+
+    void remove_data(const Ptr<Data> &dp) override {
+      auto it = std::find(dat().begin(), dat().end(), dp);
+      if (it != dat().end()) {
+        int index = it - dat().begin();
+        double weight = weights_[index];
+        weights_.erase(weights_.begin() + index);
+        Ptr<RegressionData> regression_data = dp.dcast<RegressionData>();
+        suf_->remove_data(regression_data->x(), regression_data->y(), weight);
+      }
+    }
+
+    void set_weight(size_t i, double value) {
+      weights_[i] = value;
+    }
+    double weight(size_t i) const {return weights_[i];}
+
+    WeightedRegSuf *suf() {return suf_.get();}
+    const Ptr<WeightedRegSuf> &suf() const {return suf_;}
+
+    void impute_latent_data(RNG &rng) override;
+
+    // Calling this function changes impute_latent_data() into a no-op.  This
+    // can be desirable if this model is used as a building block in a larger
+    // model that wishes to take on the responsibility of imputing the latent
+    // variables.
+    void disable_imputation(bool disabled = true) {
+      latent_data_disabled_ = disabled;
+    }
+
+    bool latent_data_disabled() const {return latent_data_disabled_;}
+
+   private:
+    Ptr<WeightedRegSuf> suf_;
+    Vector weights_;
+    bool latent_data_disabled_;
   };
 
 }  // namespace BOOM

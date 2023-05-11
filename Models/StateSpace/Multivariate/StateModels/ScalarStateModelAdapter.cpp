@@ -174,4 +174,22 @@ namespace BOOM {
     }
   }
 
+  std::string ScalarRegressionSuf::print() const {
+    std::ostringstream out;
+    print(out);
+    return out.str();
+  }
+
+  std::ostream & ScalarRegressionSuf::print(std::ostream &out) const {
+    out << "n = " << count_ << "\n"
+        << "xtx = " << xtx_ << "\n"
+        << "xty = " << xty_ << "\n"
+        << "yty = " << yty_ << "\n";
+    return out;
+  }
+
+  std::ostream & operator<<(std::ostream &out, const ScalarRegressionSuf &suf) {
+    return suf.print(out);
+  }
+
 } // namespace BOOM

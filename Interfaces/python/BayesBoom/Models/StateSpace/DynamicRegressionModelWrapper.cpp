@@ -53,7 +53,8 @@ namespace BayesBoom {
 
     py::class_<DynamicRegressionModel,
                PriorPolicy,
-               BOOM::Ptr<DynamicRegressionModel>>(boom, "DynamicRegressionModel")
+               BOOM::Ptr<DynamicRegressionModel>>(
+                   boom, "DynamicRegressionModel")
         .def(py::init<int>(),
              py::arg("xdim"),
              "Args:\n"
@@ -306,11 +307,12 @@ namespace BayesBoom {
              "Draw the residual variance parameter.")
         .def("draw_inclusion_indicators",
              &DRDGS::draw_inclusion_indicators,
-             "Simulate the vector of inclusion indicators at each time point.")
+             "Simulate the vector of inclusion indicators at each time "
+             "point.")
         .def("draw_unscaled_state_innovation_variance",
              &DRDGS::draw_unscaled_state_innovation_variance,
-             "Simulate the state innovation error variances, up to the residual "
-             "variance proportionality constant")
+             "Simulate the state innovation error variances, up to the residual"
+             " variance proportionality constant")
         .def("draw_transition_probabilities",
              &DRDGS::draw_transition_probabilities,
              "Simulate the Markov chain transition probabilities.")

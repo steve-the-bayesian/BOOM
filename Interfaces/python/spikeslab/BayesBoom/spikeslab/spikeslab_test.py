@@ -148,7 +148,7 @@ class BigAssSpikeSlabTest(unittest.TestCase):
         model.initial_screen()
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa
@@ -161,8 +161,8 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = BigAssSpikeSlabTest()
-
+#    rig = BigAssSpikeSlabTest()
+    rig = SpikeSlabTest()
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):

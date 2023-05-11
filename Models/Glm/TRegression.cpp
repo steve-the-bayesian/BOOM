@@ -253,4 +253,25 @@ namespace BOOM {
     return d;
   }
 
+  //===========================================================================
+  namespace {
+    using CDSRM = CompleteDataStudentRegressionModel;
+  }  // namespace
+
+  CDSRM::CompleteDataStudentRegressionModel(
+      const CompleteDataStudentRegressionModel &rhs):
+      Model(rhs),
+      TRegressionModel(rhs),
+      suf_(rhs.suf_->clone()),
+      weights_(rhs.weights_),
+      latent_data_disabled_(rhs.latent_data_disabled_)
+  {}
+
+  CompleteDataStudentRegressionModel * CDSRM::clone() const {
+    return new CompleteDataStudentRegressionModel(*this);
+  }
+
+  void CompleteDataStudentRegressionModel::impute_latent_data(RNG &rng) {
+  }
+
 }  // namespace BOOM

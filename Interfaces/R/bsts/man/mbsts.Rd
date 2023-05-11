@@ -273,7 +273,7 @@ opar <- par(mfrow=c(nfactors,1), mar=c(0, 4, 0, 4), omi=rep(.25, 4))
 burn <- 10
 for(j in 1:nfactors) {
   BoxplotTrue(model$shared.local.level.coefficients[-(1:burn), j, ],
-    t(observation.coefficients[, j]), axes=F, truth.color="blue")
+    t(observation.coefficients)[, j], axes=F, truth.color="blue")
   abline(h=0, lty=3)
   box()
   axis(2)

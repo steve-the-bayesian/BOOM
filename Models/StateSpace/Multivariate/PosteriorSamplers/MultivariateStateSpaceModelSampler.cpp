@@ -43,7 +43,6 @@ namespace BOOM {
     if (!latent_data_initialized_) {
       model_->impute_state(rng());
       latent_data_initialized_ = true;
-      impute_nonstate_latent_data();
     }
     model_->observation_model()->sample_posterior();
     for (int s = 0; s < model_->number_of_state_models(); ++s) {
@@ -54,7 +53,6 @@ namespace BOOM {
     // state models are updated when calling impute_state.  The non-state latent
     // data should be imputed immediately before that, so the complete data
     // sufficient statistics reflect all the latent data correctly.
-    impute_nonstate_latent_data();
     model_->impute_state(rng());
     // End with a call to impute_state() so that the internal state of
     // the Kalman filter matches up with the parameter draws.

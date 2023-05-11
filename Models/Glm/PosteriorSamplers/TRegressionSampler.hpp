@@ -105,13 +105,48 @@ namespace BOOM {
     GenericGaussianVarianceSampler sigsq_sampler_;
     TDataImputer data_imputer_;
 
-    // nu_sampler_ draws a value of nu given beta and sigma, but not
-    // given the latent data.
+    // Draws a value of nu given beta and sigma, but not given the latent data.
     ScalarSliceSampler nu_observed_data_sampler_;
 
+    // Draws a value of nu given beta, sigma, and complete data.  This is mainly
+    // kept for education purposes, to show how slow this approach can be.
     ScalarSliceSampler nu_complete_data_sampler_;
 
     bool latent_data_is_fixed_;
+  };
+
+
+  //===========================================================================
+
+  class CompleteDataStudentRegressionPosteriorSampler
+      : public PosteriorSampler {
+   public:
+    CompleteDataStudentRegressionPosteriorSampler(
+        CompleteDataStudentRegressionModel *model,
+        const Ptr<MvnBase> &coefficient_prior,
+        const Ptr<GammaModelBase> &residual_precision_prior,
+        const Ptr<DoubleModel> &tail_thickness_prior,
+        RNG &seeding_rng = GlobalRng::rng);
+
+    void draw() override;
+    double logpri() const override;
+
+    void draw_beta_full_conditional();
+    void draw_sigsq_full_conditional();
+    void draw_nu_given_observed_data();
+
+    void set_sigma_upper_limit(double max_sigma) {
+      sigsq_sampler_.set_sigma_max(max_sigma);
+    }
+
+   private:
+    CompleteDataStudentRegressionModel *model_;
+    Ptr<MvnBase> coefficient_prior_;
+    Ptr<GammaModelBase> residual_precision_prior_;
+    Ptr<DoubleModel> tail_thickness_prior_;
+
+    GenericGaussianVarianceSampler sigsq_sampler_;
+    ScalarSliceSampler nu_observed_data_sampler_;
   };
 
 }  // namespace BOOM

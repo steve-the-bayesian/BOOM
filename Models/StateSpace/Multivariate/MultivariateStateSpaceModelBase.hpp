@@ -67,6 +67,7 @@ namespace BOOM {
    public:
     MultivariateStateSpaceModelBase()
         : state_is_fixed_(false),
+          show_warnings_(true),
           observation_model_parameter_size_(-1)
     {}
 
@@ -249,6 +250,9 @@ namespace BOOM {
     }
 
     const Matrix &shared_state() const { return shared_state_; }
+    void set_shared_state(const Matrix &shared_state) {
+      shared_state_ = shared_state;
+    }
 
     ConstVectorView shared_state(int t) const {return shared_state().col(t);}
 
@@ -359,6 +363,11 @@ namespace BOOM {
     ConstVectorView observation_parameter_component(
         const Vector &model_parameters) const;
 
+    bool show_warnings() const {return show_warnings_;}
+    void show_warnings(bool should_warnings_be_shown) {
+      show_warnings_ = should_warnings_be_shown;
+    }
+
    protected:
     // Access to the state model vector owned by descendents.
     using StateModelVectorBase = StateSpaceUtils::StateModelVectorBase;
@@ -395,6 +404,10 @@ namespace BOOM {
     void clear_client_data();
     void observe_fixed_state();
 
+    // Ensure that shared_state_ has state_dimension() rows and time_dimension()
+    // columns.
+    void resize_state();
+
    private:
     // Implementation for impute_state.
     void simulate_initial_state(RNG &rng, VectorView initial_state) const;
@@ -403,12 +416,6 @@ namespace BOOM {
     void simulate_forward(RNG &rng);
     void propagate_disturbances(RNG &rng);
 
-    // If observation t is not fully observed, impute its missing values.  This
-    // is a full imputation, including regression and series-level state model
-    // effects.
-    virtual void impute_missing_observations(int t, RNG &rng) = 0;
-
-    void resize_state();
 
     // Simulate a fake observation to use as part of the Durbin-Koopman state
     // simulation algorithm.  If observed_status(t) is less than fully observed,
@@ -417,6 +424,8 @@ namespace BOOM {
 
     Matrix shared_state_;
     bool state_is_fixed_;
+
+    bool show_warnings_;
 
     mutable int observation_model_parameter_size_;
   };
@@ -487,6 +496,17 @@ namespace BOOM {
       return ans;
     }
 
+    // Args:
+    //   t:  The index of a time point.
+    //   dim:  The index of a specific time series.
+    //
+    // Returns:
+    //   The residual variance of the specified time series at the requested
+    //   time point.  If the concrete model is a mixture of Gaussians, then the
+    //   returned variance is conditional on the latent mixing variables.
+    //
+    // This method is needed to implement proxy models that handle
+    // series-specific state.
     virtual double single_observation_variance(int t, int dim) const = 0;
 
     //---------------- Prediction, filtering, smoothing ---------------
@@ -506,6 +526,13 @@ namespace BOOM {
                                   bool save_state_distributions,
                                   bool update_sufficient_statistics,
                                   Vector *gradient);
+
+    // For models that have a "sigma_squared" parameter (like Gaussian and
+    // Student T), the return value is a series-specific sigma squared's.
+    //
+    // For models that don't have natural scale parameters (e.g. Poisson, logit,
+    // probit), the return value is a vector of 1's.
+    virtual Vector observation_variance_parameter_values() const = 0;
 
     // Update the complete data sufficient statistics for the observation model
     // based on the posterior distribution of the observation model error term

@@ -29,4 +29,4 @@ namespace BOOM{
   typedef int64_t Int;
 }  // namespace BOOM
 
-#endif
+#endif  // BOOM_UINT_HPP

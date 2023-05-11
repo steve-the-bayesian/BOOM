@@ -171,11 +171,13 @@ namespace BOOM {
       ConditionallyIndependentSharedLocalLevelStateModel *model,
       const std::vector<Ptr<MvnBase>> &slabs,
       const std::vector<Ptr<VariableSelectionPrior>> &spikes,
+      const std::vector<Ptr<UnivParams>> &sigsq,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         slabs_(slabs),
-        spikes_(spikes)
+        spikes_(spikes),
+        sigsq_(sigsq)
   {
     check_spikes(spikes, model->nseries(), model->state_dimension());
     check_slabs(slabs, model->nseries(), model->state_dimension());
@@ -193,7 +195,7 @@ namespace BOOM {
 
   void CindSLLPS::draw() {
     for (int i = 0; i < model_->nseries(); ++i) {
-      double sigsq = model_->host()->single_observation_variance(0, i);
+      double sigsq = sigsq_[i]->value();
       Selector inc = model_->raw_observation_coefficients(i)->inc();
       samplers_[i].draw_inclusion_indicators(
           rng(), inc, *model_->suf(i), sigsq);
