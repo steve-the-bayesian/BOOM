@@ -3,6 +3,7 @@
 #include "test_utils/test_utils.hpp"
 
 #include "Models/StateSpace/Multivariate/tests/student_regression_framework.hpp"
+#include "Models/StateSpace/Multivariate/tests/student_mcmc_storage.hpp"
 
 #include "cpputil/math_utils.hpp"
 
@@ -27,6 +28,12 @@
 #include "distributions.hpp"
 #include "LinAlg/Array.hpp"
 
+template <class OBJECT>
+void save_to_file(const std::string &filename, const OBJECT &object) {
+  std::ofstream out(filename);
+  out << object;
+}
+
 namespace BoomStateSpaceTesting {
 
   using namespace BOOM;
@@ -43,327 +50,11 @@ namespace BoomStateSpaceTesting {
     }
   };
 
-  void reorder_state_contribution(
-      const Matrix &input,
-      std::vector<Matrix> &output,
-      int iteration) {
-    int nseries = input.nrow();
-    for (int series = 0; series < nseries; ++series) {
-      output[series].row(iteration) = input.row(series);
-    }
-  }
-
   //===========================================================================
-  template <class MULTIVARIATE_MODEL>
-  std::vector<Vector> gather_state_specific_final_state(
-      const MULTIVARIATE_MODEL &model) {
-    std::vector<Vector> ans(model.nseries());
-    int last_time = model.time_dimension() - 1;
-    if (last_time > 0) {
-      for (int i = 0; i < ans.size(); ++i) {
-        if (model.series_specific_model(i)->state_dimension() > 0) {
-          ans[i] = model.series_specific_model(i)->state().col(last_time);
-        }
-      }
-    }
-    return ans;
-  }
-
-  //===========================================================================
-  class McmcStorage {
-   public:
-
-    // Args:
-    //   prefix: A string identifying the test case being run.  This will be
-    //     prepended to the names of the output files to keep output from one
-    //     test case from overwriting another.
-    McmcStorage(const std::string &prefix)
-        : prefix_(prefix)
-    {}
-
-    // Allocate space to store a specifiec number of iterations.
-    //
-    // Args:
-    //   niter:  The number of MCMC iterations to allocate.
-    //   nseries:  The number of time series in the model.
-    //   xdim:  The number of predictor variables in the regression.
-    //   sample_size:  The number of time points in the training data.
-    //   test_size:  The number of time points in the holdout data.
-    //   nfactors:  The number of factors in the local level state model.
-    //   nseasons: The number of seasons in the seasonal component of the model,
-    //     if there is one.  If nseasons < 2 then no space for seasonal output
-    //     will be allocated.
-    void allocate(int niter,
-                  int nseries,
-                  int xdim,
-                  int sample_size,
-                  int test_size,
-                  int nfactors,
-                  int nseasons) {
-      factor_draws_ = std::vector<Matrix>(nfactors, Matrix(
-          niter, sample_size));
-      trend_contribution_draws_ = std::vector<Matrix>(
-          nseries, Matrix(niter, sample_size));
-      if (nseasons > 1) {
-        seasonal_contribution_draws_ = std::vector<Matrix>(
-            nseries, Matrix(niter, sample_size));
-      }
-
-      prediction_draws_ = Array(std::vector<int>{
-          niter, nseries, test_size});
-
-      int trend_dim = nfactors;
-      int seasonal_dim = 0;
-      if (nseasons > 1) {
-        seasonal_dim = nfactors * (nseasons - 1);
-      }
-      int state_dim = trend_dim + seasonal_dim;
-
-      observation_coefficient_draws_ = Array(
-          std::vector<int>{niter, nseries, state_dim});
-      regression_coefficient_draws_ = Array(
-          std::vector<int>{niter, nseries, xdim});
-      residual_sd_draws_ = Matrix(niter, nseries);
-      tail_thickness_draws_ = Matrix(niter, nseries);
-      trend_innovation_sd_draws_ = Matrix(niter, nfactors);
-      fully_observed_ = Selector(nseries, true);
-    }
-
-    //---------------------------------------------------------------------------
-    // The number of factors in the local level state model.
-    int nfactors() const {
-      return factor_draws_.size();
-    }
-
-    //---------------------------------------------------------------------------
-    // The number of time series in the model.
-    int nseries() const {
-      return fully_observed_.nvars_possible();
-    }
-
-    //---------------------------------------------------------------------------
-    // The number of time points in the training data.
-    int sample_size() const {
-      if (factor_draws_.empty()) {
-        return 0;
-      } else {
-        return factor_draws_[0].ncol();
-      }
-    }
-
-    //---------------------------------------------------------------------------
-    // The number of time points in the holdout data.
-    int test_size() const {
-      return prediction_draws_.empty() ? 0 : prediction_draws_.dim(2);
-    }
-
-    //---------------------------------------------------------------------------
-    // Store the results of the most recent MCMC draw.
-    //
-    // Args:
-    //   model:  The model containing the values to be stored.
-    //   iteration:  The iteration number being stored.
-    void store_mcmc(
-        const StudentMvssRegressionModel *model,
-        const ConditionallyIndependentSharedLocalLevelStateModel *trend_model,
-        const SharedSeasonalStateModel *seasonal_model,
-        int iteration) {
-      reorder_state_contribution(model->state_contributions(0),
-                                 trend_contribution_draws_,
-                                 iteration);
-      if (model->number_of_state_models() > 1) {
-        reorder_state_contribution(model->state_contributions(1),
-                                   seasonal_contribution_draws_,
-                                   iteration);
-      }
-
-      for (int factor = 0; factor < nfactors(); ++factor) {
-        factor_draws_[factor].row(iteration) = model->shared_state().row(factor);
-      }
-
-      Matrix Z = model->observation_coefficients(0, fully_observed_)->dense();
-      observation_coefficient_draws_.slice(iteration, -1, -1) = Z;
-      for (int series = 0; series < model->nseries(); ++series) {
-        residual_sd_draws_(iteration, series) =
-            model->observation_model()->model(series)->sigma();
-        tail_thickness_draws_(iteration, series) =
-            model->observation_model()->model(series)->nu();
-        regression_coefficient_draws_.slice(iteration, series, -1) =
-            model->observation_model()->model(series)->Beta();
-      }
-
-      for (int factor = 0; factor < nfactors(); ++factor) {
-        trend_innovation_sd_draws_(iteration, factor) =
-            trend_model->innovation_model(factor)->sd();
-      }
-    }
-
-    //---------------------------------------------------------------------------
-    // Store a draw from the posterior predictive distribution.
-    // Args:
-    //   model:  The model making the prediction.
-    //   iteration:  The iteration number indexing the draw to be stored.
-    //   test_predictors:  The X variables where the prediction is to be made.
-    //   rng: A random number generator used to drive the draw from the
-    //     posterior predictive distribution.
-    void store_prediction(StudentMvssRegressionModel *model,
-                          int iteration,
-                          const Matrix test_predictors,
-                          RNG &rng) {
-        prediction_draws_.slice(iteration, -1, -1) = model->simulate_forecast(
-            rng,
-            test_predictors,
-            model->shared_state().last_col(),
-            gather_state_specific_final_state(*model));
-    }
-
-    //---------------------------------------------------------------------------
-    void test_residual_sd(const Vector &residual_sd_vector) {
-      std::ofstream(prefix_ + "residual_sd.draws") << residual_sd_vector << "\n"
-                                                   << residual_sd_draws_;
-      double confidence = .99;
-      bool control_multiple_comparisons = true;
-      auto status = CheckMcmcMatrix(residual_sd_draws_, residual_sd_vector,
-                                    confidence, control_multiple_comparisons);
-      EXPECT_TRUE(status.ok) << "Problem with residual sd draws." << status;
-    }
-
-    //---------------------------------------------------------------------------
-    void test_tail_thickness(const Vector &tail_thickness_vector) {
-      ofstream(prefix_ + "tail_thickness.draws") << tail_thickness_vector << "\n"
-                                                 << tail_thickness_draws_;
-      auto status = CheckMcmcMatrix(tail_thickness_draws_, tail_thickness_vector);
-      EXPECT_TRUE(status.ok) << "Problem with tail thickness draws." << status;
-    }
-
-    //---------------------------------------------------------------------------
-    void test_factors_and_state_contributions(const StudentTestFramework &sim) {
-      // Factor draws are not identified.  Factors * observation coefficients is
-      // identified.
-      //
-      // This section prints out the (maybe unidentified) factor and observation
-      // coefficient levels.
-      for (int factor = 0; factor < nfactors(); ++factor) {
-        ConstVectorView true_factor(sim.state.row(factor), 0, sample_size());
-        std::ostringstream fname;
-        fname << prefix_ + "factor_" << factor << "_draws.out";
-        ofstream factor_draws_out(fname.str());
-        factor_draws_out << true_factor << "\n" << factor_draws_[factor];
-
-        std::ostringstream observation_coefficient_fname;
-        observation_coefficient_fname
-            << prefix_ << "observation_coefficient_draws_factor_" << factor;
-        std::ofstream obs_coef_out(observation_coefficient_fname.str());
-        obs_coef_out << sim.observation_coefficients.col(0) << "\n"
-                     << observation_coefficient_draws_.slice(-1, -1, 0);
-      }
-    }
-
-    // Check that the state contributions to each time series match the true
-    // underlying state.  This is a better test than testing the individual
-    // factors.  The factors are not identified, but the sums of the state
-    // contributions are identified.
-    void test_true_state_contributions(const StudentTestFramework &sim) {
-      Matrix true_state_contributions =
-          sim.observation_coefficients * sim.state;
-
-      Matrix true_trend_contributions =
-          sim.trend_observation_coefficients * sim.trend_state;
-
-      Matrix true_seasonal_contributions;
-      if (sim.nseasons() > 1) {
-        true_seasonal_contributions =
-            sim.seasonal_observation_coefficients * sim.seasonal_state;
-      }
-
-      for (int series = 0; series < nseries(); ++series) {
-        std::ostringstream fname;
-        fname << prefix_ << "trend_contribution_series_" << series;
-        std::ofstream trend_contribution_out(fname.str());
-        ConstVectorView truth(true_trend_contributions.row(series),
-                              0, sample_size());
-        trend_contribution_out << truth << "\n"
-                               << trend_contribution_draws_[series];
-        EXPECT_TRUE(CheckTrend(trend_contribution_draws_[series], truth, .9))
-            << "The inferred trend contribution for series " << series
-            << " is not closely aligned with the true trend contribution "
-            << "values.";
-
-        if (sim.nseasons() > 1) {
-          std::ostringstream fname;
-          fname << prefix_ << "seasonal_contribution_series_" << series;
-          std::ofstream seasonal_contribution_out(fname.str());
-          ConstVectorView truth(true_seasonal_contributions.row(series),
-                                0, sample_size());
-          seasonal_contribution_out << truth << "\n"
-                                    << seasonal_contribution_draws_[series];
-          EXPECT_TRUE(CheckTrend(seasonal_contribution_draws_[series], truth, .9))
-              << "The inferred seasonal contribution for series " << series
-              << " is not closely aligned with the true seasonal contribution "
-              << "values.";
-        }
-      }
-    }
-
-    //---------------------------------------------------------------------------
-    void print_regression_coefficients(const StudentTestFramework &sim) {
-      for (int series = 0; series < nseries(); ++series) {
-        std::ostringstream reg_fname;
-        reg_fname << prefix_
-                  << "regression_coefficient_mcmc_draws_series_"
-                  << series;
-        std::ofstream reg_out(reg_fname.str());
-        reg_out << sim.regression_coefficients.row(series) << "\n"
-                << regression_coefficient_draws_.slice(-1, series, -1);
-      }
-    }
-
-    //---------------------------------------------------------------------------
-    void print_trend_innovation_sd_draws() {
-      std::ofstream(prefix_ + "state_error_sd_mcmc_draws.out")
-          << Vector(nfactors(), 1.0) << "\n" << trend_innovation_sd_draws_;
-    }
-
-    //---------------------------------------------------------------------------
-    void print_prediction_draws(const StudentTestFramework &sim) {
-      ofstream prediction_out(prefix_ + "prediction.draws");
-      prediction_out << ConstSubMatrix(sim.response,
-                                       sample_size(),
-                                       sample_size() + test_size() - 1,
-                                       0, nseries() - 1).transpose();
-    }
-
-   private:
-    // Output files will have prefix_ prepended to their name so that output
-    // from different tests won't over-write each other.
-    std::string prefix_;
-
-    // Draws of the raw state variables.  These might not be identified.
-    std::vector<Matrix> factor_draws_;
-
-    // The state contribution is the observation coefficients times the factor
-    // values.
-    std::vector<Matrix> trend_contribution_draws_;
-    std::vector<Matrix> seasonal_contribution_draws_;
-
-    // Store the output of calls to predict().
-    Array prediction_draws_;
-
-    Array observation_coefficient_draws_;
-    Array trend_observation_coefficient_draws_;
-    Array seasonal_observation_coefficient_draws_;
-
-    Array regression_coefficient_draws_;
-
-    Matrix residual_sd_draws_;
-    Matrix trend_innovation_sd_draws_;
-    Matrix tail_thickness_draws_;
-
-    Selector fully_observed_;
-  };
-
-  //===========================================================================
-  // Repeat each row of 'mat' for 'times' times, then move to the next row.
+  // Repeat each row of 'mat' a specified number of 'times'.
+  //
+  // For example.  If a matrix has two rows: A = (r1, r2) then repeat_rows(A, 3)
+  // = (r1, r1, r1, r2, r2, r2).
   Matrix repeat_rows(const Matrix &mat, int times) {
     Matrix ans(mat.nrow() * times, mat.ncol());
     int index = 0;
@@ -376,6 +67,8 @@ namespace BoomStateSpaceTesting {
   }
 
   //===========================================================================
+  // Set the observation coefficients in a model to the specified set of
+  // coefficients.
   void set_observation_coefficients(
       const Matrix &coefficients,
       ConditionallyIndependentSharedLocalLevelStateModel &model) {
@@ -488,9 +181,10 @@ namespace BoomStateSpaceTesting {
   //                            << state_draws;
 
   // }
-  // //===========================================================================
-  // // Check draws of the state parameters given observation model parameters,
-  // // with the state fixed at true values.
+  //===========================================================================
+  //Check draws of the state parameters given observation model parameters, with
+  //the state fixed at true values.  This is for the model with just a shared
+  //local level.
   // TEST_F(StudentMvssRegressionTest, CheckStateParameterDraws) {
   //   int xdim = 3;
   //   int nseries = 2;
@@ -544,6 +238,71 @@ namespace BoomStateSpaceTesting {
   //   obs_coef_full_conditional
   //       << sim.observation_coefficients.col(0) << "\n"
   //       << observation_coefficient_draws;
+  // }
+
+  //===========================================================================
+  // Check draws of the state parameters given observation model parameters,
+  // with the state fixed at true values.  This is for the model with both a
+  // trend and seasonal components.
+  // TEST_F(StudentMvssRegressionTest, CheckSeasonalStateParameterDraws) {
+  //   int xdim = 3;
+  //   int nseries = 2;
+  //   int nfactors = 2;
+  //   int sample_size = 200;
+  //   int test_size = 20;
+  //   double residual_sd = .1;
+  //   double tail_thickness = 3.0;
+  //   int nseasons = 4;
+
+  //   StudentTestFramework sim(xdim, nseries, nfactors, sample_size,
+  //                            test_size, residual_sd, tail_thickness,
+  //                            nseasons);
+  //   int niter = 100;
+  //   int burn = 10;
+  //   std::string prefix = "SeasonalStateParameterDraws.";
+
+  //   // The observation model parameters are fixed at the true values.
+  //   sim.model->observation_model()->clear_methods();
+  //   for (int i = 0; i < nseries; ++i) {
+  //     sim.model->observation_model()->model(i)->set_Beta(
+  //         sim.regression_coefficients.row(i));
+  //     sim.model->observation_model()->model(i)->set_sigsq(
+  //         residual_sd * residual_sd);
+  //     sim.model->observation_model()->model(i)->set_nu(
+  //         tail_thickness);
+  //   }
+
+  //   sim.model->permanently_set_state(SubMatrix(
+  //       sim.state, 0, sim.state_dimension() - 1, 0, sample_size - 1).to_matrix());
+
+  //   Array seasonal_observation_coefficient_draws(std::vector<int>{
+  //       niter,
+  //       nseries,
+  //       nfactors * (nseasons - 1)});
+
+  //   for (int i = 0; i < burn; ++i) {
+  //     sim.model->sample_posterior();
+  //   }
+  //   Selector fully_observed(nseries, true);
+  //   for (int i = 0; i < niter; ++i) {
+  //     sim.model->sample_posterior();
+  //     seasonal_observation_coefficient_draws.slice(i, -1, -1) =
+  //         sim.seasonal_model->observation_coefficients(
+  //             1, fully_observed)->dense();
+  //   }
+
+  //   for (int i = 0; i < nseries; ++i) {
+  //     Matrix coefficients = seasonal_observation_coefficient_draws.slice(-1, i, -1).to_matrix();
+  //     auto status = CheckMcmcMatrix(
+  //         coefficients,
+  //         sim.seasonal_observation_coefficients.row(i));
+  //     std::ostringstream fname;
+  //     fname << prefix << "observation_coefficients_series_" << i;
+  //     std::ofstream out(fname.str());
+  //     out << sim.seasonal_observation_coefficients.row(i) << "\n"
+  //         << coefficients;
+  //     EXPECT_TRUE(status.ok) << status;
+  //   }
   // }
 
   // //===========================================================================
@@ -687,7 +446,7 @@ namespace BoomStateSpaceTesting {
   //   //---------------------------------------------------------------------------
   //   // Create space to store various different kinds of MCMC draws.
   //   //---------------------------------------------------------------------------
-  //   McmcStorage storage(prefix);
+  //   StudentRegressionMcmcStorage storage(prefix);
   //   int nseasons = -1;
   //   storage.allocate(niter,
   //                    sim.model->nseries(),
@@ -745,14 +504,14 @@ namespace BoomStateSpaceTesting {
   // Test the full MCMC experience with both a local linear trend and a seasonal
   // component.
   TEST_F(StudentMvssRegressionTest, TrendSeasonalMcmcTest) {
-    // Simulate fake data from the model: shared local level and a regression
-    // effect.
+    // Simulate fake data from the model: shared local level, seasonal, and a
+    // regression effect.
     int xdim = 3;
-    int nseries = 5;
+    int nseries = 3;
     int nfactors = 1;
-    int sample_size = 250;
+    int sample_size = 500;
     int test_size = 20;
-    double residual_sd = .1;
+    double residual_sd = 10;
     double tail_thickness = 3.0;
     int niter = 1000;
     int burn = 100;
@@ -763,7 +522,23 @@ namespace BoomStateSpaceTesting {
                              test_size, residual_sd, tail_thickness,
                              nseasons);
     sim.regression_coefficients(0, 1) = 100.0;
+    sim.seasonal_observation_coefficients(1, 0) *= 100;
+    sim.combine_observation_coefficients();
     sim.build(residual_sd, tail_thickness);
+
+    // If we freeze the model parameters at true values we recover the state.
+    //
+    // sim.freeze_seasonal_parameters();
+    // sim.freeze_trend_parameters();
+    // sim.freeze_observation_model_parameters();
+    // sim.set_model_parameters_to_true_values();
+
+    // If we freeze the state at its true values do we recover the model
+    // parameters?
+    // sim.freeze_state_at_truth();
+
+    std::cout << "sim.seasonal_observation_coefficients: \n"
+              << sim.seasonal_observation_coefficients;
 
     EXPECT_EQ(sim.xdim(), xdim);
     EXPECT_EQ(sim.nseries(), nseries);
@@ -775,22 +550,12 @@ namespace BoomStateSpaceTesting {
     ofstream(prefix + "true_state_contributions.out") <<
         sim.observation_coefficients * sim.state;
 
-    for (int i = 0; i < nseries; ++i) {
-      sim.model->observation_model()->model(i)->set_Beta(
-          sim.regression_coefficients.row(i));
-      sim.model->observation_model()->model(i)->set_sigsq(
-          residual_sd * residual_sd);
-      sim.model->observation_model()->model(i)->set_nu(
-          tail_thickness);
-    }
-    set_observation_coefficients(
-        sim.trend_observation_coefficients,
-        *sim.trend_model);
+    sim.set_model_parameters_to_true_values();
 
     //---------------------------------------------------------------------------
     // Create space to store various different kinds of MCMC draws.
     //---------------------------------------------------------------------------
-    McmcStorage storage(prefix);
+    StudentRegressionMcmcStorage storage(prefix);
     storage.allocate(niter,
                      sim.model->nseries(),
                      sim.model->xdim(),
@@ -819,6 +584,7 @@ namespace BoomStateSpaceTesting {
     EXPECT_EQ(sim.model->time_dimension(), sample_size);
     cout << "MCMC burn-in...\n";
     for (int i = 0; i < burn; ++i) {
+      //      std::cout << "burn in iteration " << i << "\n";
       sim.model->sample_posterior();
     }
 
@@ -827,7 +593,7 @@ namespace BoomStateSpaceTesting {
     //---------------------------------------------------------------------------
     for (int i = 0; i < niter; ++i) {
       if (i % (100) == 0) {
-        cout << "------ draw " << i << " of " << niter << " ---------\n";
+        cout << "======= draw " << i << " of " << niter << " =========\n";
       }
       sim.model->sample_posterior();
       storage.store_mcmc(sim.model.get(),
@@ -841,9 +607,12 @@ namespace BoomStateSpaceTesting {
     storage.test_tail_thickness(Vector(nseries, tail_thickness));
     storage.test_factors_and_state_contributions(sim);
     storage.test_true_state_contributions(sim);
+    storage.print_trend_draws(sim);
+    storage.print_seasonal_draws(sim);
     storage.print_trend_innovation_sd_draws();
     storage.print_prediction_draws(sim);
     storage.print_regression_coefficients(sim);
+    storage.print_observation_coefficients(sim);
   }
 
 

@@ -228,7 +228,6 @@ namespace BOOM {
     mutable StateSpaceUtilities::AdjustedDataWorkspace adjusted_data_workspace_;
   };
 
-
 }  // namespace BOOM
 
 #endif  // BOOM_MULTIVARIATE_STATE_SPACE_DATA_POLICY_HPP_

@@ -210,6 +210,8 @@ namespace BOOM {
       return host_;
     }
 
+    // The 'raw observation coefficients' are the model parameters for this
+    // model.
     Ptr<GlmCoefs> raw_observation_coefficients(int series) {
       return observation_parameter_manager_.coefs(series);
     }

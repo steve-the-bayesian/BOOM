@@ -125,13 +125,27 @@ namespace BoomStateSpaceTesting {
       return regression_coefficients.ncol();
     }
 
+    int state_dimension() const {
+      int ans = nfactors();
+      if (nseasons_ > 1) {
+        ans += nfactors() * (nseasons_ - 1);
+      }
+      return ans;
+    }
+
+    // Build the simulation environment based on the existing parameter values.
+    // This generates the "true state", generates the observed data, creates a
+    // model object, populates the model object with observed data, and assigns
+    // posterior samplers to the model object.  After this call the model object
+    // is ready to start MCMC from the true parameter values that generated the
+    // data.
     void build(double residual_sd, double df) {
       simulate_state();
       simulate_response(residual_sd, df);
       build_model(residual_sd, df);
     }
 
-    // Simulate state from a multivariate local level model.
+    // Simulate state from the trend and seasonal models.
     void simulate_state() {
       double factor_sd = 1.0;
       trend_state.resize(nfactors(), sample_size_ + test_size_);
@@ -216,13 +230,17 @@ namespace BoomStateSpaceTesting {
       model->add_state(trend_model);
     }
 
+    void freeze_trend_parameters() {
+      trend_model->clear_methods();
+    }
+
     void define_seasonal() {
       if (nseasons_ > 1) {
         seasonal_model.reset(new SharedSeasonalStateModel(
             model.get(), nfactors(), nseasons_, 1));
 
         Matrix observation_coefficient_prior_mean(nseries(), nfactors(), 0.0);
-        NEW(MvnModel, slab)(Vector(nfactors(), 0.0), SpdMatrix(nfactors(), 1.0));
+        NEW(MvnModel, slab)(Vector(nfactors(), 0.0), SpdMatrix(nfactors(), 10000.0));
         NEW(VariableSelectionPrior, spike)(nfactors(), 1.0);
         std::vector<Ptr<VariableSelectionPrior>> spikes;
         for (int i = 0; i < nseries(); ++i) {
@@ -250,6 +268,12 @@ namespace BoomStateSpaceTesting {
       }
     }
 
+    // Remove the posterior sampler from the seasonal model, so that the
+    // parameters for that model won't get updated by MCMC.
+    void freeze_seasonal_parameters() {
+      seasonal_model->clear_methods();
+    }
+
     void set_observation_model_sampler(double residual_sd, double df) {
       for (int i = 0; i < nseries(); ++i) {
         Vector beta_prior_mean(xdim(), 0.0);
@@ -270,17 +294,61 @@ namespace BoomStateSpaceTesting {
       model->observation_model()->set_method(observation_model_sampler);
     }
 
+    void freeze_observation_model_parameters() {
+      model->observation_model()->clear_methods();
+    }
+
     void set_posterior_sampler() {
       NEW(StudentMvssPosteriorSampler, sampler)(model.get());
       model->set_method(sampler);
     }
 
+    // Create a new model object.  Assign state models, data, and posterior
+    // samplers.
     void build_model(double residual_sd, double df) {
       model.reset(new StudentMvssRegressionModel(xdim(), nseries()));
       add_data_to_model();
       define_state();
       set_observation_model_sampler(residual_sd, df);
       set_posterior_sampler();
+      residual_sd_ = residual_sd;
+      residual_df_ = df;
+    }
+
+    void set_model_parameters_to_true_values() {
+      set_trend_model_parameters_to_true_values();
+      set_seasonal_model_parameters_to_true_values();
+      set_regression_parameters_to_true_values();
+    }
+
+    void set_trend_model_parameters_to_true_values() {
+      for (int series = 0; series < nseries(); ++series) {
+        trend_model->raw_observation_coefficients(series)->set_Beta(
+            trend_observation_coefficients.row(series));
+      }
+    }
+
+    void set_seasonal_model_parameters_to_true_values() {
+      for (int series = 0; series < nseries(); ++series) {
+        seasonal_model->compressed_observation_coefficients(series)->set_Beta(
+            seasonal_model->current_factors().select(
+                seasonal_observation_coefficients.row(series)));
+      }
+    }
+
+    void set_regression_parameters_to_true_values() {
+      for (int series = 0; series < nseries(); ++series) {
+        model->observation_model()->model(series)->set_Beta(
+            regression_coefficients.row(series));
+        model->observation_model()->model(series)->set_sigma(residual_sd_);
+        model->observation_model()->model(series)->set_nu(residual_sd_);
+      }
+    }
+
+    void freeze_state_at_truth() {
+      Matrix training_data_state(SubMatrix(
+          state, 0, state.nrow() - 1, 0, sample_size_ - 1));
+      model->permanently_set_state(training_data_state);
     }
 
     //---------------------------------------------------------------------------
@@ -294,7 +362,14 @@ namespace BoomStateSpaceTesting {
     int nseasons_;
 
     Matrix state;
+
+    // The rows of trend_state are the different factors.
     Matrix trend_state;
+
+    // seasonal state includes all the lags.  The number of rows in
+    // seasonal_state is (nseasons_ - 1) * nfactors().  The first nseasons_-1
+    // rows correspond to the first factor.  The next nseasons_-1 to the second
+    // factor, etc.
     Matrix seasonal_state;
 
     Matrix observation_coefficients;
@@ -304,11 +379,14 @@ namespace BoomStateSpaceTesting {
     Matrix regression_coefficients;
     Matrix predictors;
     Matrix response;
+    double residual_sd_;
+    double residual_df_;
 
     Ptr<StudentMvssRegressionModel> model;
     Ptr<ConditionallyIndependentSharedLocalLevelStateModel> trend_model;
     Ptr<SharedSeasonalStateModel> seasonal_model;
   };
+
 
 }  // namespace BoomStateSpaceTesting
 

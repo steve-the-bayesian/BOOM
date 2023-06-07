@@ -82,6 +82,6 @@ namespace BOOM {
                                   .95, "StateSpaceModel-sigma-obs.txt"))
           << AsciiDistributionCompare(sigma_obs_draws_, observation_sd_);
     }
-    
+
   }  // namespace StateSpaceTesting
 }  // namespace BOOM

@@ -21,7 +21,7 @@
 
 #include "Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp"
 
-#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
@@ -70,7 +70,7 @@ namespace BOOM {
   // ===========================================================================
   class SharedSeasonalStateModel
       : public SharedStateModel,
-        public CompositeParamPolicy,
+        public ManyParamPolicy,
         public NullDataPolicy,
         public PriorPolicy
   {
@@ -105,8 +105,7 @@ namespace BOOM {
     void simulate_initial_state(RNG &rng, VectorView eta) const override;
 
     //---------------------------------------------------------------------------
-    // Do we REALLY need the host?
-    // Right now it gets the observation status at time t and the number of series.
+    // The host gets the observation status at time t and the number of series.
     ConditionallyIndependentMultivariateStateSpaceModelBase *host() {
       return host_;}
     const ConditionallyIndependentMultivariateStateSpaceModelBase *host() const {
@@ -153,10 +152,19 @@ namespace BOOM {
       return ((time % season_duration_) == 0);
     }
 
+    void clear_data() override {
+      for (int series = 0; series < nseries(); ++series) {
+        observation_parameter_manager_.suf(series)->clear();
+      }
+    }
+
     const Ptr<WeightedRegSuf> & suf(int series) const {
       return observation_parameter_manager_.suf(series);
     }
 
+    // The compressed_observation_coefficients are the true "Model Parameters"
+    // for this model.
+    //
     // The observation coefficients relating a particular observed series to the
     // current values of the different factors.  The dimension of these
     // coefficients is number_of_factors().
@@ -168,6 +176,8 @@ namespace BOOM {
       return observation_parameter_manager_.coefs(series);
     }
 
+    const Selector &current_factors() const {return current_factors_;}
+
    private:
     //---------------------------------------------------------------------------
     // A set of utility functions to be called during construction.
@@ -176,6 +186,9 @@ namespace BOOM {
     void create_transition_matrix(int nseasons, int number_of_factors);
     void create_variance_matrices(int nseasons, int number_of_factors);
     void create_error_expander(int nseasons, int number_of_factors);
+
+    // Register the collection of model parameters with the parameter policy.
+    void register_params();
 
     // Create the set of raw_observation_coefficients_ from current_factors_ and
     // the coefficients held in the observation_parameter_manager_.

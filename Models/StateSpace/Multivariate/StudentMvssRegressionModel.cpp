@@ -196,15 +196,16 @@ namespace BOOM {
   }
 
 
-  void StudentMvssRegressionModel::observe_state(int t) {
-    if (t == 0) {
+  void StudentMvssRegressionModel::observe_state(int time) {
+    if (time == 0) {
       observe_initial_state();
     } else {
-      const ConstVectorView now(shared_state(t));
-      const ConstVectorView then(shared_state(t - 1));
+      const ConstVectorView now(shared_state(time));
+      const ConstVectorView then(shared_state(time - 1));
       for (int s = 0; s < number_of_state_models(); ++s) {
         state_model(s)->observe_state(state_component(then, s),
-                                      state_component(now, s), t);
+                                      state_component(now, s),
+                                      time);
       }
     }
   }
@@ -257,7 +258,9 @@ namespace BOOM {
             observation_model_->model(series);
 
         // There is an optimization opportunity here, because the regression
-        // data point is reallocated every time.
+        // data point is reallocated every time.  We could just keep these
+        // RegressionData points in a map so we didn't reallocate them every
+        // time.
         obs_model->add_data(new RegressionData(
                               new UnivData(regression_contribution),
                               data_point->Xptr()),

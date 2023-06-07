@@ -45,9 +45,10 @@ namespace BOOM {
   // slab prior on the different state factors.
   //
   // See the comments to the SharedSeasonalStateModel for a full description of
-  // the state, which includes current factor values and sevarl lags.  The
-  // dimension of Z is equal to the number of factors, because past seasonal
-  // lags don't contribute.
+  // the state, which includes current factor values and several lags.  The
+  // "interesting" dimension of Z is equal to the number of factors, because
+  // past seasonal lags don't contribute, so some elements of Z are structurally
+  // zero.
   class SharedSeasonalPosteriorSampler
       : public PosteriorSampler {
    public:

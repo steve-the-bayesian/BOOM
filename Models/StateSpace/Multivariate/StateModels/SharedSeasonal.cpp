@@ -42,6 +42,7 @@ namespace BOOM {
     create_raw_observation_coefficients();
     set_observation_coefficient_observers();
     map_observation_coefficients();
+    register_params();
   }
 
   SharedSeasonalStateModel::SharedSeasonalStateModel(const SharedSeasonalStateModel &rhs)
@@ -62,6 +63,7 @@ namespace BOOM {
     create_raw_observation_coefficients();
     set_observation_coefficient_observers();
     map_observation_coefficients();
+    register_params();
   }
 
   SharedSeasonalStateModel & SharedSeasonalStateModel::operator=(
@@ -80,6 +82,7 @@ namespace BOOM {
       current_factors_ = rhs.current_factors_;
       observation_parameter_manager_ = rhs.observation_parameter_manager_;
     }
+    register_params();
     return *this;
   }
 
@@ -188,6 +191,7 @@ namespace BOOM {
   // easy and efficient way to keep just one matrix and return it over and over.
   Ptr<SparseMatrixBlock> SharedSeasonalStateModel::observation_coefficients(
       int, const Selector &observed) const {
+    map_observation_coefficients();
     return new StackedRegressionCoefficients(
         observed.select(raw_observation_coefficients_));
   }
@@ -261,6 +265,13 @@ namespace BOOM {
       }
     }
     observation_coefficients_current_ = true;
+  }
+
+  void SharedSeasonalStateModel::register_params() {
+    ManyParamPolicy::clear();
+    for (int series = 0; series < nseries(); ++series) {
+      ManyParamPolicy::add_params(observation_parameter_manager_.coefs(series));
+    }
   }
 
 }  // namespace BOOM

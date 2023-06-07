@@ -15,6 +15,7 @@ cc_library(
     name = "mv_statespace_test_framework",
     hdrs = [
         "mv_framework.hpp",
+        "student_mcmc_storage.hpp",
         "student_regression_framework.hpp",
     ],
     visibility = ["//visibility:public"],

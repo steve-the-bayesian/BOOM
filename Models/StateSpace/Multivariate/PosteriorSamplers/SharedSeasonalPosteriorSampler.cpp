@@ -83,10 +83,17 @@ namespace BOOM {
     for (int i = 0; i < model_->nseries(); ++i) {
       double sigsq = sigsq_[i]->value();
       Selector inc = model_->compressed_observation_coefficients(i)->inc();
+      std::cout << "-------------------------------------------\n";
+      std::cout << "     series " << i << "\n"
+                << "     sigsq = " << sigsq << "\n"
+                << "     sigma = " << sqrt(sigsq) << "\n"
+                << "     inc (before)  = " << inc << "\n";
       samplers_[i].draw_inclusion_indicators(
           rng(), inc, *model_->suf(i), sigsq);
       model_->compressed_observation_coefficients(i)->set_inc(inc);
-
+      std::cout << "    inc (after)    = " << inc << "\n"
+                << "    suf: \n"
+                << *model_->suf(i);
       Vector full_beta = model_->compressed_observation_coefficients(i)->Beta();
       samplers_[i].draw_coefficients_given_inclusion(
           rng(), full_beta, inc, *model_->suf(i), sigsq);
