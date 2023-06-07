@@ -43,7 +43,8 @@ namespace BayesBoom {
     py::class_<BetaModel,
                PriorPolicy,
                DiffDoubleModel,
-               BOOM::Ptr<BetaModel>>(boom, "BetaModel", py::multiple_inheritance())
+               BOOM::Ptr<BetaModel>>(boom, "BetaModel",
+                                     py::multiple_inheritance())
         .def(py::init(
             [](double a, double b) {
               return new BetaModel(a, b);
@@ -51,8 +52,10 @@ namespace BayesBoom {
              py::arg("a") = 1.0,
              py::arg("b") = 1.0,
              "Args:\n\n"
-             "  a:  A positive real number interpretable as a prior success count.\n"
-             "  b:  A positive real number interpretable as a prior failure count.\n")
+             "  a:  A positive real number interpretable as a prior success "
+             "count.\n"
+             "  b:  A positive real number interpretable as a prior failure "
+             "count.\n")
         .def("__repr__",
              [](const BetaModel &model) {
                std::ostringstream out;

@@ -53,8 +53,8 @@ namespace BayesBoom {
                 const std::vector<uint> &nonzero_positions) {
                coefs.set_sparse_coefficients(nonzero_values, nonzero_positions);
              },
-             "Set a specific set of coefficients to nonzero values, setting all "
-             "others to zero.")
+             "Set a specific set of coefficients to nonzero values, "
+             "setting all others to zero.")
         ;
 
     // A single data point for a regression model.
@@ -117,9 +117,12 @@ namespace BayesBoom {
         .def("add_all", &GlmModel::add_all)
         .def("drop_all", &GlmModel::drop_all)
         .def("drop_all_but_intercept", &GlmModel::drop_all_but_intercept)
-        .def("add", &GlmModel::add, "Add the variable in the specified position.")
-        .def("drop", &GlmModel::add, "Drop the variable in the specified position.")
-        .def("flip", &GlmModel::add, "Flip the variable in the specified position.")
+        .def("add", &GlmModel::add,
+             "Add the variable in the specified position.")
+        .def("drop", &GlmModel::add,
+             "Drop the variable in the specified position.")
+        .def("flip", &GlmModel::add,
+             "Flip the variable in the specified position.")
         .def_property_readonly(
             "coef",
             [](const GlmModel &m) {return m.coef();},
@@ -161,10 +164,10 @@ namespace BayesBoom {
              "Args:"
              "  X:  boom.Matrix of predictor variables.\n"
              "  y:  boom.Vector of responses.\n"
-             "  start_at_mle: If True then the model parameters will be initialized "
-             "to the maximum likelihood estimate (which will be undefined if X is "
-             "less than full rank).  If False then model parameters begin at "
-             "default levels.")
+             "  start_at_mle: If True then the model parameters will be "
+             "initialized to the maximum likelihood estimate (which will "
+             "be undefined if X is less than full rank).  If False then "
+             "model parameters begin at default levels.")
         .def_property_readonly(
             "suf",
             [](const RegressionModel &m) {return m.suf();},
@@ -174,14 +177,17 @@ namespace BayesBoom {
             [](RegressionModel &m) {
               return m.Sigsq_prm();
             },
-            "The parameter object representing the residual variance.  boom.UnivParams")
+            "The parameter object representing the residual variance.  "
+            "boom.UnivParams")
         .def_property_readonly(
             "coefficients",
             [](RegressionModel &m) {
               return m.coef();
             },
-            "The parameter object representing the model coefficients.  boom.GlmCoefs")
-        .def("set_coefficients", [](RegressionModel &m, const Vector &coefficients) {
+            "The parameter object representing the model coefficients.  "
+            "boom.GlmCoefs")
+        .def("set_coefficients", [](RegressionModel &m,
+                                    const Vector &coefficients) {
           m.set_Beta(coefficients);
         })
         .def_property_readonly(
@@ -224,7 +230,60 @@ namespace BayesBoom {
              },
              py::arg("which_model"),
              "Args:\n\n"
-             "  which_model:  The index (0, ... ydim-1) of the component model.\n")
+             "  which_model:  The index (0, ... ydim-1) of the "
+             "component model.\n")
+        ;
+
+    py::class_<IndependentGlms<TRegressionModel>,
+               PriorPolicy,
+               Ptr<IndependentGlms<TRegressionModel>>>(
+                   boom,
+                   "IndependentStudentRegressions",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](int xdim, int ydim) {
+              return new IndependentGlms<TRegressionModel>(
+                  xdim, ydim);
+            }),
+             py::arg("xdim"),
+             py::arg("ydim"),
+             "Args:\n\n"
+             "  xdim:  Dimension of the predictors (X).\n"
+             "  ydim:  Dimension of the output/response (Y).\n")
+        .def("model",
+             [](IndependentGlms<TRegressionModel> *model, int which_model) {
+               return model->model(which_model);
+             },
+             py::arg("which_model"),
+             "Args:\n\n"
+             "  which_model:  The index (0, ... ydim-1) of the "
+             "component model.\n")
+        ;
+
+    py::class_<IndependentGlms<CompleteDataStudentRegressionModel>,
+               PriorPolicy,
+               Ptr<IndependentGlms<CompleteDataStudentRegressionModel>>>(
+                   boom,
+                   "IndependentStudentCompleteDataRegressions",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](int xdim, int ydim) {
+              return new IndependentGlms<CompleteDataStudentRegressionModel>(
+                  xdim, ydim);
+            }),
+             py::arg("xdim"),
+             py::arg("ydim"),
+             "Args:\n\n"
+             "  xdim:  Dimension of the predictors (X).\n"
+             "  ydim:  Dimension of the output/response (Y).\n")
+        .def("model",
+             [](IndependentGlms<CompleteDataStudentRegressionModel> *model, int which_model) {
+               return model->model(which_model);
+             },
+             py::arg("which_model"),
+             "Args:\n\n"
+             "  which_model:  The index (0, ... ydim-1) of the "
+             "component model.\n")
         ;
 
     py::class_<RegressionSlabPrior,
@@ -312,7 +371,8 @@ namespace BayesBoom {
             [](BigRegressionModel &m) {
               return m.Sigsq_prm();
             },
-            "The parameter object representing the residual variance.  boom.UnivParams")
+            "The parameter object representing the residual variance.  "
+            "boom.UnivParams")
         ;
 
     py::class_<TRegressionModel,
@@ -353,14 +413,17 @@ namespace BayesBoom {
             [](TRegressionModel &m) {
               return m.Sigsq_prm();
             },
-            "The parameter object representing the residual variance.  boom.UnivParams")
+            "The parameter object representing the residual variance.  "
+            "boom.UnivParams")
         .def_property_readonly(
             "coefficients",
             [](TRegressionModel &m) {
               return m.coef();
             },
-            "The parameter object representing the model coefficients.  boom.GlmCoefs")
-        .def("set_coefficients", [](TRegressionModel &m, const Vector &coefficients) {
+            "The parameter object representing the model coefficients.  "
+            "boom.GlmCoefs")
+        .def("set_coefficients", [](TRegressionModel &m,
+                                    const Vector &coefficients) {
           m.set_Beta(coefficients);
         })
         .def_property_readonly(
@@ -376,6 +439,22 @@ namespace BayesBoom {
           m.set_nu(nu);
         })
         ;
+
+    py::class_<CompleteDataStudentRegressionModel,
+               TRegressionModel,
+               Ptr<CompleteDataStudentRegressionModel>>(
+                   boom,
+                   "CompleteDataStudentRegressionModel",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [] (int xdim) {
+              return new CompleteDataStudentRegressionModel(xdim);
+            }),
+             py::arg("xdim"),
+             "Args:\n\n"
+             "  xdim:  Dimension of the predictor vector.\n")
+        ;
+
 
     py::class_<BinomialLogitModel,
                GlmModel,
@@ -475,17 +554,18 @@ namespace BayesBoom {
         ;
 
 
-    //===========================================================================
+    //=========================================================================
     // Priors and posterior samplers.
-    //===========================================================================
+    //=========================================================================
     py::class_<VariableSelectionPrior,
                Ptr<VariableSelectionPrior>>(boom, "VariableSelectionPrior")
         .def(py::init<const Vector &>(),
              py::arg("prior_inclusion_probabilities"),
-             "Create a VariableSelectionPrior from a vector of prior inclusion probabilities.\n\n"
+             "Create a VariableSelectionPrior from a vector of prior "
+             "inclusion probabilities.\n\n"
              "Args:\n\n"
-             "  prior_inclusion_probabilities: boom.Vector containing the prior "
-             "probability that each variable is to be included. "
+             "  prior_inclusion_probabilities: boom.Vector containing the "
+             "prior probability that each variable is to be included. "
              )
         ;
 
@@ -534,7 +614,48 @@ namespace BayesBoom {
         .def(py::init(
             [](IndependentRegressionModels *model,
                RNG &seeding_rng) {
-              return new IndependentRegressionModelsPosteriorSampler(model, seeding_rng);
+              return new IndependentRegressionModelsPosteriorSampler(
+                  model, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The model to be sampled.\n"
+             "  seeding_rng:  The RNG used to initialize the RNG owned by "
+             "this object.\n")
+        ;
+
+    py::class_<IndependentGlmsPosteriorSampler<TRegressionModel>,
+               PosteriorSampler,
+               Ptr<IndependentGlmsPosteriorSampler<TRegressionModel>>>(
+                   boom,
+                   "IndependentStudentRegressionsPosteriorSampler",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](IndependentGlms<TRegressionModel> *model,
+               RNG &seeding_rng) {
+              return new IndependentGlmsPosteriorSampler<
+                TRegressionModel>(model, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The model to be sampled.\n"
+             "  seeding_rng:  The RNG used to initialize the RNG owned by "
+             "this object.\n")
+        ;
+
+    py::class_<IndependentGlmsPosteriorSampler<CompleteDataStudentRegressionModel>,
+               PosteriorSampler,
+               Ptr<IndependentGlmsPosteriorSampler<CompleteDataStudentRegressionModel>>>(
+                   boom,
+                   "IndependentCompleteDataStudentRegressionsPosteriorSampler",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](IndependentGlms<CompleteDataStudentRegressionModel> *model,
+               RNG &seeding_rng) {
+              return new IndependentGlmsPosteriorSampler<
+                CompleteDataStudentRegressionModel>(model, seeding_rng);
             }),
              py::arg("model"),
              py::arg("seeding_rng") = BOOM::GlobalRng::rng,
@@ -553,19 +674,20 @@ namespace BayesBoom {
                GammaModelBase *residual_precision_prior,
                VariableSelectionPrior *spike,
                RNG &seeding_rng) {
-              return new BregVsSampler(model,
-                                       Ptr<MvnGivenScalarSigma>(slab),
-                                       Ptr<GammaModelBase>(residual_precision_prior),
-                                       Ptr<VariableSelectionPrior>(spike),
-                                       seeding_rng);
+              return new BregVsSampler(
+                  model,
+                  Ptr<MvnGivenScalarSigma>(slab),
+                  Ptr<GammaModelBase>(residual_precision_prior),
+                  Ptr<VariableSelectionPrior>(spike),
+                  seeding_rng);
             }),
              py::arg("model"),
              py::arg("slab"),
              py::arg("residual_precision_prior"),
              py::arg("spike"),
              py::arg("seeding_rng") = BOOM::GlobalRng::rng,
-             "Create a BregVsSampler -- a spike and slab sampler for regression "
-             "models.\n\n"
+             "Create a BregVsSampler -- a spike and slab sampler for "
+             "regression models.\n\n"
              "Args:\n"
              "  model:  The model to be sampled.\n"
              "  slab:  The conditional normal prior on the regression "
@@ -577,6 +699,55 @@ namespace BayesBoom {
              "  seeding_rng:  The random number generator used to set the seed "
              "of the RNG owned by this sampler."
              )
+        ;
+
+    py::class_<TRegressionSampler,
+               PosteriorSampler,
+               Ptr<TRegressionSampler>>(
+                   boom,
+                   "TRegressionSampler",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](TRegressionModel *model,
+               MvnBase *coefficient_prior,
+               GammaModelBase *siginv_prior,
+               DoubleModel *tail_thickness_prior,
+               RNG &seeding_rng) {
+              return new TRegressionSampler(
+                  model,
+                  coefficient_prior,
+                  siginv_prior,
+                  tail_thickness_prior,
+                  seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("coefficient_prior"),
+             py::arg("siginv_prior"),
+             py::arg("tail_thickness_prior"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+            "Args:\n\n"
+             "  model: The boom.TRegressionModel that the sampler will simulate"
+             " for.\n"
+             "  coefficient_prior:  A boom.MvnBase object giving the prior "
+             "distribution on the regression coefficients\n"
+            "  residual_precision_prior: A boom.GammaModelBase giving the "
+            "prior distribution on the residual precision parameter (one "
+            "over the residual variance).\n"
+            "  tail_thickness_prior: A boom.DoubleModel with support on "
+            "a subset of the positive real line.\n"
+             "  seeding_rng:  The random number generator used to set the seed "
+             "of the RNG owned by this sampler.")
+        .def("set_sigma_upper_limit",
+             [](TRegressionSampler *sampler,
+                double sigma_max) {
+               sampler->set_sigma_upper_limit(sigma_max);
+             },
+             py::arg("sigma_max"),
+             "Truncate the support of the residual standard deviation "
+             "parameter to (0, sigma_max).\n\n"
+             "Args:\n\n"
+             "  sigma_max:  Any non-negative value, including zero and "
+             "infinity() is allowed.")
         ;
 
     py::class_<TRegressionSpikeSlabSampler,
@@ -654,8 +825,8 @@ namespace BayesBoom {
              "  model:  The boom.BinomialLogitModel to be sampled.\n"
              "  slab: A boom.MvnBase prior for the conditional distribution of "
              "the regression coefficients given inclusion.\n"
-             "  spike:  A boom.VariableSelectionPrior describing which variables"
-             " are included in the model.\n"
+             "  spike:  A boom.VariableSelectionPrior describing which "
+             "variables are included in the model.\n"
              "  clt_threshold:  See below.\n"
              "  seeding_rng:  The random number generator used to set the seed "
              "of the RNG owned by this sampler.\n\n"
@@ -695,8 +866,8 @@ namespace BayesBoom {
              "  model:  The boom.PoissonRegressionModel to be sampled.\n"
              "  slab: A boom.MvnBase prior for the conditional distribution of "
              "the regression coefficients given inclusion.\n"
-             "  spike:  A boom.VariableSelectionPrior describing which variables"
-             " are included in the model.\n"
+             "  spike:  A boom.VariableSelectionPrior describing which "
+             "variables are included in the model.\n"
              "  num_threads:  The number of threads to use when imputing "
              "latent data.\n"
              "  seeding_rng:  The random number generator used to set the seed "
@@ -751,8 +922,9 @@ namespace BayesBoom {
              "Args:\n\n"
              "  niter:  The number of MCMC iterations to use in the initial "
              "screen.\n"
-             "  threshold: The variables whose 'marginal inclusion probabilities'"
-             "exceed 'threshold' become candidates in the next round.\n"
+             "  threshold: The variables whose 'marginal inclusion "
+             " probabilities' exceed 'threshold' become candidates "
+             "in the next round.\n"
              "  use_threads: If 'True' then C++11 threads will be used to run "
              "the MCMC algorithms for the subordinate models.  If 'False' then "
              "the code path for doing the MCMC will not use threads.\n")

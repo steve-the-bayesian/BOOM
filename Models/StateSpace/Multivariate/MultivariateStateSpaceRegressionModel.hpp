@@ -337,6 +337,8 @@ namespace BOOM {
     DiagonalMatrix observation_variance(
         int t, const Selector &observed) const override;
 
+    Vector observation_variance_parameter_values() const override;
+
     double single_observation_variance(int t, int dim) const override {
       return observation_model_->model(dim)->sigsq();
     }

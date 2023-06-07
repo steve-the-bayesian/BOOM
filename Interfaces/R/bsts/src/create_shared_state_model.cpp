@@ -43,6 +43,7 @@ namespace BOOM {
         SharedStateModelVector &state_models,
         CIMSSMB *model,
         SEXP r_shared_state_specification,
+        const std::vector<Ptr<UnivParams>> &residual_variance_parameters,
         const std::string &prefix) {
       if (!model) return;
       int number_of_state_models = Rf_length(r_shared_state_specification);
@@ -50,6 +51,7 @@ namespace BOOM {
         state_models.add_state(CreateSharedStateModel(
             model,
             VECTOR_ELT(r_shared_state_specification, i),
+            residual_variance_parameters,
             prefix));
       }
       InstallPostStateListElements();
@@ -82,9 +84,14 @@ namespace BOOM {
     CISSMF::CreateSharedStateModel(
         CIMSSMB *model,
         SEXP r_state_component,
+        const std::vector<Ptr<UnivParams>> &residual_variance_parameters,
         const std::string &prefix) {
       if (Rf_inherits(r_state_component, "SharedLocalLevel")) {
-        return CreateSharedLocalLevel(r_state_component, model, prefix);
+        return CreateSharedLocalLevel(
+            r_state_component,
+            model,
+            residual_variance_parameters,
+            prefix);
       } else {
         report_error("Unrecognized shared state model.");
       }
@@ -125,6 +132,7 @@ namespace BOOM {
     Ptr<SharedStateModel> CISSMF::CreateSharedLocalLevel(
         SEXP r_state_component,
         CIMSSMB *model,
+        const std::vector<Ptr<UnivParams>> &residual_variance_parameters,
         const std::string &prefix) {
       int nfactors = lround(Rf_asReal(getListElement(r_state_component, "size")));
       NEW(ConditionallyIndependentSharedLocalLevelStateModel, state_model)(
@@ -161,7 +169,8 @@ namespace BOOM {
 
       // Set the posterior sampler for the overall state model.
       NEW(ConditionallyIndependentSharedLocalLevelPosteriorSampler,
-          state_model_sampler)(state_model.get(), slabs, spikes);
+          state_model_sampler)(state_model.get(), slabs, spikes,
+                               residual_variance_parameters);
 
       state_model->set_method(state_model_sampler);
 

@@ -80,8 +80,10 @@ namespace BayesBoom {
 
               int nchoices = boom_responses[0]->nlevels();
               int subject_xdim = subject_predictors.ncol();
-              int choice_xdim = choice_predictors.empty() ? 0 : choice_predictors[0].ncol();
-              NEW(MultinomialLogitModel, model)(nchoices, subject_xdim, choice_xdim);
+              int choice_xdim = choice_predictors.empty() ?
+                  0 : choice_predictors[0].ncol();
+              NEW(MultinomialLogitModel, model)(
+                  nchoices, subject_xdim, choice_xdim);
 
               for (int i = 0; i < boom_responses.size(); ++i) {
                 std::vector<Ptr<VectorData>> row_level_choice_predictors;
@@ -142,7 +144,8 @@ namespace BayesBoom {
             [](MultinomialLogitModel &m) {
               return m.coef();
             },
-            "The parameter object representing the model coefficients.  boom.GlmCoefs")
+            "The parameter object representing the model coefficients.  "
+            "boom.GlmCoefs")
         .def_property_readonly(
             "log_likelihood",
             [](const MultinomialLogitModel &model) {

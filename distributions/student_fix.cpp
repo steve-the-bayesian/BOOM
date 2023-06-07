@@ -41,11 +41,13 @@ namespace BOOM {
       return exp(ans);
   }
 
-  double pstudent(double x, double mu, double sigma, double df, bool lower_tail, bool logscale) {
+  double pstudent(double x, double mu, double sigma, double df,
+                  bool lower_tail, bool logscale) {
     return pt((x - mu) / sigma, df, lower_tail, logscale);
   }
 
-  double qstudent(double p, double mu, double sigma, double df, bool lower_tail, bool logscale) {
+  double qstudent(double p, double mu, double sigma, double df,
+                  bool lower_tail, bool logscale) {
     return qt(p, lower_tail, logscale) * sigma + mu;
   }
 

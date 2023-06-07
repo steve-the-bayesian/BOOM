@@ -159,7 +159,13 @@ new_hdr="MVSSMS.hpp"
 
 mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
 echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+# echo "----------------------------------------------------------------------"
+# echo `grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models"`
+# echo `grep -rl "$dbase/$hdr" "$BOOM_DIR/inst/include/Models"`
+# echo "----------------------------------------------------------------------"
 grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+grep -rl "$dbase/$hdr" "$BOOM_DIR/inst/include/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
 
 hdr="MvStateSpaceRegressionPosteriorSampler.hpp"
 new_hdr="MVSSRPS.hpp"

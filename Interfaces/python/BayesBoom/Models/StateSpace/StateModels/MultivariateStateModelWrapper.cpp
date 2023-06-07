@@ -25,7 +25,9 @@ namespace BayesBoom {
     py::class_<SharedLocalLevelStateModelBase,
                SharedStateModel,
                BOOM::Ptr<SharedLocalLevelStateModelBase>>(
-                   boom, "SharedLocalLevelStateModelBase", py::multiple_inheritance())
+                   boom,
+                   "SharedLocalLevelStateModelBase",
+                   py::multiple_inheritance())
         .def_property_readonly(
             "number_of_factors",
             [](const SharedLocalLevelStateModelBase &state_model) {
@@ -61,7 +63,8 @@ namespace BayesBoom {
                ScalarStateModelMultivariateAdapter,
                Ptr<CiAdapter>>(
                    boom,
-                   "ConditionallyIndependentScalarStateModelMultivariateAdapter")
+                   "ConditionallyIndependentScalarStateModelMultivariate"
+                   "Adapter")
         .def(py::init(
             [](ConditionallyIndependentMultivariateStateSpaceModelBase *host,
                int nseries) {
@@ -99,9 +102,10 @@ namespace BayesBoom {
                    boom,
                    "CiScalarStateAdapterPosteriorSampler")
         .def(py::init(
-            [](ConditionallyIndependentScalarStateModelMultivariateAdapter *model,
+            [](CiAdapter *model,
                RNG &seeding_rng=GlobalRng::rng) {
-              return new CiScalarStateAdapterPosteriorSampler(model, seeding_rng);
+              return new CiScalarStateAdapterPosteriorSampler(
+                  model, seeding_rng);
             }))
         ;
 

@@ -74,6 +74,7 @@ namespace BOOM {
 
     void Update(const WeightedRegressionData &) override;
     void add_data(const Vector &x, double y, double w);
+    void remove_data(const Vector &x, double y, double w);
 
     void clear() override;
     virtual uint size() const;                      // dimension of beta

@@ -100,10 +100,16 @@ namespace BOOM {
       CreateBareModel(r_data_list_or_model_object, r_prior, r_options, io_manager);
       ConditionallyIndependentSharedStateModelFactory
           shared_state_model_factory(nseries_, io_manager);
+      std::vector<Ptr<UnivParams>> residual_variance_parameters;
+      for (int i = 0; i < model_->nseries(); ++i) {
+        residual_variance_parameters.push_back(
+            model_->observation_model()->model(i)->Sigsq_prm());
+      }
       shared_state_model_factory.AddState(
           model_->state_models(),
           model_.get(),
           r_shared_state_specification,
+          residual_variance_parameters,
           "");
       shared_state_model_factory.SaveFinalState(model_.get(), &final_state());
 
@@ -137,8 +143,8 @@ namespace BOOM {
             RListIoManager *subordinate_io_manager =
                 subordinate_model_io->subordinate_io_manager(i);
             StateModelFactory series_state_factory(subordinate_io_manager);
-            ProxyScalarStateSpaceModel *subordinate_model =
-                model_->series_specific_model(i).get();
+            ProxyScalarStateSpaceModel<MultivariateStateSpaceRegressionModel>
+                *subordinate_model = model_->series_specific_model(i);
 
             series_state_factory.AddState(
                 subordinate_model, r_subordinate_state_specification);
@@ -329,7 +335,7 @@ namespace BOOM {
         }
         for (int i = 0; i < Rf_length(r_prior); ++i) {
           BOOM::RInterface::SetRegressionSampler(
-              model_->observation_model()->model(i).get(),
+              model_->observation_model()->model(i),
               VECTOR_ELT(r_prior, i));
         }
 

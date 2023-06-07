@@ -28,6 +28,8 @@
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 
+#include "cpputil/report_error.hpp"
+
 namespace BoomStateSpaceTesting{
   class StudentMvssRegressionModelTest;
 }
@@ -52,10 +54,9 @@ namespace BOOM {
                                                 int series,
                                                 int timestamp);
 
-    // As above, but y and x are Ptr's.  If Y and X are matrices, with the same
-    // X's applying to each time series in Y, then this constructor is more
-    // space efficient than the one above, because multiple Ptr's can point the
-    // the same predictor vector.
+    // As above, but y and x are Ptr's.  If the same X's apply to each time
+    // series in Y, then this constructor is more space efficient than the one
+    // above, because multiple Ptr's can point the the same predictor vector.
     StudentMultivariateTimeSeriesRegressionData(
         const Ptr<DoubleData> &y,
         const Ptr<VectorData> &x,
@@ -66,6 +67,7 @@ namespace BOOM {
       return new StudentMultivariateTimeSeriesRegressionData(*this);
     }
 
+    // Override the weight() method in GlmData, which is a grandparent class.
     double weight() const override {return weight_;}
     void set_weight(double weight) {weight_ = weight;}
 
@@ -95,11 +97,14 @@ namespace BOOM {
   // The student T distributions are defined in terms of a latent variable w[j,
   // t] with marginal distribuiton Gamma(nu[j], nu[j]).  This weight is to be
   // stored in data structure managing the data point for time t, series j.
+  // This class needs easy access to w[j, t] because it is used in the Kalman
+  // filter.
   //
-  // The state alpha[t] consists of two types: shared and series-specific.  A
-  // shared state component is a regular state component from a dynamic factor
-  // model, with a matrix Z[t] mapping state to outcomes.  A series specific
-  // model maintains a separate element of state for each dimension of Y[t].
+  // The state alpha[t] has two components: shared state and series-specific
+  // state.  A shared state component is a regular state component from a
+  // dynamic factor model, with a matrix Z[t] mapping state to outcomes.  A
+  // series specific model maintains a separate element of state for each
+  // dimension of Y[t].
   //
   // The learning algorithm can cycle between (draw shared state given data and
   // series-specific state), (draw series-specific state), and (draw parameters
@@ -118,7 +123,7 @@ namespace BOOM {
   //
   //---------------------------------------------------------------------------
   // The basic usage idiom is
-  // NEW(MultivariateStateSpaceRegressionModel, model)(xdim, ydim);
+  // NEW(StudentMvssRegressionModel, model)(xdim, ydim);
   // for() { model->add_data(data_point); }
   // model->add_state(shared_state_model_1);
   // model->add_state(shared_state_model_2);
@@ -129,9 +134,9 @@ namespace BOOM {
   // model->observation_model()->set_method(prior_for_regression_part);
   //
   // The posterior samplers for the individual state models must be set
-  // separately.  Likewise for the samplers for the regression models.  If
-  // (e.g.) a hierarchical regression is desired then that is a new posterior
-  // sampler class for IndependentRegressionModels.
+  // separately, as must the sampler for the observation model.  If (e.g.) a
+  // hierarchical regression is desired then that is a new posterior sampler
+  // class for IndependentRegressionModels.
   class StudentMvssRegressionModel
       : public ConditionallyIndependentMultivariateStateSpaceModelBase,
         public PriorPolicy
@@ -240,6 +245,7 @@ namespace BOOM {
     // Impute both the shared and series-specific state, each conditional on the
     // other.
     void impute_state(RNG &rng) override {
+      MultivariateStateSpaceModelBase::resize_state();
       impute_student_weights(rng);
       impute_shared_state_given_series_state(rng);
       impute_series_state_given_shared_state(rng);
@@ -265,6 +271,17 @@ namespace BOOM {
     }
     void add_data(const Ptr<StudentMultivariateTimeSeriesRegressionData> &dp) {
       data_policy_.add_data(dp);
+    }
+
+    void combine_data(const Model &rhs, bool just_suf = true) override {
+      const StudentMvssRegressionModel *other_model =
+          dynamic_cast<const StudentMvssRegressionModel *>(&rhs);
+      if (other_model) {
+        data_policy_.combine_data(other_model->data_policy_);
+      } else {
+        report_error("rhs could not be converted to "
+                     "StudentMvssRegressionModel.");
+      }
     }
 
     // An override is needed so model-specific meta-data can be cleared as well.
@@ -312,7 +329,9 @@ namespace BOOM {
     // The response value after contributions from "other models" have been
     // subtracted off.  It is the caller's responsibility to do the subtracting
     // (e.g. with isolate_shared_state() or isolate_series_specific_state()).
-    double adjusted_observation(int series, int time) const;
+    double adjusted_observation(int series, int time) const {
+      return adjusted_observation(time)[series];
+    }
 
     // The vector of adjusted observations across all time series at time t.
     ConstVectorView adjusted_observation(int time) const override;
@@ -340,10 +359,10 @@ namespace BOOM {
     DiagonalMatrix observation_variance(int t) const override;
     DiagonalMatrix observation_variance(
         int t, const Selector &observed) const override;
+    Vector observation_variance_parameter_values() const override;
 
-    double single_observation_variance(int t, int dim) const override {
-      return observation_model_->model(dim)->sigsq();
-    }
+    double single_observation_variance(
+        int time, int which_series) const override;
 
     Proxy *series_specific_model(int index) {
       return state_manager_.series_specific_model(index);
@@ -489,11 +508,13 @@ namespace BOOM {
     //     time t.
     //   observation_error_variances: The posterior variance of the observation
     //     error at time t.
-    // void update_observation_model_gradient(
-    //     VectorView gradient,
-    //     int t,
-    //     const Vector &observation_error_mean,
-    //     const Vector &observation_error_variances) override;
+    void update_observation_model_gradient(
+        VectorView gradient,
+        int t,
+        const Vector &observation_error_mean,
+        const Vector &observation_error_variances) override {
+      report_error("update_observation_model_gradient is not implemented.");
+    }
 
     // Update the complete data sufficient statistics for the state models,
     // given the posterior distribution of the state error at time t (for the
@@ -519,10 +540,13 @@ namespace BOOM {
     //     parameters and all observed y's.
     //   observation_error_variance: Variance of the observation error given
     //     model parameters and all observed y's.
-    // void update_observation_model_complete_data_sufficient_statistics(
-    //     int t,
-    //     const Vector &observation_error_mean,
-    //     const Vector &observation_error_variances) override;
+    void update_observation_model_complete_data_sufficient_statistics(
+        int t,
+        const Vector &observation_error_mean,
+        const Vector &observation_error_variances) override {
+      report_error("update_observation_model_complete_data_sufficient_statistics "
+                   "is not implemented.");
+    }
 
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 

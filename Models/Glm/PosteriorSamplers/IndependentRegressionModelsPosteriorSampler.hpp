@@ -75,6 +75,7 @@ namespace BOOM {
     IndependentGlms<GLM> *model_;
   };
 
+  // The special case of GLM == RegressionModel is needed for legacy reasons.
   using IndependentRegressionModelsPosteriorSampler
   = IndependentGlmsPosteriorSampler<RegressionModel>;
 

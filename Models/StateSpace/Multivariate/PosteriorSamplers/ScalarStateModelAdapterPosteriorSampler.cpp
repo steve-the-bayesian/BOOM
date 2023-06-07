@@ -43,12 +43,7 @@ namespace BOOM {
     for (int s = 0; s < model_->number_of_state_models(); ++s) {
       model_->state_model(s)->sample_posterior();
     }
-
-    // TODO(steve): This code assumes constant variance through time.  It will
-    // only work with Gaussian models.
-    const DiagonalMatrix sigsq_mat = model_->host()->observation_variance(0);
-    const ConstVectorView sigsq(sigsq_mat.diag());
-
+    Vector sigsq = model_->host()->observation_variance_parameter_values();
     Vector slopes(model_->nseries());
     for (int i = 0; i < model_->nseries(); ++i) {
       const ScalarRegressionSuf &suf(model_->sufficient_statistics(i));

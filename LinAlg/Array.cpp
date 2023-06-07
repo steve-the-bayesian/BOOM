@@ -232,6 +232,14 @@ namespace BOOM {
     return data()[pos];
   }
 
+  bool ConstArrayBase::empty() const {
+    if (dims_.empty()) return true;
+    for (const auto &el : dims_) {
+      if (el == 0) return true;
+    }
+    return false;
+  }
+
   int ConstArrayBase::size() const {
     int ans = 1;
     for (int i = 0; i < dims_.size(); ++i) ans *= dims_[i];

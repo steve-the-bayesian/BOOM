@@ -15,7 +15,8 @@ namespace BayesBoom {
 
     py::class_<WishartModel,
                SpdModel,
-               BOOM::Ptr<WishartModel>>(boom, "WishartModel", py::multiple_inheritance())
+               BOOM::Ptr<WishartModel>>(
+                   boom, "WishartModel", py::multiple_inheritance())
         .def(py::init<double, SpdMatrix>(),
              py::arg("df"),
              py::arg("variance_estimate"),
