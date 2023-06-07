@@ -1098,6 +1098,24 @@ namespace BOOM {
                          min_char.str().size());
   }
 
+  Vector Matrix::stack_rows() const {
+    Vector ans;
+    ans.reserve(nrow() * ncol());
+    for (int i = 0; i < nrow(); ++i) {
+      ans.concat(row(i));
+    }
+    return ans;
+  }
+
+  Vector Matrix::stack_columns() const {
+    Vector ans;
+    ans.reserve(nrow() * ncol());
+    for (int j = 0; j < ncol(); ++j) {
+      ans.concat(col(j));
+    }
+    return ans;
+  }
+
   ostream &operator<<(ostream &out, const Matrix &x) {
     return x.display(out, 5);
   }
@@ -1364,6 +1382,12 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix row_matrix(const Vector &v) {
+    Matrix ans(1, v.size());
+    ans.row(0) = v;
+    return ans;
+  }
+
   Matrix rbind(const std::vector<Matrix> &input) {
     int nrow = 0;
     int ncol = -1;
@@ -1424,6 +1448,12 @@ namespace BOOM {
   Matrix rbind(const Matrix &m, double x) {
     Vector tmp(m.ncol(), x);
     return rbind(m, tmp);
+  }
+
+  Matrix col_matrix(const Vector &v) {
+    Matrix ans(v.size(), 1);
+    ans.col(0) = v;
+    return ans;
   }
 
   Matrix cbind(const Matrix &m1, const Matrix &m2) {

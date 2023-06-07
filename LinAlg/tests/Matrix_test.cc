@@ -651,8 +651,20 @@ namespace {
         EXPECT_DOUBLE_EQ(bound(i + 6, j), C(i, j));
       }
     }
-
-
   }
+
+  TEST_F(MatrixTest, StackTest) {
+    Matrix A(2, 3);
+    A.row(0) = {1.0, 2, 3};
+    A.row(1) = {4.0, 5, 6};
+
+    Vector v1 = A.stack_rows();
+    EXPECT_TRUE(VectorEquals(v1, Vector{1.0, 2, 3, 4, 5, 6}));
+
+    Vector v2 = A.stack_columns();
+    Vector expected2 = Vector{1.0, 4, 2, 5, 3, 6};
+    EXPECT_TRUE(VectorEquals(v2, expected2));
+  }
+
 
 }  // namespace

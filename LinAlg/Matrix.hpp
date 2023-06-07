@@ -342,6 +342,10 @@ namespace BOOM {
     //   character field this wide.
     int max_char_width(int precision) const;
 
+    // "Vectorize" the elements of the matrix by stacking the rows or columns.
+    Vector stack_rows() const;
+    Vector stack_columns() const;
+
    protected:
     inline uint INDX(uint i, uint j) const;
     inline bool inrange(uint i, uint j) const;
@@ -527,6 +531,7 @@ namespace BOOM {
   inline double sum(const Matrix &M) { return M.sum(); }
   inline double det(const Matrix &M) { return M.det(); }
 
+  Matrix row_matrix(const Vector &v);
   Matrix rbind(const std::vector<Matrix> &input);
   Matrix rbind(const Matrix &m1, const Matrix &m2);
   Matrix rbind(const Vector &v, const Matrix &m);
@@ -535,6 +540,7 @@ namespace BOOM {
   Matrix rbind(double x, const Matrix &m);
   Matrix rbind(const Matrix &m, double x);
 
+  Matrix col_matrix(const Vector &v);
   Matrix cbind(const std::vector<Matrix> &input);
   Matrix cbind(const Matrix &m1, const Matrix &m2);
   Matrix cbind(const Vector &v, const Matrix &m);
