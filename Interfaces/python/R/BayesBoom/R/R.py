@@ -100,7 +100,7 @@ def print_timestamp(iteration_number, ping):
         print(sep + timestamp + f" Iteration {iteration_number} " + sep)
 
 
-def ls(*args, hide_underscore=True):
+def ls(*args, hide_underscore=True, maxwidth=80):
     """
     List the contents of one or more objects.  If passed a function then print
     the body of the function.
@@ -115,7 +115,7 @@ def ls(*args, hide_underscore=True):
         print(getsource(args[0]))
     else:
         for arg in args:
-            pretty(dir(arg), hide_underscore=hide_underscore)
+            pretty(dir(arg), hide_underscore=hide_underscore, width=maxwidth)
             print("\n")
 
 
