@@ -55,8 +55,9 @@ namespace BOOM {
 
     // beta() and Beta() inherited from GlmModel;
     const double &sigsq() const;
-    double sigma() const;
     void set_sigsq(double s2);
+    double sigma() const;
+    void set_sigma(double sigma) { set_sigsq(sigma * sigma); }
 
     const double &nu() const;
     void set_nu(double Nu);
