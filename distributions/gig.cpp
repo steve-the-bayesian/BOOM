@@ -211,7 +211,6 @@ namespace {
     double ym, um;     /* location of maximum of x*sqrt(f(x)); umax of MBR */
     double s, t;       /* auxiliary variables */
     double V, X;    /* random variables */
-    int count = 0;     /* counter for total number of iterations */
 
     /* -- Setup -------------------------------------------------------------- */
 
@@ -240,7 +239,6 @@ namespace {
     /* -- Generate sample ---------------------------------------------------- */
 
     do {
-      ++count;
       double U = um * rng();              /* U(0,umax) */
       V = rng();                   /* U(0,vmax) */
       X = U/V;
