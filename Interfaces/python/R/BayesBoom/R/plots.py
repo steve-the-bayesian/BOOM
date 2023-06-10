@@ -5,7 +5,7 @@ from pandas.api.types import is_numeric_dtype
 
 from numbers import Number
 
-from .R import (
+from .base import (
     data_range,
     remove_common_suffix,
     remove_common_prefix,

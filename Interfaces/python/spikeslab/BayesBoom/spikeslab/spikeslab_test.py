@@ -3,11 +3,14 @@ import unittest
 from BayesBoom.spikeslab import (
     dot,
     lm_spike,
+    lm_spike_summary,
     RegressionSpikeSlabPrior,
     StudentSpikeSlabPrior,
     BigAssSpikeSlab
 )
+
 from BayesBoom.R import delete_if_present
+import BayesBoom.R as R
 
 import numpy as np
 import pandas as pd
@@ -65,6 +68,33 @@ class SpikeSlabTest(unittest.TestCase):
         self.assertEqual(len(pred.shape), 2)
         self.assertEqual(pred.shape[0], niter-3)
         self.assertEqual(pred.shape[1], sample_size)
+
+    def test_mcmc_from_suf(self):
+        sample_size = 10000
+        ngood = 5
+        nbad = 30
+        niter = 250
+        x = np.random.randn(sample_size, ngood + nbad)
+
+        beta = np.random.randn(ngood) * 4
+
+        b0 = 7.2
+        residual_sd = .3
+        yhat = b0 + x[:, :ngood] @ beta
+        errors = np.random.randn(sample_size) * residual_sd
+        y = yhat + errors
+
+        xtx = x.T @ x
+        xty = x.T @ y
+        sample_sd = np.std(y, ddof=1)
+        xbar = np.mean(x, axis=0)
+        suf = R.RegSuf(xtx, xty, sample_sd=sample_sd, sample_size=sample_size,
+                       xbar=xbar)
+        model = lm_spike(formula=None, data=suf, niter=niter)
+        self.assertEqual(len(model._log_likelihood), niter)
+
+        blah = model.summary(burn=10)
+        self.assertTrue(isinstance(blah, lm_spike_summary))
 
     def test_dot(self):
         X = pd.DataFrame(np.random.randn(10, 3), columns=["X1", "X2", "X3"])
@@ -154,7 +184,8 @@ if _debug_mode:
     import pdb  # noqa
 
     # Turn warnings into errors.
-    # warnings.simplefilter("error")
+    import warnings
+    warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an
@@ -168,7 +199,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_mcmc()
+    rig.test_mcmc_from_suf()
 
     print("Goodbye, cruel world!")
 

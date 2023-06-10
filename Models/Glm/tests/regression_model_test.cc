@@ -26,6 +26,29 @@ namespace {
     }
   };
 
+  TEST_F(RegressionModelTest, RegSufTest) {
+    int n = 100;
+    int p = 3;
+    Matrix X(n, p);
+    X.randomize();
+    X.col(0) = 1.0;
+
+    Vector y(n);
+    y.randomize();
+
+    double tiny = 1e-8;
+
+    NeRegSuf suf(X, y);
+    EXPECT_TRUE(MatrixEquals(suf.xtx(), t(X) * X));
+    EXPECT_TRUE(VectorEquals(suf.xty(), t(X) * y));
+    EXPECT_EQ(suf.n(), n);
+
+    EXPECT_NEAR(suf.ybar(), mean(y), tiny);
+    EXPECT_NEAR(suf.ybar(), mean(y), tiny);
+
+    EXPECT_NEAR(suf.sample_sd(), sd(y), tiny);
+  }
+
   TEST_F(RegressionModelTest, DataConstructor) {
     int nobs = 1000;
     int nvars = 10;

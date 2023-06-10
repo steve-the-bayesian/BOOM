@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .R import (
+from .base import (
     data_frame,
     pretty,
     ls,
@@ -30,6 +30,7 @@ from .bayes import (
     MvnPrior,
     MvnGivenSigma,
     NormalPrior,
+    RegSuf,
     SdPrior,
     UniformPrior,
     WishartPrior,
@@ -42,6 +43,8 @@ from .density import Density
 from .data_table import to_data_table, to_data_frame
 
 from .autoclean import AutoClean
+
+from .empirical_distribution import NumericEmpiricalDistribution, ECDF
 
 from .encoding import (
     register_encoding_json_encoder,
@@ -61,6 +64,8 @@ from .encoding import (
     DatasetEncoderJsonEncoder,
     DatasetEncoderJsonDecoder,
 )
+
+from .frequency_distribution import FrequencyDistribution
 
 from .graphics_device import get_current_graphics_device
 
@@ -97,7 +102,15 @@ from .probability import (
     rmarkov,
 )
 
-from .stats import density, sd
+from .stats import density, sd, mean
+
+from .summary import (
+    summary,
+    UnivariateSummary,
+    NumericSummary,
+    CategoricalSummary,
+    DateTimeSummary,
+)
 
 from .test_utilities import delete_if_present
 

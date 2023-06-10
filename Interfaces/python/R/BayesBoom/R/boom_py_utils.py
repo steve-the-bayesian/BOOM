@@ -31,6 +31,9 @@ def to_boom_vector(v):
     any similar object that either acts like a pd.Series or is convertible to a
     np.array.
     """
+    if isinstance(v, boom.Vector):
+        return v
+
     if hasattr(v, "values"):
         # Handle pd.Series and similar.
         return boom.Vector(np.array(v.values, dtype="float"))
@@ -50,6 +53,9 @@ def to_boom_matrix(m):
     data, or any similar object that either acts like a pd.DataFrame or is
     convertible to a np.array.
     """
+    if isinstance(m, boom.Matrix):
+        return m
+
     if hasattr(m, "values") and hasattr(m, "dtypes") and is_all_numeric(m):
         # Handle pd.DataFrame and similar.
         return boom.Matrix(m.values.astype("float"))
@@ -69,6 +75,9 @@ def to_boom_spd(m):
     data, or any similar object that either acts like a pd.DataFrame or is
     convertible to a np.array.
     """
+    if isinstance(m, boom.SpdMatrix):
+        return m
+
     if hasattr(m, "values") and hasattr(m, "dtypes") and is_all_numeric(m):
         # Handle pd.DataFrame and similar.
         return boom.SpdMatrix(m.values.astype("float"))

@@ -5,6 +5,7 @@ from .spikeslab import (
     coefficient_positive_probability,
     dot,
     lm_spike,
+    lm_spike_summary,
     sparsify,
     set_glm_coefs,
     plot_inclusion_probs,

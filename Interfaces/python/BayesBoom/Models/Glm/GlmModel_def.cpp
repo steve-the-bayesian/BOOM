@@ -137,6 +137,43 @@ namespace BayesBoom {
     py::class_<RegSuf,
                Ptr<RegSuf>>(
                    boom, "RegSuf", py::multiple_inheritance())
+        .def(py::init(
+            [](int dim) {
+              return new NeRegSuf(dim);
+            }),
+             py::arg("dim"),
+             "Args:\n\n"
+             "  dim:  The dimension of the predictor variable ('x').\n")
+        .def(py::init(
+            [](const Matrix &X, const Vector &y) {
+              return new NeRegSuf(X, y);
+            }),
+             py::arg("X"),
+             py::arg("y"),
+             "Args:\n\n"
+             "  X:  The predictor matrix.  An explicit column of 1's is needed"
+             " if an intercept term is desired.\n"
+             "  y:  The response vector.  The lenght must match the number of "
+             "rows in X.\n")
+        .def(py::init(
+            [](const SpdMatrix &xtx, const Vector &xty, double sample_sd,
+               double sample_size, const Vector &xbar) {
+              double yty = (sample_size - 1) * sample_sd * sample_sd;
+              return new NeRegSuf(xtx, xty, yty, sample_size, xbar);
+            }),
+             py::arg("xtx"),
+             py::arg("xty"),
+             py::arg("sample_sd"),
+             py::arg("sample_size"),
+             py::arg("xbar"),
+             "Args:\n\n"
+             "  xtx:  The cross product matrix X'X, where X is the matrix of "
+             "predictors.\n"
+             "  xty:  The X'y matrix, where y is the matrix of responses.\n"
+             "  sample_sd:  The sample standard deviation of the responses.\n"
+             "  sample_size:  The number of observations contained in the "
+             "sufficient statistics.\n"
+             "  xbar:  The mean of each column of the predictor matrix X.\n")
         .def_property_readonly(
             "sample_mean",
             [](const RegSuf &s) { return s.ybar(); },
@@ -168,6 +205,13 @@ namespace BayesBoom {
              "initialized to the maximum likelihood estimate (which will "
              "be undefined if X is less than full rank).  If False then "
              "model parameters begin at default levels.")
+        .def(py::init(
+            [](const Ptr<RegSuf> &suf) {
+              return new RegressionModel(suf);
+            }),
+             py::arg("suf"),
+             "Args:\n\n"
+             "  suf:  An object of class boom.RegSuf")
         .def_property_readonly(
             "suf",
             [](const RegressionModel &m) {return m.suf();},

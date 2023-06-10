@@ -137,10 +137,6 @@ class lm_spike:
 
         """
 
-        response, predictors = patsy.dmatrices(formula, data, eval_env=1)
-        self._x_design_info = predictors.design_info
-        # xdim = predictors.shape[1]
-        # sample_size = predictors.shape[0]
         niter = int(niter)
         if niter <= 0:
             raise Exception("niter should be a positive integer.")
@@ -149,16 +145,39 @@ class lm_spike:
             ping = int(niter / 10)
         ping = int(ping)
 
+        if isinstance(data, pd.DataFrame):
+            response, predictors = patsy.dmatrices(formula, data, eval_env=1)
+            self._x_design_info = predictors.design_info
+            X = boom.Matrix(predictors)
+            y = boom.Vector(response)
+            self._sample_sd = boom.sd(y)
+            xdim = X.ncol
+            self._model = boom.RegressionModel(X, y, False)
+
+            if prior is None:
+                prior = RegressionSpikeSlabPrior(x=X, y=y, **kwargs)
+
+        elif isinstance(data, R.RegSuf):
+            predictors = None
+            response = None
+
+            suf = data
+            self._sample_sd = suf.sample_sd
+            xdim = suf.xdim
+            self._model = boom.RegressionModel(suf.boom())
+            if prior is None:
+                prior = RegressionSpikeSlabPrior(suf, **kwargs)
+
+            # TODO: come up with a better way to get real variable names here.
+            xnames = ["(Intercept)"] + [
+                "x" + str(i) for i in range(1, suf.xdim)]
+            self._x_design_info = patsy.DesignInfo(xnames)
+
+        # xdim = predictors.shape[1]
+        # sample_size = predictors.shape[0]
+
         if seed is not None:
             boom.GlobalRng.rng.seed(int(seed))
-
-        X = boom.Matrix(predictors)
-        y = boom.Vector(response)
-        nvars = X.ncol
-
-        self._model = boom.RegressionModel(X, y, False)
-        if prior is None:
-            prior = RegressionSpikeSlabPrior(x=X, y=y, **kwargs)
 
         sampler = boom.BregVsSampler(
             self._model,
@@ -166,10 +185,10 @@ class lm_spike:
             prior.residual_precision,
             prior.spike)
         self._model.set_method(sampler)
-        # A lil matrix is a "linked list" matrix.  This is an efficient method
+        # A "lil" matrix is a "linked list" matrix.  This is an efficient method
         # for constructing matrices.  It should be converted to a different
         # matrix type before doing anything with it.
-        self._coefficient_draws = scipy.sparse.lil_matrix((niter, nvars))
+        self._coefficient_draws = scipy.sparse.lil_matrix((niter, xdim))
         self._residual_sd = np.zeros(niter)
         self._log_likelihood = np.zeros(niter)
 
@@ -184,8 +203,12 @@ class lm_spike:
         # vs this format should take the form X @ beta, not beta @ X.
         self._coefficient_draws = self._coefficient_draws.tocsc()
 
-        self._fitted_values = self.predict(predictors).mean(axis=0)
-        self._residuals = y.to_numpy() - self._fitted_values
+        if predictors is not None:
+            self._fitted_values = self.predict(predictors).mean(axis=0)
+            self._residuals = y.to_numpy() - self._fitted_values
+        else:
+            self._fitted_values = None
+            self._residuals = None
 
     @property
     def xdim(self):
@@ -196,11 +219,40 @@ class lm_spike:
         return self._log_likelihood
 
     @property
+    def residual_sd(self):
+        return getattr(self, "_residual_sd", None)
+
+    @property
+    def sample_sd(self):
+        return self._sample_sd
+
+    @property
+    def sample_variance(self):
+        return self._sample_sd**2
+
+    @property
+    def sparse_coefficients(self):
+        return self._coefficient_draws
+
+    @property
+    def dense_coefficients(self):
+        return pd.DataFrame(self._coefficient_draws.todense(),
+                            columns=self.xnames)
+
+    @property
     def residuals(self):
+        if self._residuals is None:
+            raise Exception("residuals are not available. This may be because "
+                            "the model was fit to sufficient statistics "
+                            "instead of raw data.")
         return self._residuals
 
     @property
     def fitted_values(self):
+        if self._fitted_values is None:
+            raise Exception("fitted values are not available. This may be "
+                            "because the model was fit to sufficient "
+                            "statistics instead of raw data.")
         return self._fitted_values
 
     @property
@@ -297,13 +349,14 @@ class lm_spike:
         return ans
 
     def plot_coefficients(self, **kwargs):
-        """A boxplot showing the values of the coefficients.
+        """
+        A boxplot showing the values of the coefficients.
         """
 
     def plot_residual(self, hexbin_threshold=1e+5,
                       xlab="fitted", ylab="residual"):
-        """A plot of the residuals vs the predicted values.
-
+        """
+        A plot of the residuals vs the predicted values.
         """
         fig, ax = R.plot(self.fitted_values, self.residuals,
                          hexbin_threshold=hexbin_threshold,
@@ -320,8 +373,8 @@ class lm_spike:
         return fig, ax
 
     def plot_predicted(self, xlab="fitted", ylab="actual"):
-        """A plot of predicted values vs actual values.
-
+        """
+        A plot of predicted values vs actual values.
         """
         fig, ax = R.plot(self.fitted_values,
                          self.residuals + self.fitted_values,
@@ -347,13 +400,100 @@ class lm_spike:
                 data=newdata)[0]
         return self._coefficient_draws[burn:, :] @ predictors.T
 
-    def summary(self, burn=None):
-        """Return a summary of model fit, including something like R^2, and residual
-        sd, along with a table of coefficients, standard deviations, and
-        marginal inclusion probabilities.
-
+    def summary(self, burn=0, order=True):
         """
-        return lm_spike_summary(self)
+        Return a summary of model fit, including something like R^2, and
+        residual sd, along with a table of coefficients, standard
+        deviations, and marginal inclusion probabilities.
+        """
+        return lm_spike_summary(self, burn=burn, order=order)
+
+
+def sparse_variance(sparse_matrix):
+    """
+    Args:
+      sparse_matrix:  A scipy.sparse_matrix object.
+
+    Returns:
+      A np.array containing the column-by-column variance of 'sparse_matrix'.
+
+    """
+    squared_matrix = sparse_matrix.copy()
+    squared_matrix.data **= 2
+    mean_square = np.array(squared_matrix.mean(axis=0)).ravel()
+    squared_mean = np.array(sparse_matrix.mean(axis=0)) ** 2
+    return mean_square - squared_mean.ravel()
+
+
+def summarize_spike_slab_coefficients(coef,
+                                      burn=None,
+                                      order=True,
+                                      colnames=None):
+    """
+    Args:
+      coefs: A matrix-like object containing MCMC draws of regression
+        coefficients.  Supported types include pd.DataFrame, np.ndarray, and
+        numpy sparse matrices.  Rows represent MCMC draws.  Columns represent
+        different model variables.
+      burn:  The number of MCMC iterations to discard as burn-in.
+      order: If True then the coefficients will be placed in descending order
+        according to their marginal inclusion probabilities.  Otherwise the
+        input order is preserved.
+      colnames: If 'coefs' is a pd.DataFrame then the columns from that frame
+        are used as variable names in the output.  If 'coefs' is a data
+        structure that does not support column names then they can be supplied
+        here as a list-like collection of strings.
+
+    Returns:
+      A pd.DataFrame containing the postior means and standard deviations of the
+        coefficients (averaging across the 0's of coefficients excluded from the
+        model), the conditional means and standard deviations of the
+        coefficients given their inclusion in the model, and the marginal
+        inclusion probability of each coefficient.
+    """
+    if burn is not None and burn > 0:
+        coef = coef[burn:, :]
+
+    if colnames is None:
+        if isinstance(coef, pd.DataFrame):
+            colnames = coef.columns
+        else:
+            colnames = ["(Intercept)"] + [
+                "X" + str(i) for i in range(1, coef.shape[1])]
+
+    colnames = np.array(colnames)
+
+    inclusion_probs = np.array(np.mean(coef != 0, axis=0)).ravel()
+
+    if order:
+        indx = R.order(inclusion_probs, True)
+        coef = coef[:, indx]
+        inclusion_probs = inclusion_probs[indx]
+        colnames = colnames[indx]
+
+    xdim = coef.shape[1]
+    coef_mean = R.mean(coef, axis=0)
+    coef_sd = R.sd(coef, axis=0)
+    coef_mean_inc = np.empty(xdim)
+    coef_sd_inc = np.empty(xdim)
+    for i in range(xdim):
+        this_var = coef[:, i]
+        nonzero = this_var[this_var != 0]
+        if np.max(nonzero.shape) > 0:
+            coef_mean_inc[i] = R.mean(nonzero)
+            coef_sd_inc[i] = R.sd(nonzero)
+        else:
+            coef_mean_inc[i] = 0
+            coef_sd_inc[i] = 0
+
+    coef = pd.DataFrame({
+        "mean": coef_mean,
+        "sd": coef_sd,
+        "mean_inc": coef_mean_inc,
+        "sd_inc": coef_sd_inc,
+        "inc_prob": inclusion_probs,
+        }, index=colnames)
+    return coef
 
 
 class lm_spike_summary:
@@ -361,10 +501,28 @@ class lm_spike_summary:
     Summarizes the fit of an lm_spike model.
     """
 
+    def __init__(self, model, burn=None, order=True):
+        self._model = model
+
+        sigma = model.residual_sd
+        if burn > 0:
+            sigma = sigma[burn:]
+
+        self._rsquare_distribution = 1 - sigma**2 / model.sample_variance
+        self._rsquare = R.summary(self._rsquare_distribution)
+        self._residual_sd = R.summary(sigma)
+        self._coefficients = summarize_spike_slab_coefficients(
+            model.sparse_coefficients,
+            order=order,
+            burn=burn,
+            colnames=model.xnames)
+
     def __repr__(self):
-        return """A spike and slab model summary!
-        Put R2, residual_sd, and top 10 coefficients here.
+        x = 3
+        ans = f"""A spike and slab model summary!
+        {x}
         """
+        return ans
 
 
 def compute_inclusion_probabilities(coefficients):
