@@ -3,6 +3,7 @@
 #include "Models/MvnBase.hpp"
 #include "Models/MvnModel.hpp"
 #include "Models/MvnGivenScalarSigma.hpp"
+#include "Models/MvnGivenSigma.hpp"
 #include "cpputil/Ptr.hpp"
 #include "uint.hpp"
 
@@ -156,9 +157,13 @@ namespace BayesBoom {
         ;
 
     //=========================================================================
+    py::class_<MvnGivenScalarSigmaBase,
+               MvnBase,
+               Ptr<MvnGivenScalarSigmaBase>>(boom, "MvnGivenScalarSigmaBase", py::multiple_inheritance())
+        ;
 
     py::class_<MvnGivenScalarSigma,
-               MvnBase,
+               MvnGivenScalarSigmaBase,
                PriorPolicy,
                Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma", py::multiple_inheritance())
         .def(py::init<const SpdMatrix&, const Ptr<UnivParams> &>(),
@@ -173,6 +178,26 @@ namespace BayesBoom {
              ""
              )
         ;
+
+    //=========================================================================
+    py::class_<MvnGivenSigma,
+               MvnBase,
+               PriorPolicy,
+               Ptr<MvnGivenSigma>>(boom, "MvnGivenSigma", py::multiple_inheritance())
+        .def(py::init(
+            [](const Vector &mu, double kappa) {
+              return new MvnGivenSigma(mu, kappa);
+            }),
+             py::arg("mu"),
+             py::arg("kappa") = 1.0,
+             "A prior distribution on the mean parameter of a multivariate "
+             "normal model.  The model is: \n   "
+             "'mean | Sigma' ~ N(mu, Sigma / kappa).\n\n"
+             "Args:\n\n"
+             "  mu:  The mean of the distribution.\n"
+             "  kappa:  The prior sample size.\n")
+        ;
+
 
   }  // Module
 

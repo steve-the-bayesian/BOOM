@@ -51,6 +51,8 @@ namespace BOOM {
     virtual void add_data(const Ptr<DataType> &dp);
     virtual void remove_data(const Ptr<Data> &dp);
 
+    long sample_size() const {return dat_.size();}
+
     std::vector<Ptr<DataType>> &dat() { return dat_; }
     const std::vector<Ptr<DataType>> &dat() const { return dat_; }
 
@@ -114,7 +116,7 @@ namespace BOOM {
   template <class D>
   void IID_DataPolicy<D>::set_data(const std::vector<Ptr<DataType>> &d) {
     clear_data();
-    for (auto i = 0; i < d.size(); ++i) add_data(d[i]);
+    for (size_t i = 0; i < d.size(); ++i) add_data(d[i]);
   }
 
   template <class D>

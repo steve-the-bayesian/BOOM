@@ -21,6 +21,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {

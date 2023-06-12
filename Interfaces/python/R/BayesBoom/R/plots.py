@@ -218,15 +218,19 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       x: The variable to be plotted.
       density: If True then the area of the histogram bars sums to 1.
     """
+    fig = None
     if ax is None:
-        _, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
     ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
             color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
 
-    return ax
+    if fig is not None:
+        fig.show()
+
+    return fig, ax
 
 
 def barplot(x, labels=None, zero=True, ax=None, **kwargs):
@@ -354,6 +358,24 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     return ax
 
 
+def pairs(x, **kwargs):
+    """
+    Return a pairs plot of the data in x.
+
+    Args:
+      x: A pd.DataFrame or numpy matrix.
+
+    Returns:
+      The seaborn.axisgrid.PairGrid object containing the plots.
+    """
+    import seaborn as sns
+    if isinstance(x, np.ndarray):
+        x = pd.DataFrame(x)
+    ans = sns.pairplot(x, **kwargs)
+    ans.fig.show()
+    return ans
+
+
 # ===========================================================================
 # Custom plots
 # ===========================================================================
@@ -370,7 +392,8 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
     else:
         fig = None
 
-    assert isinstance(ax, plt.Axes)
+    if not isinstance(ax, plt.Axes):
+        raise Exception("ax must be a plt.Axes object")
 
     if isinstance(counts, np.ndarray):
         counts = pd.DataFrame(counts,
@@ -482,6 +505,21 @@ def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
 
 def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                  **kwargs):
+    """
+    Args:
+
+      series: A numpy array of data to be plotted.  The first dimension of the
+        array is time.
+      same_scale:  If True then all series are plotted on the same scale.
+      ylim:  lower and upper limits of the Y axis.
+      gap:  Amount of space to leave beween panels of the plot.
+      truth: Values at which reference lines should be drawn.  Either a single
+        numeric value, or an array of values that matches the shape of 'series'
+        (without the time dimension).
+      **kwargs:  Other keyword arguments are ignored.
+    """
+    series = np.array(series)
+
     if len(series.shape) == 2:
         nseries = series.shape[1]
         nr, nc = plot_grid_shape(nseries)
@@ -623,6 +661,10 @@ def plot_dynamic_distribution(
         fig.show()
 
     return ax
+
+
+# Allow the same function name as R.
+PlotDynamicDistribution = plot_dynamic_distribution
 
 
 def compare_dynamic_distributions(

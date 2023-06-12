@@ -23,14 +23,118 @@
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 #include "stats/moments.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM {
   using Rmath::lgammafn;
 
+  BetaBinomialSuf::BetaBinomialSuf()
+      : sample_size_(0),
+        sum_log_normalizing_constants_(0.0)
+  {}
+
+  BetaBinomialSuf * BetaBinomialSuf::clone() const {
+    return new BetaBinomialSuf(*this);
+  }
+
+  void BetaBinomialSuf::Update(const BinomialData &dp) {
+    add_data(dp.trials(), dp.successes(), 1);
+  }
+
+  void BetaBinomialSuf::add_data(int64_t trials, int64_t successes, int64_t counts) {
+    if (counts < 0) {
+      report_error("Negative 'counts' arugment.");
+    }
+    if (trials < 0) {
+      report_error("Negative 'trials' argument.");
+    }
+    if (successes < 0) {
+      report_error("Negative 'successes' argument.");
+    }
+    if (successes > trials) {
+      report_error("'successes' cannot exceed 'trials'.");
+    }
+    int64_t failures = trials - successes;
+    sum_log_normalizing_constants_ +=
+        counts * (lgammafn(trials + 1) - lgammafn(successes + 1) - lgammafn(failures + 1));
+    data_[std::pair<int64_t, int64_t>(trials, successes)] += counts;
+    sample_size_ += counts;
+  }
+
+  void BetaBinomialSuf::clear() {
+    data_.clear();
+    sample_size_ = 0;
+  }
+
+  void BetaBinomialSuf::combine(const Ptr<BetaBinomialSuf> &suf) {
+    return combine(*suf);
+  }
+
+  void BetaBinomialSuf::combine(const BetaBinomialSuf &rhs) {
+    for (const auto &el : rhs.data_) {
+      auto it = this->data_.find(el.first);
+      if (it != this->data_.end()) {
+        it->second += el.second;
+      } else {
+        this->data_[el.first] = el.second;
+      }
+    }
+    sample_size_ += rhs.sample_size_;
+    sum_log_normalizing_constants_ += rhs.sum_log_normalizing_constants_;
+  }
+
+  BetaBinomialSuf *BetaBinomialSuf::abstract_combine(Sufstat *s) {
+    return abstract_combine_impl(this, s);
+  }
+
+  Vector BetaBinomialSuf::vectorize(bool minimal) const {
+    Vector ans;
+    ans.push_back(sample_size_);
+    ans.push_back(sum_log_normalizing_constants_);
+    ans.push_back(data_.size());
+    for (const auto &el : data_) {
+      ans.push_back(el.first.first);
+      ans.push_back(el.first.second);
+      ans.push_back(el.second);
+    }
+    return ans;
+  }
+
+  Vector::const_iterator BetaBinomialSuf::unvectorize(
+      Vector::const_iterator &v, bool) {
+    sample_size_ = static_cast<int64_t>(*v); ++v;
+    sum_log_normalizing_constants_ = *v; ++v;
+
+    size_t data_size = static_cast<size_t>(*v);
+    for (size_t i = 0; i < data_size; ++i) {
+      int64_t trials = static_cast<int64_t>(*v); ++v;
+      int64_t successes = static_cast<int64_t>(*v); ++v;
+      int64_t counts = static_cast<int64_t>(*v); ++v;
+      data_[std::pair<int64_t, int64_t>(trials, successes)] = counts;
+    }
+    return v;
+  }
+
+  Vector::const_iterator BetaBinomialSuf::unvectorize(
+      const Vector &v, bool minimal) {
+    Vector::const_iterator it = v.begin();
+    return unvectorize(it, minimal);
+  }
+
+  std::ostream & BetaBinomialSuf::print(std::ostream &out) const {
+    for (const auto &el : data_) {
+      out << std::setw(12) << el.first.first << ' '
+          << std::setw(12) << el.first.second << ' '
+          << std::setw(12) << el.second << '\n';
+    }
+    return out;
+  }
+
+  //===========================================================================
   BetaBinomialModel::BetaBinomialModel(double a, double b)
       : ParamPolicy(new UnivParams(a), new UnivParams(b)),
-
-        lgamma_n_y_(0.0) {
+        DataPolicy(new BetaBinomialSuf)
+  {
     check_positive(a, "BetaBinomialModel");
     check_positive(b, "BetaBinomialModel");
   }
@@ -38,8 +142,8 @@ namespace BOOM {
   BetaBinomialModel::BetaBinomialModel(const BOOM::Vector &trials,
                                        const BOOM::Vector &successes)
       : ParamPolicy(new UnivParams(1.0), new UnivParams(1.0)),
-
-        lgamma_n_y_(0.0) {
+        DataPolicy(new BetaBinomialSuf)
+  {
     if (trials.size() != successes.size()) {
       ostringstream err;
       err << "Vectors of trials and counts have different sizes in "
@@ -70,16 +174,15 @@ namespace BOOM {
       : Model(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
-        PriorPolicy(rhs),
-        lgamma_n_y_(0.0) {}
+        PriorPolicy(rhs)
+  {}
 
   BetaBinomialModel *BetaBinomialModel::clone() const {
     return new BetaBinomialModel(*this);
   }
 
   void BetaBinomialModel::clear_data() {
-    lgamma_n_y_ = 0.0;
-    IID_DataPolicy<BinomialData>::clear_data();
+    DataPolicy::clear_data();
   }
 
   void BetaBinomialModel::add_data(const Ptr<Data> &dp) {
@@ -87,10 +190,9 @@ namespace BOOM {
   }
 
   void BetaBinomialModel::add_data(const Ptr<BinomialData> &data) {
-    IID_DataPolicy<BinomialData>::add_data(data);
     const int64_t n = data->n();
     const int64_t y = data->y();
-    lgamma_n_y_ += lgammafn(n + 1) - lgammafn(y + 1) - lgammafn(n - y + 1);
+    suf()->add_data(n, y, 1);
   }
 
   double BetaBinomialModel::loglike() const { return loglike(a(), b()); }
@@ -111,10 +213,16 @@ namespace BOOM {
     if (a <= 0 || b <= 0) {
       return BOOM::negative_infinity();
     }
-    const std::vector<Ptr<BinomialData> > &data(dat());
-    int nobs = data.size();
-    double ans =
-        nobs * (lgammafn(a + b) - lgammafn(a) - lgammafn(b)) + lgamma_n_y_;
+
+    const Ptr<BetaBinomialSuf> sufstat_ptr(suf());
+    const BetaBinomialSuf &sufstat(*sufstat_ptr);
+    auto &data(sufstat.count_table());
+    int64_t nobs = sufstat.sample_size();
+
+    double ans = nobs * (lgammafn(a + b) - lgammafn(a) - lgammafn(b))
+        + sufstat.log_normalizing_constant();
+
+    // Initialize the gradient and hessian if they were requested.
     if (nd > 0) {
       g[0] = nobs * (digamma(a + b) - digamma(a));
       g[1] = nobs * (digamma(a + b) - digamma(b));
@@ -125,20 +233,23 @@ namespace BOOM {
       }
     }
 
-    for (int i = 0; i < nobs; ++i) {
-      int64_t y = data[i]->y();
-      int64_t n = data[i]->n();
-      ans -= lgammafn(n + a + b) - lgammafn(a + y) - lgammafn(b + n - y);
+    for (const auto &el : data) {
+      int64_t trials = el.first.first;
+      int64_t successes = el.first.second;
+      int64_t failures = trials - successes;
+      int64_t counts = el.second;
+      ans += counts * (lgammafn(a + successes) + lgammafn(b + failures)
+                                   -lgammafn(trials + a + b));
       if (nd > 0) {
-        double psin = digamma(a + b + n);
-        g[0] += digamma(a + y) - psin;
-        g[1] += digamma(b + n - y) - psin;
+        double psin = digamma(a + b + trials);
+        g[0] += counts * (digamma(a + successes) - psin);
+        g[1] += counts * (digamma(b + failures) - psin);
         if (nd > 1) {
-          double trigamma_n = trigamma(a + b + n);
-          h(0, 0) += trigamma(a + y) - trigamma_n;
-          h(1, 1) += trigamma(b + n - y) - trigamma_n;
-          h(0, 1) -= trigamma_n;
-          h(1, 0) -= trigamma_n;
+          double trigamma_n = trigamma(a + b + trials);
+          h(0, 0) += counts * (trigamma(a + successes) - trigamma_n);
+          h(1, 1) += counts * (trigamma(b + failures) - trigamma_n);
+          h(0, 1) -= counts * trigamma_n;
+          h(1, 0) = h(0, 1);
         }
       }
     }
@@ -146,8 +257,8 @@ namespace BOOM {
   }
 
   double BetaBinomialModel::logp(int64_t n, int64_t y, double a,
-                                 double b) const {
-    if (a <= 0 || b <= 0) {
+                                 double b) {
+    if (a <= 0 || b <= 0 || n < 0 || y < 0 || y > n) {
       return BOOM::negative_infinity();
     }
     double ans = lgammafn(n + 1) - lgammafn(y + 1) - lgammafn(n - y + 1);
@@ -156,20 +267,18 @@ namespace BOOM {
     return ans;
   }
 
+  double BetaBinomialModel::logp(int64_t n, int64_t y) const {
+    return logp(n, y, a(), b());
+  }
+
   double BetaBinomialModel::loglike(double a, double b) const {
     if (a <= 0 || b <= 0) {
       return BOOM::negative_infinity();
     }
-    const std::vector<Ptr<BinomialData> > &data(dat());
-    int nobs = data.size();
-    double ans =
-        nobs * (lgammafn(a + b) - lgammafn(a) - lgammafn(b)) + lgamma_n_y_;
-    for (int i = 0; i < nobs; ++i) {
-      int64_t y = data[i]->y();
-      int64_t n = data[i]->n();
-      ans -= lgammafn(n + a + b) - lgammafn(a + y) - lgammafn(b + n - y);
-    }
-    return ans;
+    Vector ab = {a, b};
+    Vector g;
+    Matrix h;
+    return Loglike(ab, g, h, 0);
   }
 
   int64_t BetaBinomialModel::sim(RNG &rng, int64_t n) const {
@@ -182,18 +291,16 @@ namespace BOOM {
   // the sample variance is zero, in which case this function will
   // exit without changing the model.
   void BetaBinomialModel::method_of_moments() {
-    const std::vector<Ptr<BinomialData> > &data(dat());
     Vector p_hat;
-    p_hat.reserve(data.size());
-    for (int i = 0; i < data.size(); ++i) {
-      int64_t trials = data[i]->trials();
-      if (trials > 0) {
-        double successes = data[i]->successes();
-        p_hat.push_back(successes / trials);
-      }
+    Vector counts;
+    const auto &data(suf()->count_table());
+    for (const auto &el : data) {
+      double trials = el.first.first;
+      double successes = el.first.second;
+      p_hat.push_back(successes / trials);
+      counts.push_back(static_cast<double>(el.second));
     }
-
-    double sample_mean = mean(p_hat);
+    double sample_mean = BOOM::mean(p_hat);
     double sample_variance = var(p_hat);
     if (sample_variance == 0.0 || sample_mean == 0.0 || sample_mean == 1.0) {
       return;

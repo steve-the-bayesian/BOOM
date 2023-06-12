@@ -88,6 +88,10 @@ export(AcfDist,
   PlotBstsState,
   PlotDynamicRegression,
   PlotHoliday,
+  plot.mbsts,
+  plot.mbsts.prediction,
+  predict.mbsts,
+  PlotMbstsSeriesMeans,
   PlotSeasonalEffect,
   predict.bsts,
   Quarter,
@@ -117,6 +121,7 @@ S3method(predict, bsts)
 S3method(residuals, bsts)
 
 S3method(plot, bsts.prediction)
+
 S3method(plot, bsts.mixed)
 
 S3method(plot, mbsts)

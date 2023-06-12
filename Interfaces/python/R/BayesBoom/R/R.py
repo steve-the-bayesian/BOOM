@@ -129,6 +129,10 @@ def table(*args):
     if len(args) == 1:
         if isinstance(args[0], pd.DataFrame):
             return args[0].crosstab(margins=True)
+        elif isinstance(args[0], np.ndarray):
+            values, counts = np.unique(args[0], return_counts=True)
+            ans = pd.Series(counts, index=values)
+            return ans.sort_index()
         else:
             x = pd.Series(args[0])
             return x.value_counts()
@@ -137,12 +141,52 @@ def table(*args):
         return x.crosstab(margins=True)
 
 
+def order(input, decreasing=False):
+    """
+    Given an input sequence, return a vector of integers that will put the
+    sequence in order.
+
+    """
+    x = pd.Series(input).reset_index(drop=True).sort_values(
+        ascending=(not decreasing))
+    return x.index
+
+
+def invert_order(ord):
+    """
+    Put entries that have been sorted by a call to 'order' back in their
+    original order.
+
+    Args:
+      ord: A permutation of the numbers 0, ... n.
+
+    Returns:
+      ans: A permutation of the numbers 0..n such that ans[ord] = 0...n.
+    """
+    n = len(ord)
+    return pd.Series(range(n), index=ord).sort_index().values
+
+
 def data_range(x):
     """
     Return the smallest and largest entries in x.  The name distinguishes this
     function from the python built-in 'range'.
     """
     return np.quantile(x, q=[0, 1])
+
+
+def var(x):
+    """
+    Compute the variance of the input x.  If x is a vector then return the
+    scalar valued variance.  If x is a matrix return the variance matrix,
+    assuming each row of x is an observation.
+    """
+    if isinstance(x, Number):
+        return 0
+    elif len(x.shape) == 1:
+        return np.var(x, ddof=1)
+    else:
+        return np.cov(x, rowvar=False, ddof=1)
 
 
 def corr(*args):
@@ -169,6 +213,15 @@ def first_true(boolean_array):
     Returns None if no True values are found.
     """
     return next((i for i, v in enumerate(boolean_array) if v), None)
+
+
+def which(boolean_array):
+    """
+    Return the integer indices at which 'boolean_array' is True.
+    """
+    n = len(boolean_array)
+    indices = np.arange(n)
+    return indices[boolean_array.astype(bool)]
 
 
 def recycle(x, output_len):

@@ -381,6 +381,30 @@ namespace BOOM {
     return inc_select<ConstVectorView>(x, *this);
   }
 
+  Vector Selector::select_if_needed(const Vector &x) const {
+    if (x.size() == nvars()) {
+      return x;
+    } else {
+      return select(x);
+    }
+  }
+
+  Vector Selector::select_if_needed(const VectorView &x) const {
+    if (x.size() == nvars()) {
+      return Vector(x);
+    } else {
+      return select(x);
+    }
+  }
+
+  Vector Selector::select_if_needed(const ConstVectorView &x) const {
+    if (x.size() == nvars()) {
+      return Vector(x);
+    } else {
+      return select(x);
+    }
+  }
+
   SpdMatrix Selector::select(const SpdMatrix &S) const {
     uint n = nvars();
     uint N = nvars_possible();

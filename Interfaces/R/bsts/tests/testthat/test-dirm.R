@@ -1,7 +1,7 @@
 set.seed(8675309)
 
 library(bsts)
-
+library(testthat)
 SimulateDirmData <- function(observation.sd = 1, trend.sd = .1,
                              time.dimension = 100, nobs.per.period = 3,
                              xdim = 4) {
@@ -35,6 +35,6 @@ model2 <- dirm(response ~ predictors, ss, niter = 50, data = data,
 test_that("Models are identical", {
   expect_that(model, is_a("DynamicIntercept"))
   expect_that(model$coefficients, is_a("matrix"))
-  expect_true(all(model$coefficients == model2$coefficients))
-  expect_true(all(model$sigma.obs == model2$sigma.obs))
-  })
+  expect_true(all(abs(model$coefficients - model2$coefficients) < 1e-8))
+  expect_true(all(abs(model$sigma.obs - model2$sigma.obs) < 1e-8))
+})

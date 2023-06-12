@@ -81,7 +81,7 @@ namespace BOOM {
     Copyright 1999 by Stephen L. Moshier
   */
 
-  /*  NIST value (1999): 2 pi h c^2 = 3.741 7749(22) Å◊ 10-16 W m2  */
+  /*  NIST value (1999): 2 pi h c^2 = 3.741 7749(22) x 10-16 W m2  */
   const double planck_c1 = 3.7417749e-16;
   /*  NIST value (1999):  h c / k  = 0.014 387 69 m K */
   const double planck_c2 = 0.01438769;

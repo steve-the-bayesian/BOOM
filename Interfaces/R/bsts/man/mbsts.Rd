@@ -133,7 +133,6 @@ mbsts(formula,
     If ping > 0 then the program will print a status message to the
     screen every \code{ping} MCMC iterations.}
 
-
   \item{data.format}{Whether the data are store in wide (each row is a
     time point, and columns are values from different series) or long
     (each row is the value of a particular series at a particular point
@@ -177,7 +176,6 @@ mbsts(formula,
   the design matrix when a new prediction is made.
 }
 
-
 \references{
   Harvey (1990), "Forecasting, structural time series, and the Kalman
   filter", Cambridge University Press.
@@ -188,7 +186,6 @@ mbsts(formula,
   George and McCulloch (1997)
   "Approaches for Bayesian variable selection", Statistica Sinica pp
   339--374.
-
 }
 
 \author{
@@ -207,6 +204,12 @@ mbsts(formula,
 }
 
 \examples{
+\dontrun{
+
+# This example takes 12s on Windows, which is longer than CRAN's 10s
+# limit.  Marking code as 'dontrun' to prevent CRAN auto checks from
+# timing out.
+
 seed <- 8675309
 set.seed(seed)
 
@@ -228,16 +231,11 @@ for (i in 1:ncol(state)) {
 ## Simulate "observed" data from state.
 ##---------------------------------------------------------------------------
 observation.coefficients <- matrix(rnorm(nseries * nfactors), nrow = nseries)
-print("observation.coefficients =\n", observation.coefficients)
 diag(observation.coefficients) <- 1.0
 observation.coefficients[upper.tri(observation.coefficients)] <- 0
 
 errors <- matrix(rnorm(nseries * ntimes, 0, residual.sd), ncol = ntimes)
 y <- t(observation.coefficients \%*\% t(state) + errors)
-
-\dontrun{
-cat("simulated y (first 10 rows): \n")
-print(y[1:10, ])
 
 ##---------------------------------------------------------------------------
 ## Plot the data.
@@ -245,7 +243,6 @@ print(y[1:10, ])
 par(mfrow=c(1,2))
 plot.ts(y, plot.type="single", col = rainbow(nseries), main = "observed data")
 plot.ts(state, plot.type = "single", col = 1:nfactors, main = "latent state")
-}
 
 ##---------------------------------------------------------------------------
 ## Fit the model
@@ -272,19 +269,17 @@ for (j in 1:nfactors) {
 ##---------------------------------------------------------------------------
 ## Plot the factor loadings.
 ##---------------------------------------------------------------------------
-\dontrun{
 opar <- par(mfrow=c(nfactors,1), mar=c(0, 4, 0, 4), omi=rep(.25, 4))
 burn <- 10
 for(j in 1:nfactors) {
   BoxplotTrue(model$shared.local.level.coefficients[-(1:burn), j, ],
-    t(observation.coefficients[, j]), axes=F, truth.color="blue")
+    t(observation.coefficients)[, j], axes=F, truth.color="blue")
   abline(h=0, lty=3)
   box()
   axis(2)
 }
 axis(1)
 par(opar)
-}
 
 ##---------------------------------------------------------------------------
 ## Plot the predicted values of the series.
@@ -301,6 +296,9 @@ for (i in index) {
   points(y[, i], col="blue", pch = ".", cex = .2)
 }
 par(opar)
+# next line closes 'dontrun'
+}
+# next line closes 'examples'
 }
 \keyword{models}
 \keyword{regression}

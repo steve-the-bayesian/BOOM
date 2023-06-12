@@ -19,7 +19,6 @@
 
 #include "Models/MarkovModel.hpp"
 #include <cmath>
-#include <iostream>
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/VectorView.hpp"
 #include "Models/DirichletModel.hpp"
@@ -76,16 +75,10 @@ namespace BOOM {
   }
 
   void MarkovData::unset_prev() {
-    if (!!prev_) {
-      prev_->unset_next();
-    }
     prev_ = nullptr;
   }
 
   void MarkovData::unset_next() {
-    if (!!next_) {
-      next_->unset_prev();
-    }
     next_ = nullptr;
   }
 

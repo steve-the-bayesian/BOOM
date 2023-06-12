@@ -9,7 +9,7 @@ import distutils.ccompiler
 MAJOR = 0
 
 # Bump the minor version when adding backwards compatible features.
-MINOR = 0
+MINOR = 1
 
 # Bump the patch version when making bug fixes.
 PATCH = 11 
@@ -204,6 +204,9 @@ state_space_sources = (
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/PosteriorSamplers/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/StateModels/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/PosteriorSamplers/*.cpp")
 )
 state_space_headers = (
     glob(BOOM_DIR + "Models/StateSpace/*.hpp")
@@ -256,11 +259,14 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/Models/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Impute/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/Mixtures/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/StateModels/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/StateSpace/Multivariate/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/TimeSeries/*.cpp")
     + glob(BOOM_DIR + "pybind11/LinAlg/*.cpp")
     + glob(BOOM_DIR + "pybind11/stats/*.cpp")
+    + glob(BOOM_DIR + "pybind11/numopt/*.cpp")
     + glob(BOOM_DIR + "pybind11/cpputil/*.cpp")
     + glob(BOOM_DIR + "pybind11/distributions/*.cpp")
     + glob(BOOM_DIR + "pybind11/test_utils/*.cpp")

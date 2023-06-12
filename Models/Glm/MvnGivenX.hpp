@@ -69,7 +69,9 @@ namespace BOOM {
     // Args:
     //   mean:  The mean of the distribution.
     //   prior_sample_size:  The number of observations worth of prior weight.
-    //   precision_diagonal:  The diagonal that X'X is to be averaged with.  
+    //   precision_diagonal: The diagonal that X'X is to be averaged with.  This
+    //     can be an empty Vector to signal that diagonal shrinkage is to be
+    //     skipped.
     //   diagonal_weight: A number between 0 and 1 indicating the weight to put
     //     on the diagonal when X'X is averaged with its diagonal.
     MvnGivenXBase(const Ptr<VectorParams> &mean,
@@ -99,7 +101,7 @@ namespace BOOM {
     //---------------------------------------------------------------------------
     const Ptr<VectorParams> Mu_prm() const {return prm1();}
     Ptr<VectorParams> Mu_prm() {return prm1();}
-    
+
     const Ptr<UnivParams> Kappa_prm() const {return prm2();}
     Ptr<UnivParams> Kappa_prm() {return prm2();}
 
@@ -107,7 +109,7 @@ namespace BOOM {
 
     // Note that diagonal might be empty.
     const Vector &diagonal() const { return diagonal_; }
-    
+
     // An observer that can be set when the precision matrix is determined by
     // outside data that might change.
     std::function<void(void)> observer() {
@@ -122,13 +124,13 @@ namespace BOOM {
    private:
     // Sets the value of precision_, and sets current_ to true.
     virtual void set_precision_matrix() const = 0;
-    
+
     // The weight to give to the diagonal in the average of diagonal_ and X'X.
     double diagonal_weight_;
 
     // The diagonal is the prior precision if there are no X's.  It may be
     // unallocated in which case the diagonal is taken to be diag(X'X).
-    Vector diagonal_;    
+    Vector diagonal_;
 
     // The actual matrix used to hold the precision.
     mutable Ptr<SpdData> precision_;
@@ -146,6 +148,14 @@ namespace BOOM {
   // clear_xtwx() and add_x() should be called as needed to manage the changes.
   class MvnGivenX : public MvnGivenXBase {
    public:
+    // Args:
+    //   mean:  The mean of the distribution.
+    //   prior_sample_size:  The number of observations worth of prior weight.
+    //   precision_diagonal: The diagonal that X'X is to be averaged with.  This
+    //     can be an empty Vector to signal that diagonal shrinkage is to be
+    //     skipped.
+    //   diagonal_weight: A number between 0 and 1 indicating the weight to put
+    //     on the diagonal when X'X is averaged with its diagonal.
     MvnGivenX(const Ptr<VectorParams> &mean,
               const Ptr<UnivParams> &prior_sample_size,
               const Vector &precision_diagonal = Vector(),
@@ -154,13 +164,13 @@ namespace BOOM {
     MvnGivenX * clone() const override {
       return new MvnGivenX(*this);
     }
-    
+
     void add_x(const Vector &x, double w = 1.0);
     void clear_xtwx();
     void set_xtwx(const SpdMatrix &xtwx);
 
    private:
-    void set_precision_matrix() const override; 
+    void set_precision_matrix() const override;
 
     mutable SpdMatrix xtwx_;
     double sumw_;
@@ -171,6 +181,14 @@ namespace BOOM {
   // statistics.
   class MvnGivenXRegSuf : public MvnGivenXBase {
    public:
+    // Args:
+    //   mean:  The mean of the distribution.
+    //   prior_sample_size:  The number of observations worth of prior weight.
+    //   precision_diagonal: The diagonal that X'X is to be averaged with.  This
+    //     can be an empty Vector to signal that diagonal shrinkage is to be
+    //     skipped.
+    //   diagonal_weight: A number between 0 and 1 indicating the weight to put
+    //     on the diagonal when X'X is averaged with its diagonal.
     MvnGivenXRegSuf(const Ptr<VectorParams> &mean,
                     const Ptr<UnivParams> &prior_sample_size,
                     const Vector &precision_diagonal = Vector(),
@@ -178,13 +196,13 @@ namespace BOOM {
                     const Ptr<RegSuf> &suf = Ptr<RegSuf>(nullptr));
 
     MvnGivenXRegSuf(const MvnGivenXRegSuf &rhs);
-    
+
     MvnGivenXRegSuf * clone() const override {
       return new MvnGivenXRegSuf(*this);
     }
-  
+
     void set_suf(const Ptr<RegSuf> &suf) { suf_ = suf; }
-    
+
    private:
     void set_precision_matrix() const override;
     Ptr<RegSuf> suf_;
@@ -195,6 +213,14 @@ namespace BOOM {
   // multivariate regression.
   class MvnGivenXMvRegSuf : public MvnGivenXBase {
    public:
+    // Args:
+    //   mean:  The mean of the distribution.
+    //   prior_sample_size:  The number of observations worth of prior weight.
+    //   precision_diagonal: The diagonal that X'X is to be averaged with.  This
+    //     can be an empty Vector to signal that diagonal shrinkage is to be
+    //     skipped.
+    //   diagonal_weight: A number between 0 and 1 indicating the weight to put
+    //     on the diagonal when X'X is averaged with its diagonal.
     MvnGivenXMvRegSuf(const Ptr<VectorParams> &mean,
                       const Ptr<UnivParams> &prior_sample_size,
                       const Vector &precision_diagonal = Vector(),
@@ -202,13 +228,13 @@ namespace BOOM {
                       const Ptr<MvRegSuf> &suf = Ptr<MvRegSuf>(nullptr));
 
     MvnGivenXMvRegSuf(const MvnGivenXMvRegSuf &rhs);
-    
+
     MvnGivenXMvRegSuf * clone() const override {
       return new MvnGivenXMvRegSuf(*this);
     }
-  
+
     void set_suf(const Ptr<MvRegSuf> &suf) { suf_ = suf; }
-    
+
    private:
     void set_precision_matrix() const override;
     Ptr<MvRegSuf> suf_;
@@ -219,6 +245,14 @@ namespace BOOM {
   // sufficient statistics.
   class MvnGivenXWeightedRegSuf : public MvnGivenXBase {
    public:
+    // Args:
+    //   mean:  The mean of the distribution.
+    //   prior_sample_size:  The number of observations worth of prior weight.
+    //   precision_diagonal: The diagonal that X'X is to be averaged with.  This
+    //     can be an empty Vector to signal that diagonal shrinkage is to be
+    //     skipped.
+    //   diagonal_weight: A number between 0 and 1 indicating the weight to put
+    //     on the diagonal when X'X is averaged with its diagonal.
     MvnGivenXWeightedRegSuf(
         const Ptr<VectorParams> &mean,
         const Ptr<UnivParams> &prior_sample_size,
@@ -227,13 +261,13 @@ namespace BOOM {
         const Ptr<WeightedRegSuf> &suf = Ptr<WeightedRegSuf>(nullptr));
 
     MvnGivenXWeightedRegSuf(const MvnGivenXWeightedRegSuf &rhs);
-    
+
     MvnGivenXWeightedRegSuf * clone() const override {
       return new MvnGivenXWeightedRegSuf(*this);
     }
-    
+
     void set_suf(const Ptr<WeightedRegSuf> &suf) { suf_ = suf; }
-    
+
    private:
     void set_precision_matrix() const override;
     Ptr<WeightedRegSuf> suf_;

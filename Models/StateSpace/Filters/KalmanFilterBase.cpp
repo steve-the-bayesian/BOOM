@@ -39,9 +39,10 @@ namespace BOOM {
     }
 
     void MarginalDistributionBase::check_variance(const SpdMatrix &v) const {
-      for (int i = 0; i < v.ncol(); ++i) {
+      for (int i = 0; i < v.nrow(); ++i) {
         if (v(i, i) < 0.0) {
-          // Some models with deterministic state can have zero variance.
+          // The check is for < 0 and not <= 0, because some models with
+          // deterministic state can have zero variance.
           std::ostringstream err;
           err << "Variance can't be negative." << std::endl << v;
           report_error(err.str());
@@ -80,6 +81,26 @@ namespace BOOM {
     }
     return ans;
   }
+
+  double KalmanFilterBase::compute_log_likelihood() {
+    if (status_ == NOT_CURRENT) {
+      clear_loglikelihood();
+      // Some optimizers need to compute log likelihood by trying various
+      // combinations of parameter values.  If those parameter values result in
+      // NaN's or Inf's (e.g. because of a negative variance) then code down the
+      // stack will throw an exception.  This function is the right place to
+      // catch that exception and just return negative infinity.
+      try {
+        // If the update() call succeeds it will set the status to CURRENT.
+        update();
+      } catch (...) {
+        log_likelihood_ = negative_infinity();
+        status_ = NOT_CURRENT;
+      }
+    }
+    return log_likelihood_;
+  }
+
 
   void KalmanFilterBase::clear_loglikelihood() {
     log_likelihood_ = 0;

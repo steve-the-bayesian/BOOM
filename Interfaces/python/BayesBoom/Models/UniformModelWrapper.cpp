@@ -11,9 +11,8 @@ namespace BayesBoom {
 
   void UniformModel_def(py::module &boom) {
 
-    // Do we want to inherit from DoubleModel in the class template
     py::class_<UniformModel,
-               DoubleModel,
+               DiffDoubleModel,
                BOOM::Ptr<UniformModel>>(boom, "UniformModel", py::multiple_inheritance())
         .def(py::init<double, double>(),
              py::arg("lo"),

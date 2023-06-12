@@ -75,19 +75,27 @@ namespace BOOM {
     Matrix imaginary_eigenvectors_;
   };
 
-  // Eigenvalues and vectors of an SpdMatrix.
-  class SpdEigen {
+  // Eigenvalues and vectors of an SpdMatrix, which will have only real
+  // eigenvalues.
+  class SymmetricEigen {
    public:
     // Args:
     //   matrix:  The matrix whose eigendecomposition is desired.
     //   compute_vectors: If true then eigenvalues and eigenvectors are both
     //     computed.  If false only the eigenvalues are computed.
-    SpdEigen(const SpdMatrix &matrix, bool compute_vectors);
+    explicit SymmetricEigen(const SpdMatrix &matrix, bool compute_vectors = true);
 
     const Vector &eigenvalues() const { return eigenvalues_; }
 
     // This matrix is size zero if eigenvectors were not requested.
     const Matrix &eigenvectors() const { return right_vectors_; }
+
+    // Reconstruct the original matrix that was decomposed.
+    SpdMatrix original_matrix() const;
+
+    // The closest positive definite matrix to the original matrix.  Despite the
+    // name, an SpdMatrix might not actually be positive definite.
+    SpdMatrix closest_positive_definite() const;
 
    private:
     Vector eigenvalues_;

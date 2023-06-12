@@ -5,7 +5,7 @@ Author: Steven L. Scott <steve.the.bayesian@gmail.com>
 Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
 Description: Markov chain Monte Carlo methods for finite mixture models, including hidden Markov models and Markov modulated Poisson processes (HMM's in continuous time).  Includes support for multiple mixture components used to model multivariate data.
 Depends: BoomSpikeSlab(>= 1.0.0), Boom(>= 0.8.0), R (>= 3.4.0)
-LinkingTo:  Boom(>= 0.8.0), BH (>= 1.15.0-2)
+LinkingTo:  Boom(>= 0.8.0)
 Version: 0.1
 License: LGPL-2.1 | file LICENSE
 Encoding: UTF-8

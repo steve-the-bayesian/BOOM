@@ -257,6 +257,18 @@ class LogitZellnerPrior:
                  optional_coefficient_estimate=None,
                  max_flips=-1,
                  prior_inclusion_probabilities=None):
+        """
+        Args:
+          predictors: A matrix of predictor variables, denoted X below.
+          successes:  A vector of success counts.
+          trials: A vector of trial counts.  If successes and trials are given,
+            they must satisfy 0 <= successes <= trials.  If successes is given
+            and trials is None, then successes must only contain 0's and 1's.
+
+          prior_success_probability: If 'successes' is not given,
+            then prior_success_probability is used to scale the prior mean of
+            the intercept term.  Otherwise
+        """
 
         self._max_flips = max_flips
         sample_size = predictors.shape[0]
@@ -267,7 +279,7 @@ class LogitZellnerPrior:
         xtx *= 1 - diagonal_shrinkage
         np.fill_diagonal(xtx, xtx_diagonal)
 
-        self._prior_precision = xtx
+        self._precision = xtx
         self._mean = np.zeros(xdim)
         if successes is None:
             self._mean[0] = logit(prior_success_probability)
@@ -276,7 +288,7 @@ class LogitZellnerPrior:
                 trials = np.ones(sample_size)
             p_hat = np.nanmean(successes / trials)
             self._mean[0] = logit(p_hat)
-        if not np.finite(self._mean[0]):
+        if not np.isfinite(self._mean[0]):
             self._mean[0] = 0.0
 
         if prior_inclusion_probabilities is None:
@@ -293,15 +305,15 @@ class LogitZellnerPrior:
         trials = np.ones(xdim)
         ans = LogitZellnerPrior(predictors, y, trials, max_flips=max_flips)
         ans._prior_inclusion_probabilities = prior_inclusion_probabilities
-        ans._prior_mean = mean
-        ans._prior_precision = precision
+        ans._mean = mean
+        ans._precision = precision
         return ans
 
     @property
     def slab(self):
         return boom.MvnModel(
-            boom.Vector(self._prior_mean),
-            boom.SpdMatrix(self._prior_precision),
+            boom.Vector(self._mean),
+            boom.SpdMatrix(self._precision),
             True)
 
     @property
@@ -322,7 +334,7 @@ class LogitZellnerPrior:
             spike=self.spike,
             clt_threshold=5,
             seeding_rng=boom.GlobalRng.rng)
-        if self._max_flips > 0 and np.finite(self._max_flips):
+        if self._max_flips > 0 and np.isfinite(self._max_flips):
             sampler.limit_model_selection(self._max_flips)
         if assign:
             model.set_method(sampler)
@@ -350,7 +362,7 @@ class PoissonZellnerPrior:
         xtx *= 1 - diagonal_shrinkage
         np.fill_diagonal(xtx, xtx_diagonal)
 
-        self._prior_precision = xtx
+        self._precision = xtx
         self._mean = np.zeros(xdim)
         if counts is None:
             self._mean[0] = np.log(prior_event_rate)
@@ -359,7 +371,7 @@ class PoissonZellnerPrior:
                 exposure = np.ones(sample_size)
             p_hat = np.nanmean(counts / exposure)
             self._mean[0] = logit(p_hat)
-        if not np.finite(self._mean[0]):
+        if not np.isfinite(self._mean[0]):
             self._mean[0] = 0.0
 
         if prior_inclusion_probabilities is None:
@@ -376,15 +388,15 @@ class PoissonZellnerPrior:
         trials = np.ones(xdim)
         ans = LogitZellnerPrior(predictors, y, trials, max_flips=max_flips)
         ans._prior_inclusion_probabilities = prior_inclusion_probabilities
-        ans._prior_mean = mean
-        ans._prior_precision = precision
+        ans._mean = mean
+        ans._precision = precision
         return ans
 
     @property
     def slab(self):
         return boom.MvnModel(
-            boom.Vector(self._prior_mean),
-            boom.SpdMatrix(self._prior_precision),
+            boom.Vector(self._mean),
+            boom.SpdMatrix(self._precision),
             True)
 
     @property
@@ -406,8 +418,51 @@ class PoissonZellnerPrior:
             spike=self.spike,
             clt_threshold=5,
             seeding_rng=boom.GlobalRng.rng)
-        if self._max_flips > 0 and np.finite(self._max_flips):
+        if self._max_flips > 0 and np.isfinite(self._max_flips):
             sampler.limit_model_selection(self._max_flips)
+        if assign:
+            model.set_method(sampler)
+        return sampler
+
+
+class MultinomialLogitSpikeSlabPrior:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def from_model(cls,
+                   model: boom.MultinomialLogitModel,
+                   expected_model_size=1.0,
+                   diagonal_shrinkage=.05):
+        obj = cls()
+        obj._prior_precision = model.xtx.to_numpy() / model.sample_size
+        obj._prior_precision = (
+            (1 - diagonal_shrinkage) * obj._prior_precision
+            + diagonal_shrinkage * np.diag(np.diag(obj._prior_precision))
+        )
+        xdim = obj._prior_precision.shape[1]
+        obj._prior_inclusion_probabilities = np.full(
+            xdim, expected_model_size / xdim)
+        return obj
+
+    @property
+    def slab(self):
+        xdim = self._prior_precision.shape[1]
+        return boom.MvnModel(
+            R.to_boom_vector(np.zeros(xdim)),
+            R.to_boom_spd(self._prior_precision),
+            ivar=True)
+
+    @property
+    def spike(self):
+        return boom.VariableSelectionPrior(R.to_boom_vector(
+            self._prior_inclusion_probabilities))
+
+    def create_sampler(self, model, assign=True):
+        sampler = boom.MultinomialLogitCompositeSpikeSlabSampler(
+            model,
+            self.slab,
+            self.spike)
         if assign:
             model.set_method(sampler)
         return sampler

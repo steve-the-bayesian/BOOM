@@ -20,16 +20,21 @@
 
   The contribution to the mean of the observed series obeys \deqn{y_{t}
   = B \alpha_t + \epsilon_t.}{y[t, ] = B \%*\% alpha[t, ]} plus
-  observation error.  Identifiability constraints ipmly that the
+  observation error.  Identifiability constraints imply that the
   observation coefficients \code{B} form a rectangular lower triangular
   matrix with diagonal 1.0.
+
+  If there are \eqn{m} time series and \eqn{p} factors, then \eqn{B} has
+  \eqn{m} rows and \eqn{p} columns.  Having \eqn{B} be lower triangular
+  means that the first factor affects all series.  The second affects
+  all but the first, the third excludes the first two, etc.
 }
 
 \usage{
   AddSharedLocalLevel(
      state.specification,
      response,
-     nfactors, 
+     nfactors,
      coefficient.prior = NULL,
      initial.state.prior = NULL,
      timestamps = NULL,
@@ -53,10 +58,8 @@
     This is the dimension of the state for this model component.}
 
   \item{coefficient.prior}{Prior distribution on the observation
-    coefficients.  This currently must be a
-    \code{\link[Boom]{ScaledMatrixNormalPrior}}.  Expect other choices
-    in the future. }
-  
+    coefficients. }
+
   \item{initial.state.prior}{An object of class
     \code{\link[Boom]{MvnPrior}}, describing the prior distribution of
     the initial state vector (at time 1).}
@@ -70,7 +73,7 @@
     instead of a matrix) this argument is a vector of the same length
     indicating the time series to which each element of \code{response}
     belongs. }
-  
+
   \item{sdy}{A vector giving the standard deviation of each series to be
     modeled.  This argument is only necessary if \code{response} cannot
     be supplied directly.}

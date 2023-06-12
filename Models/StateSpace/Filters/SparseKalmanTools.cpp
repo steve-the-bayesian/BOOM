@@ -145,127 +145,6 @@ namespace BOOM {
     return log_likelihood;
   }
 
-  // For computing the forecast error precision in the case of highly
-  // multivariate conditionally independent data.
-  //
-  // The observation variance of such data is diagonal, and the dimension of
-  // the state is (potentially) much smaller than the dimension of the data.
-  //
-  // The forecast error variance is F = H + ZPZ', where H is diagonal and P is
-  // low dimensional.
-  //
-  // The Woodbury formula tells us that F.inverse is
-  //
-  // H.inv - H.inv * Z * (P.inv + Z' * H.inv * Z).inv * Z' * H.inv
-  //
-  // This function also computes the log determinant of F.inverse, which is the
-  // inverse of det(H + ZPZ').  That determinant can be computed using the
-  // "matrix determinant lemma,"  which states det(A + UWV') =
-  // det(W) * det(A) * det(W.inv + V'*A.inv*U).
-  //
-  // Thus the determinant of F is
-  //     det(H) * det(P) * det(P.inv + Z'HZ)
-  
-  // SpdMatrix WoodburyInverse(const Vector &observation_precision,
-  //                           const SparseKalmanMatrix &observation_coefficients,
-  //                           const SpdMatrix &state_conditional_variance,
-  //                           double logdet_observation_precision,
-  //                           double &log_determinant) {
-  //   Matrix Z = observation_coefficients.dense();
-  //   Cholesky rootP(state_conditional_variance);
-
-  //   for (int i = 0; i < Z.nrow(); ++i) {
-  //     Z.row(i) *= sqrt(observation_precision[i]);
-  //   }
-      
-  //   SpdMatrix inner = rootP.inv() + Z.inner();
-  //   Cholesky inner_chol(inner);
-    
-  //   double logdet_state_variance = rootP.logdet();
-  //   log_determinant =
-  //       -logdet_observation_precision - inner_chol.logdet() - rootP.logdet();
-        
-  //   inner = inner_chol.inv();
-  //   for (int i = 0; i < Z.nrow(); ++i) {
-  //     Z.row(i) *= sqrt(observation_precision[i]);
-  //   }
-
-  //   SpdMatrix ans = sandwich(Z, inner);
-  //   ans *= -1;
-  //   ans.diag() += observation_precision;
-  //   return ans;
-  // }
-
-  // // TODO(stevescott): Spend some time optimizing this function for sparse
-  // // matrix operations.
-  // double sparse_conditionally_independent_kalman_update(
-  //     const ConstVectorView &observation,
-  //     Vector &state_conditional_mean,
-  //     SpdMatrix &state_conditional_variance,
-  //     Matrix &kalman_gain,
-  //     SpdMatrix &forecast_error_precision,
-  //     double &forecast_precision_log_determinant,
-  //     Vector &forecast_error,
-  //     bool missing,
-  //     const Matrix &observation_coefficients,
-  //     const Vector &observation_precision_diagonal,
-  //     const SparseKalmanMatrix &transition_matrix,
-  //     const SparseKalmanMatrix &RQR) {
-
-  //   // The forecast error variance is F = H + ZPZ'
-
-  //   forecast_error_precision = WoodburyInverse(observation_precision_diagonal,
-  //                                              observation_coefficients,
-  //                                              state_conditional_variance);
-  //   forecast_precision_log_determinant =
-  //       forecast_error_precision.invert_inplace();
-
-  //   double log_likelihood = 0;
-  //   if (!missing) {
-  //     // K = T * P * Z.transpose * Finv
-  //     kalman_gain = (transition_matrix * state_conditional_variance) *
-  //                   observation_coefficients.Tmult(forecast_error_precision);
-
-  //     Vector observation_mean =
-  //         observation_coefficients * state_conditional_mean;
-  //     forecast_error = observation - observation_mean;
-  //     log_likelihood =
-  //         dmvn(observation, observation_mean, forecast_error_precision,
-  //              forecast_precision_log_determinant, true);
-  //   } else {
-  //     kalman_gain.resize(state_conditional_mean.size(), observation.size());
-  //     kalman_gain = 0;
-  //     forecast_error.resize(observation.size());
-  //     forecast_error = 0.0;
-  //   }
-
-  //   state_conditional_mean = transition_matrix * state_conditional_mean;
-  //   if (!missing) {
-  //     // a += K * v
-  //     state_conditional_mean += kalman_gain * forecast_error;
-  //   }
-
-  //   // Need to define TPZprime before modifying P (known here as
-  //   // state_conditional_variance).
-  //   Matrix TPZprime;
-  //   if (!missing) {
-  //     // TPZprime = T * P * Z'
-  //     TPZprime = transition_matrix *
-  //                multT(state_conditional_variance, observation_coefficients);
-  //   }
-  //   // Set P = T * P * T.transpose()
-  //   transition_matrix.sandwich_inplace(state_conditional_variance);
-  //   if (!missing) {
-  //     // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
-  //     // skipped if y is missing, because K is zero.
-  //     state_conditional_variance.Matrix::add_outer(TPZprime, kalman_gain, -1);
-  //   }
-  //   // P += RQR
-  //   RQR.add_to(state_conditional_variance);
-  //   state_conditional_variance.fix_near_symmetry();
-  //   return log_likelihood;
-  // }
-
   // As part of the Kalman smoothing (backward) recursion, update the
   // vector r[t] and the matrix N[t] to time t-1.
   //
@@ -324,6 +203,7 @@ namespace BOOM {
     scaled_residual_variance_N = previousN;
   }
 
+  // For use in testing code.  Do not use in actual library code.
   void sparse_multivariate_kalman_disturbance_smoother_update(
       Vector &scaled_residual_r, SpdMatrix &scaled_residual_variance_N,
       const SparseKalmanMatrix &transition_matrix_T,

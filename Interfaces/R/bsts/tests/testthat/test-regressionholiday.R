@@ -60,7 +60,7 @@ holiday.list <- list(memorial.day, labor.day, presidents.day)
 number.of.holidays <- length(holiday.list)
 
 ## In a real example you'd want more than 100 MCMC iterations.
-niter <- 200
+niter <- 500
 
 test_that("regression holiday model works", {
   ss <- AddLocalLevel(list(), y)
@@ -80,7 +80,7 @@ test_that("regression holiday model works", {
 
 test_that("hierarchical model runs", {
   ## Try again with some shrinkage.  With only 3 holidays there won't be much
-  ## shrinkage.  
+  ## shrinkage.
   ss2 <- AddLocalLevel(list(), y)
   ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
   model2 <- bsts(y, state.specification = ss2, niter = niter, seed = 8675309, ping = niter)

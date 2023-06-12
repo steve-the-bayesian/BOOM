@@ -28,6 +28,9 @@ class DoubleModel(ABC):
         The mean of the distribution.
         """
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class SdPrior(DoubleModel):
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
@@ -233,6 +236,27 @@ class MvnPrior:
                              boom.SpdMatrix(self._Sigma))
 
 
+class MvnGivenSigma:
+    """
+    Encodes a conditional multivariate normal distribution given an external
+    variance matrix Sigma.  This model describes y ~ Mvn(mu, Sigma / kappa).
+    """
+    def __init__(self, mu: np.ndarray, sample_size: float):
+        self._mu = np.array(mu, dtype="float").ravel()
+        self._sample_size = float(sample_size)
+
+    @property
+    def dim(self):
+        return len(self._mu)
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.MvnGivenSigma(self._mu, self._sample_size)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
 class UniformPrior(DoubleModel):
     """
     Univariate uniform distribution.
@@ -255,7 +279,46 @@ class UniformPrior(DoubleModel):
         return boom.UniformModel(self._lo, self._hi)
 
 
-class WisharPrior:
+class BetaPrior(DoubleModel):
+    """
+    A distribution, typically used as the prior over a scalar probability.
+    """
+    def __init__(self, a=1.0, b=1.0):
+        self._a = float(a)
+        self._b = float(b)
+
+    @property
+    def mean(self):
+        return self._a / (self._a + self._b)
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.BetaModel(self._a, self._b)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class DirichletPrior:
+    """
+    A Dirichlet prior distribution over discrete probability distributions.
+    """
+
+    def __init__(self, counts):
+        counts = np.array(counts)
+        if not np.all(counts > 0):
+            raise Exception("All elements of 'counts' must be positive.")
+        self._counts = counts
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.DirichletModel(boom.Vector(self._counts))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class WishartPrior:
     def __init__(self, df: float, variance_estimate: np.ndarray):
         """
         Args:
@@ -280,8 +343,8 @@ class WisharPrior:
             raise Exception("sumsq must be square")
 
         sym_sumsq = (sumsq + sumsq.T) * .5
-        sumabs = np.sum(np.aps(sumsq - sym_sumsq))
-        relative = np.sum(np.aps(sumsq))
+        sumabs = np.sum(np.abs(sumsq - sym_sumsq))
+        relative = np.sum(np.abs(sumsq))
         if sumabs / relative > 1e-8:
             raise Exception("sumsq must be symmetric")
 
@@ -293,9 +356,17 @@ class WisharPrior:
         self._df = df
         self._sumsq = sumsq
 
+    @property
+    def variance_estimate(self):
+        return self._sumsq / self._df
+
+    @property
+    def df(self):
+        return self._df
+
     def boom(self):
-        import BayesBoom as boom
-        return boom.WishartModel(self._df, self._sumsq)
+        import BayesBoom.boom as boom
+        return boom.WishartModel(self.df, self.variance_estimate)
 
 
 class GaussianSuf:
@@ -394,3 +465,6 @@ class GaussianSuf:
         if n < 2:
             return 0
         return self.centered_sumsq() / (n - 1)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__

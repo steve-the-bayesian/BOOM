@@ -531,10 +531,9 @@ namespace BOOM {
   void MixedDataImputerBase::initialize(const std::vector<Vector> &atoms) {
     // int num_clusters = mixing_distribution_->dim();
     auto data_point = dat()[0];
-    auto variable_types = data_point->variable_types();
     std::vector<Ptr<CatKey>> levels;
     for (int j = 0; j < data_point->dim(); ++j) {
-      if (variable_types[j] == VariableType::categorical) {
+      if (data_point->variable_type(j) == VariableType::categorical) {
         levels.push_back(data_point->categorical(j).catkey());
       }
     }

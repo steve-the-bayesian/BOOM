@@ -15,12 +15,13 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 
 namespace BayesBoom {
   using namespace BOOM;
+  using BOOM::uint;
 
   // Define the classes related to Gaussian model.
   void GaussianModel_def(py::module &boom) {
 
     py::class_<GaussianModelBase,
-               DoubleModel,
+               DiffDoubleModel,
                Ptr<GaussianModelBase>>(boom, "GaussianModelBase")
         .def_property_readonly("mean", &GaussianModelBase::mu)
         .def_property_readonly("sd", &GaussianModelBase::sigma)
@@ -28,6 +29,54 @@ namespace BayesBoom {
         .def_property_readonly("mu", &GaussianModelBase::mu)
         .def_property_readonly("sigma", &GaussianModelBase::sigma)
         .def_property_readonly("sigsq", &GaussianModelBase::sigsq)
+        ;
+
+    py::class_<GaussianSuf,
+               Ptr<GaussianSuf>>(boom, "GaussianSuf")
+        .def(py::init<double, double, double>(),
+             py::arg("sum") = 0,
+             py::arg("sumsq") = 0,
+             py::arg("n") = 0,
+             "Args:\n\n"
+             "  sum: sum of the data.\n"
+             "  sumsq:  uncentered sum of the squared data.\n"
+             "  n:  sample size.\n")
+        .def("increment",
+             [](GaussianSuf *suf, const Vector &data) {
+               for (uint i = 0; i < data.size(); ++i) {
+                 suf->update_raw(data[i]);
+               }
+             },
+             py::arg("data"),
+             "Args:\n\n"
+             "  data:  Vector of data values to add to the sufficient "
+             "statistics.\n")
+        .def_property_readonly(
+            "sum",
+            [] (const GaussianSuf &suf) {return suf.sum();})
+        .def_property_readonly(
+            "sumsq",
+            [] (const GaussianSuf &suf) {return suf.sumsq();},
+            "Uncentered sum of squares.")
+        .def_property_readonly(
+            "n",
+            [] (const GaussianSuf &suf) {return suf.n();},
+            "Sample size.")
+        .def("centered_sumsq",
+             [](const GaussianSuf &suf, double mean) {
+               return suf.centered_sumsq(mean);
+             },
+             py::arg("mean"),
+             "The centered sum of squares around 'mean'.\n")
+        .def_property_readonly(
+            "ybar", [](const GaussianSuf &suf) {return suf.ybar();})
+        .def_property_readonly(
+            "sample_mean", [](const GaussianSuf &suf) {return suf.ybar();})
+        .def_property_readonly(
+            "sample_var", [](const GaussianSuf &suf) {return suf.sample_var();})
+        .def_property_readonly(
+            "sample_sd", [](const GaussianSuf &suf) {
+                           return std::sqrt(suf.sample_var());})
         ;
 
     py::class_<GaussianModel,

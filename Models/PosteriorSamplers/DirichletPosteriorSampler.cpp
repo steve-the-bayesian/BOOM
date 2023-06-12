@@ -25,14 +25,22 @@
 namespace BOOM {
   typedef DirichletPosteriorSampler DPS;
 
-  DPS::DirichletPosteriorSampler(DirichletModel *mod,
-                                 const Ptr<VectorModel> &Phi,
-                                 const Ptr<DoubleModel> &alpha,
+  // Args:
+  //   model:  The model being managed.
+  //   phi_prior: A prior for the discrete probability distribution
+  //     parameter phi.  This should assign logp = negative_infinity
+  //     if phi is not a discrete probability distribution.
+  //   alpha_prior: A prior for the "sample size" parameter alpha.
+  //     This should assign logp = negative_infinity if alpha <= 0.
+  //   seeding_rng:  The random number generator used to seed the sampler.
+  DPS::DirichletPosteriorSampler(DirichletModel *model,
+                                 const Ptr<VectorModel> &phi_prior,
+                                 const Ptr<DoubleModel> &alpha_prior,
                                  RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
-        model_(mod),
-        phi_prior_(Phi),
-        alpha_prior_(alpha) {
+        model_(model),
+        phi_prior_(phi_prior),
+        alpha_prior_(alpha_prior) {
     set_method(std::shared_ptr<DirichletSampler::DirichletSamplerImpl>(
                    new DirichletSampler::MlogitSliceImpl(
                        model_, phi_prior_.dcast<DiffVectorModel>(),
@@ -305,126 +313,6 @@ namespace BOOM {
 
     typedef MultinomialLogitLogPosterior Mlogit;
 
-    Mlogit::Jacobian::Jacobian(const Vector &truncated_phi)
-        : truncated_phi_(truncated_phi) {}
-
-    // Here is the math for the Jacobian of the multinomial logit
-    // transform of phi:  phi -> eta.
-    //
-    // The inverse transform is defined as
-    // phi[s] = exp(eta[s]) / (1 + sum_r(exp(eta[r]))).
-    //
-    // Using the quotient rule, we have for the (r,s) element of the
-    // Jacobian matrix:
-    //     d_phi[s] / d_eta[r != s]
-    //         = 0 - exp(eta[s]) * exp(eta[r]) / (1 + sum)^2
-    //         = -phi[s] * phi[r]
-    // and d_phi[s] / d_eta[s]
-    //         = [(1 + sum)*exp(eta[s]) - exp(eta[s]) * exp(eta[s])]
-    //             / (1 + sum)^2
-    //         = phi[s] - phi[s]^2
-    // In matrix form this says d_phi / d_eta = diag(phi) - phi *
-    // phi^T.  Keep in mind that the first element of phi is omitted,
-    // so this is a square matrix with side model_->nu().size() - 1.
-    SpdMatrix Mlogit::Jacobian::matrix() const {
-      SpdMatrix ans(truncated_phi_.size());
-      ans.diag() = truncated_phi_;
-      ans.add_outer(truncated_phi_, -1.0);
-      return ans;
-    }
-
-    double Mlogit::Jacobian::logdet() const {
-      double phi0 = 1.0 - truncated_phi_.sum();
-      double ans = log(phi0);
-      for (int s = 0; s < truncated_phi_.size(); ++s) {
-        ans += log(truncated_phi_[s]);
-      }
-      return ans;
-    }
-
-    // Here is the math for the inverse Jacobian transformation.
-    //
-    // eta[s] = log(phi[s] / (1 - sum(phi))) = log(phi[s]) - log(phi[0])
-    //  d eta[s] / d phi [r != s]
-    //       = -(1.0 / phi0) * (-1)
-    //       = 1.0 / phi0
-    //  The extra (-1) in the second line comes from the chain rule,
-    //  and the fact that phi[0] = 1 - sum(phi).
-    //
-    //  d eta[s] / d phi[s]
-    //       = (1.0 / phi[s]) + (1.0 / phi0)
-    //
-    // The matrix way of expressing this is that the inverse Jacobian
-    // is diag(1.0 / truncated_phi) + 1/phi0 * b1 * b1^T, where b1 is
-    // a vector of 1's.
-    SpdMatrix Mlogit::Jacobian::inverse_matrix() const {
-      SpdMatrix ans(truncated_phi_.size());
-      double phi0 = 1.0 - sum(truncated_phi_);
-      ans = 1.0 / phi0;
-      diag(ans) += (1.0 / truncated_phi_);
-      return ans;
-    }
-
-    // From Harville, 15.8.6:
-    //     d logdet(J) / d eta[s] =   tr (J^{-1} * d_J/d_eta[s])
-    //
-    // tr(AB) = sum_i sum_j (a[i,j] * b[j, i])
-    // Element i, j of dJ / d_eta[s] is this->second_order_element(s, i, j).
-    //
-    // But even simpler...
-    // log |J| = sum_i log(full_phi[i])     (phi is truncated_phi)
-    //     d_logdet(J) / d_eta[r]
-    //      = (1/phi0) * (-1) * sum_s(J[r,s]) + sum_s (1/phi[s]) J(r,s)
-    //      = sum_s J(r, s) * (1/phi[s] - 1/phi0)
-    void Mlogit::Jacobian::add_eta_gradient(
-        Vector &gradient, const SpdMatrix &jacobian_matrix) const {
-      if (gradient.size() != truncated_phi_.size()) {
-        report_error("gradient is the wrong size.");
-      }
-      double phi0 = 1.0 - sum(truncated_phi_);
-      Vector adjusted_reciprocal = 1.0 / truncated_phi_;
-      adjusted_reciprocal -= 1.0 / phi0;
-      gradient += jacobian_matrix * adjusted_reciprocal;
-    }
-
-    // From Harville 15.9.3:
-    // Write Jinv = J^{-1}.
-    //
-    //   d^2 log|J| / d_eta[r] d_eta[s] =
-    //     = tr(Jinv d^2J / d_eta[r] d_eta[s])
-    //       - tr( Jinv*(d_J / d_eta[r]) * Jinv*(d_J / d_eta[s]) )
-    // Where dJ/deta[r] can be obtained through a call to
-    // second_order.
-    //
-    // Even simpler:
-    // From the comment to add_eta_gradient we have
-    //    d_logdet(J) / d_eta[s] = \sum_t J(s,t) * (1/phi[t] - 1/phi0)
-    //        d . / d_eta[r]
-    //          = \sum_t d_J(s,t) / d_eta[r] * (1/phi[t] - 1/phi0)
-    //                +  J(s,t) * (-1/phi[t]^2 * J(r,t)
-    //                             +1/phi0^2 * d_phi0 / d_eta[r])
-    //          = \sum_t J2(r,s,t) * (1/phi[t] - 1/phi0)
-    //                   - J(s,t) * J(r,t) / phi[t]^2
-    //                   - J(s,t) * sum_m J(r,m) / phi0^2
-    void Mlogit::Jacobian::add_eta_hessian(
-        Matrix &hessian, const SpdMatrix &jacobian_matrix) const {
-      const SpdMatrix &J(jacobian_matrix);
-      int dim = hessian.nrow();
-      double phi0 = 1.0 - sum(truncated_phi_);
-      for (int r = 0; r < dim; ++r) {
-        double jacobian_row_sum_over_phi0_squared =
-            sum(J.row(r)) / square(phi0);
-        for (int s = 0; s < dim; ++s) {
-          for (int t = 0; t < dim; ++t) {
-            hessian(r, s) += second_order_element(r, s, t) *
-                                 (1.0 / truncated_phi_[t] - 1.0 / phi0) -
-                             J(s, t) * (J(r, t) / square(truncated_phi_[t]) +
-                                        jacobian_row_sum_over_phi0_squared);
-          }
-        }
-      }
-    }
-
     Mlogit::MultinomialLogitLogPosterior(DirichletModel *model,
                                          const Ptr<DiffVectorModel> &phi_prior)
         : model_(model), phi_prior_(phi_prior) {}
@@ -466,25 +354,26 @@ namespace BOOM {
       Vector phi_gradient;
       Matrix phi_hessian;
       double ans = logp_phi(truncated_phi, phi_gradient, phi_hessian, nderiv);
-      Jacobian jacobian(truncated_phi);
-      ans += jacobian.logdet();
+      MultinomialLogitJacobian jacobian;
+      ans += jacobian.logdet(truncated_phi);
 
       if (nderiv > 0) {
-        SpdMatrix jacobian_matrix = jacobian.matrix();
+        SpdMatrix jacobian_matrix = jacobian.matrix(truncated_phi);
         gradient = jacobian_matrix * phi_gradient;
-        jacobian.add_eta_gradient(gradient, jacobian_matrix);
+        jacobian.add_logits_gradient(truncated_phi, gradient, jacobian_matrix, true);
 
         if (nderiv > 1) {
           Hessian = sandwich(jacobian_matrix.transpose(), phi_hessian);
           for (int r = 0; r < phi_gradient.size(); ++r) {
             for (int s = 0; s < phi_gradient.size(); ++s) {
               for (int t = 0; t < phi_gradient.size(); ++t) {
-                Hessian(r, s) += jacobian.second_order_element(r, s, t);
+                Hessian(r, s) += jacobian.second_order_element(
+                    r, s, t, truncated_phi);
               }
             }
           }
           reflect_upper_triangle(Hessian);
-          jacobian.add_eta_hessian(Hessian, jacobian_matrix);
+          jacobian.add_logits_hessian(truncated_phi, Hessian, jacobian_matrix, true);
         }
       }
       return ans;

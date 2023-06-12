@@ -25,6 +25,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Selector.hpp"
 
+// Probability distributions coming from R can be found in Rmath_dist.
 #include "distributions/Rmath_dist.hpp"
 #include "distributions/rng.hpp"
 
@@ -162,6 +163,8 @@ namespace BOOM {
 
   double dstudent(double y, double mu, double sigma, double df,
                   bool log = false);
+  double pstudent(double y, double mu, double sigma, double df, bool lower_tail = true, bool logscale = false);
+  double qstudent(double y, double mu, double sigma, double df, bool lower_tail = true, bool logscale = false);
   double rstudent(double mu, double sigma, double df);
   double rstudent_mt(RNG &rng, double mu, double sigma, double df);
 
@@ -424,6 +427,8 @@ namespace BOOM {
   uint rmulti_mt(RNG &rng, const ConstVectorView &);
   int rmulti(int, int);
   int rmulti_mt(RNG &, int, int);
+
+  // See also rmultinom in Rmath_dist.hpp
 
   //===========================================================================
   // Multivariate student T distribution, defined by

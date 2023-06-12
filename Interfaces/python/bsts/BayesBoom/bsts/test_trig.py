@@ -1,12 +1,13 @@
 import unittest
 import numpy as np
-import pandas as pd
 import pickle
-import json
+import pandas as pd   # noqa
+import json           # noqa
 
+# pylint: disable=unused-import
 import pdb
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt    # noqa
 
 from BayesBoom.R import delete_if_present
 
@@ -49,8 +50,6 @@ _debug_mode = False
 
 
 if _debug_mode:
-    import pdb  # noqa
-
     # Turn warnings into errors.
     # warnings.simplefilter("error")
 

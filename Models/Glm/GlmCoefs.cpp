@@ -269,6 +269,30 @@ namespace BOOM {
     return unvectorize(b, min);
   }
 
+  namespace {
+    template <class VECTOR>
+    void add_to_impl(VECTOR &vec, const Vector &included_coefficients, const Selector &inc) {
+      for (int i = 0; i < inc.nvars(); ++i) {
+        int I = inc.dense_index(i);
+        vec[I] += included_coefficients[i];
+      }
+    }
+  }  // namespace
+
+  void GlmCoefs::add_to(VectorView view) const {
+    if (!included_coefficients_current_) {
+      fill_beta();
+    }
+    add_to_impl(view, included_coefficients_, inc_);
+  }
+
+  void GlmCoefs::add_to(Vector &view) const {
+    if (!included_coefficients_current_) {
+      fill_beta();
+    }
+    add_to_impl(view, included_coefficients_, inc_);
+  }
+
   //____________________ private stuff ___________
 
   // To be called when setting the full coefficient vector.  If nonzero values

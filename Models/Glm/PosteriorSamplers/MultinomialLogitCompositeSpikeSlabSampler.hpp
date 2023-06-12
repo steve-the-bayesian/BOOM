@@ -58,11 +58,15 @@ namespace BOOM {
     //     variables are initially excluded (or included) by the
     //     model.
     MultinomialLogitCompositeSpikeSlabSampler(
-        MultinomialLogitModel *model, const Ptr<MvnBase> &coefficient_prior,
+        MultinomialLogitModel *model,
+        const Ptr<MvnBase> &coefficient_prior,
         const Ptr<VariableSelectionPrior> &inclusion_prior,
-        double t_degrees_of_freedom = -1, double rwm_variance_scale_factor = 1,
-        uint nthreads = 1, int max_chunk_size = 10,
-        bool check_initial_condition = true, RNG &seeding_rng = GlobalRng::rng);
+        double t_degrees_of_freedom = -1,
+        double rwm_variance_scale_factor = 1,
+        uint nthreads = 1,
+        int max_chunk_size = 10,
+        bool check_initial_condition = true,
+        RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     void rwm_draw();

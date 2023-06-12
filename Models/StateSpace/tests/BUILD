@@ -4,11 +4,11 @@ COPTS = [
 ]
 
 SANITIZERS = [
-#        "-fsanitize=address",
-#        "-fsanitize=undefined",
-#        "-fsanitize=vptr",
-#        "-fsanitize=thread"
-    ]
+    #        "-fsanitize=address",
+    #        "-fsanitize=undefined",
+    #        "-fsanitize=vptr",
+    #        "-fsanitize=thread"
+]
 
 filegroup(
     name = "testdata",
@@ -22,14 +22,16 @@ cc_library(
         "DynamicInterceptTestFramework.cpp",
         "StateSpaceTestFramework.cpp",
     ],
-    copts = COPTS,
     hdrs = [
         "DynamicInterceptTestFramework.hpp",
         "StateSpaceTestFramework.hpp",
         "TestFrameworkBase.hpp",
         "state_space_test_utils.hpp",
     ],
+    copts = COPTS,
     visibility = [
+        "//Models/StateSpace/Multivariate/StateModels/tests:__pkg__",
+        "//Models/StateSpace/Multivariate/tests:__pkg__",
         "//Models/StateSpace/StateModels/tests:__pkg__",
         "//Models/StateSpace/tests:__pkg__",
     ],
@@ -43,6 +45,7 @@ cc_library(
 
 cc_test(
     name = "dynamic_regression_test",
+    size = "small",
     srcs = ["dynamic_regression_test.cc"],
     copts = COPTS,
     data = [":testdata"],
@@ -52,33 +55,32 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "dynamic_intercept_regression_test",
+    size = "small",
     srcs = ["dynamic_intercept_regression_test.cc"],
     copts = COPTS + SANITIZERS,
-    linkopts = SANITIZERS,
     data = [":testdata"],
+    linkopts = SANITIZERS,
     deps = [
         ":test_utils",
         "//:boom",
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "mixed_frequency_test",
+    size = "small",
     srcs = ["mixed_frequency_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",
-        "@gtest//:gtest_main"
+        "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 # genrule(
@@ -91,10 +93,10 @@ cc_test(
 # )
 
 cc_test(
-    name = "multivariate_state_space_regression_test",
-    srcs = ["multivariate_state_space_regression_test.cc"],
-    copts = COPTS,
+    name = "state_model_vector_test",
     size = "small",
+    srcs = ["state_model_vector_test.cc"],
+    copts = COPTS,
     deps = [
         "//:boom",
         "//:boom_test_utils",
@@ -104,20 +106,21 @@ cc_test(
 
 cc_test(
     name = "state_space_gaussian_model_test",
+    size = "small",
     srcs = ["state_space_gaussian_model_test.cc"],
     copts = COPTS + SANITIZERS,
-    linkopts = SANITIZERS,
     data = [":testdata"],
+    linkopts = SANITIZERS,
     deps = [
         "//:boom",
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "state_space_regression_model_test",
+    size = "small",
     srcs = ["state_space_regression_model_test.cc"],
     copts = COPTS,
     data = [":testdata"],
@@ -126,5 +129,4 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )

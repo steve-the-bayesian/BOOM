@@ -41,7 +41,7 @@ namespace BOOM {
       }
       return true;
     }
-  }
+  }  // namespace
 
   std::string CheckDerivatives(DerivativeTestTarget target,
                                const Vector &evaluation_point,

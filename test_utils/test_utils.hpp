@@ -59,7 +59,8 @@ namespace BOOM {
         : ok(true),
           fails_to_cover(0),
           fraction_failing_to_cover(0),
-          failure_rate_limit(0)
+          failure_rate_limit(0),
+          dimension_mismatch(false)
     {}
 
     // A human readable error message that should be examined in case 'ok' is
@@ -75,6 +76,10 @@ namespace BOOM {
 
     double fraction_failing_to_cover;
     double failure_rate_limit;
+
+    // Indicates that the "truth" value passed into CheckMcmcMatrix did not
+    // conform.
+    bool dimension_mismatch;
   };
 
   // Printing a status object prints its error message.
@@ -131,6 +136,9 @@ namespace BOOM {
   //     deviation of the centered draws to the standard deviation of the true
   //     function.  If that ratio is less than this threshold the diagnostic is
   //     passed.
+  //   coverage_fraction: The fraction of marginal posterior intervals that must
+  //     cover their true values at the specified confidence level in order for
+  //     the check to pass.
   //   filename: The name of a file to which the matrix will be printed if the
   //     check fails.  The first row of the file will be the true value.  If the
   //     file name is the empty string no file will be created.
@@ -146,6 +154,7 @@ namespace BOOM {
                                      const Vector &truth,
                                      double confidence = .95,
                                      double sd_ratio_threshold = .1,
+                                     double coverage_fraction = 0.5,
                                      const std::string &filename = "");
 
   //===========================================================================
@@ -169,6 +178,8 @@ namespace BOOM {
   //   filename: The name of a file to which the matrix will be printed if the
   //     check fails.  The first row of the file will be the true value.  If the
   //     file name is the empty string no file will be created.
+  //   force_file_output: If true then print output to a file even of the check
+  //     succeeds.
   //
   // Returns:
   //   A central credibility interval with probability content 'confidence' is
@@ -177,7 +188,8 @@ namespace BOOM {
   bool CheckMcmcVector(const Vector &draws,
                        double truth,
                        double confidence = .95,
-                       const std::string &filename = "");
+                       const std::string &filename = "",
+                       bool force_file_output = false);
 
   //===========================================================================
   // Returns true if the empirical CDF of the vector of data matches the

@@ -44,7 +44,9 @@ class GaussianStateSpaceModelFactory:
             if data is None:
                 raise Exception("One of 'prior' or 'data' must be given")
             sdy = np.std(data, ddof=1)
-            prior = R.SdPrior(sigma_guess=sdy, upper_limit=sdy * 1.2)
+            prior = R.SdPrior(sigma_guess=sdy,
+                              upper_limit=sdy * 1.2,
+                              initial_value=sdy / 2.0)
 
         if not isinstance(prior, R.SdPrior):
             raise Exception(
@@ -52,6 +54,8 @@ class GaussianStateSpaceModelFactory:
                 " parameter."
             )
         self._prior = prior
+
+        self._model.observation_model.set_sigma(self._prior.initial_value)
 
         boom_prior = boom.ChisqModel(prior.sample_size, prior.sigma_guess)
         observation_model_sampler = boom.ZeroMeanGaussianConjSampler(

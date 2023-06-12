@@ -76,7 +76,7 @@
     "box" would work, for example.}
 
   \item{ylim}{Limits on the vertical axis.}
-  
+
   \item{series.id}{A factor, string, or integer used to indicate which
     of the multivariate series to plot.  If NULL then predictions for
     all series will be plotted.  If there are many series this can make
@@ -90,7 +90,7 @@
 
   \item{gap}{The amount of space to leave between plots, measured in
     lines of text.}
-  
+
   \item{...}{Extra arguments to be passed to
     \code{\link[Boom]{PlotDynamicDistribution}}
     and \code{\link{lines}}.}
@@ -105,4 +105,3 @@
 \value{
   Returns NULL.
 }
-

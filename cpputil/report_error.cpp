@@ -20,6 +20,7 @@
 #include <iostream>
 #include "cpputil/ThrowException.hpp"
 
+
 #ifdef RLANGUAGE
 #include <Rinternals.h>
 #endif
@@ -33,13 +34,13 @@ namespace BOOM {
 #ifdef RLANGUAGE
     Rf_warning("%s\n", msg.c_str());
 #else
-    std::cerr << msg << std::endl;
+    std::cerr << "Warning:  " << msg << std::endl;
 #endif
   }
 
   void report_message(const std::string &msg) {
 #ifdef RLANGUAGE
-    REprintf("%s\n", msg.c_str());
+    Rprintf("%s\n", msg.c_str());
 #else
     std::cout << msg << std::endl;
 #endif

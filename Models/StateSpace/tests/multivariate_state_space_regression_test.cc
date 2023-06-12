@@ -15,7 +15,7 @@
 #include "Models/Glm/PosteriorSamplers/RegressionSemiconjugateSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/IndependentRegressionModelsPosteriorSampler.hpp"
 
-#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"

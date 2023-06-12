@@ -36,6 +36,10 @@ namespace BOOM {
         beta_sampler_(model_, beta_prior_, seeding_rng),
         sigsq_sampler_(siginv_prior_) {}
 
+  void RSS::set_sigma_max(double sigma_max) {
+    sigsq_sampler_.set_sigma_max(sigma_max);
+  }
+
   void RSS::draw() {
     draw_beta_given_sigma();
     draw_sigma_given_beta();

@@ -19,7 +19,6 @@
 #ifndef BOOM_ARRAY_ITERATOR_HPP_
 #define BOOM_ARRAY_ITERATOR_HPP_
 
-#include <iostream>
 #include <iterator>
 #include <vector>
 
@@ -55,8 +54,7 @@ namespace BOOM {
   };
 
   //======================================================================
-  class ArrayIterator
-      : public std::iterator<std::forward_iterator_tag, double> {
+  class ArrayIterator {
    public:
     ArrayIterator(ArrayBase *host, const std::vector<int> &starting_position);
     explicit ArrayIterator(ArrayBase *host);
@@ -91,8 +89,7 @@ namespace BOOM {
   };
 
   //======================================================================
-  class ConstArrayIterator
-      : public std::iterator<std::forward_iterator_tag, double> {
+  class ConstArrayIterator {
    public:
     // Iterator begins at the beginning of the array.
     ConstArrayIterator(const ConstArrayBase *host);
@@ -133,5 +130,29 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
+
+
+// To make the iterator a 'first class' iterator we need to specialize
+// std::iterator_traits.  This should be done inside namespace std.
+namespace std {
+  template <> struct iterator_traits<BOOM::ArrayIterator> {
+    using iterator_category = forward_iterator_tag;
+    //  using difference_type   = ptrdiff_t;
+    using difference_type   = void;
+    using value_type        = double;
+    using pointer           = double*;
+    using reference         = double&;
+  };
+
+  template<> struct iterator_traits<BOOM::ConstArrayIterator> {
+    using iterator_category = forward_iterator_tag;
+    //  using difference_type   = ptrdiff_t;
+    using difference_type   = void;
+    using value_type        = double;
+    using pointer           = double*;
+    using reference         = double&;
+  };
+}  // namespace std
+
 
 #endif  //  BOOM_ARRAY_ITERATOR_HPP_

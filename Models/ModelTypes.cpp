@@ -55,7 +55,9 @@ namespace BOOM {
   void Model::unvectorize_params(const Vector &v, bool minimal) {
     std::vector<Ptr<Params>> prm(parameter_vector());
     Vector::const_iterator b = v.begin();
-    for (uint i = 0; i < prm.size(); ++i) b = prm[i]->unvectorize(b, minimal);
+    for (uint i = 0; i < prm.size(); ++i) {
+      b = prm[i]->unvectorize(b, minimal);
+    }
   }
 
   //============================================================

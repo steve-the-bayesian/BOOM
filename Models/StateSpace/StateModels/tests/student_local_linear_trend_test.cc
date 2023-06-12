@@ -13,7 +13,7 @@ namespace {
   class StudentLocalLinearTrendStateModelTest : public ::testing::Test {
    protected:
     StudentLocalLinearTrendStateModelTest()
-        : time_dimension_(600)
+        : time_dimension_(300)
     {
       GlobalRng::rng.seed(8675309);
       double initial_level = 0.0;
@@ -21,7 +21,7 @@ namespace {
       double level_sd = 0.3;
       double slope_sd = 0.1;
       double nu_level = 2.0;
-      double nu_slope = 20.0;
+      double nu_slope = 10.0;
       modules_.AddModule(new StudentLocalLinearTrendTestModule(
           level_sd, initial_level, nu_level,
           slope_sd, initial_slope, nu_slope));
@@ -32,7 +32,7 @@ namespace {
 
   //======================================================================
   TEST_F(StudentLocalLinearTrendStateModelTest, StateSpaceModelTest) {
-    int niter = 500;
+    int niter = 600;
     int burn = 100;
     StateSpaceTestFramework state_space(1.3);
     state_space.AddState(modules_);

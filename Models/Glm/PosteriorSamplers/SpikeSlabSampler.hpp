@@ -41,7 +41,7 @@ namespace BOOM {
    public:
     // Args:
     //   model: The model to be managed.  This can be nullptr.
-    //   slab_prior: The conditional normal model defining 
+    //   slab_prior: The conditional normal model defining
     //     p(coefficients | inclusion).
     //   spike_prior: The marginal inclusion probabilities for the coefficients.
     SpikeSlabSampler(GlmModel *model, const Ptr<MvnBase> &slab_prior,
@@ -51,6 +51,7 @@ namespace BOOM {
     // Internal interface: These functions operate on the managed model, and
     // assume it is not nullptr.
     double logpri() const;
+
 
     // Performs one MCMC sweep along the inclusion indicators for the
     // managed GlmModel.
@@ -65,7 +66,7 @@ namespace BOOM {
     void draw_model_indicators(RNG &rng, const WeightedRegSuf &suf,
                                double sigsq = 1.0);
 
-    
+
     // Draws the set of included Glm coefficients given complete data
     // sufficient statistics.
     void draw_beta(RNG &rng, const WeightedRegSuf &suf, double sigsq = 1.0);
@@ -97,11 +98,29 @@ namespace BOOM {
         double sigsq = 1.0,
         bool full_set = true) const;
 
+    // Evaluate the log prior density on beta.
+    double log_prior(const GlmCoefs &beta) const;
+
+    // Take one MCMC draw of the inclusion indicators for a model, given the
+    // sufficient statistics.
+    //
+    // Args:
+    //   rng:  The random number generator to use for the simulation.
+    //   inclusion: The inclusion indicators to be sampled.  This is both an
+    //     input and output parameter.
+    //   suf:  The sufficient statisitcs.
+    //   sigsq: The residual variance parameter, if the model includes one.  For
+    //     models wihtout a residual variance parameter use the default value of
+    //     1.0.
+    //
+    // Effects:
+    //   The elements of 'inclusion' are modified by a set of Gibbs sampling
+    //   steps.
     void draw_inclusion_indicators(RNG &rng,
                                    Selector &inclusion,
                                    const WeightedRegSuf &suf,
                                    double sigsq = 1.0) const;
-    
+
     // If tf == true then draw_model_indicators is a no-op.  Otherwise
     // model indicators will be sampled each iteration.
     void allow_model_selection(bool tf);

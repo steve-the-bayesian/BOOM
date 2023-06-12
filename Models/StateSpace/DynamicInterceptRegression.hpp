@@ -19,14 +19,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Policies/CompositeParamPolicy.hpp"
+// #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
 
@@ -99,7 +99,6 @@ namespace BOOM {
   //
   class DynamicInterceptRegressionModel
       : public ConditionalIidMultivariateStateSpaceModelBase,
-        public CompositeParamPolicy,
         public IID_DataPolicy<StateSpace::TimeSeriesRegressionData>,
         public PriorPolicy {
    public:
@@ -108,12 +107,16 @@ namespace BOOM {
     DynamicInterceptRegressionModel *clone() const override {
       return new DynamicInterceptRegressionModel(*this);
     }
+    DynamicInterceptRegressionModel * deepclone() const override {
+      DynamicInterceptRegressionModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
     DynamicInterceptRegressionModel(DynamicInterceptRegressionModel &&rhs) =
         default;
 
     void add_state(const Ptr<DynamicInterceptStateModel> &state_model) {
       state_models_.add_state(state_model);
-      ParamPolicy::add_model(state_model);
     }
 
     int state_dimension() const override {
@@ -162,21 +165,8 @@ namespace BOOM {
     //   observed: Indicates which elements of the observation are observed.
     //     NOTE: 'observed is not currently used for this model.  It is needed
     //     to match the signature from the base class.
-    const SparseKalmanMatrix *observation_coefficients(
+    Ptr<SparseKalmanMatrix> observation_coefficients(
         int t, const Selector &observed) const override;
-
-    const SparseKalmanMatrix *state_transition_matrix(int t) const override {
-      return state_models_.state_transition_matrix(t);
-    }
-    const SparseKalmanMatrix *state_variance_matrix(int t) const override {
-      return state_models_.state_variance_matrix(t);
-    }
-    const SparseKalmanMatrix *state_error_expander(int t) const override {
-      return state_models_.state_error_expander(t);
-    }
-    const SparseKalmanMatrix *state_error_variance(int t) const override {
-      return state_models_.state_error_variance(t);
-    }
 
     ConstVectorView observation(int t) const override;
     ConstVectorView adjusted_observation(int time) const override;
@@ -235,10 +225,10 @@ namespace BOOM {
     // observation variance.
     Vector simulate_fake_observation(RNG &rng, int t) override;
 
-    StateModelVectorBase &state_model_vector() override {
+    StateModelVectorBase &state_models() override {
       return state_models_;
     }
-    const StateModelVectorBase &state_model_vector() const override {
+    const StateModelVectorBase &state_models() const override {
       return state_models_;
     }
 
@@ -250,15 +240,8 @@ namespace BOOM {
     // The regression component of the model is the first state component.
     Ptr<RegressionDynamicInterceptStateModel> regression_;
 
-    // This set of state parallels the state_models_ vector in the base class.
-    // These are needed to provide the right version of observation_coefficients().
+    // Manages the state models.
     StateSpaceUtils::StateModelVector<DynamicInterceptStateModel> state_models_;
-
-    // The observation coefficients are a set of horizontal blocks
-    // (i.e. vertical strips?).  Each state component contributes a block.  The
-    // number of rows is the number of elements in y[t].
-    mutable SparseVerticalStripMatrix observation_coefficients_;
-
   };
 
 }  // namespace BOOM

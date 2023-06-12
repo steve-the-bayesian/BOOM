@@ -23,12 +23,10 @@ class SeasonalStateModel(StateModel):
             and initial_y are passed.
           nseasons: The number of seasons in a cycle.
           season_duration:  The number of time periods each season.  See below.
-
           initial_state_prior: A multivariate normal distribution of dimension
             nseasons - 1.  This is a distribution on the seasonal value at time
             0 and on the nseasons-2 previous values.  If None is passed then a
             default prior will be assumed.
-
           innovation_sd_prior: Prior distribution on the standard deviation of
             the innovation terms.  If None, then a default prior will be
             assumed.
@@ -130,13 +128,14 @@ class SeasonalStateModel(StateModel):
             boom.Vector(self._initial_state_prior.mu))
         self._state_model.set_initial_state_variance(
             boom.SpdMatrix(self._initial_state_prior.Sigma))
+        self._state_model.set_sigma(self._innovation_sd_prior.initial_value)
 
         # The prior needs to be saved so the object can be serialized.
         self._assign_posterior_sampler(self._innovation_sd_prior)
 
     def __repr__(self):
         ans = f"A SeasonalStateModel with {self.nseasons} "
-        ans += f"seasonas of duration {self.season_duration}, and "
+        ans += f"seasons of duration {self.season_duration}, and "
         ans += f"residual sd {self._state_model.sigma}."
         return ans
 
@@ -157,12 +156,9 @@ class SeasonalStateModel(StateModel):
         return R.SdPrior(.01 * sdy, upper_limit=sdy)
 
     def _assign_posterior_sampler(self, innovation_sd_prior: R.SdPrior):
-        innovation_precision_prior = boom.ChisqModel(
-            innovation_sd_prior.sigma_guess,
-            innovation_sd_prior.sample_size)
         state_model_sampler = boom.ZeroMeanGaussianConjSampler(
             self._state_model,
-            innovation_precision_prior,
+            innovation_sd_prior.boom(),
             seeding_rng=boom.GlobalRng.rng)
         state_model_sampler.set_sigma_upper_limit(
             innovation_sd_prior.upper_limit)
@@ -187,7 +183,11 @@ class SeasonalStateModel(StateModel):
                 if (j == 2) and (i < 2):
                     pass
                 else:
-                    ax = fig.add_subplot(spec)
+                    if i == 0:
+                        ax = fig.add_subplot(spec[i, j])
+                        row_axis = ax
+                    else:
+                        ax = fig.add_subplot(spec[i, j], sharey=row_axis)
                     time_subset = time[season::7]
                     R.PlotDynamicDistribution(
                         curves=self.state_contribution[burn:, season::7],

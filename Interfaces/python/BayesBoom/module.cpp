@@ -14,20 +14,36 @@ namespace BayesBoom {
   void cpputil_def(py::module &);
   void LinAlg_def(py::module &);
   void stats_def(py::module &);
+  void numopt_def(py::module &);
   void Model_def(py::module &);
   void Data_def(py::module &);
   void Parameter_def(py::module &);
+  void DirichletModel_def(py::module &);
+  void BetaModel_def(py::module &);
+
+  //   void BinomialModel_def(py::module &);
+  void BetaBinomialModel_def(py::module &);
+  void MultinomialModel_def(py::module &);
+
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
   void UniformModel_def(py::module &m);
   void MvnModel_def(py::module &);
   void WishartModel_def(py::module &);
+
   void GlmModel_def(py::module &);
+  void MultinomialLogitModel_def(py::module &);
+
   void Imputation_def(py::module &);
   void TimeSeries_def(py::module &);
   void StateSpaceModel_def(py::module &);
   void StateModel_def(py::module &);
   void DynamicRegressionModel_def(py::module &);
+
+  void MultivariateStateSpaceModel_def(py::module &);
+  void MultivariateStateModel_def(py::module &);
+  void DirichletProcessMvn_def(py::module &);
+  void BetaBinomialMixture_def(py::module &);
 
   void test_utils_def(py::module &);
 
@@ -52,9 +68,17 @@ namespace BayesBoom {
     // defined after Models, where the Data class is defined.
 
     stats_def(boom);
+    numopt_def(boom);
 
     Model_def(boom);
     Parameter_def(boom);
+    BetaModel_def(boom);
+    DirichletModel_def(boom);
+
+    //    BinomialModel_def(boom);
+    BetaBinomialModel_def(boom);
+    MultinomialModel_def(boom);
+
     GaussianModel_def(boom);
     GammaModel_def(boom);
     MvnModel_def(boom);
@@ -62,13 +86,20 @@ namespace BayesBoom {
     WishartModel_def(boom);
 
     GlmModel_def(boom);
+    MultinomialLogitModel_def(boom);
     TimeSeries_def(boom);
     StateSpaceModel_def(boom);
     StateModel_def(boom);
 
+    MultivariateStateSpaceModel_def(boom);
+    MultivariateStateModel_def(boom);
+
     Imputation_def(boom);
 
     DynamicRegressionModel_def(boom);
+
+    DirichletProcessMvn_def(boom);
+    BetaBinomialMixture_def(boom);
 
     test_utils_def(boom);
   }  // Module BOOM

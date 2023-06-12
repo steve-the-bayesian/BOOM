@@ -19,27 +19,33 @@
 #ifndef BOOM_CHI_SQUARE_TEST_HPP_
 #define BOOM_CHI_SQUARE_TEST_HPP_
 
-#include <iostream>
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 
 namespace BOOM {
   class FrequencyDistribution;
-  
+
   // For testing counts vs. a known distribution
   class OneWayChiSquareTest {
    public:
     // Args:
     //   observed:  The observed cell counts in each cell of the frequency distribution.
     //   distribution:  The discrete probability distribution being tested against.
-    OneWayChiSquareTest(const Vector &observed, const Vector &distribution);
+    //   collapse: The minimium expected cell count.  Cells with less than this
+    //     minimum count are collapsed into neighboring cells.  A negative value
+    //     indicates no cell collapsing is desired.
+    OneWayChiSquareTest(const Vector &observed, const Vector &distribution, double collapse = -1.0);
 
     // Args:
     //   freq:  The empirical frequency distribution of observed events.
     //   distribution:  The discrete probability distribution being tested against.
+    //   collapse: The minimium expected cell count.  Cells with less than this
+    //     minimum count are collapsed into neighboring cells.  A negative value
+    //     indicates no cell collapsing is desired.
     OneWayChiSquareTest(const FrequencyDistribution &freq,
-                        const Vector &distribution);
-    
+                        const Vector &distribution,
+                        double collapse = -1.0);
+
     double p_value() const;
     double degrees_of_freedom() const;
     double chi_square() const;
@@ -50,6 +56,13 @@ namespace BOOM {
     std::ostream &print(std::ostream &out) const;
 
    private:
+    // Collapse all cells with expected counts less than min_count into
+    // neighboring cells.
+    //
+    // Effect:
+    //   observed_ and expected_ are replaced with collapsed versions of themselves.
+    void collapse_cells(double min_count);
+
     Vector observed_;
     Vector expected_;
     double chi_square_;
