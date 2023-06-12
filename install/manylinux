@@ -1,2 +1,2 @@
 docker build -t pyboom .
-docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-0.0.3-cp36-cp36m-manylinux2010_x86_64.whl /export/.
+docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-0.0.11-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl /export/.
