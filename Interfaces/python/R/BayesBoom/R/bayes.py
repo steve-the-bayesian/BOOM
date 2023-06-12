@@ -28,6 +28,9 @@ class DoubleModel(ABC):
         The mean of the distribution.
         """
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class SdPrior(DoubleModel):
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
@@ -233,6 +236,27 @@ class MvnPrior:
                              boom.SpdMatrix(self._Sigma))
 
 
+class MvnGivenSigma:
+    """
+    Encodes a conditional multivariate normal distribution given an external
+    variance matrix Sigma.  This model describes y ~ Mvn(mu, Sigma / kappa).
+    """
+    def __init__(self, mu: np.ndarray, sample_size: float):
+        self._mu = np.array(mu, dtype="float").ravel()
+        self._sample_size = float(sample_size)
+
+    @property
+    def dim(self):
+        return len(self._mu)
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.MvnGivenSigma(self._mu, self._sample_size)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
 class UniformPrior(DoubleModel):
     """
     Univariate uniform distribution.
@@ -255,7 +279,46 @@ class UniformPrior(DoubleModel):
         return boom.UniformModel(self._lo, self._hi)
 
 
-class WisharPrior:
+class BetaPrior(DoubleModel):
+    """
+    A distribution, typically used as the prior over a scalar probability.
+    """
+    def __init__(self, a=1.0, b=1.0):
+        self._a = float(a)
+        self._b = float(b)
+
+    @property
+    def mean(self):
+        return self._a / (self._a + self._b)
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.BetaModel(self._a, self._b)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class DirichletPrior:
+    """
+    A Dirichlet prior distribution over discrete probability distributions.
+    """
+
+    def __init__(self, counts):
+        counts = np.array(counts)
+        if not np.all(counts > 0):
+            raise Exception("All elements of 'counts' must be positive.")
+        self._counts = counts
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.DirichletModel(boom.Vector(self._counts))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class WishartPrior:
     def __init__(self, df: float, variance_estimate: np.ndarray):
         """
         Args:
@@ -280,8 +343,8 @@ class WisharPrior:
             raise Exception("sumsq must be square")
 
         sym_sumsq = (sumsq + sumsq.T) * .5
-        sumabs = np.sum(np.aps(sumsq - sym_sumsq))
-        relative = np.sum(np.aps(sumsq))
+        sumabs = np.sum(np.abs(sumsq - sym_sumsq))
+        relative = np.sum(np.abs(sumsq))
         if sumabs / relative > 1e-8:
             raise Exception("sumsq must be symmetric")
 
@@ -293,9 +356,17 @@ class WisharPrior:
         self._df = df
         self._sumsq = sumsq
 
+    @property
+    def variance_estimate(self):
+        return self._sumsq / self._df
+
+    @property
+    def df(self):
+        return self._df
+
     def boom(self):
-        import BayesBoom as boom
-        return boom.WishartModel(self._df, self._sumsq)
+        import BayesBoom.boom as boom
+        return boom.WishartModel(self.df, self.variance_estimate)
 
 
 class GaussianSuf:
@@ -394,3 +465,104 @@ class GaussianSuf:
         if n < 2:
             return 0
         return self.centered_sumsq() / (n - 1)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class RegSuf:
+    """
+    The sufficient statistics needed to specify a regression model.
+    """
+
+    def __init__(self, xtx, xty, sample_sd, sample_size=None, ybar=None,
+                 xbar=None):
+        """
+        In what follows X is the design matrix of predictors, and y is the
+        column vector of responses.  The matrix transpose of X is denoted X'.
+
+        Args:
+          xtx: The cross product matrix X'X.
+          xty: X'y
+          sample_sd:  The sample standard deviation of the y's.
+          sample_size: The number of observations covered by the sufficient
+            statistics.  If X contains a column of 1's in column 0 then
+            sample_size can be None.
+
+          ybar: The mean of the y's (a scalar).  If X contains a column of 1's
+            in column 0 then this can be None.
+
+          xbar: The mean of the X's (a vector).
+        """
+        if xtx.shape[0] != xtx.shape[1]:
+            raise Exception("xtx must be square")
+        if xtx.shape[0] != xty.shape[0]:
+            raise Exception("xtx and xty must be the same size.")
+
+        if not sample_sd >= 0:
+            raise Exception("The sample_sd must be non-negative.")
+
+        if sample_size is None:
+            sample_size = xtx[0, 0]
+        if not sample_size >= 0:
+            raise Exception("The sample size must be non-negative.")
+
+        if xbar is None:
+            raise Exception("xbar must be supplied.")
+        if xbar.shape[0] != xty.shape[0]:
+            raise Exception("xbar has the wrong size.")
+
+        if ybar is None:
+            ybar = xty[0] / sample_size
+
+        self._xtx = np.array(xtx)
+        self._xty = np.array(xty)
+        self._sample_sd = sample_sd
+        self._sample_size = sample_size
+        self._ybar = ybar
+        self._xbar = np.array(xbar)
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        import BayesBoom.R as R
+        return boom.RegSuf(xtx=R.to_boom_spd(self._xtx),
+                           xty=R.to_boom_vector(self._xty),
+                           sample_sd=self._sample_sd,
+                           sample_size=self._sample_size,
+                           xbar=self._xbar)
+
+    @property
+    def xtx(self):
+        return self._xtx
+
+    @property
+    def xdim(self):
+        return self._xtx.shape[0]
+
+    @property
+    def xbar(self):
+        return self._xbar
+
+    @property
+    def mean_x(self):
+        return self._xbar
+
+    @property
+    def mean_y(self):
+        return self._ybar
+
+    @property
+    def ybar(self):
+        return self._ybar
+
+    @property
+    def sample_sd(self):
+        return self._sample_sd
+
+    @property
+    def sample_variance(self):
+        return self._sample_sd**2
+
+    @property
+    def sample_size(self):
+        return self._sample_size

@@ -770,7 +770,7 @@ namespace BOOM {
           return -1;
         } else {
           for (int i = 0; i < model->number_of_state_models(); ++i) {
-            if (model->state_model(i).get() == state_model) {
+            if (model->state_model(i) == state_model) {
               return i;
             }
           }

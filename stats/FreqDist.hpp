@@ -41,6 +41,17 @@ namespace BOOM {
     explicit FrequencyDistribution(const std::vector<unsigned long> &y,
                                    bool contiguous = false);
 
+    // A frequency distribution for integers between lower_limit and
+    // upper_limit, inclusive.
+    //
+    // Args:
+    //   y:  The data to be summarized.
+    //   lower_limit, upper_limit: The domain of y.  The frequency distribution
+    //     will contains counts for all integer values between lower_limit and
+    //     upper_limit, inclusive, even if those counts are zero.
+    explicit FrequencyDistribution(const std::vector<int> &y,
+                                   int lower_limit, int upper_limit);
+
     // Set the category labels for the unique values in y.
     void set_labels(const std::vector<std::string> &labels);
     const std::vector<std::string> &labels() const { return labs_; }

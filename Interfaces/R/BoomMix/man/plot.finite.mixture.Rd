@@ -15,7 +15,7 @@
   \method{plot}{FiniteMixture}(x,
      y = c("state.probabilities", "mixing.weights",
            "loglikelihood", "log.likelihood",
-           "logprior", "log.prior"),
+           "logprior", "log.prior", "density"),
      burn = 0,
      ...)
 
@@ -55,6 +55,7 @@ plot(model, "mixing.weights")
 }
 
 \seealso{
+  \code{\link{PlotDensityDistribution}}
   \code{\link{PlotMixtureParams}}
   \code{\link{PlotMixingWeights}}
   \code{\link{PlotStateProbabilities}}

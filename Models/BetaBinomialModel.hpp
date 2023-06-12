@@ -30,8 +30,48 @@ namespace BOOM {
   // probability drawn from a beta(a, b) distribution.  If the group
   // size is 1 then this is simply the BetaBinomial distribution.
 
+  // The sufficient statistics for the beta binomial model are a collection of
+  // BinomialData objects, with a set of counts for each one.
+  class BetaBinomialSuf : public SufstatDetails<BinomialData> {
+   public:
+    using DataTableType = std::map<std::pair<int64_t, int64_t>, int64_t>;
+
+    BetaBinomialSuf();
+
+    BetaBinomialSuf * clone() const override;
+
+    void Update(const BinomialData &dp) override;
+    void add_data(int64_t trials, int64_t successes, int64_t counts);
+
+    void clear() override;
+
+    // Returns the sum over all data points of log n[i] choose y[i].
+    double log_normalizing_constant() const {return sum_log_normalizing_constants_;}
+    int64_t sample_size() const {return sample_size_;}
+
+    const DataTableType &count_table() const {return data_;}
+
+    BetaBinomialSuf *abstract_combine(Sufstat *suf) override;
+    void combine(const Ptr<BetaBinomialSuf> &rhs);
+    void combine(const BetaBinomialSuf &rhs);
+
+    Vector vectorize(bool minimal = true) const override;
+    Vector::const_iterator unvectorize(Vector::const_iterator &v, bool minimal = true) override;
+    Vector::const_iterator unvectorize(const Vector &v, bool minimal = true) override;
+    std::ostream & print(std::ostream &out) const override;
+
+   private:
+    DataTableType data_;
+    int64_t sample_size_;
+
+    // Sum of log n[i] choose y[i].  This is the part of the normalizing
+    // constant that does not depend on model parameters.
+    double sum_log_normalizing_constants_;
+  };
+
+
   class BetaBinomialModel : public ParamPolicy_2<UnivParams, UnivParams>,
-                            public IID_DataPolicy<BinomialData>,
+                            public SufstatDataPolicy<BinomialData, BetaBinomialSuf>,
                             public PriorPolicy,
                             public NumOptModel {
    public:
@@ -55,6 +95,7 @@ namespace BOOM {
     BetaBinomialModel *clone() const override;
 
     void clear_data() override;
+
     // Marking virtual functions as final so they can be called in the
     // constructor.
     void add_data(const Ptr<Data> &dp) final;
@@ -68,7 +109,8 @@ namespace BOOM {
     double loglike(double a, double b) const;
     double Loglike(const Vector &ab, Vector &g, Matrix &h,
                    uint nd) const override;
-    double logp(int64_t n, int64_t y, double a, double b) const;
+    static double logp(int64_t n, int64_t y, double a, double b);
+    double logp(int64_t n, int64_t y) const;
 
     // Args:
     //   n: The number of trials for a particular observation.  All trials will
@@ -87,6 +129,7 @@ namespace BOOM {
     void set_b(double b);
 
     double prior_mean() const;  // a / a+b
+    double mean() const {return prior_mean();}
     void set_prior_mean(double prob);
 
     double prior_sample_size() const;  // a+b
@@ -105,10 +148,6 @@ namespace BOOM {
    private:
     void check_positive(double arg, const char *function_name) const;
     void check_probability(double arg, const char *function_name) const;
-
-    // Stores sum of lgammafn(n+1) - lgammafn(y+1) - lgammafn(n-y+1) since the
-    // trials and rewards do not change over the lifetime of this object.
-    double lgamma_n_y_;
   };
 
 }  // namespace BOOM

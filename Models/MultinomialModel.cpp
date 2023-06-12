@@ -150,6 +150,23 @@ namespace BOOM {
   Ptr<VectorParams> MM::Pi_prm() { return ParamPolicy::prm(); }
   const Ptr<VectorParams> MM::Pi_prm() const { return ParamPolicy::prm(); }
 
+  Vector MM::vectorize_params(bool minimal) const {
+    const Vector &prob(pi());
+    if (minimal) {
+      return Vector(ConstVectorView(prob, 1));
+    } else {
+      return prob;
+    }
+  }
+
+  void MM::unvectorize_params(const Vector &v, bool minimal) {
+    if (minimal) {
+      set_pi(concat(v.sum(), v));
+    } else {
+      set_pi(v);
+    }
+  }
+
   const double &MM::pi(int s) const { return pi()[s]; }
   const Vector &MM::pi() const { return Pi_prm()->value(); }
   const Vector &MM::logpi() const {

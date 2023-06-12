@@ -27,6 +27,8 @@
 #include "Models/ModelTypes.hpp"
 #include "Models/ParamTypes.hpp"
 
+#include <iostream>  // needed for display() to compile on mac.
+
 namespace BOOM {
 
   // A base class for GlmData,

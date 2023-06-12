@@ -83,8 +83,10 @@ namespace BOOM {
           if (x < 0) {
             ++numneg;
             ans += std::log(-x);
-          } else {
+          } else if (x > 0) {
             ans += std::log(x);
+          } else {
+            return negative_infinity();
           }
         }
         return numneg %2 == 0 ? ans : negative_infinity();

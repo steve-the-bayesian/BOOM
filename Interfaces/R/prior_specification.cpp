@@ -28,6 +28,9 @@
 #include "Models/PoissonModel.hpp"
 #include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
 #include "Models/UniformModel.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/WishartModel.hpp"
+
 
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
@@ -135,6 +138,15 @@ namespace BOOM {
       return out;
     }
 
+    MvnGivenSigmaMatrixPrior::MvnGivenSigmaMatrixPrior(SEXP r_prior)
+        : mu_(ToBoomVector(getListElement(r_prior, "mean"))),
+          sample_size_(Rf_asReal(getListElement(r_prior, "sample.size")))
+    {}
+
+    MvnGivenSigma *MvnGivenSigmaMatrixPrior::boom() const {
+      return new MvnGivenSigma(mu(), kappa());
+    }
+
     Ar1CoefficientPrior::Ar1CoefficientPrior(SEXP prior)
         : NormalPrior(prior),
           force_stationary_(Rf_asLogical(getListElement(
@@ -219,6 +231,10 @@ namespace BOOM {
               prior, "variance.guess")))
     {}
 
+    WishartModel * InverseWishartPrior::boom() const {
+      return new WishartModel(variance_guess_weight_, variance_guess_);
+    }
+
     NormalInverseWishartPrior::NormalInverseWishartPrior(SEXP prior)
         : mu_guess_(ToBoomVector(getListElement(prior, "mean.guess"))),
           mu_guess_weight_(Rf_asReal(getListElement(
@@ -262,7 +278,7 @@ namespace BOOM {
         : mean_(ToBoomMatrix(getListElement(r_prior, "mean", true))),
           sample_size_(Rf_asReal(getListElement(r_prior, "nu", true)))
     {}
-    
+
     //==========================================================================
     DiscreteUniformPrior::DiscreteUniformPrior(SEXP prior)
         :lo_(Rf_asInteger(getListElement(prior, "lower.limit"))),
@@ -496,7 +512,7 @@ namespace BOOM {
           model,
           sampler);
     }
-          
+
     void SetRegressionSampler(RegressionModel *model, SEXP r_prior) {
       if (Rf_inherits(r_prior, "RegressionCoefficientConjugatePrior")) {
         report_error("TODO");
@@ -511,6 +527,6 @@ namespace BOOM {
                        r_prior);
       }
     }
-    
+
   }  // namespace RInterface
 }  // namespace BOOM

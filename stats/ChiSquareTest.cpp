@@ -25,7 +25,8 @@
 
 namespace BOOM {
   OneWayChiSquareTest::OneWayChiSquareTest(const Vector &observed,
-                                           const Vector &distribution)
+                                           const Vector &distribution,
+                                           double collapse)
       : observed_(observed),
         expected_(distribution * sum(observed_)),
         chi_square_(0),
@@ -35,6 +36,11 @@ namespace BOOM {
                    "true discrete distribution.  Maybe some zero-counts are "
                    "missing?");
     }
+
+    if (collapse > 0) {
+      collapse_cells(collapse);
+    }
+
     for (int i = 0; i < observed_.size(); ++i) {
       double Oi = observed_[i];
       double Ei = expected_[i];
@@ -58,8 +64,9 @@ namespace BOOM {
   }
 
   OneWayChiSquareTest::OneWayChiSquareTest(const FrequencyDistribution &freq,
-                                           const Vector &distribution)
-      : OneWayChiSquareTest(Vector(freq.counts()), distribution)
+                                           const Vector &distribution,
+                                           double collapse)
+      : OneWayChiSquareTest(Vector(freq.counts()), distribution, collapse)
   {}
 
   bool OneWayChiSquareTest::is_valid() const {
@@ -75,6 +82,31 @@ namespace BOOM {
     out << "chi_square = " << chi_square_ << " df = " << df_
         << " p-value = " << p_value_;
     return out;
+  }
+
+  void OneWayChiSquareTest::collapse_cells(double min_count) {
+    Vector collapsed_observed;
+    Vector collapsed_expected;
+
+    double current_observed = 0;
+    double current_expected = 0;
+
+    for (size_t i = 0; i < observed_.size(); ++i) {
+      current_observed += observed_[i];
+      current_expected += expected_[i];
+      if (current_expected > min_count) {
+        collapsed_observed.push_back(current_observed);
+        collapsed_expected.push_back(current_expected);
+        current_observed = 0;
+        current_expected = 0;
+      }
+    }
+    if (current_expected > 0 || current_observed > 0) {
+      collapsed_observed.back() += current_observed;
+      collapsed_expected.back() += current_expected;
+    }
+    observed_ = collapsed_observed;
+    expected_ = collapsed_expected;
   }
 
   TwoWayChiSquareTest::TwoWayChiSquareTest(const Matrix &observed)

@@ -43,7 +43,9 @@ namespace BOOM {
   //   scale.
   inline Vector logit(const Vector &probs) {
     Vector ans(probs);
-    for (int i = 0; i < ans.size(); ++i) ans[i] = logit(ans[i]);
+    for (size_t i = 0; i < ans.size(); ++i) {
+      ans[i] = logit(double(ans[i]));
+    }
     return ans;
   }
 
@@ -56,7 +58,7 @@ namespace BOOM {
   //   using the inverse logit transformation.
   inline Vector logit_inv(const Vector &logits) {
     Vector ans(logits);
-    for (int i = 0; i < ans.size(); ++i) ans[i] = logit_inv(ans[i]);
+    for (size_t i = 0; i < ans.size(); ++i) ans[i] = logit_inv(ans[i]);
     return ans;
   }
 

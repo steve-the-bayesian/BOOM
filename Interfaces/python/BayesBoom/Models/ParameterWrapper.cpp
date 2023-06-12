@@ -5,6 +5,8 @@
 #include "Models/SpdParams.hpp"
 #include "cpputil/Ptr.hpp"
 
+#include <sstream>
+
 namespace py = pybind11;
 PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 
@@ -14,7 +16,17 @@ namespace BayesBoom {
   // Define the
   void Parameter_def(py::module &boom) {
 
-    py::class_<UnivParams, Ptr<UnivParams>>(boom, "UnivParams")
+    py::class_<Params, Ptr<Params>>(boom, "Params")
+        .def("__repr__",
+             [](const Params &prm) {
+               std::ostringstream out;
+               out << prm;
+               return out.str();
+             })
+        ;
+
+
+    py::class_<UnivParams, Params, Ptr<UnivParams>>(boom, "UnivParams")
         .def(py::init<double>(),
              py::arg("x") = 0,
              "Create a UnivParams with value x")
@@ -29,7 +41,7 @@ namespace BayesBoom {
 
         ;
 
-    py::class_<VectorParams, Ptr<VectorParams>>(boom, "VectorParams")
+    py::class_<VectorParams, Params, Ptr<VectorParams>>(boom, "VectorParams")
         .def(py::init<const Vector &>(),
              py::arg("x") = 0,
              "Create a VectorParams with value x")
@@ -44,6 +56,7 @@ namespace BayesBoom {
         ;
 
     py::class_<SpdParams,
+               Params,
                Ptr<SpdParams>>(boom, "SpdParams")
         .def(py::init<const SpdMatrix &, bool>(),
              py::arg("V"),
@@ -51,7 +64,8 @@ namespace BayesBoom {
              "Create an SpdParams from a variance or precision matrix.\n\n"
              "Args:\n"
              "  V: SpdMatrix.  The initial value of the parameter.\n"
-             "  ivar:  If True then V is a precision matrix.  If False then V is a variance.")
+             "  ivar:  If True then V is a precision matrix.  If False then "
+             "V is a variance.")
         .def("set_var",
              [](SpdParams &prm, const SpdMatrix &value) {
                prm.set_var(value);

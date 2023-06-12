@@ -54,20 +54,13 @@ namespace BOOM {
     // that code changes in the future this constructor will probably need to
     // change as well.
     parameter_positions_.push_back(rhs.parameter_positions_[0]);
-    for (int s = 0; s < rhs.number_of_state_models(); ++s) {
-      add_state(rhs.state_model(s)->clone());
-    }
     if (state_is_fixed_) state_ = rhs.state_;
   }
 
   Base &Base::operator=(const Base &rhs) {
     if (&rhs != this) {
       Model::operator=(rhs);
-      state_models_.clear();
       state_is_fixed_ = rhs.state_is_fixed_;
-      for (int s = 0; s < number_of_state_models(); ++s) {
-        add_state(rhs.state_model(s)->clone());
-      }
       if (state_is_fixed_) state_ = rhs.state_;
     }
     return *this;
@@ -93,7 +86,7 @@ namespace BOOM {
       for (int m = 0; m < num_methods; ++m) {
         state_model(s)->set_method(
             rhs.state_model(s)->sampler(m)->clone_to_new_host(
-                state_model(s).get()));
+                state_model(s)));
       }
     }
 
@@ -181,8 +174,7 @@ namespace BOOM {
     }
   }
   //----------------------------------------------------------------------
-  void Base::add_state(const Ptr<StateModel> &m) {
-    state_models_.add_state(m);
+  void Base::observe_added_state(const StateModelBase *state_model) {
     if (parameter_positions_.empty() && observation_model()) {
       // If no state has been added yet, add the size of the observation model
       // parameters, which come before the state model parameters in the
@@ -194,10 +186,12 @@ namespace BOOM {
           observation_model()->vectorize_params(true).size());
     }
     if (parameter_positions_.empty()) {
-      parameter_positions_.push_back(m->vectorize_params(true).size());
+      parameter_positions_.push_back(
+          state_model->vectorize_params(true).size());
     } else {
-      parameter_positions_.push_back(parameter_positions_.back() +
-                                     m->vectorize_params(true).size());
+      parameter_positions_.push_back(
+          parameter_positions_.back() +
+          state_model->vectorize_params(true).size());
     }
   }
 
@@ -229,7 +223,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   Vector Base::initial_state_mean() const {
     Vector ans;
-    for (int s = 0; s < state_models_.size(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       ans.concat(state_model(s)->initial_state_mean());
     }
     return ans;
@@ -241,7 +235,7 @@ namespace BOOM {
     SpdMatrix ans(Base::state_dimension());
     int lo = 0;
     for (int s = 0; s < number_of_state_models(); ++s) {
-      Ptr<StateModel> this_state_model = state_model(s);
+      const StateModelBase* this_state_model = state_model(s);
       int hi = lo + this_state_model->state_dimension() - 1;
       SubMatrix block(ans, lo, hi, lo, hi);
       block = this_state_model->initial_state_variance();
@@ -255,7 +249,7 @@ namespace BOOM {
     if (observation_model()) {
       observation_model()->clear_data();
     }
-    state_models_.clear_data();
+    state_models().clear_data();
     signal_complete_data_reset();
   }
 
@@ -292,7 +286,7 @@ namespace BOOM {
       resize_state();
       clear_client_data();
       simulate_forward(rng);
-      propagate_disturbances();
+      propagate_disturbances(rng);
     }
   }
 
@@ -664,7 +658,13 @@ namespace BOOM {
       Base(rhs),
       filter_(this),
       simulation_filter_(this)
-  {}
+  {
+    // TODO: Need to make sure that the individual state models don't need a
+    // copy of 'this'.
+    for (int s = 0; s < rhs.number_of_state_models(); ++s) {
+      add_state(rhs.state_model(s)->clone());
+    }
+  }
 
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
@@ -806,10 +806,11 @@ namespace BOOM {
         "update_observation_model_gradient.");
   }
 
-  void ScalarBase::update_observation_model(Vector &r, SpdMatrix &N, int t,
-                                       bool save_state_distributions,
-                                       bool update_sufficient_statistics,
-                                       Vector *gradient) {
+  void ScalarBase::update_observation_model(
+      Vector &r, SpdMatrix &N, int t,
+      bool save_state_distributions,
+      bool update_sufficient_statistics,
+      Vector *gradient) {
     // Some syntactic sugar to make later formulas easier to read.  These are
     // bad variable names, but they match the math in Durbin and Koopman.
     const double H = observation_variance(t);
@@ -854,7 +855,7 @@ namespace BOOM {
   // The call to simulate_forward fills the state matrix with simulated state
   // values that have the right variance but the wrong mean.  This function
   // subtracts off the wrong mean and adds in the correct one.
-  void Base::propagate_disturbances() {
+  void Base::propagate_disturbances(RNG &rng) {
     if (time_dimension() <= 0) return;
     // Calling fast_disturbance_smoother() puts r[t] in
     // filter_[t].scaled_state_error().

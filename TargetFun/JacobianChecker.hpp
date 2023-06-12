@@ -44,8 +44,10 @@ namespace BOOM {
     //     when deciding whether the numerical version and the
     //     analytic version match.
     JacobianChecker(
+        const std::function<Vector(const Vector &)> &transformation,
         const std::function<Vector(const Vector &)> &inverse_transformation,
-        const std::shared_ptr<Jacobian> &analytic_jacobian, double epsilon);
+        const std::shared_ptr<Jacobian> &analytic_jacobian,
+        double epsilon);
 
     // The following functions return 'true' if the analytic and
     // numeric Jacobians match, and 'false' if they don't.
@@ -83,6 +85,7 @@ namespace BOOM {
     bool check_logdet_Hessian(const Vector &new_parameterization);
 
    private:
+    std::function<Vector(const Vector &)> transformation_;
     std::function<Vector(const Vector &)> inverse_transformation_;
     NumericJacobian numeric_jacobian_;
     std::shared_ptr<Jacobian> analytic_jacobian_;

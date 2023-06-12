@@ -24,7 +24,7 @@ predict.mbsts <- function(object,
                           seed = NULL,
                           ...) {
   ## Args:
-  ##   object:  an object of class 'bsts' created using the function 'bsts'
+  ##   object:  an object of class 'mbsts' created using the function 'mbsts'
   ##   horizon: An integer specifying the number of periods into the future you
   ##     wish to predict.  If 'object' contains a regression component then the
   ##     forecast horizon is nrow(X) and this argument is not used.
@@ -148,5 +148,3 @@ predict.mbsts <- function(object,
   ## .ExtractDynamicRegressionPredictors.  See the example in predict.bsts.R.
   return(ans)
 }
-
-

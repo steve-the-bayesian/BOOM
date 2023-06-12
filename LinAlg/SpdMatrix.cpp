@@ -72,7 +72,9 @@ namespace BOOM {
 
   SpdMatrix::SpdMatrix(const Matrix &A, bool check) : Matrix(A) {
     if (check) {
-      double d = A.distance_from_symmetry();
+      double d;
+      uint imax, jmax;
+      std::tie(d, imax, jmax) = A.distance_from_symmetry();
       if (d > .5) {
         std::ostringstream err;
         err << "Non-symmetric matrix passed to SpdMatrix constructor."
@@ -126,7 +128,9 @@ namespace BOOM {
   }
 
   SpdMatrix &SpdMatrix::operator=(const Matrix &rhs) {
-    double d = rhs.distance_from_symmetry();
+    double d;
+    uint imax, jmax;
+    std::tie(d, imax, jmax) = rhs.distance_from_symmetry();
     if (d > .5) {
       report_error("Argument to SpdMatrix is non-symmetric.");
     }
@@ -146,13 +150,19 @@ namespace BOOM {
 
   void SpdMatrix::swap(SpdMatrix &rhs) { Matrix::swap(rhs); }
 
-  SpdMatrix &SpdMatrix::randomize() {
+  SpdMatrix &SpdMatrix::randomize(RNG &rng) {
     *this = 0.0;
     SpdMatrix tmp(nrow());
-    tmp.Matrix::randomize();
+    tmp.Matrix::randomize(rng);
     EigenMap(*this).selfadjointView<Eigen::Upper>().rankUpdate(
         EigenMap(tmp).transpose(), 1.0);
     reflect();
+    return *this;
+  }
+
+  SpdMatrix &SpdMatrix::randomize_gaussian(double mean, double sd, RNG &rng) {
+    report_error("randomize_gaussian doesn't make sense for an SpdMatrix.  "
+                 "Consider just calling randomize() instead.");
     return *this;
   }
 
@@ -668,6 +678,16 @@ namespace BOOM {
     return ans;
   }
 
+  SpdMatrix sandwich(const Matrix &A, const Vector &diagonal) {
+    DiagonalMatrix d(diagonal);
+    return A.Tmult(d * A);
+  }
+
+  SpdMatrix sandwich_transpose(const Matrix &A, const Vector &diagonal) {
+    Matrix tmp(A * DiagonalMatrix(diagonal));
+    return(tmp.multT(A));
+  }
+
   SpdMatrix as_symmetric(const Matrix &A) {
     assert(A.is_square());
     Matrix ans = A.transpose();
@@ -689,12 +709,12 @@ namespace BOOM {
   }
 
   Vector eigenvalues(const SpdMatrix &X) {
-    SpdEigen eigen(X, false);
+    SymmetricEigen eigen(X, false);
     return eigen.eigenvalues();
   }
 
   Vector eigen(const SpdMatrix &X, Matrix &Z) {
-    SpdEigen eigen(X, true);
+    SymmetricEigen eigen(X, true);
     Z = eigen.eigenvectors();
     return eigen.eigenvalues();
   }
@@ -741,6 +761,24 @@ namespace BOOM {
       }
     }
     ans.reflect();
+    return ans;
+  }
+
+  SpdMatrix block_diagonal_spd(const std::vector<SpdMatrix> &blocks) {
+    size_t total_dim = 0;
+    for (const auto &el : blocks) {
+      total_dim += el.nrow();
+    }
+    SpdMatrix ans(total_dim, 0.0);
+
+    size_t start = 0;
+    for (const auto &el : blocks) {
+      SubMatrix view(ans,
+                     start, start + el.nrow() - 1,
+                     start, start + el.ncol() - 1);
+      view = el;
+      start += el.nrow();
+    }
     return ans;
   }
 

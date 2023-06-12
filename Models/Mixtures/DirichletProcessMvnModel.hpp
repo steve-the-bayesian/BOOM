@@ -73,7 +73,8 @@ namespace BOOM {
     // Change value of data currently used in model.
     void update_cluster(const Vector &old_y, const Vector &new_y, int cluster);
 
-    // It is an error to try to obtain a cluster >= number_of_clusters().
+    // The mixture component defining cluster i.  It is an error to call this
+    // function with i >= number_of_clusters().
     const MvnModel &cluster(int i) const;
 
     // Sets the parameters of the specified mixture component to the
@@ -112,18 +113,29 @@ namespace BOOM {
     }
 
     // Cluster indicator for i-th observation.
-    const int &cluster_indicators(int i) const {
-      return cluster_indicators_.at(i);
+    int cluster_indicators(int i) const {
+      return cluster_indicators_[i];
     }
 
     // Set cluster indicator for i-th observation.
     void set_cluster_indicator(int i, int k) { cluster_indicators_[i] = k; }
+
+    const Matrix cluster_membership_probabilities() const {
+      return cluster_membership_probabilities_;
+    }
+
+    void set_cluster_membership_probabilities(
+        int observation_index, const Vector &probs);
 
     // Initialize vector of cluster indicators.
     void initialize_cluster_indicators(int s) {
       cluster_indicators_.clear();
       cluster_indicators_.resize(s, -1);
     }
+
+    // Ensure that appropriate space is declared to hold cluster membership
+    // probabilities.  Cluster membership probabilities are optional
+    void initialize_cluster_membership_probabilities();
 
    private:
     // Clears the ParamPolicy and re-registers all models with it.
@@ -144,6 +156,14 @@ namespace BOOM {
     // calculations).
     // cluster_indicators_[i] == -1 means observation i is unassigned.
     std::vector<int> cluster_indicators_;
+
+    // Row i stores the cluster membership probabilities for observation i.  The
+    // columns go from 0 to number_of_clusters().  The final column indicates an
+    // as-yet unassigned cluster.
+    //
+    // This data element is optional and the initial value for the matrix may be
+    // an empty matrix.
+    Matrix cluster_membership_probabilities_;
 
     // Dimension of the data being modeled.
     int dim_;

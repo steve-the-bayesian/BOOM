@@ -23,7 +23,6 @@
 #include "uint.hpp"
 
 #include <cassert>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -132,11 +131,15 @@ namespace BOOM {
     // vector.
     uint indx(uint i) const;  // i=0..n-1, ans in 0..N-1
     uint sparse_index(uint dense_index) const { return indx(dense_index); }
+    uint expanded_index(uint compressed) const {
+      return indx(compressed);
+    }
 
-    // Returns the position in the condensed (dense) vector corresponding to
-    // position I in the expanded (sparse) vector.
+    // Returns the position in the condensed (compressed, dense) vector
+    // corresponding to position I in the expanded (sparse) vector.
     uint INDX(uint I) const;  // I=0..N-1, ans in 0..n-1
     uint dense_index(uint sparse_index) const { return INDX(sparse_index); }
+    uint compressed_index(uint expanded) const {return INDX(expanded);}
 
     // Returns the index of a randomly selected included (or excluded)
     // element.  If no (all) elements are included then -1 is returned
@@ -148,9 +151,16 @@ namespace BOOM {
     // no elements in this position or lower are included, then return -1.
     int first_included_at_or_before(uint position) const;
 
-    Vector select(const Vector &x) const;          // x includes intercept
+    // Return the subset of 'x' modeled by the Selector object.
+    Vector select(const Vector &x) const;
     Vector select(const VectorView &x) const;
     Vector select(const ConstVectorView &x) const;
+
+    // If x.size() == nvars() then assume it is already 'selected' and return
+    // x. Otherwise return select(x).
+    Vector select_if_needed(const Vector &x) const;
+    Vector select_if_needed(const VectorView &x) const;
+    Vector select_if_needed(const ConstVectorView &x) const;
 
     SpdMatrix select(const SpdMatrix &) const;
     Matrix select_cols(const Matrix &M) const;
@@ -173,10 +183,13 @@ namespace BOOM {
     Vector expand(const ConstVectorView &x) const;
 
     // Fill the missing elements of a vector with specfic values.
+    //
     // Args:
     //   v: The vector to be partially filled.
-    //   value/values:  The values to be filled in for v[i] where *this[i] is false.
-    //     In the vector version, values must have size nvars_excluded().
+    //   value/values: The values to be filled in for v[i] where *this[i] is
+    //     false.  In the vector version, values must have size
+    //     nvars_excluded().
+    //
     // Returns:
     //   The excluded elements of v are filled with the supplied values, and the
     //   modified v is returned.
@@ -261,7 +274,7 @@ namespace BOOM {
 
   template <class T>
   std::vector<T> Selector::select(const std::vector<T> &v) const {
-    assert(v.size() == nvars_possible());
+    assert(long(v.size()) == nvars_possible());
     if (include_all_ || nvars() == nvars_possible()) return v;
     std::vector<T> ans;
     ans.reserve(nvars());

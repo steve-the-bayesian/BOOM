@@ -232,6 +232,14 @@ namespace BOOM {
     return data()[pos];
   }
 
+  bool ConstArrayBase::empty() const {
+    if (dims_.empty()) return true;
+    for (const auto &el : dims_) {
+      if (el == 0) return true;
+    }
+    return false;
+  }
+
   int ConstArrayBase::size() const {
     int ans = 1;
     for (int i = 0; i < dims_.size(); ++i) ans *= dims_[i];
@@ -724,6 +732,37 @@ namespace BOOM {
       length *= dims[i];
     }
     data_.assign(data, data + length);
+  }
+
+
+  namespace {
+    std::vector<int> compute_dimensions(const std::vector<Matrix> &m) {
+      std::vector<int> ans(3);
+      if (m.empty()) {
+        ans.assign(3, 0);
+      } else {
+        ans[0] = m.size();
+        ans[1] = m[0].nrow();
+        ans[2] = m[0].ncol();
+      }
+      return ans;
+    }
+  }  // namespace
+
+  Array::Array(const std::vector<Matrix> &matrices)
+      : ArrayBase(compute_dimensions(matrices)),
+        data_(size())
+  {
+    int n = matrices.size();
+    for (int i = 0; i < n; ++i) {
+      if (matrices[i].nrow() != dim(1) || matrices[i].ncol() != dim(2)) {
+        report_error("All matrices must be the same size in the array "
+                     "constructor.");
+      }
+      for (int j = 0; j < matrices[i].nrow(); ++j) {
+        this->vector_slice(i, j, -1) = matrices[i].row(j);
+      }
+    }
   }
 
   Array &Array::operator=(const ArrayView &a) {

@@ -2,6 +2,7 @@ export(
   CheckMixtureComponent,
   CheckProcessSpecification,
   ConditionalMixture,
+  DirichletProcessMvn,
   FiniteMixture,
   HiddenMarkovModel,
   IndependentMvnMixtureComponent,
@@ -12,6 +13,10 @@ export(
   MultinomialMixtureComponent,
   MvnMixtureComponent,
   NormalMixtureComponent,
+  PlotDensityDistribution,
+  PlotDpMvnNclusters,
+  PlotDpMvnMeans,
+  PlotDpMvnMeanPairs,
   PlotInitialStateDistribution,
   PlotMixingWeights,
   PlotMixtureParams,
@@ -29,6 +34,8 @@ export(
   ZeroInflatedPoissonMixtureComponent,
   plot.FiniteMixture,
   plot.HiddenMarkovModel,
+  plot.DirichletProcessMvn,
+  summary.DirichletProcessMvn,
   HomogeneousPoissonProcess,
   WeeklyCyclePoissonProcess,
   SimulateWeeklyCyclePoissonProcess,
@@ -41,40 +48,45 @@ S3method(plot, PointProcess)
 S3method(plot, PointProcessDensity)
 S3method(plot, HiddenMarkovModel)
 S3method(plot, WeeklyProfile)
+S3method(plot, DirichletProcessMvn)
+
+S3method(summary, DirichletProcessMvn)
 
 S3method(print, WeeklyProfile)
 
 S3method(density, PointProcess)
 S3method(length, PointProcess)
 
-
 import(Boom, BoomSpikeSlab)
 
 importFrom("graphics",
-  "abline",
-  "barplot",
-  "boxplot",
-  "layout",
-  "legend",
-  "par",
-  "plot",
-  "polygon",
-  "rug")
-
+           "abline",
+           "axis",
+           "barplot",
+           "box",
+           "boxplot",
+           "layout",
+           "legend",
+           "par",
+           "plot",
+           "polygon",
+           "points",
+           "rug")
 
 importFrom("stats",
-  ".getXlevels",
-  "density",
-  "model.matrix",
-  "model.response",
-  "plot.ts",
-  "rgamma",
-  "rpois",
-  "runif",
-  "sd",
-  "var"
-)
+           ".getXlevels",
+           "density",
+           "dnorm",
+           "model.matrix",
+           "model.response",
+           "plot.ts",
+           "rgamma",
+           "rpois",
+           "runif",
+           "sd",
+           "var"
+           )
 
-importFrom("utils", "head", "tail")
+importFrom("utils", "head", "help", "tail")
 
 useDynLib(BoomMix, .registration = TRUE)

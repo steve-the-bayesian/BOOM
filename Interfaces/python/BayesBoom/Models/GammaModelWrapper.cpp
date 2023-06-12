@@ -13,7 +13,7 @@ namespace BayesBoom {
   void GammaModel_def(py::module &boom) {
 
     py::class_<GammaModelBase,
-               DoubleModel,
+               DiffDoubleModel,
                BOOM::Ptr<GammaModelBase>>(boom, "GammaModelBase")
         .def("alpha", &GammaModelBase::alpha)
         .def("beta", &GammaModelBase::beta)

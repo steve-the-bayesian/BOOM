@@ -33,7 +33,7 @@ namespace BOOM {
 
   void RCS::set_posterior_suf() {
     const Vector &prior_mean(coefficient_prior_->mu());
-    SpdMatrix unscaled_prior_precision = coefficient_prior_->unscaled_precision(); 
+    SpdMatrix unscaled_prior_precision = coefficient_prior_->unscaled_precision();
     posterior_precision_ = unscaled_prior_precision + model_->suf()->xtx();
     posterior_mean_ = model_->suf()->xty() + unscaled_prior_precision * prior_mean;
     posterior_mean_ = posterior_precision_.solve(posterior_mean_);
@@ -47,8 +47,17 @@ namespace BOOM {
     double sigsq = sigsq_sampler_.draw(rng(), DF_, SS_);
     model_->set_sigsq(sigsq);
     posterior_precision_ /= sigsq;
-    model_->set_Beta(rmvn_ivar_mt(
-        rng(), posterior_mean_, posterior_precision_));
+    Vector beta = rmvn_ivar_mt(
+        rng(), posterior_mean_, posterior_precision_);
+    // if (beta[0] < -10 || beta[0] > 10) {
+    //   std::cout << "Unusual draw of beta[0] in RegressionConjSampler...\n"
+    //             << "xtx = " << model_->suf()->xtx()
+    //             << "xty = " << model_->suf()->xty() << "\n"
+    //             << "posterior_mean = " << posterior_mean_ << "\n"
+    //             << "posterior_precision_ = " << posterior_precision_
+    //             << "sigsq = " << sigsq << "\n" ;
+    // }
+    model_->set_Beta(beta);
   }
 
   void RCS::find_posterior_mode(double) {

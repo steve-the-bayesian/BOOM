@@ -54,19 +54,24 @@ namespace BayesBoom {
              "  is returned.  In other words, 'true' indicates that 'data1' and 'data2'\n"
              "  are a match.\n");
 
-
     boom.def("check_stochastic_process",
              [](const Matrix &draws,
                 const Vector &truth,
                 double confidence,
-                double sd_ratio_threshold) {
-               return CheckStochasticProcess(draws, truth, confidence,
-                                             sd_ratio_threshold, "");
+                double sd_ratio_threshold,
+                double coverage_fraction) {
+               return CheckStochasticProcess(draws,
+                                             truth,
+                                             confidence,
+                                             sd_ratio_threshold,
+                                             coverage_fraction,
+                                             "");
              },
              py::arg("draws"),
              py::arg("truth"),
              py::arg("confidence") = .95,
              py::arg("sd_ratio_threshold") = .1,
+             py::arg("coverage_fraction") = .5,
              "A check similar to CheckMcmcMatrix, but designed for stochastic processes\n"
              "or other functions exhibiting serial correlation, which can mess up the\n"
              "multiple comparisons adjustments used by CheckMcmcMatrix.\n\n"
@@ -80,7 +85,11 @@ namespace BayesBoom {
              "  sd_ratio_threshold: One of the testing diagnostics compares the standard\n"
              "    deviation of the centered draws to the standard deviation of the true\n"
              "    function.  If that ratio is less than this threshold the diagnostic is\n"
-             "    passed.\n\n"
+             "    passed.\n"
+             "  coverage_fraction: The fraction of marginal posterior intervals that must\n"
+             "    cover their true values at the specified confidence level in order for\n"
+             "    the check to pass. \n"
+             "\n"
              "Details:\n"
              "  Half the marginal confidence intervals should cover, and the residual\n"
              "  standard deviation should be small relative to the standard deviation of\n"

@@ -1,3 +1,6 @@
+#ifndef BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_
+#define BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_
+
 /*
   Copyright (C) 2019 Steven L. Scott
 
@@ -21,9 +24,10 @@
 
 namespace BOOM {
 
-  // A posterior sampler for IndependentRegressionModels.  All work is deferred
-  // to the posterior samplers assigned to the subordinate models.
-  class IndependentRegressionModelsPosteriorSampler
+  // All work is deferred to the posterior samplers assigned to the subordinate
+  // models.
+  template <class GLM>
+  class IndependentGlmsPosteriorSampler
       : public PosteriorSampler {
    public:
     // Args:
@@ -31,8 +35,8 @@ namespace BOOM {
     //     its own posterior samplers assigned.
     //   seeding_rng: The random number generator used to seed the RNG owned by
     //     this posterior sampler.
-    explicit IndependentRegressionModelsPosteriorSampler(
-        IndependentRegressionModels *model,
+    explicit IndependentGlmsPosteriorSampler(
+        IndependentGlms<GLM> *model,
         RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
           model_(model)
@@ -52,9 +56,29 @@ namespace BOOM {
       return ans;
     }
 
+    bool can_find_posterior_mode() const override {
+      for (int i = 0; i < model_->ydim(); ++i) {
+        if (!model_->model(i)->can_find_posterior_mode()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    void find_posterior_mode(double epsilon = 1e-5) override {
+      for (int i = 0; i < model_->ydim(); ++i) {
+        model_->model(i)->find_posterior_mode(epsilon);
+      }
+    }
+
    private:
-    IndependentRegressionModels *model_;
+    IndependentGlms<GLM> *model_;
   };
 
+  // The special case of GLM == RegressionModel is needed for legacy reasons.
+  using IndependentRegressionModelsPosteriorSampler
+  = IndependentGlmsPosteriorSampler<RegressionModel>;
 
 }  // namespace BOOM
+
+#endif  //  BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_

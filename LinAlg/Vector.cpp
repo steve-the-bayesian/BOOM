@@ -166,6 +166,15 @@ namespace BOOM {
     return *this;
   }
 
+  Vector &Vector::randomize_gaussian(double mean, double sd, RNG &rng) {
+    size_t n = size();
+    double *d(data());
+    for (size_t i = 0; i < n; ++i) {
+      d[i] = rnorm_mt(rng, mean, sd);
+    }
+    return *this;
+  }
+
   double *Vector::data() {
     if (empty()) return 0;
     return &((*this)[0]);
@@ -1010,7 +1019,7 @@ namespace BOOM {
     double real_index = quantile * max_index;
     double index = lround(floor(real_index));
     double fraction = real_index - index;
-    if (fraction > (1.0 / n)) {
+    if (fraction > std::min<double>(0.01, (1.0 / n))) {
       // In this case real_index is between two integers, which means it can't
       // be max_index.  Return an interpolated average of the lower and upper
       // values.

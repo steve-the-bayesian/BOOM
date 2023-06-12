@@ -24,6 +24,9 @@
 #include <map>  // for STL's map container
 #include <string>
 #include <vector>
+// The iostream include is needed for templated display() to compile across
+// platform.
+#include <iostream>
 #include "uint.hpp"
 
 #include "LinAlg/CorrelationMatrix.hpp"  // for VectorData

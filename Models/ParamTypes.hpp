@@ -38,10 +38,10 @@ namespace BOOM {
     // copied/cloned params have distinct data and distinct io buffers
 
     //----------------------------------------------------------------------
-    // Params can be 'vectorized' which is useful for io and
-    // message passing.
-    // The "size" of a parameter is the number of elements that it
-    // occupies when represented as a vector.
+    // Params can be 'vectorized' which is useful for io and message passing.
+    // The "size" of a parameter is the number of elements that it occupies when
+    // represented as a vector.
+    //
     // Args:
     //   minimal: If true then the size refers to the size of the
     //     smallest vector that can represent the parameter.  If false

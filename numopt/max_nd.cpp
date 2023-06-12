@@ -18,7 +18,6 @@
 */
 
 #include <cmath>
-#include <iostream>
 
 #include "numopt.hpp"
 

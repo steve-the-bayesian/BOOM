@@ -55,7 +55,10 @@ MODELS_HDRS = glob([
 
 NUMOPT_SRCS = glob(["numopt/*.cpp"])
 
-NUMOPT_HDRS = glob(["numopt/*.hpp"])
+NUMOPT_HDRS = glob([
+    "numopt/*.hpp",
+    "numopt/linear_assignment/*.hpp",
+])
 
 STATS_SRCS = glob(["stats/*.cpp"])
 
@@ -96,11 +99,11 @@ HIERARCHICAL_HDRS = glob([
 ])
 
 IMPUTE_SRCS = glob([
-    "Models/Impute/*.cpp"
+    "Models/Impute/*.cpp",
 ])
 
 IMPUTE_HDRS = glob([
-    "Models/Impute/*.hpp"
+    "Models/Impute/*.hpp",
 ])
 
 IRT_SRCS = glob([
@@ -149,6 +152,9 @@ STATE_SPACE_SRCS = glob([
     "Models/StateSpace/StateModels/*.cpp",
     "Models/StateSpace/PosteriorSamplers/*.cpp",
     "Models/StateSpace/StateModels/PosteriorSamplers/*.cpp",
+    "Models/StateSpace/Multivariate/*.cpp",
+    "Models/StateSpace/Multivariate/StateModels/*.cpp",
+    "Models/StateSpace/Multivariate/PosteriorSamplers/*.cpp",
 ])
 
 STATE_SPACE_HDRS = glob([
@@ -157,6 +163,9 @@ STATE_SPACE_HDRS = glob([
     "Models/StateSpace/StateModels/*.hpp",
     "Models/StateSpace/PosteriorSamplers/*.hpp",
     "Models/StateSpace/StateModels/PosteriorSamplers/*.hpp",
+    "Models/StateSpace/Multivariate/*.hpp",
+    "Models/StateSpace/Multivariate/StateModels/*.hpp",
+    "Models/StateSpace/Multivariate/PosteriorSamplers/*.hpp",
 ])
 
 TIMESERIES_SRCS = glob([
@@ -224,7 +233,7 @@ cc_library(
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",
         #        "-g",
-#        "-fsanitize=address",
+        #        "-fsanitize=address",
     ],
     #    includes = ["."],
     linkopts = [
@@ -233,7 +242,7 @@ cc_library(
         #        "-lprofiler",
         "-lpthread",
         "-lm",
-#        "-fsanitize=address"
+        #        "-fsanitize=address"
     ],
     visibility = ["//visibility:public"],
 )

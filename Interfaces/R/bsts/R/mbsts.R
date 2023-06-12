@@ -175,7 +175,7 @@ mbsts <- function(formula,
     if (is.data.frame(response) || is.matrix(response)) {
       stop("Please change data.format to 'wide' if passing matrix-valued time series")
     }
-    
+
     predictors <- matrix(1, nrow = length(response), ncol = 1)
     colnames(predictors) <- "Intercept"
   }
@@ -187,7 +187,7 @@ mbsts <- function(formula,
     series.id = series.id,
     timestamp.info = TimestampInfo(predictors, NULL, timestamps)
   )
-  
+
   #------------------------------------------------------------------------
   # Check the format of the state specification.
   #------------------------------------------------------------------------
@@ -202,7 +202,7 @@ mbsts <- function(formula,
   if (is.null(prior)) {
     prior <- .DefaultMbstsPrior(predictors, response, series.id)
   }
-  # The prior for the observation model is a list of spike adn slab priors.
+  # The prior for the observation model is a list of spike and slab priors.
   stopifnot(is.list(prior), length(prior) == nseries,
     all(sapply(prior, inherits, "SpikeSlabPrior")))
 
@@ -213,10 +213,10 @@ mbsts <- function(formula,
   if (!is.null(opts)) {
     stopifnot(is.list(opts))
   }
-  
-  #------------------------------------------------------------------------  
+
+  #------------------------------------------------------------------------
   # Check that all the scalars are actually scalars.
-  #------------------------------------------------------------------------  
+  #------------------------------------------------------------------------
   if (!is.null(seed)) {
     seed <- as.integer(seed)
     stopifnot(length(seed) == 1)
@@ -224,7 +224,7 @@ mbsts <- function(formula,
   check.scalar.integer(niter)
   check.scalar.integer(ping)
 
-  #------------------------------------------------------------------------  
+  #------------------------------------------------------------------------
   # Do the work!
   #------------------------------------------------------------------------
   ans <- .Call("analysis_common_r_fit_multivariate_bsts_model_",
@@ -232,7 +232,7 @@ mbsts <- function(formula,
     shared.state.specification,
     series.state.specification,
     prior,
-    opts, 
+    opts,
     as.integer(niter),
     as.integer(ping),
     seed)
@@ -241,14 +241,15 @@ mbsts <- function(formula,
   ans$series.state.specification <- series.state.specification
   ans$prior <- prior
   ans$niter <- niter
+
   ans$timestamp.info <- data.list$timestamp.info
   ans$series.id <- series.id
   ans$original.series <- response
   ans$predictors <- predictors
-  
-  #------------------------------------------------------------------------  
+
+  #------------------------------------------------------------------------
   # Final formatting.
-  #------------------------------------------------------------------------  
+  #------------------------------------------------------------------------
   # Set dimnames.
   series.names <- as.character(levels(series.id))
   predictor.names <- colnames(predictors)
@@ -256,12 +257,12 @@ mbsts <- function(formula,
     function(x) x$name)
   ans$nseries <- length(series.names)
 
-  
+
   dimnames(ans$regression.coefficients) <- list(
     NULL, series.names, predictor.names)
   dimnames(ans$shared.state.contributions) <- list(
     NULL, state.model.names, series.names, NULL)
-  
+
   class(ans) <- "mbsts"
   return(ans)
 }
@@ -327,4 +328,3 @@ mbsts <- function(formula,
   }
   return(list(shared.state.specification, series.state.specification))
 }
-

@@ -51,6 +51,8 @@ namespace BOOM {
 
     double operator[](const std::vector<int> &index) const;
 
+    bool empty() const;
+
     int ndim() const { return dims_.size(); }
     int dim(int i) const { return dims_[i]; }
     const std::vector<int> &dim() const { return dims_; }
@@ -309,6 +311,13 @@ namespace BOOM {
     explicit Array(const std::vector<int> &dims, double initial_value = 0);
     Array(const std::vector<int> &dims, const std::vector<double> &data);
     Array(const std::vector<int> &dims, const double *data);
+
+    // Convenience constructor for a 3-way array.  The first array dimension is
+    // the index of the vector.  The second and third dimensions are the rows
+    // and columns of the elements of 'matrices.'  If 'matrices' is empty then
+    // all three dimensions are zero.  Otherwise, an error will be reported if
+    // the matrices are not all the same size.
+    explicit Array(const std::vector<Matrix> &matrices);
 
     Array(const Array &rhs) = default;
     Array(Array &&rhs) = default;

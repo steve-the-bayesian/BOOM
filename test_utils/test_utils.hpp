@@ -59,7 +59,8 @@ namespace BOOM {
         : ok(true),
           fails_to_cover(0),
           fraction_failing_to_cover(0),
-          failure_rate_limit(0)
+          failure_rate_limit(0),
+          dimension_mismatch(false)
     {}
 
     // A human readable error message that should be examined in case 'ok' is
@@ -73,8 +74,16 @@ namespace BOOM {
     // confidence.
     int fails_to_cover;
 
+    // The fraction of draws that did not cover the true value.
     double fraction_failing_to_cover;
+
+    // The maximum value fraction_failing_to_cover can have before we declare
+    // a test failure.
     double failure_rate_limit;
+
+    // Indicates that the "truth" value passed into CheckMcmcMatrix did not
+    // conform.
+    bool dimension_mismatch;
   };
 
   // Printing a status object prints its error message.
@@ -131,6 +140,9 @@ namespace BOOM {
   //     deviation of the centered draws to the standard deviation of the true
   //     function.  If that ratio is less than this threshold the diagnostic is
   //     passed.
+  //   coverage_fraction: The fraction of marginal posterior intervals that must
+  //     cover their true values at the specified confidence level in order for
+  //     the check to pass.
   //   filename: The name of a file to which the matrix will be printed if the
   //     check fails.  The first row of the file will be the true value.  If the
   //     file name is the empty string no file will be created.
@@ -146,6 +158,7 @@ namespace BOOM {
                                      const Vector &truth,
                                      double confidence = .95,
                                      double sd_ratio_threshold = .1,
+                                     double coverage_fraction = 0.5,
                                      const std::string &filename = "");
 
   //===========================================================================
@@ -169,6 +182,8 @@ namespace BOOM {
   //   filename: The name of a file to which the matrix will be printed if the
   //     check fails.  The first row of the file will be the true value.  If the
   //     file name is the empty string no file will be created.
+  //   force_file_output: If true then print output to a file even of the check
+  //     succeeds.
   //
   // Returns:
   //   A central credibility interval with probability content 'confidence' is
@@ -177,7 +192,24 @@ namespace BOOM {
   bool CheckMcmcVector(const Vector &draws,
                        double truth,
                        double confidence = .95,
-                       const std::string &filename = "");
+                       const std::string &filename = "",
+                       bool force_file_output = false);
+
+  // Compare the median of 'draws' as the Y variable with 'truth' as the X
+  // variable in a simple regression.  Look for an intercept close to zero, a
+  // slope close to 1, and a fairly high R^2.
+  //
+  // Args:
+  //   draws:  Each row is a draw, each column is a different variable.
+  //   truth: A Vector with the same length as the number of columns in 'draws'.
+  //     These are the true values that 'draws' are supposed to cover.
+  //   r2_threshold: The r-square threshold that must be exceeded in order for
+  //     the test to pass.
+  //
+  // Returns:
+  //   true if the R^2 between 'truth' and the median of 'draws' equals or
+  //   exceeds the specified threshold.  Returns false otherwise.
+  bool CheckTrend(const Matrix &draws, const Vector &truth, double r2_threshold);
 
   //===========================================================================
   // Returns true if the empirical CDF of the vector of data matches the
@@ -235,6 +267,20 @@ namespace BOOM {
   //   is returned.  Otherwise 'false' is returned.
   bool EquivalentSimulations(const ConstVectorView &draws1,
                              const ConstVectorView &draws2);
+
+
+  // A utility function.
+  // Args:
+  //   draws: A collection of Monte Carlo draws describing a probability
+  //     distribution.
+  //   value: A value to compare to the probability distribution in 'draws'.
+  //   confidence: The confidence value used to determine if 'value' lies inside
+  //     'draws'.
+  //
+  // Returns true iff the 'confidence' central interval from 'draws' includes
+  // 'value'.
+  bool covers(const ConstVectorView &draws, double value, double confidence);
+
 }  // namespace BOOM
 
 #endif //  BOOM_TEST_UTILS_HPP_

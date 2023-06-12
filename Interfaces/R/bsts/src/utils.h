@@ -22,7 +22,7 @@
 #include "LinAlg/Selector.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
 
 namespace BOOM {
@@ -41,7 +41,7 @@ namespace BOOM {
     // not NA.
     std::vector<bool> IsObserved(SEXP r_vector);
     SelectorMatrix IsObserved(const Matrix &matrix);
-    
+
     //======================================================================
     // Record the state of a DynamicRegressionStateModel in the io_manager.
     // Args:
@@ -117,7 +117,7 @@ namespace BOOM {
           : model_(model),
             nseries_(nseries)
       {}
-      
+
       std::vector<int> dim() const override {
         return {model_->number_of_state_models(),
                 model_->time_dimension(),
@@ -133,12 +133,12 @@ namespace BOOM {
       void read_from_array(const ArrayView &view) override {
         report_error("State contributions should not be streamed.");
       }
-      
+
      private:
       const MultivariateStateSpaceModelBase *model_;
       const int nseries_;
     };
-    
+
     //======================================================================
     class DynamicInterceptStateContributionCallback
         : public MatrixIoCallback {
@@ -179,20 +179,21 @@ namespace BOOM {
         return model_->one_step_prediction_errors();
       }
 
-   private:
+     private:
       ScalarStateSpaceModelBase *model_;
     };
 
     // A callback class for saving log likelihood values.
+    template<class STATE_SPACE_MODEL>
     class LogLikelihoodCallback : public ScalarIoCallback {
-   public:
-      explicit LogLikelihoodCallback(ScalarStateSpaceModelBase *model)
+     public:
+      explicit LogLikelihoodCallback(STATE_SPACE_MODEL *model)
           : model_(model) {}
       double get_value() const override {
         return model_->log_likelihood();
       }
-   private:
-      ScalarStateSpaceModelBase *model_;
+     private:
+      STATE_SPACE_MODEL *model_;
     };
 
   }  // namespace bsts

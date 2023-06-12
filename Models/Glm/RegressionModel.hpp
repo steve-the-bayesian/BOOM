@@ -43,6 +43,10 @@ namespace BOOM {
     double df_error, df_model, df_total;
     double F, p_value;
     std::ostream &display(std::ostream &out) const;
+
+    double Rsquare() const {
+      return SSM / SST;
+    }
   };
 
   std::ostream &operator<<(std::ostream &out, const AnovaTable &tab);
@@ -78,6 +82,8 @@ namespace BOOM {
     // Column means of the design matrix.
     virtual Vector xbar() const = 0;
     virtual double n() const = 0;
+    double sample_variance() const;
+    double sample_sd() const { return sqrt(sample_variance()); }
 
     // Compute the sum of square errors using the given set of
     // coefficients, taking advantage of sparsity.
@@ -93,9 +99,11 @@ namespace BOOM {
 
     std::ostream &print(std::ostream &out) const override;
   };
+
   inline std::ostream &operator<<(std::ostream &out, const RegSuf &suf) {
     return suf.print(out);
   }
+
   //------------------------------------------------------------------
   class QrRegSuf : public RegSuf, public SufstatDetails<RegressionData> {
    public:
@@ -143,6 +151,7 @@ namespace BOOM {
     mutable bool current;
     mutable Vector x_column_sums_;
   };
+
   //------------------------------------------------------------------
   class NeRegSuf
       : public RegSuf,
@@ -294,6 +303,15 @@ namespace BOOM {
     //     at zero.
     RegressionModel(const Matrix &X, const Vector &y, bool start_at_mle = true);
 
+
+    // Initialize a regression model using the sufficient statistics.  The
+    // coefficients wll be initialized at zero except for the intercept term,
+    // set to the mean.
+    //
+    // Args:
+    //   suf: An object containing the sufficient statistics for the model.
+    RegressionModel(const Ptr<RegSuf> &suf);
+
     RegressionModel(const RegressionModel &rhs);
     RegressionModel *clone() const override;
 
@@ -428,11 +446,12 @@ namespace BOOM {
     friend class BigAssSpikeSlabSampler;
    public:
     // Args:
-    //
+    //   xdim:  The dimension of the full (very large) predictor vector.
     //   subordinate_model_max_dim:  The largest predictor dimension for each model.
-    BigRegressionModel(uint xdim,
-                      int subordinate_model_max_dim = 500,
-                      bool force_intercept = true);
+    //   force_intercept:  If true then the intercep
+    explicit BigRegressionModel(uint xdim,
+                                int subordinate_model_max_dim = 500,
+                                bool force_intercept = true);
 
     BigRegressionModel * clone() const override;
 

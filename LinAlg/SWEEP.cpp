@@ -37,7 +37,8 @@ namespace BOOM {
         if (i != sweep_index) {
           for (uint j = 0; j < dimension; ++j) {
             if (j != sweep_index) {
-              target(i, j) -= target(i, sweep_index) * target(sweep_index, j) / x;
+              target(i, j) -=
+                  target(i, sweep_index) * target(sweep_index, j) / x;
             }
           }
         }

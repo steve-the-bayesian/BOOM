@@ -25,21 +25,25 @@ namespace BOOM {
 
   std::string CheckMatrixStatus::error_message() const {
     std::ostringstream err;
-    err << "Too many columns of 'draws' failed to cover true values." << endl
-        << "Failure rate: " << fraction_failing_to_cover * 100 << " (%) " << endl
-        << "Rate limit: " << failure_rate_limit * 100 << " (%) " << endl;
+    if (dimension_mismatch) {
+      err << "The dimension of the 'truth' vector did not match the number of "
+          "columns in the matrix being checked.";
+    } else {
+      err << "Too many columns of 'draws' failed to cover true values." << "\n"
+          << "Failure rate: " << fraction_failing_to_cover * 100 << " (%) "
+          << "\n"
+          << "Rate limit: " << failure_rate_limit * 100 << " (%) " << endl;
+    }
     return err.str();
   }
 
-  namespace {
-    bool covers(const ConstVectorView &draws, double value, double confidence) {
-      double alpha = 1 - confidence;
-      Vector sorted = sort(draws);
-      double lower = sorted_vector_quantile(sorted, alpha / 2);
-      double upper = sorted_vector_quantile(sorted, 1 - (alpha / 2));
-      return value >= lower && value <= upper;
-    }
-  }  // namespace
+  bool covers(const ConstVectorView &draws, double value, double confidence) {
+    double alpha = 1 - confidence;
+    Vector sorted = sort(draws);
+    double lower = sorted_vector_quantile(sorted, alpha / 2);
+    double upper = sorted_vector_quantile(sorted, 1 - (alpha / 2));
+    return value >= lower && value <= upper;
+  }
 
   CheckMatrixStatus CheckMcmcMatrix(
       const Matrix &draws,
@@ -52,23 +56,28 @@ namespace BOOM {
     }
     if (confidence < .5) confidence = 1 - confidence;
     CheckMatrixStatus status;
-    for (int i = 0; i < ncol(draws); ++i) {
-      if (!covers(draws.col(i), truth[i], confidence)) {
-        ++status.fails_to_cover;
-      }
-    }
-
-    double fraction_failing_to_cover = status.fails_to_cover;
-    fraction_failing_to_cover /= ncol(draws);
-    double coverage_rate_limit = confidence;
-    if (control_multiple_comparisons) {
-      double se = sqrt(confidence * (1 - confidence) / ncol(draws));
-      coverage_rate_limit -= 2 * se;
-    }
-    status.failure_rate_limit = 1 - coverage_rate_limit;
-    if (fraction_failing_to_cover >= status.failure_rate_limit) {
+    if (truth.size() != draws.ncol()) {
       status.ok = false;
-      status.fraction_failing_to_cover = fraction_failing_to_cover;
+      status.dimension_mismatch = true;
+    } else {
+      for (int i = 0; i < ncol(draws); ++i) {
+        if (!covers(draws.col(i), truth[i], confidence)) {
+          ++status.fails_to_cover;
+        }
+      }
+
+      double fraction_failing_to_cover = status.fails_to_cover;
+      fraction_failing_to_cover /= ncol(draws);
+      double coverage_rate_limit = confidence;
+      if (control_multiple_comparisons) {
+        double se = sqrt(confidence * (1 - confidence) / ncol(draws));
+        coverage_rate_limit -= 2 * se;
+      }
+      status.failure_rate_limit = 1 - coverage_rate_limit;
+      if (fraction_failing_to_cover >= status.failure_rate_limit) {
+        status.ok = false;
+        status.fraction_failing_to_cover = fraction_failing_to_cover;
+      }
     }
 
     if (!status.ok && filename != "") {
@@ -79,45 +88,6 @@ namespace BOOM {
     return status;
   }
 
-  std::string CheckStochasticProcess(const Matrix &draws,
-                                     const Vector &truth,
-                                     double confidence,
-                                     double sd_ratio_threshold,
-                                     const std::string &filename) {
-    ostringstream err;
-    Matrix centered_draws = draws;
-    double number_covering = 0;
-    for (int i = 0; i < ncol(centered_draws); ++i) {
-      centered_draws.col(i) -= truth[i];
-      number_covering += covers(draws.col(i), truth[i], confidence);
-    }
-    number_covering /=  ncol(draws);
-    if (number_covering < .5) {
-      err << "fewer than half the intervals covered the true value."
-          << std::endl;
-    }
-
-    Vector means = mean(centered_draws);
-    double truth_sd = sd(truth);
-    double residual_sd = sd(means);
-
-    if (residual_sd / truth_sd > sd_ratio_threshold) {
-      err << "The standard deviation of the centered draws (centered "
-          << "around true values) is " << residual_sd << ". \n"
-          << "The standard deviation of the true function is "
-          << truth_sd << ".\n"
-          << "The ratio is " << residual_sd / truth_sd
-          << " which exceeds the testing threshold of "
-          << sd_ratio_threshold << "." << std::endl;
-    }
-
-    std::string ans = err.str();
-    if (ans != "") {
-      std::ofstream error_file(filename);
-      error_file << truth << std::endl << draws;
-    }
-    return ans;
-  }
 
 
   std::string CheckWithinRage(const Matrix &draws, const Vector &lo,
@@ -164,7 +134,8 @@ namespace BOOM {
   }
 
   bool CheckMcmcVector(const Vector &draws, double truth, double confidence,
-                       const std::string &filename) {
+                       const std::string &filename,
+                       bool force_file_output) {
     if (confidence <= 0 || confidence >= 1) {
       report_error("Confidence must be strictly between 0 and 1.");
     }
@@ -175,7 +146,7 @@ namespace BOOM {
     double lo = sorted_vector_quantile(v, alpha_2);
     double hi = sorted_vector_quantile(v, 1 - alpha_2);
     bool ok = lo <= truth && hi >= truth;
-    if (!ok && filename != "") {
+    if (force_file_output || (!ok && filename != "")) {
       std::ofstream error_file(filename);
       error_file << truth << " " << draws;
     }

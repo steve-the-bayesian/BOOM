@@ -38,6 +38,10 @@ namespace BOOM {
         const Ptr<GammaModelBase> &residual_precision_prior,
         RNG &seeding_rng = GlobalRng::rng);
 
+    // Truncate the support of the residual standard deviation ("sigma") to (0,
+    // sigma_max).
+    void set_sigma_max(double sigma_max);
+
     void draw() override;
     double logpri() const override;
 

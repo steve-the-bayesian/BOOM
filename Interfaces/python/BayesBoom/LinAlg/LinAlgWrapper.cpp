@@ -312,6 +312,18 @@ namespace BayesBoom {
              "Args:\n"
              "  dim:  The number of potential elements.\n"
              "  all:  If True include all elements.  If False exclude all elements.")
+        .def(py::init(
+            [](const std::vector<BOOM::uint> &included_positions,
+               int dim) {
+              return new Selector(included_positions, dim);
+            }),
+             py::arg("included_positions"),
+             py::arg("dim"),
+             "Create a Selector from a list of included positions.\n"
+             "Args:\n"
+             "  included_positions:  A list of integer-valued indices "
+             "to mark as included.\n"
+             "  dim:  The number of possible elements.\n")
         .def_property_readonly("nvars", &Selector::nvars,
                                "The number of included variables.")
         .def_property_readonly("nvars_possible", &Selector::nvars_possible,
@@ -327,6 +339,19 @@ namespace BayesBoom {
             "included_positions",
             &Selector::included_positions,
             "A vector of integers giving the location of included positions.")
+        .def("__repr__",
+             [](const Selector &inc) {
+               std::ostringstream out;
+               out << "A boom.Selector containing " << inc.nvars()
+                   << " of " << inc.nvars_possible() << " variables.";
+               if (inc.nvars() < 40) {
+                 for (int i = 0; i < inc.nvars(); ++i) {
+                   out << inc.expanded_index(i) << " ";
+                 }
+                 out << "\n";
+               }
+               return out.str();
+             })
         ;
 
   }  // ends the LinAlg_def function.

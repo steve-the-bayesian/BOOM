@@ -292,7 +292,7 @@ plot.bsts.prediction <- function(x,
     predictors <- matrix(rep(1, horizon), ncol = 1)
   }
   horizon <- as.integer(horizon)
-  
+
   if (object$family == "gaussian" || object$family == "student") {
     if (object$has.regression) {
       ans <- list("predictors" = predictors, horizon = horizon)
@@ -509,7 +509,7 @@ plot.bsts.prediction <- function(x,
   if (any(dynamic.regression)) {
     ## dynamic.regression is now a list of dynamic regression state
     ## specification objects.
-    dynamic.regression <- 
+    dynamic.regression <-
         seq_along(bsts.object$state.specification)[dynamic.regression]
     for (d in dynamic.regression) {
       dr.object <- bsts.object$state.specification[[d]]
@@ -554,7 +554,7 @@ plot.bsts.prediction <- function(x,
   ##       vector can be passed.
   ##     newdata can also contain predictors needed for dynamic regression
   ##     state components.
-  ## 
+  ##
   ##     If the model is multivariate, then newdata must be structured so that
   ##     its first 'nseries' rows describe the 'nseries' time series in the
   ##     first forecast period.  The next 'nseries' rows describe the second
@@ -580,7 +580,7 @@ plot.bsts.prediction <- function(x,
       stop("'coefficients' element should have dimension 2 or 3.")
     }
   }
-  
+
   if (is.null(newdata)) {
     stop("You need to supply 'newdata' when making predictions with ",
          "a bsts object that has a regression component.")
@@ -660,4 +660,3 @@ plot.bsts.prediction <- function(x,
   }
   return(response)
 }
-

@@ -14,12 +14,12 @@ def is_all_numeric(data_frame):
     return np.all(data_frame.dtypes.apply(pd.api.types.is_numeric_dtype))
 
 
-def is_iterable(object):
+def is_iterable(obj):
     """
     Check to see if 'object' is an iterable object.  An iterable object allows
     the idiom 'for x in object:...'.
     """
-    return hasattr(object, "__getitem__") or hasattr(object, "__iter__")
+    return hasattr(obj, "__getitem__") or hasattr(obj, "__iter__")
 
 
 def to_boom_vector(v):
@@ -31,6 +31,9 @@ def to_boom_vector(v):
     any similar object that either acts like a pd.Series or is convertible to a
     np.array.
     """
+    if isinstance(v, boom.Vector):
+        return v
+
     if hasattr(v, "values"):
         # Handle pd.Series and similar.
         return boom.Vector(np.array(v.values, dtype="float"))
@@ -50,6 +53,9 @@ def to_boom_matrix(m):
     data, or any similar object that either acts like a pd.DataFrame or is
     convertible to a np.array.
     """
+    if isinstance(m, boom.Matrix):
+        return m
+
     if hasattr(m, "values") and hasattr(m, "dtypes") and is_all_numeric(m):
         # Handle pd.DataFrame and similar.
         return boom.Matrix(m.values.astype("float"))
@@ -69,6 +75,9 @@ def to_boom_spd(m):
     data, or any similar object that either acts like a pd.DataFrame or is
     convertible to a np.array.
     """
+    if isinstance(m, boom.SpdMatrix):
+        return m
+
     if hasattr(m, "values") and hasattr(m, "dtypes") and is_all_numeric(m):
         # Handle pd.DataFrame and similar.
         return boom.SpdMatrix(m.values.astype("float"))

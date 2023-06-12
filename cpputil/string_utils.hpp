@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 #include <ostream>
+
 #include "uint.hpp"
 #include "cpputil/Split.hpp"
-#include "uint.hpp"
 
 namespace BOOM {
 
@@ -56,7 +56,7 @@ namespace BOOM {
     }
     return out;
   }
-  
+
   std::ostream &print_columns(
       std::ostream &out,
       const std::vector<std::vector<std::string>> &columns,
@@ -73,7 +73,7 @@ namespace BOOM {
   std::string strip_white_space(const std::string &s);
 
   // Remove white space from the front and back.
-  std::string trim_white_space(const std::string &s);   
+  std::string trim_white_space(const std::string &s);
   void trim_white_space(std::vector<std::string> &v);
 
   std::string strip(const std::string &s, const std::string &bad = "\r\n\t");
@@ -94,7 +94,7 @@ namespace BOOM {
   //   A string formed by concatenating the elements of string_vector.
   std::string concatenate(const std::vector<std::string> &string_vector,
                           const std::string &sep = " ");
-  
+
 }  // namespace BOOM
 
 #endif  // CPP_STRING_UTILS_H

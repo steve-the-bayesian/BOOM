@@ -84,6 +84,10 @@ namespace BOOM {
     Ptr<VectorParams> Pi_prm();
     const Ptr<VectorParams> Pi_prm() const;
 
+    // If 'minimal' then the first element of pi is omitted.
+    Vector vectorize_params(bool minimal = true) const override;
+    void unvectorize_params(const Vector &v, bool minimal = true) override;
+
     const double &pi(int s) const;
     const Vector &pi() const;
     const Vector &logpi() const;

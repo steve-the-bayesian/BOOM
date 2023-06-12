@@ -3,6 +3,7 @@
 #include "Models/MvnBase.hpp"
 #include "Models/MvnModel.hpp"
 #include "Models/MvnGivenScalarSigma.hpp"
+#include "Models/MvnGivenSigma.hpp"
 #include "cpputil/Ptr.hpp"
 #include "uint.hpp"
 
@@ -45,7 +46,8 @@ namespace BayesBoom {
 
     py::class_<MvnBaseWithParams,
                MvnBase,
-               BOOM::Ptr<MvnBaseWithParams>>(boom, "MvnBaseWithParams", py::multiple_inheritance())
+               BOOM::Ptr<MvnBaseWithParams>>(boom, "MvnBaseWithParams",
+                                             py::multiple_inheritance())
         .def_property_readonly(
             "mu",
             &MvnBaseWithParams::mu,
@@ -75,13 +77,15 @@ namespace BayesBoom {
                model.set_siginv(siginv);
              },
              "Args:\n"
-             "  siginv: Precision (inverse variance) of the distribution (boom SpdMatrix).")
+             "  siginv: Precision (inverse variance) of the distribution "
+             "(boom SpdMatrix).")
         ;
 
     py::class_<MvnModel,
                MvnBaseWithParams,
                PriorPolicy,
-               BOOM::Ptr<MvnModel>>(boom, "MvnModel", py::multiple_inheritance())
+               BOOM::Ptr<MvnModel>>(
+                   boom, "MvnModel", py::multiple_inheritance())
         .def(py::init<uint, double, double>(),
              py::arg("dim"),
              py::arg("mu") = 0.0,
@@ -96,11 +100,12 @@ namespace BayesBoom {
              py::arg("mu"),
              py::arg("SigmaOrSiginv"),
              py::arg("ivar") = false,
-             "Create a MvnModel by specifying moments with a vector and a matrix.\n\n"
+             "Create a MvnModel by specifying moments with a vector and a "
+             "matrix.\n\n"
              "Args:\n"
              "  mu:  mean of the distribution.\n"
              "  Sigma:  Variance or precision of the distribution.\n"
-             "  ivar:  If True then Sigma is a precision (inverse variance).  \n"
+             "  ivar:  If True then Sigma is a precision (inverse variance).\n"
              "         If False then Sigma is a variance matrix."
              )
         .def(py::init( [] (const Ptr<VectorParams> &mean,
@@ -124,16 +129,19 @@ namespace BayesBoom {
              },
              "Assign a data set to the model.\n\n"
              "Args:\n"
-             "  data: boom.Matrix.  Rows are observations.  Columns are variables."
+             "  data: boom.Matrix.  Rows are observations.  "
+             "Columns are variables."
              )
         .def_property_readonly(
             "mean_parameter",
             [](const MvnModel &model) { return model.Mu_prm();},
-            "The VectorParams object representing the mean of the distribution.")
+            "The VectorParams object representing the mean of the "
+            "distribution.")
         .def_property_readonly(
             "variance_parameter",
             [](const MvnModel &model) { return model.Sigma_prm();},
-            "The SpdParams object representing the variance of the distribution.")
+            "The SpdParams object representing the variance of the "
+            "distribution.")
         .def("mle",
              &MvnModel::mle,
              "Set parameters to their maximum likelihood estimates.")
@@ -156,23 +164,52 @@ namespace BayesBoom {
         ;
 
     //=========================================================================
+    py::class_<MvnGivenScalarSigmaBase,
+               MvnBase,
+               Ptr<MvnGivenScalarSigmaBase>>(
+                   boom, "MvnGivenScalarSigmaBase", py::multiple_inheritance())
+        ;
 
     py::class_<MvnGivenScalarSigma,
-               MvnBase,
+               MvnGivenScalarSigmaBase,
                PriorPolicy,
-               Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma", py::multiple_inheritance())
+               Ptr<MvnGivenScalarSigma>>(
+                   boom, "MvnGivenScalarSigma", py::multiple_inheritance())
         .def(py::init<const SpdMatrix&, const Ptr<UnivParams> &>(),
              py::arg("ominv"),
              py::arg("sigsq"),
              ""
              )
-        .def(py::init<const Vector &, const SpdMatrix&, const Ptr<UnivParams> &>(),
+        .def(py::init<const Vector &,
+             const SpdMatrix&,
+             const Ptr<UnivParams> &>(),
              py::arg("mu"),
              py::arg("ominv"),
              py::arg("sigsq"),
              ""
              )
         ;
+
+    //=========================================================================
+    py::class_<MvnGivenSigma,
+               MvnBase,
+               PriorPolicy,
+               Ptr<MvnGivenSigma>>(
+                   boom, "MvnGivenSigma", py::multiple_inheritance())
+        .def(py::init(
+            [](const Vector &mu, double kappa) {
+              return new MvnGivenSigma(mu, kappa);
+            }),
+             py::arg("mu"),
+             py::arg("kappa") = 1.0,
+             "A prior distribution on the mean parameter of a multivariate "
+             "normal model.  The model is: \n   "
+             "'mean | Sigma' ~ N(mu, Sigma / kappa).\n\n"
+             "Args:\n\n"
+             "  mu:  The mean of the distribution.\n"
+             "  kappa:  The prior sample size.\n")
+        ;
+
 
   }  // Module
 

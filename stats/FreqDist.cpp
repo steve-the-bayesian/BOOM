@@ -18,7 +18,6 @@
 */
 #include "stats/FreqDist.hpp"
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 #include "Models/CategoricalData.hpp"
 #include "cpputil/report_error.hpp"
@@ -73,6 +72,17 @@ namespace BOOM {
   FrequencyDistribution::FrequencyDistribution(
       const std::vector<unsigned long> &y, bool contiguous) {
     counts_ = count_values(y, labs_, contiguous);
+  }
+
+  FrequencyDistribution::FrequencyDistribution(
+      const std::vector<int> &y, int lo, int hi) {
+    counts_ = std::vector<int>(hi - lo + 1, 0);
+    for (int yi : y) {
+      ++counts_[yi - lo];
+    }
+    for (int i = lo; i <= hi; ++i) {
+      labs_.push_back(std::to_string(i));
+    }
   }
 
   void FrequencyDistribution::set_labels(

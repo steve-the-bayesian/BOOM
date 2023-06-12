@@ -45,9 +45,9 @@ namespace BOOM {
         initial_variance.set_diag(trend_model_->stationary_variance());
         trend_model_->set_initial_state_variance(initial_variance);
     }
-          
+
     void ArStateModelTestModule::SimulateData(int time_dimension) {
-      trend_ = trend_model_->simulate(time_dimension);
+      trend_ = trend_model_->ArModel::simulate(time_dimension);
     }
 
     void ArStateModelTestModule::CreateObservationSpace(int niter) {

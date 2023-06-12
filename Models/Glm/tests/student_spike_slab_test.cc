@@ -36,7 +36,7 @@ namespace {
       VectorView zero_coefficients(coefficients_, 6);
       zero_coefficients = 0.0;
     }
-    
+
     void SimulatePredictors() {
       predictors_.resize(nobs_, xdim_);
       predictors_.randomize();
@@ -67,7 +67,8 @@ namespace {
     }
     return ans / coefficients.size();
   }
-  
+
+  // Simulate fake data with only the first 5 coefficients nonzero.
   TEST_F(StudentSpikeSlabTest, Small) {
     SimulatePredictors();
     SimulateCoefficients();
@@ -77,7 +78,7 @@ namespace {
     NEW(TRegressionModel, model)(predictors_, response_);
     NEW(RegressionModel, reg)(predictors_, response_);
     SpdMatrix xtx = reg->suf()->xtx();
-    
+
     NEW(MvnGivenScalarSigma, slab)(
         Vector(xdim_, 0), xtx / nobs_, model->Sigsq_prm());
     NEW(ChisqModel, residual_precision_prior)(1.0, 1.0);

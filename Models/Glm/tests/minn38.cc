@@ -95,8 +95,6 @@ namespace BOOM {
       19, 19, 89, 210, 448, 219, 95, 105, 93
     };
 
-    double x= 3.8;
-    x += 2;
     DataTable table;
     table.append_variable(CategoricalVariable(hs), "hs");
     table.append_variable(CategoricalVariable(phs), "phs");

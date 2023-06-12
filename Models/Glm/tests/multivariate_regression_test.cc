@@ -33,7 +33,7 @@ namespace {
       coefficients_.randomize();
       predictors_.resize(sample_size, xdim);
       response_.resize(sample_size, ydim);
-      
+
       if (inclusion_prob < 1.0) {
         for (int i = 0; i < xdim; ++i) {
           for (int j = 0; j < ydim; ++j) {
@@ -94,10 +94,10 @@ namespace {
         }
       }
       model.Beta_prm()->set_inclusion_pattern(included_coefficients);
-    
+
       return sampler;
     }
-    
+
     Matrix coefficients_;
     SpdMatrix Sigma_;
     Matrix predictors_;
@@ -114,9 +114,12 @@ namespace {
 
     SpdMatrix xtx = predictors_.transpose() * predictors_;
     EXPECT_TRUE(MatrixEquals(xtx, model.suf()->xtx()));
-    
+
     Matrix xty = predictors_.transpose() * response_;
     EXPECT_TRUE(MatrixEquals(xty, model.suf()->xty()));
+
+    EXPECT_TRUE(VectorEquals(model.suf()->xty().col(1),
+                             predictors_.Tmult(response_.col(1))));
 
     Matrix yty = response_.transpose() * response_;
     EXPECT_TRUE(MatrixEquals(yty, model.suf()->yty()));
@@ -146,7 +149,7 @@ namespace {
     SpdMatrix Siginv = model.Siginv();
     double ldsi = model.ldsi();
     SpdMatrix SSE(ydim, 0.0);
-    
+
     Matrix predictors(sample_size, xdim);
     double loglike_direct = 0;
     double qform = 0;
@@ -161,7 +164,7 @@ namespace {
 
     EXPECT_TRUE(MatrixEquals(SSE, model.suf()->SSE(model.Beta())));
     EXPECT_NEAR(qform, trace(SSE * Siginv), 1e-5);
-    
+
     double loglike = model.log_likelihood(model.Beta(), model.Sigma());
     double loglike_inv = model.log_likelihood_ivar(model.Beta(), Siginv);
     EXPECT_NEAR(loglike, loglike_inv, 1e-6);
@@ -220,7 +223,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(full_cholesky.getL(),
                              Kronecker(siginv.chol(), ominv.chol())))
         << "Numerical problems!";
-    
+
     EXPECT_TRUE(MatrixEquals(full_cholesky.getL(),
                              composite_cholesky.matrix()))
         << "Full chol: " << endl
@@ -244,7 +247,7 @@ namespace {
     EXPECT_NEAR(composite_cholesky.Mdist(y2),
                 full_matrix.Mdist(y2),
                 1e-4);
-    
+
     //----------------------------------------------------------------------
     // Now exclude some variables and check again.
     included.randomize();
@@ -252,7 +255,7 @@ namespace {
 
     SpdMatrix full_subset(inc.select(full_matrix));
     Matrix full_subset_cholesky = full_subset.chol();
-    
+
     CompositeCholesky composite_subset_cholesky(
         ominv.chol(), siginv.chol(), included);
     EXPECT_TRUE(MatrixEquals(full_subset_cholesky,
@@ -299,7 +302,7 @@ namespace {
     EXPECT_EQ(ydim, nrow(model.residual_precision_cholesky()));
   }
 
-  
+
   //===========================================================================
   TEST_F(MultivariateRegressionTest, SpikeSlabDrawSigmaTest) {
     int xdim = 12;
@@ -332,7 +335,7 @@ namespace {
     MultivariateRegressionModel model(xdim, ydim);
     EXPECT_EQ(ydim, model.residual_precision_cholesky().nrow());
     EXPECT_EQ(ydim, model.residual_precision_cholesky().ncol());
-    
+
     int sample_size = 1000;
     PopulateModel(model, .25, sample_size);
     Ptr<MultivariateRegressionSpikeSlabSampler> sampler = SetupSpikeSlab(model);
@@ -361,14 +364,14 @@ namespace {
     MultivariateRegressionModel model(xdim, ydim);
     EXPECT_EQ(ydim, model.residual_precision_cholesky().nrow());
     EXPECT_EQ(ydim, model.residual_precision_cholesky().ncol());
-    
+
     int sample_size = 1000;
     Sigma_ *= 1e-8;
     PopulateModel(model, .25, sample_size);
     Ptr<MultivariateRegressionSpikeSlabSampler> sampler = SetupSpikeSlab(model);
     int niter = 1000;
     int burn = 100;
-    
+
     Matrix inclusion_draws(niter, xdim * ydim);
     SetTrueParameterValues(model);
     sampler->set_total_row_precision_cholesky();
@@ -435,5 +438,5 @@ namespace {
                              true, "sigma.draws");
     EXPECT_TRUE(status.ok) << status.error_message();
   }
-  
+
 }  // namespace

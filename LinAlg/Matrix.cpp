@@ -139,6 +139,32 @@ namespace BOOM {
     }
   }
 
+  Matrix::Matrix(
+      const std::initializer_list<std::initializer_list<double>> &rows) {
+    nr_ = rows.size();
+    nc_ = -1;
+    std::vector<Vector> row_vectors;
+    for (const auto &el : rows) {
+      row_vectors.push_back(Vector(el));
+      if (nc_ < 0) {
+        nc_ = row_vectors.back().size();
+      } else {
+        if (row_vectors.back().size() != nc_) {
+          std::ostringstream err;
+          err << "All rows must be the same size.  "
+              << "Row " << row_vectors.size() << " was size "
+              << row_vectors.back().size()
+              << " but previous rows were " << nc_;
+          report_error(err.str());
+        }
+      }
+    }
+    data_.resize(nr_ * nc_);
+    for (size_t r = 0; r < nr_; ++r) {
+      set_row(r, row_vectors[r]);
+    }
+  }
+
   Matrix::Matrix(const SubMatrix &rhs) { operator=(rhs); }
 
   Matrix::Matrix(const ConstSubMatrix &rhs) { operator=(rhs); }
@@ -181,10 +207,17 @@ namespace BOOM {
     std::swap(data_, rhs.data_);
   }
 
-  Matrix &Matrix::randomize() {
+  Matrix &Matrix::randomize(RNG &rng) {
     uint n = nr_ * nc_;
     for (uint i = 0; i < n; ++i) {
-      data_[i] = runif(0, 1);
+      data_[i] = runif_mt(rng, 0, 1);
+    }
+    return *this;
+  }
+
+  Matrix & Matrix::randomize_gaussian(double mean, double sd, RNG &rng) {
+    for (auto &el : data_) {
+      el = rnorm_mt(rng, mean, sd);
     }
     return *this;
   }
@@ -206,12 +239,20 @@ namespace BOOM {
   uint Matrix::nrow() const { return nr_; }
   uint Matrix::ncol() const { return nc_; }
 
-  double Matrix::distance_from_symmetry() const {
-    if (nr_ != nc_) return infinity();
+  std::tuple<double, uint, uint> Matrix::distance_from_symmetry() const {
+    if (nr_ != nc_) {
+      return std::tuple<double, uint, uint>(infinity(), 0, 0);
+    }
     double num = 0, denom = 0;
+    uint imax = 0, jmax = 0;
     for (uint i = 0; i < nr_; ++i) {
       for (uint j = 0; j < i; ++j) {
-        num = std::max<double>(num, fabs(unchecked(i, j) - unchecked(j, i)));
+        double crit = fabs(unchecked(i, j) - unchecked(j, i));
+        if (crit > num) {
+          num = crit;
+          imax = i;
+          jmax = j;
+        }
         denom += fabs(unchecked(i, j)) + fabs(unchecked(j, i));
       }
       // Include the diagonal when figuring the average size of the matrix
@@ -223,13 +264,42 @@ namespace BOOM {
     // The denominator can't be less than zero, but I don't want actual equality
     // here.
     if (denom <= 0.0) {
-      return 0;
+      return std::tuple<double, uint, uint>(0.0, 0, 0);
     }
-    return num / denom;
+    return std::tuple<double, uint, uint>(num / denom, imax, jmax);
+  }
+
+  double relative_distance(const Matrix &A, const Matrix &B, int &imax, int &jmax) {
+    if (A.nrow() != B.nrow() || A.ncol() != B.ncol()) {
+      return infinity();
+    }
+    imax = jmax = -1;
+    double max_distance = negative_infinity();
+    for (int i = 0; i < A.nrow(); ++i) {
+      for (int j = 0; j < A.ncol(); ++j) {
+        double num = fabs(A(i, j) - B(i, j));
+        double denom = fabs(A(i, j)) + fabs(B(i, j));
+        double crit = denom <= 0 ? 0.0 : .5 * num / denom;
+        if (crit > max_distance) {
+          imax = i;
+          jmax = j;
+          max_distance = crit;
+        }
+      }
+    }
+    return max_distance;
+  }
+
+  double relative_distance(const Matrix &A, const Matrix &B) {
+    int imax = -1, jmax = -1;
+    return relative_distance(A, B, imax, jmax);
   }
 
   bool Matrix::is_sym(double tol) const {
-    return distance_from_symmetry() < tol;
+    double dist;
+    uint imax, jmax;
+    std::tie(dist, imax, jmax) = distance_from_symmetry();
+    return dist < tol;
   }
 
   bool Matrix::same_dim(const Matrix &A) const {
@@ -468,13 +538,18 @@ namespace BOOM {
     return *this;
   }
 
-  dVector::iterator Matrix::col_begin(uint j) { return data_.begin() + j * nr_; }
+  dVector::iterator Matrix::col_begin(uint j) {
+    return data_.begin() + j * nr_;
+  }
+
   dVector::iterator Matrix::col_end(uint j) {
     return data_.begin() + (j + 1) * nr_;
   }
+
   dVector::const_iterator Matrix::col_begin(uint j) const {
     return data_.begin() + j * nr_;
   }
+
   dVector::const_iterator Matrix::col_end(uint j) const {
     return data_.begin() + (j + 1) * nr_;
   }
@@ -495,7 +570,10 @@ namespace BOOM {
   }
 
   VectorViewConstIterator Matrix::dbegin() const {
-    return VectorViewConstIterator(&(data_.front()), &(data_.back()), ncol() + 1);
+    return VectorViewConstIterator(
+        &(data_.front()),
+        &(data_.back()),
+        ncol() + 1);
   }
   VectorViewConstIterator Matrix::dend() const {
     return VectorViewConstIterator(
@@ -761,6 +839,15 @@ namespace BOOM {
     return values;
   }
 
+  double Matrix::condition_number() const {
+    Vector sv = singular_values();
+    if (sv.back() > 0.0) {
+      return sv[0] / sv.back();
+    } else {
+      return negative_infinity();
+    }
+  }
+
   struct greater {
     bool operator()(double a, double b) const { return a > b; }
   };
@@ -985,13 +1072,30 @@ namespace BOOM {
   }
 
   ostream &Matrix::display(ostream &out, int precision) const {
+    int col_width = std::max<int>(8, max_char_width(precision) + 1);
     out << std::setprecision(precision);
     for (uint i = 0; i < nrow(); ++i) {
       for (uint j = 0; j < ncol(); ++j)
-        out << std::setw(8) << unchecked(i, j) << " ";
+        out << std::setw(col_width) << unchecked(i, j) << " ";
       out << endl;
     }
     return out;
+  }
+
+  int Matrix::max_char_width(int precision) const {
+    double min_value, max_value;
+    std::tie(min_value, max_value) = minmax();
+    if (precision > 40) {
+      report_error("max precision exceeded.");
+    }
+    std::ostringstream max_char;
+    max_char << std::setprecision(precision) << max_value;
+
+    std::ostringstream min_char;
+    min_char << std::setprecision(precision) << min_value;
+
+    return std::max<int>(max_char.str().size(),
+                         min_char.str().size());
   }
 
   ostream &operator<<(ostream &out, const Matrix &x) {
@@ -1072,7 +1176,9 @@ namespace BOOM {
     return ans;
   }
 
-  double Matrix::sum() const { return accumulate(data_.begin(), data_.end(), 0.0); }
+  double Matrix::sum() const {
+    return accumulate(data_.begin(), data_.end(), 0.0);
+  }
 
   double Matrix::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
@@ -1402,7 +1508,8 @@ namespace BOOM {
   Vector LTmult(const Matrix &L, const Vector &y) {
     assert(L.is_square() && L.nrow() == y.size());
     Vector ans(y);
-    EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
+    EigenMap(ans) =
+        EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
     return ans;
   }
 

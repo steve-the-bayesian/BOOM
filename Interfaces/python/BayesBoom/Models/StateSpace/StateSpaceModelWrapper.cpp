@@ -36,31 +36,20 @@ namespace BayesBoom {
             "state_dimension", &StateSpaceModelBase::state_dimension,
             "The number of elements in the state vector.")
         .def_property_readonly(
-            "number_of_state_models", &StateSpaceModelBase::number_of_state_models,
+            "number_of_state_models",
+            &StateSpaceModelBase::number_of_state_models,
             "The number of logical components in the state for this model.")
         .def_property_readonly(
             "state",
             [] (const StateSpaceModelBase &model) {return model.state();},
             "The state matrix. Rows are state variables, columns are time.")
-        .def("add_state",
-             [](StateSpaceModelBase &model, StateModel &state_model) {
-               // TODO: This is a hack around pybind11 struggling to convert Ptr
-               // from concrete to base classes.  It works only because BOOM's
-               // pointers are intrusive.
-               model.add_state(Ptr<StateModel>(&state_model));
-             },
-             "Expand the state definition by adding a state model to "
-             "describe trend, seasonal, etc.\n\n"
-             "Args:\n"
-             "  state: state model to be added.   Posterior samplers and initial "
-             "state priors should be set before adding.")
         .def_property_readonly(
             "log_likelihood",
             [](StateSpaceModelBase &model) { return model.log_likelihood(); },
-             "The log likelihood associated with the current model parameters.  "
-             "If the Kalman filter is current this is already computed.  If not, "
-             "then computing log likelihood requires a Kalman filter pass through "
-             "the data.")
+            "The log likelihood associated with the current model parameters. "
+            "If the Kalman filter is current this is already computed.  "
+            "If not, then computing log likelihood requires a Kalman filter "
+            "pass through the data.")
         ;
 
     py::class_<ScalarStateSpaceModelBase,
@@ -69,12 +58,24 @@ namespace BayesBoom {
                    boom,
                    "ScalarStateSpaceModelBase",
                    py::multiple_inheritance())
+        .def("add_state",
+             [](ScalarStateSpaceModelBase &model, StateModel &state_model) {
+               // TODO: This is a hack around pybind11 struggling to convert Ptr
+               // from concrete to base classes.  It works only because BOOM's
+               // pointers are intrusive.
+               model.add_state(Ptr<StateModel>(&state_model));
+             },
+             "Expand the state definition by adding a state model to "
+             "describe trend, seasonal, etc.\n\n"
+             "Args:\n"
+             "  state: state model to be added.   Posterior samplers and "
+             "initial state priors should be set before adding.")
         .def_property_readonly(
             "regression_contribution",
             [](const ScalarStateSpaceModelBase &model) {
               return model.regression_contribution();
             },
-            "The contribution of the regression component to the mean of y.   "
+            "The contribution of the regression component to the mean of y.  "
             "If no regression component is present, an empty Vector is "
             "returned.")
         .def("observation_variance",
@@ -83,8 +84,8 @@ namespace BayesBoom {
              "Args:\n"
              "  t: time index where variance is desired.\n"
              "Returns:\n"
-             "  The (residual) variance of the observed data y[t] given the state "
-             "alpha[t] and all model parameters.")
+             "  The (residual) variance of the observed data y[t] given "
+             "the state alpha[t] and all model parameters.")
         .def("one_step_prediction_errors",
              &ScalarStateSpaceModelBase::one_step_prediction_errors,
              py::arg("standardize") = false,
@@ -182,12 +183,19 @@ namespace BayesBoom {
             },
             "The residual standard deviation parameter.")
         .def("simulate_forecast",
-             [](StateSpaceModel &model, RNG &rng, int horizon, const Vector &final_state) {
+             [](StateSpaceModel &model,
+                RNG &rng,
+                int horizon,
+                const Vector &final_state) {
                return model.simulate_forecast(rng, horizon, final_state);
              })
         .def("simulate_forecast_components",
-             [](StateSpaceModel &model, RNG &rng, int horizon, const Vector &final_state) {
-               return model.simulate_forecast_components(rng, horizon, final_state);
+             [](StateSpaceModel &model,
+                RNG &rng,
+                int horizon,
+                const Vector &final_state) {
+               return model.simulate_forecast_components(
+                   rng, horizon, final_state);
              })
         ;
 
@@ -241,14 +249,19 @@ namespace BayesBoom {
             },
             "The GlmCoefs object describing the regression coefficients.")
         .def("simulate_forecast",
-             [](StateSpaceRegressionModel &model, RNG &rng, const Matrix &predictors,
+             [](StateSpaceRegressionModel &model,
+                RNG &rng,
+                const Matrix &predictors,
                 const Vector &final_state) {
                return model.simulate_forecast(rng, predictors, final_state);
              })
         .def("simulate_forecast_components",
-             [](StateSpaceRegressionModel &model, RNG &rng, const Matrix &predictors,
+             [](StateSpaceRegressionModel &model,
+                RNG &rng,
+                const Matrix &predictors,
                 const Vector &final_state) {
-               return model.simulate_forecast_components(rng, predictors, final_state);
+               return model.simulate_forecast_components(
+                   rng, predictors, final_state);
              })
         ;
 
@@ -287,7 +300,8 @@ namespace BayesBoom {
             [](StateSpaceStudentRegressionModel &model) {
               return model.observation_model();
             },
-            "A BayesBoom.TRegression model object describing observation errors.")
+            "A BayesBoom.TRegression model object describing observation "
+            "errors.")
         .def_property_readonly(
             "residual_sd",
             [] (const StateSpaceStudentRegressionModel &model) {
@@ -312,8 +326,8 @@ namespace BayesBoom {
               return model.observation_model()->nu();
             },
             "The tail thickness parameter of the observation model describing "
-            "residual errors.  This is sometimes called the 'degrees of freedom' "
-            "parameter\n")
+            "residual errors.  This is sometimes called the 'degrees of "
+            "freedom' parameter\n")
         .def("set_residual_sd",
              [] (StateSpaceStudentRegressionModel &model, double residual_df) {
                model.observation_model()->set_nu(residual_df * residual_df);
@@ -329,14 +343,19 @@ namespace BayesBoom {
             },
             "The GlmCoefs object describing the regression coefficients.")
         .def("simulate_forecast",
-             [](StateSpaceStudentRegressionModel &model, RNG &rng, const Matrix &predictors,
+             [](StateSpaceStudentRegressionModel &model,
+                RNG &rng,
+                const Matrix &predictors,
                 const Vector &final_state) {
                return model.simulate_forecast(rng, predictors, final_state);
              })
         .def("simulate_forecast_components",
-             [](StateSpaceStudentRegressionModel &model, RNG &rng, const Matrix &predictors,
+             [](StateSpaceStudentRegressionModel &model,
+                RNG &rng,
+                const Matrix &predictors,
                 const Vector &final_state) {
-               return model.simulate_forecast_components(rng, predictors, final_state);
+               return model.simulate_forecast_components(
+                   rng, predictors, final_state);
              })
         ;
 
@@ -356,7 +375,8 @@ namespace BayesBoom {
                const Vector &trials,
                const Matrix &predictors,
                const std::vector<bool> &observed) {
-              return new StateSpaceLogitModel(successes, trials, predictors, observed);
+              return new StateSpaceLogitModel(
+                  successes, trials, predictors, observed);
             }),
             py::arg("successes"),
             py::arg("trials"),

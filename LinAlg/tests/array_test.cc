@@ -26,8 +26,12 @@ namespace {
     Array empty;
     EXPECT_EQ(0, empty.ndim());
 
+    EXPECT_TRUE(empty.empty());
+
     std::vector<int> dim = {2, 4, 3};
     Array array(dim, 0.0);
+    EXPECT_FALSE(array.empty());
+
     EXPECT_EQ(array.ndim(), 3);
     EXPECT_EQ(array.dim()[0], dim[0]);
     EXPECT_EQ(array.dim()[1], dim[1]);
@@ -58,7 +62,20 @@ namespace {
   }
 
   // TODO
-  TEST_F(ArrayTest, ArrayViewTest) { }
+  TEST_F(ArrayTest, ArrayViewTest) {
+    std::vector<int> dim = {2, 4, 3};
+    Array array(dim, 0.0);
+    for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 4; ++j) {
+        for (int k = 0; k < 3; ++k) {
+          array(i, j, k) = rnorm();
+        }
+      }
+    }
+    EXPECT_EQ(array.slice(0, -1, -1).ndim(), 2);
+    EXPECT_EQ(array.slice(-1, 0, -1).ndim(), 2);
+    EXPECT_EQ(array.slice(-1, -1, 0).ndim(), 2);
+  }
 
   // TODO
   TEST_F(ArrayTest, ConstArrayViewTest) { }
@@ -76,6 +93,30 @@ namespace {
     ++it;
     EXPECT_EQ(it.position(), (std::vector<int>{0, 1, 0}));
     EXPECT_DOUBLE_EQ(*it, arr[it.position()]);
+  }
+
+  TEST_F(ArrayTest, MatrixConstructor) {
+    Matrix m1(2, 3);
+    Matrix m2(2, 3);
+    m1.randomize();
+    m2.randomize();
+
+    std::cout << "building the array ...\n";
+
+    Array array(std::vector<Matrix>{m1, m2});
+    std::cout << "checking stuff ...\n";
+    EXPECT_EQ(array.ndim(), 3);
+    EXPECT_EQ(array.dim(0), 2);
+    EXPECT_EQ(array.dim(1), 2);
+    EXPECT_EQ(array.dim(2), 3);
+
+    std::cout << "checking array entries\n";
+    for (int j = 0; j < 2; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        EXPECT_DOUBLE_EQ(array(0, j, k), m1(j, k));
+        EXPECT_DOUBLE_EQ(array(1, j, k), m2(j, k));
+      }
+    }
   }
 
 }  // namespace

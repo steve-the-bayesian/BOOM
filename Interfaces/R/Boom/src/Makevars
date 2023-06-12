@@ -4,7 +4,7 @@ all:	libboom.a
 # passed to make can be specified here.
 # -k:  keep going
 # -j 16: use 16 threads
-MAKEFLAGS=" -j 16 "
+MAKEFLAGS=" -j 32 "
 
 # An explanation for the cflags listed below:
 # - ADD_ is probably no longer needed.  It was necessary for communicating with
@@ -67,7 +67,10 @@ STATESPACE_SRCS := $(wildcard Models/StateSpace/*.cpp) \
 	$(wildcard Models/StateSpace/Filters/*.cpp) \
 	$(wildcard Models/StateSpace/PosteriorSamplers/*.cpp) \
 	$(wildcard Models/StateSpace/StateModels/*.cpp) \
-	$(wildcard Models/StateSpace/StateModels/PosteriorSamplers/*.cpp)
+	$(wildcard Models/StateSpace/StateModels/PosteriorSamplers/*.cpp) \
+	$(wildcard Models/StateSpace/Multivariate/*.cpp) \
+	$(wildcard Models/StateSpace/Multivariate/PosteriorSamplers/*.cpp) \
+	$(wildcard Models/StateSpace/Multivariate/StateModels/*.cpp)
 
 STATS_SRCS := $(wildcard stats/*.cpp)
 
@@ -100,12 +103,15 @@ CXX_SRCS = ${R_INTERFACE_SRCS} \
 	${TIMESERIES_SRCS} \
 	${UTIL_SRCS}
 
-CXX_STD = CXX11
+CXX_STD = CXX17
 
 OBJECTS = ${CXX_SRCS:.cpp=.o}
 
 # End list of BOOM source files
 ############################################################################
 
+# To remove debug symbols from the library (reducing its size by about a factor
+# of 100), uncomment the "strip" command below.
 libboom.a: ${OBJECTS}
 	   ${AR} rc $@ $^
+#	   strip $@

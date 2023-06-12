@@ -190,11 +190,18 @@ namespace BOOM {
 
     // compute all choice probabilities
     Vector predict(const Ptr<ChoiceData> &) const;
+
     // returns choice probabilities
     Vector &predict(const Ptr<ChoiceData> &, Vector &ans) const;
 
+    // The number of potential predictor variables relating to the subject.
     uint subject_nvars() const;
+
+    // The number of potential predictor variables relating to a single choice
+    // level.
     uint choice_nvars() const;
+
+    // The number of potential choices.
     uint Nchoices() const;
 
     // Args:

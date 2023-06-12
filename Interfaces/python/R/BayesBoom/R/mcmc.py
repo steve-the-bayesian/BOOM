@@ -1,5 +1,5 @@
 import numpy as np
-
+from datetime import datetime as dt
 
 def suggest_burn(loglike, fraction: float = 0.1, quantile: float = 0.9):
     """Suggest a burn-in sample size for an MCMC.  The suggestion uses a heuristic
@@ -37,3 +37,14 @@ def suggest_burn(loglike, fraction: float = 0.1, quantile: float = 0.9):
     if burn < 0:
         burn = 0
     return int(burn)
+
+
+def report_progress(iteration: int, ping: int):
+    if ping is None:
+        return
+    if ping <= 0:
+        return
+    if iteration % ping == 0:
+        timestamp = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+        sep = "=-=-=-=-="
+        print(f"{sep} Iteration {iteration} {sep} {timestamp}")

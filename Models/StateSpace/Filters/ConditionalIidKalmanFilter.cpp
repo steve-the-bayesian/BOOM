@@ -16,9 +16,9 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+
 #include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/QR.hpp"
 #include "cpputil/Constants.hpp"
@@ -28,142 +28,168 @@ namespace BOOM {
   namespace Kalman {
     namespace {
       using CIMD = ConditionalIidMarginalDistribution;
-    }  // namespace 
+    }  // namespace
 
-    double CIMD::high_dimensional_threshold_factor_(1.0);
-    
     CIMD::ConditionalIidMarginalDistribution(
         ConditionalIidMultivariateStateSpaceModelBase *model,
-        CIMD *previous,
+        FilterType *filter,
         int time_index)
         : MultivariateMarginalDistributionBase(
               model->state_dimension(), time_index),
           model_(model),
-          previous_(previous)
+          filter_(filter),
+          forecast_precision_log_determinant_(negative_infinity()),
+          forecast_precision_inner_condition_number_(negative_infinity()),
+          forecast_precision_implementation_(
+              ForecastPrecisionImplementation::Woodbury)
     {}
-    
-    //---------------------------------------------------------------------------
-    void CIMD::low_dimensional_update(
-        const Vector &observation,
-        const Selector &observed,
-        const SparseKalmanMatrix &transition,
-        const SparseKalmanMatrix &observation_coefficients) {
-      set_prediction_error(
-          observation - observation_coefficients * state_mean());
-      SpdMatrix forecast_variance =
-          DiagonalMatrix(observed.nvars(),
-                         model_->observation_variance(time_index()))
-          + observation_coefficients.sandwich(state_variance());
-      SpdMatrix forecast_precision = forecast_variance.inv();
-      set_forecast_precision_log_determinant(forecast_precision.logdet());
-      set_scaled_prediction_error(forecast_precision * prediction_error());
-      set_kalman_gain(transition * state_variance() *
-                      observation_coefficients.Tmult(forecast_precision));
+
+    CIMD * CIMD::previous() {
+      if (time_index() == 0) {
+        return nullptr;
+      } else {
+        return &((*filter_)[time_index() - 1]);
+      }
+    }
+
+    const CIMD * CIMD::previous() const {
+      if (time_index() == 0) {
+        return nullptr;
+      } else {
+        return &((*filter_)[time_index() - 1]);
+      }
     }
 
     //---------------------------------------------------------------------------
-    void CIMD::high_dimensional_update(
-        const Vector &observation,
-        const Selector &observed,
-        const SparseKalmanMatrix &transition,
-        const SparseKalmanMatrix &observation_coefficients) {
-      double observation_variance = model_->observation_variance(time_index());
-
-      Vector observation_mean = observed.select(
-          observation_coefficients * state_mean());
-      Vector observed_data = observed.select(observation);
-      set_prediction_error(observed_data - observation_mean);
-
-      // At this point the Kalman recursions compute the forecast precision Finv
-      // and its log determinant.  However, we can get rid of the forecast
-      // precision matrix, and replace it with the scaled error = Finv *
-      // prediction_error.
-      //
-      // To evaluate the normal likelihood, we need the quadratic form:
-      //   error * Finv * error == error.dot(scaled_error).
-      // We also need the log determinant of Finv.
-      //
-      // The forecast_precision can be computed using the binomial inverse
-      // theorem:
-      //  (A + UBV).inv =
-      //    A.inv - A.inv * U * (I + B * V * Ainv * U).inv * B * V * Ainv.
-      //
-      // When applied to F = H + Z P Z' the theorem gives
-      //
-      //   Finv = Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv
-      //
-      // We don't compute Finv directly, we compute Finv * prediction_error.
-      SpdMatrix Z_inner = observation_coefficients.inner();
-      Matrix inner_matrix = state_variance() * Z_inner / observation_variance;
-      inner_matrix.diag() += 1.0;
-      QR inner_qr(inner_matrix);
-      
-      Vector scaled_error =
-          state_variance() * (observation_coefficients.Tmult(prediction_error()));
-      scaled_error = inner_qr.solve(scaled_error);
-      scaled_error = observation_coefficients * scaled_error;
-      scaled_error /= observation_variance;
-      scaled_error -= prediction_error();
-      scaled_error /= -1 * observation_variance;
-      set_scaled_prediction_error(scaled_error);
-      
-      // The log determinant of F.inverse is the negative log of det(H + ZPZ').
-      // That determinant can be computed using the "matrix determinant lemma,"
-      // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
-      //
-      // Let A = H, U = Z, V' = PZ'.  Then det(F) = det(I + PZ'Z / v) * det(H)
-      set_forecast_precision_log_determinant(
-          -1 * (inner_qr.logdet()
-                + observed.nvars() * log(observation_variance)));
-
-      // Kalman gain = TPZ'Finv = 
-      //
-      // TPZ' * (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv) = 
-      //
-      // T * PZ'Hinv * (I - Z * (I + P Z' Hinv Z).inv * PZ'Hinv) = 
-      Matrix PZprimeHinv = (observation_coefficients * state_variance()).transpose()
-          / observation_variance;
-      Matrix gain = -1 * (observation_coefficients * inner_qr.solve(PZprimeHinv));
-      gain.diag() += 1.0;
-      set_kalman_gain(transition * PZprimeHinv * gain);
-    }
-
     const MultivariateStateSpaceModelBase *CIMD::model() const {
       return model_;
     }
 
-    SpdMatrix CIMD::forecast_precision() const {
-      if (high_dimensional(model_->observed_status(time_index()))) {
-        return large_scale_forecast_precision();
-      }  else {
-        return direct_forecast_precision();
+    double CIMD::forecast_precision_log_determinant() const {
+      return forecast_precision_log_determinant_;
+    }
+
+    Ptr<SparseBinomialInverse> CIMD::bi_sparse_forecast_precision() const {
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
+      const Selector &observed(model_->observed_status(time_index()));
+      NEW(ConstantMatrix, observation_precision)(
+          observed.nvars(),
+          1.0 / model_->observation_variance(time_index()));
+      Ptr<SparseKalmanMatrix> observation_coefficients =
+          model_->observation_coefficients(time_index(), observed);
+      return new SparseBinomialInverse(
+          observation_precision,
+          observation_coefficients,
+          variance,
+          forecast_precision_inner_matrix_,
+          forecast_precision_log_determinant_,
+          forecast_precision_inner_condition_number_);
+    }
+
+    Ptr<SparseWoodburyInverse>
+    CIMD::woodbury_sparse_forecast_precision() const {
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
+      Cholesky state_variance_chol(variance);
+
+      const Selector &observed(model_->observed_status(time_index()));
+      NEW(ConstantMatrix, observation_precision)(
+          observed.nvars(),
+          1.0 / model_->observation_variance(time_index()));
+      Ptr<SparseKalmanMatrix> observation_coefficients =
+          model_->observation_coefficients(time_index(), observed);
+      NEW(SparseMatrixProduct, U)();
+      U->add_term(observation_coefficients);
+      U->add_term(new DenseMatrix(state_variance_chol.getL(false)));
+
+      return new SparseWoodburyInverse(
+          observation_precision,
+          U,
+          forecast_precision_inner_matrix_,
+          forecast_precision_log_determinant_,
+          forecast_precision_inner_condition_number_);
+    }
+
+    Ptr<SparseKalmanMatrix> CIMD::sparse_forecast_precision() const {
+      switch (forecast_precision_implementation_) {
+        case BinomialInverse:
+          return bi_sparse_forecast_precision();
+          break;
+        case Woodbury:
+          return woodbury_sparse_forecast_precision();
+          break;
+        case Dense:
+          return new DenseSpd(direct_forecast_precision());
+          break;
+        default:
+          report_error("Unknown value of forecast_precision_implementation_");
+          return new NullMatrix(1);
       }
     }
-    
+
     SpdMatrix CIMD::direct_forecast_precision() const {
+      SpdMatrix variance = previous() ? previous()->state_variance()
+          : model_->initial_state_variance();
       SpdMatrix ans = model_->observation_coefficients(
           time_index(), model_->observed_status(time_index()))->sandwich(
-              previous()->state_variance());
+              variance);
       ans.diag() += model_->observation_variance(time_index());
       return ans.inv();
     }
 
-    SpdMatrix CIMD::large_scale_forecast_precision() const {
-      double observation_variance = model_->observation_variance(time_index());
-      const SparseKalmanMatrix *observation_coefficients =
-          model_->observation_coefficients(
-              time_index(), model_->observed_status(time_index()));
-      Matrix inner = previous()->state_variance() *
-          observation_coefficients->inner() / observation_variance;
-      inner.diag() += 1.0;
+    void CIMD::update_sparse_forecast_precision(const Selector &observed) {
+      int t = time_index();
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
+      Cholesky state_variance_chol(variance);
 
-      SpdMatrix ans = observation_coefficients->sandwich(
-          inner.solve(previous()->state_variance()));
-      ans /= -square(observation_variance);
-      ans.diag() += 1.0 / observation_variance;
-      return ans;
+      NEW(ConstantMatrix, observation_precision)(
+          observed.nvars(),
+          1.0 / model_->observation_variance(t));
+      Ptr<SparseKalmanMatrix> observation_coefficients =
+          model_->observation_coefficients(t, observed);
+      double sumlog_precision =
+          observed.nvars() * log(observation_precision->value());
+
+      NEW(SparseMatrixProduct, U)();
+      U->add_term(observation_coefficients);
+      U->add_term(new DenseMatrix(state_variance_chol.getL(false)));
+
+      SparseWoodburyInverse woodbury_precision(
+          observation_precision, sumlog_precision, U);
+      if (woodbury_precision.inner_matrix_condition_number() < 1e+8) {
+        forecast_precision_implementation_ =
+            ForecastPrecisionImplementation::Woodbury;
+        forecast_precision_inner_matrix_ = woodbury_precision.inner_matrix();
+        forecast_precision_log_determinant_ = woodbury_precision.logdet();
+        forecast_precision_inner_condition_number_ =
+            woodbury_precision.inner_matrix_condition_number();
+      } else {
+        SparseBinomialInverse bi_precision(
+            observation_precision,
+            observation_coefficients,
+            variance,
+            sumlog_precision);
+        if (bi_precision.okay()) {
+          forecast_precision_log_determinant_ = bi_precision.logdet();
+          forecast_precision_inner_matrix_ = bi_precision.inner_matrix();
+          forecast_precision_inner_condition_number_ =
+              bi_precision.inner_matrix_condition_number();
+          forecast_precision_implementation_ =
+              ForecastPrecisionImplementation::BinomialInverse;
+        } else {
+          // You land here if both the Woodbury and BinomialInverse methods
+          // fail.  Fall back to dense.
+          forecast_precision_inner_matrix_ = SpdMatrix();
+          SpdMatrix Finv = direct_forecast_precision();
+          forecast_precision_log_determinant_ = Finv.logdet();
+          forecast_precision_implementation_ =
+              ForecastPrecisionImplementation::Dense;
+        }
+      }
     }
-  }  // namespace Kalman
-  
-}  // namespace BOOM
 
+  }  // namespace Kalman
+
+}  // namespace BOOM

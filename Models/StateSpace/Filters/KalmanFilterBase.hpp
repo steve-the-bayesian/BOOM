@@ -78,7 +78,7 @@ namespace BOOM {
       // If a[t] = E(state[t] | Data to t-1) then the contemporaneous state mean is
       // a[t] + P[t] * Z[t].transpose() * Finv * v;
       virtual Vector contemporaneous_state_mean() const = 0;
-      virtual SpdMatrix contemporaneous_state_variance() const = 0;
+      //      virtual SpdMatrix contemporaneous_state_variance() const = 0;
 
       // Durbin and Koopman's r[t].  Recall that eta[t] is the error term for
       // moving from state t to state t+1.  The conditional mean of eta[t] given
@@ -170,13 +170,10 @@ namespace BOOM {
     // Filtering operations
     //--------------------------------------------------------------------------
 
-    double compute_log_likelihood() {
-      if (status_ == NOT_CURRENT) {
-        clear_loglikelihood();
-        update();
-      }
-      return log_likelihood_;
-    }
+    // If the filter status is current then return the pre-computed log
+    // likelihood.  If not current the compute and store the log likelihood and
+    // return the saved value.
+    double compute_log_likelihood();
 
     // Concrete classes hold a pointer to a model object.  Calling update() runs
     // the kalman filter over all the data contained in *model_.
@@ -198,7 +195,11 @@ namespace BOOM {
     }
 
    private:
+    // For explanation, please see the comments for the enum definition ofr
+    // KalmanFilterStatus.
     KalmanFilterStatus status_;
+
+    // The log likelihood of the data as computed by the last forward update.
     double log_likelihood_;
 
     // Durbin and Koopman's r0 from the fast disturbance smoother (see equation

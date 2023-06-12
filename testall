@@ -5,3 +5,5 @@
 # 'testall -c dbg'
 
 bazel test $* Models/... cpputil/... LinAlg/... Samplers/... stats/... distributions/...
+
+# test comment

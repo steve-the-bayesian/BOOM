@@ -47,7 +47,7 @@ namespace BOOM {
    public:
 
     // Clear links to neighboring data points before destruction.
-    ~MarkovData() {clear_links();}
+    ~MarkovData() {}
 
     // Create MarkovData that needs to be linked to other data.
     MarkovData(uint val, uint Nlevels);

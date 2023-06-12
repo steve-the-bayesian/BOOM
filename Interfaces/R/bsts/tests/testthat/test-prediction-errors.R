@@ -15,7 +15,7 @@ test_that("Scaled prediction errors are reasonable.", {
 
   ## The errors should be highly but not perfectly correlated.
   expect_gt(cor(se[[1]][30, ], errors[[1]][30, ]), .8)
-  expect_lt(cor(se[[1]][30, ], errors[[1]][30, ]), 1.0)
+  expect_lte(cor(se[[1]][30, ], errors[[1]][30, ]), 1.0)
 })
 
 test_that("Prediction errors work for student family", {

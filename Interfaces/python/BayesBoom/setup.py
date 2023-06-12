@@ -3,13 +3,12 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 from glob import glob
-import distutils.ccompiler
 
 # Bump the major version when making backwards incompatible changes.
 MAJOR = 0
 
 # Bump the minor version when adding backwards compatible features.
-MINOR = 0
+MINOR = 1
 
 # Bump the patch version when making bug fixes.
 PATCH = 11 
@@ -204,6 +203,9 @@ state_space_sources = (
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/PosteriorSamplers/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/StateModels/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/PosteriorSamplers/*.cpp")
 )
 state_space_headers = (
     glob(BOOM_DIR + "Models/StateSpace/*.hpp")
@@ -256,11 +258,14 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/Models/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Impute/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/Mixtures/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/StateModels/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/StateSpace/Multivariate/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/TimeSeries/*.cpp")
     + glob(BOOM_DIR + "pybind11/LinAlg/*.cpp")
     + glob(BOOM_DIR + "pybind11/stats/*.cpp")
+    + glob(BOOM_DIR + "pybind11/numopt/*.cpp")
     + glob(BOOM_DIR + "pybind11/cpputil/*.cpp")
     + glob(BOOM_DIR + "pybind11/distributions/*.cpp")
     + glob(BOOM_DIR + "pybind11/test_utils/*.cpp")
@@ -283,7 +288,7 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
 
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
     # parallel code
-    nthreads = 16  # number of parallel compilations
+    nthreads = 64  # number of parallel compilations
     import multiprocessing.pool
 
     def _single_compile(obj):
@@ -305,7 +310,7 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
     return objects
 
 
-distutils.ccompiler.CCompiler.compile = parallelCCompile
+setuptools.distutils.ccompiler.CCompiler.compile = parallelCCompile
 # End of parallel compile "monkey patch"
 # ---------------------------------------------------------------------------
 
@@ -318,7 +323,6 @@ ext_modules = [
         '_boom',
         sources=boom_sources,
         depends=boom_headers,
-        headers=boom_headers,
         include_dirs=[
             "./BayesBoom/boom",
             # Path to pybind11 headers

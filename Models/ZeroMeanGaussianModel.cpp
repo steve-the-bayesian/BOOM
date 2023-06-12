@@ -35,7 +35,9 @@ namespace BOOM {
 
   ZGM *ZGM::clone() const { return new ZGM(*this); }
 
-  void ZGM::set_sigsq(double s2) { Sigsq_prm()->set(s2); }
+  void ZGM::set_sigsq(double s2) {
+    Sigsq_prm()->set(s2);
+  }
 
   Ptr<UnivParams> ZGM::Sigsq_prm() { return ParamPolicy::prm(); }
 

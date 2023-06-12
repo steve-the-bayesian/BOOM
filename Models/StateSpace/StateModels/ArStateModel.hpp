@@ -69,6 +69,8 @@ namespace BOOM {
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
 
+    using StateModel::simulate;
+
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_error_expander(int t) const override;

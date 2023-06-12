@@ -45,6 +45,12 @@ namespace BOOM {
     double prior_df() const { return 2.0 * residual_precision_prior_->alpha(); }
     double prior_ss() const { return 2.0 * residual_precision_prior_->beta(); }
 
+    // Truncate the support of the residual standard deviation to (0,
+    // sigma_max).
+    void set_sigma_upper_limit(double sigma_max) {
+      sigsq_sampler_.set_sigma_max(sigma_max);
+    }
+
    private:
     RegressionModel *model_;
     Ptr<MvnGivenScalarSigmaBase> coefficient_prior_;
@@ -55,5 +61,8 @@ namespace BOOM {
     GenericGaussianVarianceSampler sigsq_sampler_;
     void set_posterior_suf();
   };
+
+  typedef RegressionConjSampler RegressionConjugateSampler;
+
 }  // namespace BOOM
 #endif  // BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP

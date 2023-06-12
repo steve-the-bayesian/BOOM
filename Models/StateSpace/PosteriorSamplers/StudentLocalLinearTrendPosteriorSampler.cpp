@@ -54,7 +54,7 @@ namespace BOOM {
     class NuPosteriorRobust {
      public:
       // Args:
-      //   nu_prior_: A prior distribution for the tail thickness parameter of
+      //   nu_prior: A prior distribution for the tail thickness parameter of
       //     the student T distribution.
       //   residuals: A set of zero-mean data drawn from the T_nu(0, sigma)
       //     distribution.
@@ -83,7 +83,42 @@ namespace BOOM {
       const BOOM::Vector &residuals_;
       double sigma_;
     };
-    
+
+    class JointPosterior {
+     public:
+      // Args:
+      //   sigma_prior: A prior distribution on the value of scale parameter
+      //     sigma.  Be sure to inclue any Jacobian terms if the prior is on a
+      //     scale other than sigma (i.e. sigma^2 or 1 / sigma^2).
+      //   nu_prior: A prior distribution on the tail thickness parameter (df
+      //     parameter) nu.
+      JointPosterior(const DoubleModel *nu_prior,
+                     const DoubleModel *sigma_prior,
+                     const Vector &residuals)
+          : nu_prior_(nu_prior),
+            sigma_prior_(sigma_prior),
+            residuals_(residuals)
+      {}
+
+      double operator()(const Vector &sigma_nu) const {
+        double sigma = sigma_nu[0];
+        double nu = sigma_nu[1];
+        double ans = nu_prior_->logp(nu) + sigma_prior_->logp(sigma);
+        if (!std::isfinite(ans)) {
+          return ans;
+        }
+        for (double r : residuals_) {
+          ans += dstudent(r, 0, sigma, nu, true);
+        }
+        return ans;
+      }
+
+     private:
+      const BOOM::DoubleModel *nu_prior_;
+      const BOOM::DoubleModel *sigma_prior_;
+      const BOOM::Vector &residuals_;
+    };
+
     typedef StudentLocalLinearTrendPosteriorSampler SLLTPS;
 
   }  // namespace
@@ -139,7 +174,7 @@ namespace BOOM {
 
   void SLLTPS::draw_nu_level() {
     std::function<double(double)> logpost;
-    if (model_->nu_level() > 20) {
+    if (model_->nu_level() > 10) {
       logpost = NuPosteriorRobust(nu_level_prior_.get(),
                                   model_->level_residuals(),
                                   model_->sigma_level());
@@ -155,12 +190,24 @@ namespace BOOM {
   }
 
   void SLLTPS::draw_nu_slope() {
-    NuPosteriorFast logpost(nu_slope_prior_.get(),
-                            &model_->nu_slope_complete_data_suf());
+    std::function<double(double)> logpost;
+    if (model_->nu_slope() > 10) {
+      logpost = NuPosteriorRobust(
+          nu_slope_prior_.get(),
+          model_->slope_residuals(),
+          model_->sigma_slope());
+    } else {
+      logpost = NuPosteriorFast(
+          nu_slope_prior_.get(),
+          &model_->nu_slope_complete_data_suf());
+    }
     ScalarSliceSampler sampler(logpost, true);
     sampler.set_lower_limit(0.0);
     double nu = sampler.draw(model_->nu_slope());
     model_->set_nu_slope(nu);
   }
+
+  // TODO(steve): Investigate functions that can draw the tail thickness and the
+  // slope parameters jointly.
 
 }  // namespace BOOM

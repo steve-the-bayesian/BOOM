@@ -1,0 +1,9 @@
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+patsy
+distutils
+setuptools
+wheel

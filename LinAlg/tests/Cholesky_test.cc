@@ -9,7 +9,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class CholeskyTest : public ::testing::Test {
    protected:
     CholeskyTest()
@@ -50,7 +50,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(spd, cholesky.original_matrix()))
         << "Original matrix = " << endl << spd << endl
         << "Recovered matrix = " << endl << cholesky.original_matrix() << endl;
-    
+
     EXPECT_NEAR(cholesky.logdet(),
                 log(fabs(spd.Matrix::det())),
                 1e-8);
@@ -93,7 +93,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(spd, cholesky.original_matrix()))
         << "Original matrix = " << endl << spd << endl
         << "Recovered matrix = " << endl << cholesky.original_matrix() << endl;
-    
+
     EXPECT_NEAR(cholesky.logdet(),
                 log(fabs(spd.Matrix::det())),
                 1e-8);
@@ -118,7 +118,18 @@ namespace {
     EXPECT_TRUE(MatrixEquals(deficient, deficient_copy))
         << "deficient:" << endl << deficient
         << "reconstructed: " << endl << deficient_copy;
+
+    SpdMatrix some_zeros(3);
+    some_zeros.randomize();
+    some_zeros.row(0) = 0.0;
+    some_zeros.col(0) = 0.0;
+    Cholesky chol0(some_zeros);
+    Matrix L0 = chol0.getL(false);
+
+    SpdMatrix same_zeros = L0 * L0.transpose();
+    EXPECT_TRUE(MatrixEquals(some_zeros, same_zeros));
+
   }
-  
-  
+
+
 }  // namespace

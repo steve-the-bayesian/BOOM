@@ -17,17 +17,26 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/ConstrainedVectorParams.hpp"
+#include "cpputil/report_error.hpp"
 #include <algorithm>
 
 namespace BOOM {
 
-  using VC = BOOM::VectorConstraint;
-  using EC = BOOM::ElementConstraint;
-  EC::ElementConstraint(uint el, double val) : element_(el), value_(val) {}
+  ElementConstraint::ElementConstraint(uint el, double val)
+      : element_(el),
+        value_(val)
+  {}
 
-  bool EC::check(const Vector &v) const { return v[element_] == value_; }
-  void EC::impose(Vector &v) const { v[element_] = value_; }
-  Vector EC::expand(const Vector &v) const {
+  bool ElementConstraint::check(const Vector &v) const {
+    return v[element_] == value_;
+  }
+
+  Vector &ElementConstraint::impose(Vector &v) const {
+    v[element_] = value_;
+    return v;
+  }
+
+  Vector ElementConstraint::expand(const Vector &v) const {
     Vector ans(v.size() + 1);
     Vector::const_iterator b(v.begin()), e(v.end());
     Vector::const_iterator pos = b + element_;
@@ -37,7 +46,7 @@ namespace BOOM {
     return ans;
   }
 
-  Vector EC::reduce(const Vector &v) const {
+  Vector ElementConstraint::reduce(const Vector &v) const {
     if (v.empty()) {
       return Vector(0);
     }
@@ -53,9 +62,10 @@ namespace BOOM {
 
   bool SC::check(const Vector &v) const { return v.sum() == sum_; }
 
-  void SC::impose(Vector &v) const {
+  Vector &SC::impose(Vector &v) const {
     double tot = v.sum();
     v.back() = sum_ - tot;
+    return v;
   }
 
   Vector SC::expand(const Vector &v) const {
@@ -70,54 +80,100 @@ namespace BOOM {
     return ans;
   }
 
-  //============================================================
+  //===========================================================================
 
-  using CVP = BOOM::ConstrainedVectorParams;
-
-  CVP::ConstrainedVectorParams(uint p, double x, const Ptr<VC> &vc)
-      : VectorParams(p, x), c_(vc) {
-    if (!vc) {
-      c_ = new NoConstraint;
-    }
+  bool ProportionalSumConstraint::check(const Vector &v) const {
+    return (fabs(v.sum() - sum_) < 1e-5);
   }
 
-  CVP::ConstrainedVectorParams(const Vector &v, const Ptr<VC> &vc)
-      : VectorParams(v), c_(vc) {
-    if (!vc) {
-      c_ = new NoConstraint;
+  Vector &ProportionalSumConstraint::impose(Vector &v) const {
+    double total = v.sum();
+    if (fabs(total - sum_) > 1e-5) {
+      v *= sum_ / total;
     }
+    return v;
   }
 
-  CVP::ConstrainedVectorParams(const CVP &rhs)
-      : Data(rhs), Params(rhs), VectorParams(rhs), c_(rhs.c_) {}
+  Vector ProportionalSumConstraint::expand(const Vector &constrained) const {
+    double value = sum_ - constrained.sum();
+    Vector ans = concat(value, constrained);
+    return impose(ans);
+  }
 
-  CVP *CVP::clone() const { return new CVP(*this); }
+  Vector ProportionalSumConstraint::reduce(const Vector &full) const {
+    return Vector(ConstVectorView(full, 1));
+  }
 
-  Vector CVP::vectorize(bool minimal) const {
+  //===========================================================================
+  ConstrainedVectorParams::ConstrainedVectorParams(
+      const Vector &v, const Ptr<VectorConstraint> &constraint)
+      : VectorParams(v), constraint_(constraint)
+  {
+    if (!constraint) {
+      constraint_ = new NoConstraint;
+    }
+    Vector value(v);
+    constraint_->impose(value);
+    bool signal_observers = false;
+    VectorParams::set(value, signal_observers);
+  }
+
+  ConstrainedVectorParams::ConstrainedVectorParams(
+      const ConstrainedVectorParams &rhs)
+      : Data(rhs),
+        Params(rhs),
+        VectorParams(rhs),
+        constraint_(rhs.constraint_)
+  {}
+
+  ConstrainedVectorParams *ConstrainedVectorParams::clone() const {
+    return new ConstrainedVectorParams(*this);
+  }
+
+  uint ConstrainedVectorParams::size(bool minimal) const {
+    uint ans = VectorParams::size();
     if (minimal) {
-      return c_->reduce(value());
+      ans -= constraint_->minimal_size_reduction();
+    }
+    return ans;
+  }
+
+  Vector ConstrainedVectorParams::vectorize(bool minimal) const {
+    if (minimal) {
+      return constraint_->reduce(value());
     }
     return value();
   }
 
-  Vector::const_iterator CVP::unvectorize(Vector::const_iterator &v,
-                                          bool minimal) {
+  Vector::const_iterator ConstrainedVectorParams::unvectorize(
+      Vector::const_iterator &v, bool minimal) {
     Vector tmp(vectorize(minimal));
     Vector::const_iterator e = v + tmp.size();
     tmp.assign(v, e);
     if (minimal) {
-      set(c_->expand(tmp));
+      set(constraint_->expand(tmp));
     } else {
       set(tmp);
     }
     return e;
   }
 
-  Vector::const_iterator CVP::unvectorize(const Vector &v, bool minimal) {
+  Vector::const_iterator ConstrainedVectorParams::unvectorize(
+      const Vector &v, bool minimal) {
     Vector::const_iterator b(v.begin());
     return unvectorize(b, minimal);
   }
 
-  //============================================================
+  void ConstrainedVectorParams::set(const Vector &value, bool signal_change) {
+    int n = value.size();
+    if (n == size(true)) {
+      VectorParams::set(constraint_->expand(value), signal_change);
+    } else if (n == size(false)) {
+      Vector val = value;
+      VectorParams::set(constraint_->impose(val), signal_change);
+    } else {
+      report_error("Wrong size argument.");
+    }
+  }
 
 }  // namespace BOOM

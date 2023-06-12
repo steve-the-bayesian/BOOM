@@ -359,7 +359,7 @@ namespace BOOM {
       // dropped an dimension because of a singleton index.
       ConstVectorView v = ToBoomVectorView(r_array);
       int n = v.size();
-      Array ans({n});
+      Array ans(std::vector<int>{n});
       ans.assign(v.begin(), v.end());
       return ans;
     } else {
