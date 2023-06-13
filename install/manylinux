@@ -21,5 +21,6 @@ echo "BayesBoom version = [${version}]"
 python_version=`grep "RUN ln" Dockerfile | sed 's|RUN ln -sf /opt/python/||' | sed 's|/bin/python /usr/local/bin/python3||'`
 
 docker build -t pyboom .
-docker run -v /tmp:/export -it --rm pyboom cp /output/BayesBoom-${version}-${python_version}-manylinux2010_x86_64.whl /export
+docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-0.0.11-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl /export/.
+
 cp /tmp/*manylinux*.whl .
