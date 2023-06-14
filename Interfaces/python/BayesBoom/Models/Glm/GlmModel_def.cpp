@@ -618,7 +618,7 @@ namespace BayesBoom {
              "    ascending order.")
         .def("logp",
              [](const LoglinearModel &model,
-                const std::vector<int> data_values) {
+                const std::vector<int> &data_values) {
                return model.logp(data_values);
              },
              "Args:\n"
