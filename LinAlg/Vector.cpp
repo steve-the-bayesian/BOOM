@@ -874,6 +874,20 @@ namespace BOOM {
 
   void print_vector(const Vector &v) { print(v); }
 
+  std::string to_Rstring(const Vector &v) {
+    std::ostringstream out;
+    if (v.empty()) {
+      out << "numeric(0)";
+    } else {
+      out << "c(" << v[0];
+      for (int i = 1; i < v.size(); ++i) {
+        out << ", " << v[i];
+      }
+      out << ")";
+    }
+    return out.str();
+  }
+
   std::istream &operator>>(std::istream &in, Vector &v) {
     std::string s;
     do {

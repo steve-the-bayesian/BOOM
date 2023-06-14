@@ -167,7 +167,7 @@ namespace BOOM {
     // Build from the indiviudal sufficient statistic components.  The
     // 'n' is needed because X might not have an intercept term.
     NeRegSuf(const SpdMatrix &xtx, const Vector &xty, double yty, double n,
-             const Vector &xbar);
+             double ybar, const Vector &xbar);
 
     // Build from a sequence of Ptr<RegressionData>
     template <class Fwd>
@@ -310,7 +310,7 @@ namespace BOOM {
     //
     // Args:
     //   suf: An object containing the sufficient statistics for the model.
-    RegressionModel(const Ptr<RegSuf> &suf);
+    explicit RegressionModel(const Ptr<RegSuf> &suf);
 
     RegressionModel(const RegressionModel &rhs);
     RegressionModel *clone() const override;

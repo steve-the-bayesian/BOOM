@@ -228,10 +228,10 @@ namespace BOOM {
     //
     // Upon observing data, the parameters b, Omega, df, and ss are updated to
     // become
-    //      b -> posterior_mean_
-    // V^{-1} -> unscaled_posterior_precision_
-    //     df -> DF_
-    //     ss -> SS_
+    //          b -> posterior_mean_
+    // Omega^{-1} -> unscaled_posterior_precision_
+    //         df -> DF_
+    //         ss -> SS_
     //
     // These quantities are mutable because they are modified when computing
     // posterior model probabilities.
@@ -247,6 +247,26 @@ namespace BOOM {
     // had to restart because of a degenerate information matrix.
     int failure_count_;
 
+    // Compute the posterior mean, (unscaled) precision, df, and SS parameters
+    // required to evaluate the posterior distribution conditional on a set of
+    // inclusion indicators.
+    //
+    // Args:
+    //   inclusion_indicators: Indicate which variables are to included in the
+    //     conditional model.  I.e. the variables with nonzero coefficients.
+    //   do_ldoi:  Compute (and return) the log determinant of omega-inverse?
+    //
+    // Effects:
+    //   The following variables are populated with their values given the
+    //   observed data and conditional on 'inclusion_indicators':
+    //     - posterior_mean_
+    //     - unscaled_posterior_precision_
+    //     - DF_
+    //     - SS_
+    //
+    // Return:
+    //   If do_ldoi is true then the log determinant of omega-inverse is
+    //   returned.  Otherwise the return value is 0.
     double set_reg_post_params(const Selector &inclusion_indicators,
                                bool do_ldoi) const;
 

@@ -1104,6 +1104,26 @@ namespace BOOM {
 
   void print(const Matrix &m) { std::cout << m << std::endl; }
 
+  std::string to_Rstring(const Matrix &m) {
+    std::ostringstream out;
+    if (m.size() == 0) {
+      out << "numeric(0)";
+    } else {
+      out << "matrix(c(";
+      for (int i = 0; i < m.nrow(); ++i) {
+        for (int j = 0; j < m.ncol(); ++j){
+          if (i > 0 || j > 0) {
+            out << ", ";
+          }
+          out << m(i, j);
+        }
+      }
+      out << "), nrow = "
+          << m.nrow() << ", byrow=TRUE)";
+    }
+    return out.str();
+  }
+
   std::istream &operator>>(std::istream &in, Matrix &m) {
     // reads until a blank line is found or the end of a line
 

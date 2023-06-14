@@ -431,6 +431,10 @@ namespace BOOM {
   // Print the matrix to stdout.
   void print(const Matrix &m);
   inline void print_matrix(const Matrix &m) {print(m);}
+
+  // Print R code that can read in the matrix values.
+  std::string to_Rstring(const Matrix &m);
+
   std::istream &operator>>(std::istream &in, Matrix &m);
   // reads until a blank line is found or the end of a line
 

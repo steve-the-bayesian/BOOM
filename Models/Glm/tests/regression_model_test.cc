@@ -134,7 +134,7 @@ namespace {
     Vector xty = X.Tmult(y);
     double yty = y.dot(y);
 
-    NeRegSuf suf(xtx, xty, yty, sample_size, mean(X));
+    NeRegSuf suf(xtx, xty, yty, sample_size, mean(y), mean(X));
 
     // Test loglike.
     double direct_loglike = 0;

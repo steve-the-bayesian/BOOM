@@ -27,6 +27,8 @@
 #include "distributions.hpp"
 #include "distributions/trun_gamma.hpp"
 
+#include <fstream>
+
 namespace BOOM {
 
   namespace {
@@ -401,14 +403,15 @@ namespace BOOM {
         inclusion_indicators.select(slab_->unscaled_precision());
     double ldoi = do_ldoi ? unscaled_prior_precision.logdet() : 0.0;
 
-    Ptr<RegSuf> s = model_->suf();
+    Ptr<RegSuf> suf = model_->suf();
 
-    SpdMatrix xtx = s->xtx(inclusion_indicators);
-    Vector xty = s->xty(inclusion_indicators);
+    SpdMatrix xtx = suf->xtx(inclusion_indicators);
+    Vector xty = suf->xty(inclusion_indicators);
 
     // unscaled_posterior_precision_ / sigsq is the conditional posterior
     // precision matrix, given inclusion_indicators.
     unscaled_posterior_precision_ = unscaled_prior_precision + xtx;
+
     // posterior_mean_ is the posterior mean, given inclusion_indicators.
     posterior_mean_ = unscaled_prior_precision * prior_mean + xty;
     bool positive_definite = true;
@@ -418,7 +421,7 @@ namespace BOOM {
       posterior_mean_ = Vector(unscaled_posterior_precision_.nrow());
       return negative_infinity();
     }
-    DF_ = s->n() + prior_df();
+    DF_ = suf->n() + prior_df();
     // SS_ starts off with the prior sum of squares from the prior on sigma^2.
     SS_ = prior_ss();
     if (!std::isfinite(SS_)) {
@@ -428,7 +431,7 @@ namespace BOOM {
     // Add in the sum of squared errors around posterior_mean_
     // (y - XB)' (y -XB) = y'y - 2 * B' X'y + B' X'X B.
     double likelihood_ss =
-        s->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
+        suf->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
     SS_ += likelihood_ss;
     if (!std::isfinite(SS_)) {
       report_error("Quadratic form caused infinite SS.");
@@ -437,11 +440,40 @@ namespace BOOM {
     // Add in the sum of squares component arising from the discrepancy between
     // the prior and posterior means.
     // (B - b)' Ominv (B - b)
-    SS_ += unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
+    double prior_mismatch_ss = unscaled_prior_precision.Mdist(
+        posterior_mean_, prior_mean);
+    SS_ +=prior_mismatch_ss;
     if (SS_ < 0) {
-      report_error(
-          "Illegal data caused negative sum of squares "
-          "in Breg::set_reg_post_params.");
+      ofstream err_file("/tmp/BregErrorLogs");
+      err_file << "xty <- " << to_Rstring(suf->xty()) << "\n\n"
+               << "xtx <- " << to_Rstring(suf->xtx()) << "\n\n"
+               << "sample.size <- " << suf->n() << "\n"
+               << "prior.mean <- " << to_Rstring(prior_mean) << "\n\n"
+               << "prior.precision <- "
+               << to_Rstring(unscaled_prior_precision) << "\n\n"
+               << "inclusion.indicators <- '" << inclusion_indicators
+               << "'\n"
+               << "posterior.mean <- " << to_Rstring(posterior_mean_)
+               << "\n"
+               << "unscaled.posterior.precision <- "
+               << to_Rstring(unscaled_posterior_precision_)
+          ;
+
+      ostringstream err;
+      err << "Illegal data caused negative sum of squares "
+          "in Breg::set_reg_post_params.\n";
+      err << "SS_ = " << SS_ << "\n"
+          << "        prior_ss = " << prior_ss() << "\n"
+          << "   likelihood_ss = " << likelihood_ss << "\n"
+          << "                   yty = " << suf->yty() << "\n"
+          << "           -2 * B' X'y = " <<
+          - 2 * posterior_mean_.dot(xty) << "\n"
+          << "              B' X'X B = " <<
+          xtx.Mdist(posterior_mean_) << "\n"
+          << "     mismatch_ss = " << prior_mismatch_ss << "\n"
+          << "     posterior_mean = " << to_Rstring(posterior_mean_)
+          << "\n";
+      report_error(err.str());
     } else if (!std::isfinite(SS_)) {
       report_error("Prior to Posterior Mahalanobis distance caused "
                    "infinite SS.");
