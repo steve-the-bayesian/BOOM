@@ -38,8 +38,8 @@ namespace BOOM {
         RListIoManager *io_manager) {
       Matrix predictors;
       Vector response;
-      std::vector<bool> response_is_observed;
       if (!Rf_isNull(r_data_list)) {
+        std::vector<bool> response_is_observed;
         // If we were passed data from R then use it to build the model.
         SEXP r_predictors = getListElement(r_data_list, "predictors");
         if (Rf_inherits(r_data_list, "bsts")) {
