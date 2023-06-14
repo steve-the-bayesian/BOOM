@@ -76,7 +76,7 @@ def dot(data_frame, omit=[]):
     if isinstance(omit, str):
         omit = [omit]
 
-    vnames = [x for x in data_frame.columns if x not in omit]
+    vnames = [str(x) for x in data_frame.columns if x not in omit]
     ans = "(" + "+".join(x for x in vnames) + ")"
     return ans
 
@@ -115,8 +115,10 @@ class lm_spike:
                  prior: RegressionSpikeSlabPrior = None,
                  ping: int = None,
                  seed: int = None,
+                 xnames = None,
                  **kwargs):
-        """Create and a model object and run a specified number of MCMC iterations.
+        """
+        Create and a model object and run a specified number of MCMC iterations.
 
         Args:
           formula: A model formula that can be interpreted by the 'patsy'
@@ -130,11 +132,13 @@ class lm_spike:
           ping: The frequency (in iterations) with which to print status
             updates.  If ping is None then niter/10 will be assumed.
           seed: The seed for the C++ random number generator, or None.
+          xnames: If the model is begin built from sufficient statistics, these
+            are the names that can be used for the columns of the predictor
+            matrix X.  Include a name for the intercept, if one is included.
           **kwargs: Extra argumnts will be passed to SpikeSlabPrior.
 
         Returns:
           An lm_spike object.
-
         """
 
         niter = int(niter)
@@ -155,7 +159,9 @@ class lm_spike:
             self._model = boom.RegressionModel(X, y, False)
 
             if prior is None:
-                prior = RegressionSpikeSlabPrior(x=X, y=y, **kwargs)
+                prior = RegressionSpikeSlabPrior(predictors,
+                                                 response,
+                                                 **kwargs)
 
         elif isinstance(data, R.RegSuf):
             predictors = None
@@ -168,9 +174,9 @@ class lm_spike:
             if prior is None:
                 prior = RegressionSpikeSlabPrior(suf, **kwargs)
 
-            # TODO: come up with a better way to get real variable names here.
-            xnames = ["(Intercept)"] + [
-                "x" + str(i) for i in range(1, suf.xdim)]
+            if xnames is None:
+                xnames = ["(Intercept)"] + [
+                    "x" + str(i) for i in range(1, suf.xdim)]
             self._x_design_info = patsy.DesignInfo(xnames)
 
         # xdim = predictors.shape[1]
@@ -191,6 +197,9 @@ class lm_spike:
         self._coefficient_draws = scipy.sparse.lil_matrix((niter, xdim))
         self._residual_sd = np.zeros(niter)
         self._log_likelihood = np.zeros(niter)
+
+        self._model.coefficients.drop_all()
+        self._model.coef.add(0)
 
         for i in range(niter):
             self._model.sample_posterior()
@@ -430,6 +439,9 @@ def summarize_spike_slab_coefficients(coef,
                                       order=True,
                                       colnames=None):
     """
+    Produce a summary table from a collection of model coefficients produced by
+    a spike and slab MCMC run.
+
     Args:
       coefs: A matrix-like object containing MCMC draws of regression
         coefficients.  Supported types include pd.DataFrame, np.ndarray, and
@@ -437,8 +449,9 @@ def summarize_spike_slab_coefficients(coef,
         different model variables.
       burn:  The number of MCMC iterations to discard as burn-in.
       order: If True then the coefficients will be placed in descending order
-        according to their marginal inclusion probabilities.  Otherwise the
-        input order is preserved.
+        according to their marginal inclusion probabilities (so that the most
+        "significant" coefficients appear first). Otherwise the input order is
+        preserved.
       colnames: If 'coefs' is a pd.DataFrame then the columns from that frame
         are used as variable names in the output.  If 'coefs' is a data
         structure that does not support column names then they can be supplied
@@ -508,19 +521,43 @@ class lm_spike_summary:
         if burn > 0:
             sigma = sigma[burn:]
 
+        quantiles = [.01, .025, .10, .25, .5, .75, .9, .975, .99]
         self._rsquare_distribution = 1 - sigma**2 / model.sample_variance
-        self._rsquare = R.summary(self._rsquare_distribution)
-        self._residual_sd = R.summary(sigma)
+        self._rsquare = R.summary(self._rsquare_distribution,
+                                  quantiles=quantiles)
+        self._residual_sd = R.summary(sigma, quantiles=quantiles)
         self._coefficients = summarize_spike_slab_coefficients(
             model.sparse_coefficients,
             order=order,
             burn=burn,
             colnames=model.xnames)
 
+    @property
+    def coefficients(self):
+        return self._coefficients
+
+    @property
+    def residual_sd(self):
+        return self._residual_sd.median
+
+    @property
+    def r2(self):
+        return self._rsquare.median
+
+    @property
+    def rsquare(self):
+        return self._rsquare.median
+
     def __repr__(self):
-        x = 3
-        ans = f"""A spike and slab model summary!
-        {x}
+        ans = f"""
+R^2:
+{self._rsquare}
+
+Residual SD:
+{self._residual_sd}
+
+Coefficients:
+{self._coefficients}
         """
         return ans
 

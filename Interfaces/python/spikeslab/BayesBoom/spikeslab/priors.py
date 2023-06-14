@@ -31,58 +31,48 @@ class RegressionSpikeSlabPrior:
         classes that inherit from it.
 
         Args:
-
           x: Either the design matrix (as a pd.DataFrame or a np.array), or an
             object of class R.RegSuf containing the sufficient statistics for
             the model to be fit.
-
           y: The response vector (as a pd.Series or a np.array).  If 'x'
              contains model sufficient statistics then y is not used.
-
           expected_r2: The R^2 statistic that the model is expected
             to achieve.  Used along with 'sdy' to derive a prior distribution
             for the residual variance.
-
           prior_df: The number of observations worth of weight to give to the
             guess at the residual variance.
-
           expected_model_size: The expected number of nonzero coefficients in
             the model.  Used to set prior_inclusion_probabilities to
             expected_model_size / number_of_variables.  If expected_model_size
             is either negative or larger than number.of.variables then all
             elements of prior_inclusion_probabilities will be set to 1.0 and
             the model will be fit with all available coefficients.
-
           optional_coefficient_estimate: A vector of length number.of.variables
             to use as the prior mean of the regression coefficients.  This can
             also be None, in which case the prior mean for the intercept will
             be set to mean.y, and the prior mean for all slopes will be 0.
-
           mean.y: The mean of the response variable.  Used to create a sensible
             default prior mean for the regression coefficients when
             optional_coefficient_estimate is None.
-
           sdy: Used along with expected_r2 to create a prior guess at the
             residual variance.
-
           prior_inclusion_probabilities: A vector of length number.of.variables
             giving the prior inclusion probability of each coefficient.  Each
             element must be between 0 and 1, inclusive.  If left as None then a
             default value will be created with all elements set to
             expected_model_size / number_of_variables.
-
           sigma_upper_limit: The largest acceptable value for the residual
             standard deviation.
         """
 
         if isinstance(x, R.RegSuf):
-            (xtx, sdy_data, mean_y_data,
+            (xtx, mean_y_data, sdy_data,
              sample_size) = self._init_from_suf(x)
         else:
-            (xtx, sdy_data, mean_y_data,
+            (xtx, mean_y_data, sdy_data,
              sample_size) = self._init_from_data(x, y)
 
-        xdim = xtx.nrow
+        xdim = xtx.shape[0]
         if mean_y is None:
             mean_y = mean_y_data
         if sdy is None:
@@ -93,11 +83,11 @@ class RegressionSpikeSlabPrior:
             optional_coefficient_estimate[0] = mean_y
         self._mean = boom.Vector(optional_coefficient_estimate)
 
-        ods = 1. - diagonal_shrinkage
-        scale_factor = prior_information_weight * ods / sample_size
-        self._unscaled_prior_precision = xtx * scale_factor
-        diag_view = self._unscaled_prior_precision.diag()
-        diag_view /= ods
+        D = np.diag(np.diagonal(xtx))
+        ominv = diagonal_shrinkage * D + (1 - diagonal_shrinkage) * xtx
+        ominv *= prior_information_weight / sample_size
+
+        self._unscaled_prior_precision = R.to_boom_spd(ominv)
 
         if prior_inclusion_probabilities is None:
             prob = expected_model_size / xdim
@@ -125,6 +115,9 @@ class RegressionSpikeSlabPrior:
         self._max_flips = max_flips
 
     def __getstate__(self):
+        """
+        Allows objects to be pickled.
+        """
         ans = self.__dict__.copy()
         if hasattr(self, "_residual_precision_prior"):
             prior = self._residual_precision_prior
@@ -134,6 +127,9 @@ class RegressionSpikeSlabPrior:
         return ans
 
     def __setstate__(self, payload):
+        """
+        Allows objects to be unpickled.
+        """
         self.__dict__.update(payload)
         self._residual_precision_prior = boom.ChisqModel(
             self.prior_df, np.sqrt(self.prior_ss / self.prior_df))
@@ -176,9 +172,9 @@ class RegressionSpikeSlabPrior:
         return self._max_flips
 
     def _init_from_data(self, x, y):
-        x = R.to_boom_matrix(x)
-        xtx = x.inner()
-        sample_size = x.nrow
+        x = np.array(x)
+        xtx = x.T @ x
+        sample_size = x.shape[0]
         if y is None:
             mean_y = None
             sdy = None
@@ -191,7 +187,7 @@ class RegressionSpikeSlabPrior:
 
     def _init_from_suf(self, suf):
         return (
-            R.to_boom_spd(suf.xtx),
+            suf.xtx,
             suf.mean_y,
             suf.sample_sd,
             suf.sample_size

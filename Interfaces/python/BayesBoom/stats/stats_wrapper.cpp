@@ -34,9 +34,9 @@ namespace BayesBoom {
 
     boom.def("mean", [](const Vector &m){return mean(m);},
              "Returns the mean of a boom.Vector.");
-    boom.def("var", [](const Vector &m){return mean(m);},
+    boom.def("var", [](const Vector &m){return var(m);},
              "Returns the variance of a boom.Vector.");
-    boom.def("sd", [](const Vector &m){return mean(m);},
+    boom.def("sd", [](const Vector &m){return sd(m);},
              "Returns the standard deviation of a boom.Vector.");
 
     //===========================================================================

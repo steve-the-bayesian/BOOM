@@ -18,7 +18,9 @@ class ECDF:
           side: If "right" then this is a traditional CDF, returning P(X <= x).
             If "left" then this returns P(X < x).
         """
-        assert side in ["right", "left"]
+        if side not in ["right", "left"]:
+            raise Exception(
+                "'side' argument must be either 'left' or 'right'.")
         y = np.array(data, copy=True)
         if len(y) == 0:
             raise Exception("ECDF of empty data set.")
@@ -328,7 +330,8 @@ class NumericEmpiricalDistribution:
             else:
                 rho = (Fplus[xplus_pos] - pm) / (
                     Fplus[xplus_pos] - Fminus[xminus_pos])
-                assert rho >= 0 and rho <= 1
+                if not 0 <= rho <= 1:
+                    raise Exception("rho is out of range")
                 self._quantiles[m] = rho * xminus + (1 - rho) * xplus
 
         self._nobs += bufsize
@@ -405,7 +408,8 @@ class NumericEmpiricalDistribution:
             else:
                 rho = (Fplus[xplus_pos] - pm) / (
                     Fplus[xplus_pos] - Fminus[xminus_pos])
-                assert rho >= 0 and rho <= 1
+                if not 0 <= rho <= 1:
+                    raise Exception("rho is out of range")
                 self._quantiles[m] = rho * xminus + (1 - rho) * xplus
 
         self._nobs += bufsize

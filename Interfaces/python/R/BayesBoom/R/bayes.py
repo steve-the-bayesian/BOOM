@@ -529,11 +529,16 @@ class RegSuf:
                            xty=R.to_boom_vector(self._xty),
                            sample_sd=self._sample_sd,
                            sample_size=self._sample_size,
+                           ybar=self._ybar,
                            xbar=self._xbar)
 
     @property
     def xtx(self):
         return self._xtx
+
+    @property
+    def xty(self):
+        return self._xty
 
     @property
     def xdim(self):
