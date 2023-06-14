@@ -494,6 +494,10 @@ class RegSuf:
 
           xbar: The mean of the X's (a vector).
         """
+        xtx = np.array(xtx)
+        xty = np.array(xty)
+        xbar = np.array(xbar)
+
         if xtx.shape[0] != xtx.shape[1]:
             raise Exception("xtx must be square")
         if xtx.shape[0] != xty.shape[0]:
@@ -515,12 +519,12 @@ class RegSuf:
         if ybar is None:
             ybar = xty[0] / sample_size
 
-        self._xtx = np.array(xtx)
-        self._xty = np.array(xty)
+        self._xtx = xtx
+        self._xty = xty
         self._sample_sd = sample_sd
         self._sample_size = sample_size
         self._ybar = ybar
-        self._xbar = np.array(xbar)
+        self._xbar = xbar
 
     def boom(self):
         import BayesBoom.boom as boom

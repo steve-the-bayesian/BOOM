@@ -361,6 +361,7 @@ class lm_spike:
         """
         A boxplot showing the values of the coefficients.
         """
+        print("plot_coefficients is TBD")
 
     def plot_residual(self, hexbin_threshold=1e+5,
                       xlab="fitted", ylab="residual"):
