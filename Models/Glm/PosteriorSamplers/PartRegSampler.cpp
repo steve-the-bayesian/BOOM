@@ -32,7 +32,12 @@ namespace BOOM {
                       const SpdMatrix &prior_ivar, double prior_df,
                       double prior_sigma_guess, double inc_prob)
       : rng_(seed_rng(GlobalRng::rng)),
-        suf_(new NeRegSuf(xtx, xty, yty, xtx(0, 0), xtx.col(0) / xtx(0, 0))),
+        suf_(new NeRegSuf(xtx,
+                          xty,
+                          yty,
+                          xtx(0, 0),                 // sample_size
+                          xty(0) / xtx(0, 0),        // ybar
+                          xtx.col(0) / xtx(0, 0))),  // xbar
         prior_mean_(prior_mean),
         prior_ivar_(prior_ivar),
         prior_df_(prior_df),
@@ -47,7 +52,12 @@ namespace BOOM {
                       double yty, const Vector &prior_mean,
                       const SpdMatrix &prior_ivar, double prior_df,
                       double prior_sigma_guess, const Vector &inc_probs)
-      : suf_(new NeRegSuf(xtx, xty, yty, xtx(0, 0), xtx.col(0) / xtx(0, 0))),
+      : suf_(new NeRegSuf(xtx,
+                          xty,
+                          yty,
+                          xtx(0, 0),                 // sample_size
+                          xty[0] / xtx(0, 0),        // ybar
+                          xtx.col(0) / xtx(0, 0))),  // xbar
         prior_mean_(prior_mean),
         prior_ivar_(prior_ivar),
         prior_df_(prior_df),

@@ -55,6 +55,34 @@ namespace BayesBoom {
              },
              "Set a specific set of coefficients to nonzero values, "
              "setting all others to zero.")
+        .def("add_all",
+             [](GlmCoefs &coefs) {
+               coefs.add_all();
+             },
+             "Allow all model coefficients to be nonzero.")
+        .def("drop_all",
+             [](GlmCoefs &coefs) {
+               coefs.drop_all();
+             },
+             "Force all model coefficients to zero.")
+        .def("add",
+             [](GlmCoefs &coef, int i) {
+               coef.add(i);
+             },
+             py::arg("i"),
+             "Allow coefficient i to be nonzero.")
+        .def("drop",
+             [](GlmCoefs &coef, int i) {
+               coef.drop(i);
+             },
+             py::arg("i"),
+             "Force coefficient i to be zero.")
+        .def("flip",
+             [](GlmCoefs &coef, int i) {
+               coef.flip(i);
+             },
+             py::arg("i"),
+             "Flip the include/exclude status of coefficient i.")
         ;
 
     // A single data point for a regression model.
@@ -157,14 +185,19 @@ namespace BayesBoom {
              "rows in X.\n")
         .def(py::init(
             [](const SpdMatrix &xtx, const Vector &xty, double sample_sd,
-               double sample_size, const Vector &xbar) {
-              double yty = (sample_size - 1) * sample_sd * sample_sd;
-              return new NeRegSuf(xtx, xty, yty, sample_size, xbar);
+               double sample_size, double ybar, const Vector &xbar) {
+
+              // E(X^2) = sigma^2 + mu^2
+              double yty = (sample_size - 1) * sample_sd * sample_sd
+                  + sample_size * ybar * ybar;
+
+              return new NeRegSuf(xtx, xty, yty, sample_size, ybar, xbar);
             }),
              py::arg("xtx"),
              py::arg("xty"),
              py::arg("sample_sd"),
              py::arg("sample_size"),
+             py::arg("ybar"),
              py::arg("xbar"),
              "Args:\n\n"
              "  xtx:  The cross product matrix X'X, where X is the matrix of "
@@ -173,7 +206,18 @@ namespace BayesBoom {
              "  sample_sd:  The sample standard deviation of the responses.\n"
              "  sample_size:  The number of observations contained in the "
              "sufficient statistics.\n"
+             "  ybar:  The mean of the response variable."
              "  xbar:  The mean of each column of the predictor matrix X.\n")
+        .def_property_readonly(
+            "xtx", [](const RegSuf &suf) {return suf.xtx();})
+        .def_property_readonly(
+            "xty", [](const RegSuf &suf) {return suf.xty();})
+        .def_property_readonly(
+            "yty", [](const RegSuf &suf) {return suf.yty();})
+        .def_property_readonly(
+            "n", [](const RegSuf &suf) {return suf.n();})
+        .def_property_readonly(
+            "sample_size", [](const RegSuf &suf) {return suf.n();})
         .def_property_readonly(
             "sample_mean",
             [](const RegSuf &s) { return s.ybar(); },

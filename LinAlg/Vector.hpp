@@ -320,6 +320,9 @@ namespace BOOM {
   // prints to stdout.  This function is here so it can be called from gdb.
   void print(const Vector &v);
   void print_vector(const Vector &v);
+
+  // Print R code that can read in the vector values.
+  std::string to_Rstring(const Vector &v);
   std::istream &operator>>(std::istream &, Vector &);
   Vector read_Vector(std::istream &in);
 

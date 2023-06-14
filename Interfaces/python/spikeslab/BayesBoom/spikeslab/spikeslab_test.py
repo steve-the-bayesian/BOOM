@@ -18,6 +18,31 @@ import scipy.sparse
 import pickle
 
 
+def write_R_vector(v):
+    if v.size == 0:
+        return "numeric(0)"
+    else:
+        ans = "c(" + str(v[0])
+        for el in v[1:]:
+            ans += ", " + str(el)
+        return ans + ")"
+
+
+def write_R_matrix(m):
+    if m.size == 0:
+        return "numeric(0)"
+    else:
+        ans = "matrix(c("
+        for i in range(m.shape[0]):
+            for j in range(m.shape[1]):
+                if i > 0 or j > 0:
+                    ans += ", "
+                ans += str(m[i, j])
+        ans += "), nrow = " + str(m.shape[0])
+        ans += ", byrow = TRUE)"
+        return ans
+
+
 class SpikeSlabTest(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
@@ -75,7 +100,7 @@ class SpikeSlabTest(unittest.TestCase):
         nbad = 30
         niter = 250
         x = np.random.randn(sample_size, ngood + nbad)
-
+        x[:, 0] = 1.0
         beta = np.random.randn(ngood) * 4
 
         b0 = 7.2
@@ -86,15 +111,53 @@ class SpikeSlabTest(unittest.TestCase):
 
         xtx = x.T @ x
         xty = x.T @ y
+        x1 = x[:, 1]
+        self.assertAlmostEqual(np.sum(x1 * y),  xty[1])
+        x2 = x[:, 2]
+        self.assertAlmostEqual(np.sum(x1 * x2), xtx[1, 2])
+
+        X = pd.DataFrame(x[:, 1:],
+                         columns=["X" + str(i) for i in range(1, x.shape[1])])
+        xnames = ["Intercept"] + [str(name) for name in X.columns]
+        X["y"] = y
+
         sample_sd = np.std(y, ddof=1)
         xbar = np.mean(x, axis=0)
         suf = R.RegSuf(xtx, xty, sample_sd=sample_sd, sample_size=sample_size,
                        xbar=xbar)
-        model = lm_spike(formula=None, data=suf, niter=niter)
+        model = lm_spike(formula=None, data=suf, niter=niter, xnames=xnames)
+
+        raw_model = lm_spike("y ~ " + dot(X, "y"), niter=niter, data=X)
         self.assertEqual(len(model._log_likelihood), niter)
 
-        blah = model.summary(burn=10)
-        self.assertTrue(isinstance(blah, lm_spike_summary))
+        suf_summary = model.summary(burn=10)
+        self.assertTrue(isinstance(suf_summary, lm_spike_summary))
+
+        raw_summary = raw_model.summary(burn=10)
+
+        # Check that the r-squares from the raw and suf models agree closely.
+
+        pct_change_r2 = (raw_summary.r2 - suf_summary.r2) / suf_summary.r2
+        self.assertLess(np.abs(pct_change_r2), .01)
+
+        # Check that the residual standard deviations from the raw and suf
+        # models agree closely.
+        pct_change_sigma = (
+            (raw_summary.residual_sd - suf_summary.residual_sd) /
+            suf_summary.residual_sd
+        )
+        self.assertLess(np.abs(pct_change_sigma), .01)
+
+        # Check that the two models include the same set of coefficients.
+        raw_coef = raw_summary.coefficients
+        suf_coef = suf_summary.coefficients
+
+        raw_included = raw_coef["inc_prob"] > .5
+        suf_included = suf_coef["inc_prob"] > .5
+        self.assertEqual(
+            set(raw_coef[raw_included].index),
+            set(suf_coef[suf_included].index)
+        )
 
     def test_dot(self):
         X = pd.DataFrame(np.random.randn(10, 3), columns=["X1", "X2", "X3"])
@@ -192,7 +255,6 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-#    rig = BigAssSpikeSlabTest()
     rig = SpikeSlabTest()
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()

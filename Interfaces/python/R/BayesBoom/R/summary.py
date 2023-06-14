@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
 
-def summary(x, max_levels: int = 10, numeric_min_unique: int = 10):
+def summary(x, max_levels: int = 10, numeric_min_unique: int = 10, **kwargs):
     """
     Return the appropriate categorical or numeric summary.
 
@@ -14,6 +14,8 @@ def summary(x, max_levels: int = 10, numeric_min_unique: int = 10):
         variable.
       numeric_min_unique: A numeric variable with fewer than this many distinct
         values will be summarized as categorical.
+      **kwargs: keyword arguments passed to the appropriate summary object
+        (NumericSummary, etc).
 
     Returns: If x is a data frame, the return is a dict, keyed by column name,
         containing summaries of each column.  Otherwise the return is a summary
@@ -39,11 +41,11 @@ def summary(x, max_levels: int = 10, numeric_min_unique: int = 10):
 
         x = pd.Series(x, dtype=float)
         if is_numeric_dtype(x.dtype) and x.nunique() >= numeric_min_unique:
-            return NumericSummary(x)
+            return NumericSummary(x, **kwargs)
         elif is_datetime64_any_dtype(x):
-            return DateTimeSummary(x)
+            return DateTimeSummary(x, **kwargs)
         else:
-            return CategoricalSummary(x, max_levels)
+            return CategoricalSummary(x, max_levels, **kwargs)
 
 
 def pad(series, nspaces=4):
@@ -75,13 +77,14 @@ def granularity_bucket(timedelta: pd.Timedelta):
     Given a pd.Timedelta describing the typical time difference between
     events. Characterize the granularity as a descriptive category.
 
-    :param timedelta:
+    Args:
+      timedelta:
         A duration thought to be a typical gap between observed events.
 
-    :return bucket:
-        A string indicating the timescale of the data.  Possible values are
-        "zero", "seconds" "minutes", "hourly", "daily", "weekly", "monthly",
-        "quarterly", "yearly", "unknown"
+    Returns:
+      A string indicating the timescale of the data.  Possible values are
+      "zero", "seconds" "minutes", "hourly", "daily", "weekly", "monthly",
+      "quarterly", "yearly", "unknown"
     """
     dt = pd.Timedelta(1, "s")
     seconds = timedelta / dt
@@ -116,9 +119,10 @@ def is_all_nines(x):
     Check whether x is a positive or negative string of all 9's.  This is a
     common way of encoding missing data.
 
-    :param x:  a number (python scalar)
+    Args:
+      x:  a number (python scalar)
 
-    :return bool:
+    Return:
         True if x is "all nines".  False otherwise.
     """
     # If x is infinite, NaN, or has a fractional part then we don't consider it
@@ -222,16 +226,16 @@ class UnivariateSummary(ABC):
 
 class NumericSummary(UnivariateSummary):
 
-    def __init__(self, x):
+    def __init__(self, x, **kwargs):
         """
-        :param x:
-            The numeric variable to be summarized.
+        Args:
+          x: The numeric variable to be summarized.
         """
         # Calling with x as None should only be done by another constructor.
+        if x is not None:
+            self._summarize(x, **kwargs)
 
-        self._summarize(x)
-
-    def _summarize(self, x):
+    def _summarize(self, x, quantiles=None):
         X = pd.Series(x)
 
         try:
@@ -267,11 +271,12 @@ class NumericSummary(UnivariateSummary):
 
             X = X.dropna()
 
-            deciles = np.arange(11) / 10
-            quantiles = np.sort(
-                list(deciles) + [0.25, 0.75, 0.01, 0.99, 0.025, 0.975,
-                                 0.05, 0.95]
-            )
+            if quantiles is None:
+                deciles = np.arange(11) / 10
+                quantiles = np.sort(
+                    list(deciles) + [0.25, 0.75, 0.01, 0.99, 0.025, 0.975,
+                                     0.05, 0.95]
+                )
             self._quantiles = X.quantile(q=quantiles)
 
             self._mean = X.mean()
@@ -319,8 +324,9 @@ class NumericSummary(UnivariateSummary):
         """
         The approximate fraction of the data less than or equal to x.
 
-        :param x:
-            float or np.array.
+        Args:
+          x: The location where the cdf is to be evaluated.  Vectorized values
+             are supported.
         """
         from .empirical_distribution import NumericEmpiricalDistribution
         dist = NumericEmpiricalDistribution.from_summary(self)
@@ -416,11 +422,7 @@ class NumericSummary(UnivariateSummary):
 
     def _compute_histogram(self, X):
         """
-        Computes a histogram for pandas/koalas series X
-        :param X: pd.Series or ks.Series
-        :param sample_row_count int
-            If the koalas series is greater than the sample_row_count,
-            select a random sample from the series equal to sample_row_count.
+        Computes a histogram for the vector of numeric data X.
         """
         self._histogram = np.histogram(X)
         self._log_histogram = None
@@ -458,6 +460,20 @@ class NumericSummary(UnivariateSummary):
                 self._potential_missing_value_codes = (
                     frequency_distribution.index[candidates].tolist()
                 )
+
+    def __str__(self):
+        ans = f"""
+        Nobs: {self._number_observed}
+        Nmis: {self._number_missing}
+        Nunique: {self._number_unique}
+
+        Mean: {self._mean :.4f}
+          SD: {self._sd :.4f}
+
+        Quantiles:
+{self._quantiles}
+        """
+        return ans
 
 
 class CategoricalSummary(UnivariateSummary):
@@ -560,42 +576,6 @@ class CategoricalSummary(UnivariateSummary):
         return self.number_missing > 0
 
     @property
-    def has_signal(self):
-        return self.signal_analysis("")[0]
-
-    def signal_analysis(self, name):
-        """
-        Return a pair indicating (a) whether the variable has signal (b) The
-        message to pass to the user if no signal is present.
-
-        :param name:
-            The name of the variable being analyzed.
-
-        :return has_signal:
-            A True value indicates the variable has signal.  A False value
-            indicates it does not.
-        :return reason:
-            A string.  If has_signal is False then 'reason' contains an
-            informative message about the reason why we believe the variable
-            lacks signal.
-        """
-        frequency_distribution = (
-            self._frequency_distribution.non_nan.sort_values(ascending=False))
-        if self.number_observed < 0.001 * self.sample_size:
-            return False, f"Column '{name}' has too many missing values"
-
-        elif self.number_missing > 0 and self.number_observed > 0:
-            return True, f"Column '{name}' looks fine for inclusion."
-
-        elif self.number_unique < 2 or len(frequency_distribution) < 2:
-            return False, f"Column '{name}' has only one unique value."
-
-        elif frequency_distribution.values[1] < 2:
-            return False, f"Column '{name}' has too few recurring values."
-
-        return True, f"Column '{name}' looks fine for inclusion."
-
-    @property
     def is_high_cardinality(self):
         return len(self.levels(True)) >= self.cardinality_limit
 
@@ -623,16 +603,15 @@ class CategoricalSummary(UnivariateSummary):
         """
         Returns the levels for encoding the categorical variable.
 
-        :param include_missing:
-            Include missing values as a separate level, if any missing values
-            are present in the summarized data.
-        :param missing_code:
-            Value used to represent missing data in the returned list.
-        :param omit_zero_frequency:
-            Should levels that are known to exist, but which have zero
-            frequency in the data, be omitted from the output.
+        Args:
+          include_missing: Include missing values as a separate level, if any
+            missing values are present in the summarized data.
+          missing_code: Value used to represent missing data in the returned
+            list.
+          omit_zero_frequency: Should levels that are known to exist, but which
+            have zero frequency in the data, be omitted from the output.
 
-        :return levels:
+        Returns:
             List of the most frequent levels, up to max_levels.
         """
         fd = self.frequency_distribution
@@ -677,23 +656,23 @@ Frequency Distribution:
         Generate the other summary atributes based on
         self._frequency_distribution.
 
-        :param max_levels: int or None
-            The maximum number of non-missing levels to consider.  The most
-            frequent levels will be captured. If max_levels = None, all levels
-            will be captured.
-        :param other_name: str
-            Name to use for levels that are 'collapsed' due to high
+        Args:
+          max_levels: The maximum number of non-missing levels to consider.
+            The most frequent levels will be captured. If max_levels = None,
+            all levels will be captured.
+          other_name: Name to use for levels that are 'collapsed' due to high
             cardinality.  The chosen name should be one that is highly unlikely
             to appear in the raw data.  The default is chosen to appear near
             the end of alphabetically sorted lists.
 
-        :effect self._number_missing:
-        :effect self._number_observed:
-        :effect self._number_unique:
-            Populated with appropriate values.
+        Effects:
+          The following fields are populated:
+          - self._number_missing:
+          - self._number_observed:
+          - self._number_unique:
 
-        :effect self._frequency_distribution:
-            Potentially collapsed if levels exceed max_levels.
+          The field self._frequency_distribution is potentially collapsed if
+          levels exceed max_levels.
         """
 
         if self._frequency_distribution.has_missing_data:
@@ -714,20 +693,19 @@ Frequency Distribution:
                    max_levels: int = 10,
                    other_name: str = "[Other]"):
         """
-        :param x: array-like
-            The categorical variable to summarize.  This will be coerced to a
+        Args:
+          x: The categorical variable to summarize.  This will be coerced to a
             categorical pd.Series.
-        :param max_levels: int or None
-            The maximum number of non-missing levels to consider.  The most
-            frequent levels will be captured. If max_levels = None, all levels
-            will be captured.
-        :param other_name: str
-            Name to use for levels that are 'collapsed' due to high
+          max_levels: The maximum number of non-missing levels to consider.  The
+            most frequent levels will be captured. If max_levels = None, all
+            levels will be captured.
+          other_name: Name to use for levels that are 'collapsed' due to high
             cardinality.  The chosen name should be one that is highly unlikely
-            to appear in the raw data.  The default is chosen to appear near
-            the end of alphabetically sorted lists.
+            to appear in the raw data.  The default is chosen to appear near the
+            end of alphabetically sorted lists.
 
-        :effect self._frequency_distribution:
+        Effects:
+          self._frequency_distribution is created.
         """
         from .frequency_distribution import FrequencyDistribution
         try:
@@ -869,35 +847,6 @@ Monthly seasonality:
         return self._max
 
     @property
-    def has_signal(self):
-        return self.signal_analysis("")[0]
-
-    def signal_analysis(self, name):
-        """
-        Return a pair indicating (a) whether the variable has signal (b) The
-        message to pass to the user if no signal is present.
-
-        :param name:
-            The name of the variable being analyzed.
-
-        :return has_signal:
-            A True value indicates the variable has signal.  A False value
-            indicates it does not.
-        :return reason:
-            A string.  If has_signal is False then 'reason' contains an
-            informative message about the reason why we believe the variable
-            lacks signal.
-        """
-        if self.number_missing == self.sample_size:
-            return False, f"Column '{name}' is all missing."
-        elif self._number_unique < 2:
-            return False, f"Column '{name}' has too few distinct values."
-        elif self.number_observed <= 0.001 * self.sample_size:
-            return False, f"Column '{name}' has too many missing values."
-        else:
-            return True, f"Column '{name}' looks fine for inclusion."
-
-    @property
     def intensity(self):
         """
         A frequency distribution of the number of observations per time period.
@@ -965,14 +914,14 @@ Monthly seasonality:
         buckets.  The return values are either based on years, months, weeks, or
         days depending on the time window covered by this summary.
 
-        :param dates:
-            A pd.Series of dtype datetime64[ns], or compatible.
+        Args:
+          dates: A pd.Series of dtype datetime64[ns], or compatible.
 
-        :return:
-            A pd.Series of string labels.  This is a coarsening of 'dates'
-            representing the date group to which each date belongs.  The return
-            value must maintain equivalence between lexicographic and datetime
-            sortability.
+        Returns:
+          A pd.Series of string labels.  This is a coarsening of 'dates'
+          representing the date group to which each date belongs.  The return
+          value must maintain equivalence between lexicographic and datetime
+          sortability.
         """
         if self.duration.days > (365 * 5):
             return pd.Series(dates.dt.year).astype(str)
@@ -1035,12 +984,12 @@ Monthly seasonality:
         The grouping period used is a function of the time window covered by
         the date range.
 
-        :param dates:
-            pd.Series of dtype datetime64[ns], or equivalent type.
+        Args:
+          dates: pd.Series of dtype datetime64[ns], or equivalent type.
 
-        :effect self._intensity:
-            Assigned a pd.Series, indexed by the time groups, containing the
-            count associated with each group.
+        Effects:
+          self._intensity is assigned a pd.Series, indexed by the time groups,
+            containing the count associated with each group.
         """
         self._intensity = self.group_timestamps(
             dates).value_counts().sort_index()
@@ -1095,11 +1044,10 @@ Monthly seasonality:
     @staticmethod
     def _deduce_intensity_granularity(intensity: pd.Series):
         """
-        :param intensity:
-            An intensity function.
+        Args:
+          intensity: An intensity function.
 
-        :return str:
-           A string describing which of the level of granularity in the
+        Returns: A string describing which of the level of granularity in the
            intensity function.
 
            The index of an intensity function is a vector of strings with one

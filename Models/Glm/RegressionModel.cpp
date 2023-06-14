@@ -328,14 +328,14 @@ namespace BOOM {
   }
 
   NeRegSuf::NeRegSuf(const SpdMatrix &XTX, const Vector &XTY, double YTY,
-                     double n, const Vector &xbar)
+                     double n, double ybar, const Vector &xbar)
       : xtx_(XTX),
         needs_to_reflect_(true),
         xty_(XTY),
         xtx_is_fixed_(false),
         sumsqy_(YTY),
         n_(n),
-        sumy_(XTY[0]),
+        sumy_(ybar * n),
         x_column_sums_(xbar * n),
         allow_non_finite_responses_(false) {
     if (XTX.nrow() != XTY.size() || XTY.size() != xbar.size()) {
@@ -738,7 +738,8 @@ namespace BOOM {
     NeRegSuf *rs = dynamic_cast<NeRegSuf *>(s);
     if (rs) return;
     Ptr<NeRegSuf> ne_reg_suf(
-        new NeRegSuf(s->xtx(), s->xty(), s->yty(), s->n(), s->xbar()));
+        new NeRegSuf(s->xtx(), s->xty(), s->yty(),
+                     s->n(), s->ybar(), s->xbar()));
     set_suf(ne_reg_suf);
   }
 
