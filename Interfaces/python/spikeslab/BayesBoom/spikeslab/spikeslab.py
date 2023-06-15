@@ -4,6 +4,7 @@ import patsy
 import BayesBoom.boom as boom
 import BayesBoom.R as R
 import scipy.sparse
+import matplotlib.pyplot as plt
 
 from .priors import RegressionSpikeSlabPrior
 
@@ -266,8 +267,8 @@ class lm_spike:
 
     @property
     def xnames(self):
-        # A list of strings containing the column names of the predictors.
-        return self._x_design_info.column_names
+        # A numpy array of strings containing the column names of the predictors.
+        return np.array(self._x_design_info.column_names)
 
     def inclusion_probs(self, burn=None):
         """
@@ -357,11 +358,35 @@ class lm_spike:
                         **kwargs)
         return ans
 
-    def plot_coefficients(self, **kwargs):
+    def plot_coefficients(self,
+                          burn=None,
+                          inclusion_threshold=0,
+                          number_of_variables=None,
+                          ax=None,
+                          **kwargs):
         """
         A boxplot showing the values of the coefficients.
         """
-        print("plot_coefficients is TBD")
+        inc = self.inclusion_probs(burn=burn)
+        index = np.argsort(inc.values)[::-1]
+
+        if number_of_variables is None:
+            number_of_variables = np.sum(inc >= inclusion_threshold)
+            inc = inc[index[:number_of_variables]]
+
+        index = index[:number_of_variables]
+        nonzero_coefs = [self._coefficient_draws[:, i].data for i in index]
+        names = self.xnames[index]
+
+        if ax is None:
+            _, ax = plt.subplots(1, 1)
+
+        ax.boxplot(nonzero_coefs,
+                   widths=.8 * inc,
+                   vert=False,
+                   labels=names,
+                   **kwargs)
+        return ax
 
     def plot_residual(self, hexbin_threshold=1e+5,
                       xlab="fitted", ylab="residual"):
@@ -574,9 +599,8 @@ def compute_inclusion_probabilities(coefficients):
     """
     nvars = coefficients.shape[1]
     return np.array(
-        [
-            np.mean(coefficients[:, i] != 0) for i in range(nvars)
-        ]
+        [np.round(np.mean(coefficients[:, i] != 0), 6)
+         for i in range(nvars)]
     )
 
 
@@ -584,7 +608,8 @@ def coefficient_positive_probability(coefficients):
     nvars = coefficients.shape[1]
     return np.array(
         [
-            np.mean(coefficients[:, i] > 0) for i in range(nvars)
+            np.round(np.mean(coefficients[:, i] > 0), 6)
+            for i in range(nvars)
         ]
     )
 

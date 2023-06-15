@@ -17,6 +17,8 @@ import pandas as pd
 import scipy.sparse
 import pickle
 
+import matplotlib.pyplot as plt
+
 
 def write_R_vector(v):
     if v.size == 0:
@@ -159,6 +161,32 @@ class SpikeSlabTest(unittest.TestCase):
             set(suf_coef[suf_included].index)
         )
 
+    def test_plots(self):
+        sample_size = 10000
+        ngood = 5
+        nbad = 30
+        niter = 250
+        x = np.random.randn(sample_size, ngood + nbad)
+
+        beta = np.random.randn(ngood) * 4
+
+        b0 = 7.2
+        residual_sd = .3
+        yhat = b0 + x[:, :ngood] @ beta
+        errors = np.random.randn(sample_size) * residual_sd
+        y = yhat + errors
+
+        data = pd.DataFrame(
+            x, columns=["X" + str(i) for i in range(x.shape[1])])
+        data["y"] = y
+        formula = "y ~ " + dot(data, ["y"])
+
+        model = lm_spike(formula, niter=niter, data=data)
+        ax1 = model.plot_inclusion(inclusion_threshold=.1)
+        ax2 = model.plot_coefficients(inclusion_threshold=.1)
+        self.assertIsInstance(ax1, plt.Axes)
+        self.assertIsInstance(ax2, plt.Axes)
+
     def test_dot(self):
         X = pd.DataFrame(np.random.randn(10, 3), columns=["X1", "X2", "X3"])
 
@@ -261,7 +289,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_mcmc_from_suf()
+    rig.test_plots()
 
     print("Goodbye, cruel world!")
 
