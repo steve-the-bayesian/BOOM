@@ -35,7 +35,7 @@ namespace BOOM {
       localtime_r(&rawtime, &timeinfo);
       char buf[28];
       std::string time_str(asctime_r(&timeinfo, buf));
-      time_str = time_str.substr(0, time_str.find("\n"));
+      time_str.resize(time_str.find("\n"));
 #endif
       const char *sep="=-=-=-=-=";
       Rprintf("%s Iteration %d %s %s\n", sep, iteration_number,

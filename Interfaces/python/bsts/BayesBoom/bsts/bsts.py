@@ -1004,7 +1004,7 @@ class Bsts:
         if len(state_models) == 0:
             raise Exception("No suitable SeasonalStateModel objects found.")
 
-        num_plots = len(state_models)
+        # num_plots = len(state_models)
         # TODO
         # TODO
         # TODO

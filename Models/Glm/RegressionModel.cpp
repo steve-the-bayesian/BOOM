@@ -75,6 +75,10 @@ namespace BOOM {
     return xtx().Mdist(beta) - 2 * beta.dot(xty()) + yty();
   }
 
+  double RegSuf::sample_variance() const {
+    return n() <= 1.0 ? 0.0 : SST() / (n() - 1);
+  }
+
   AnovaTable RegSuf::anova() const {
     AnovaTable ans;
     double nobs = n();
@@ -310,22 +314,38 @@ namespace BOOM {
         sumy_(y.sum()),
         x_column_sums_(ColSums(X)),
         allow_non_finite_responses_(false) {
+    if (X.nrow() != y.size()) {
+      std::ostringstream err;
+      err << "Number of rows of X: " << X.nrow()
+          << " must match the length of y: " << y.size()
+          << ".";
+      report_error(err.str());
+    }
+
     xty_ = y * X;
     xtx_ = X.inner();
     sumsqy_ = y.dot(y);
   }
 
   NeRegSuf::NeRegSuf(const SpdMatrix &XTX, const Vector &XTY, double YTY,
-                     double n, const Vector &xbar)
+                     double n, double ybar, const Vector &xbar)
       : xtx_(XTX),
         needs_to_reflect_(true),
         xty_(XTY),
         xtx_is_fixed_(false),
         sumsqy_(YTY),
         n_(n),
-        sumy_(XTY[0]),
+        sumy_(ybar * n),
         x_column_sums_(xbar * n),
-        allow_non_finite_responses_(false) {}
+        allow_non_finite_responses_(false) {
+    if (XTX.nrow() != XTY.size() || XTY.size() != xbar.size()) {
+      std::ostringstream err;
+      err << "XTX[" << XTX.nrow() << ", " << XTX.ncol() << "], XTY["
+          << XTY.size() << "], and xbar["
+          << xbar.size() << "] must all be the same size.";
+      report_error(err.str());
+    }
+  }
 
   NeRegSuf *NeRegSuf::clone() const { return new NeRegSuf(*this); }
 
@@ -527,6 +547,16 @@ namespace BOOM {
     }
   }
 
+  RM::RegressionModel(const Ptr<RegSuf> &suf)
+      : GlmModel(),
+        ParamPolicy(
+            new GlmCoefs(Vector(suf->xty().size(), 0.0), false),
+            new UnivParams(suf->sample_variance())),
+        DataPolicy(suf) {
+    DataPolicy::only_keep_sufstats();
+    coef().set_element(suf->ybar(), 0);
+  }
+
   RM::RegressionModel(const RegressionModel &rhs)
       : Model(rhs),
         GlmModel(rhs),
@@ -708,7 +738,8 @@ namespace BOOM {
     NeRegSuf *rs = dynamic_cast<NeRegSuf *>(s);
     if (rs) return;
     Ptr<NeRegSuf> ne_reg_suf(
-        new NeRegSuf(s->xtx(), s->xty(), s->yty(), s->n(), s->xbar()));
+        new NeRegSuf(s->xtx(), s->xty(), s->yty(),
+                     s->n(), s->ybar(), s->xbar()));
     set_suf(ne_reg_suf);
   }
 

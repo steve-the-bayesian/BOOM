@@ -49,7 +49,7 @@ namespace BOOM {
     //     For data representing individual observations in a data table,
     //     frequency will be 1.  For data representing cells in a contingency
     //     table frequency is typically an integer > 1.
-    MultivariateCategoricalData(
+    explicit MultivariateCategoricalData(
         const std::vector<Ptr<CategoricalData>> &data = {},
         double frequency = 1.0)
         : data_(data), frequency_(frequency) {}
@@ -186,7 +186,7 @@ namespace BOOM {
   // The "parent" encoder class containing main effects and interactions.
   class MultivariateCategoricalEncoder {
    public:
-    MultivariateCategoricalEncoder(bool add_intercept=true)
+    explicit MultivariateCategoricalEncoder(bool add_intercept=true)
         : add_intercept_(add_intercept),
           dim_(add_intercept_)
     {}

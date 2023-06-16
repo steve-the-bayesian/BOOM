@@ -29,8 +29,14 @@ namespace BOOM {
     if (m == negative_infinity()) return m;
     double tmp = 0;
     uint n = eta.size();
-    for (uint i = 0; i < n; ++i) tmp += exp(eta[i] - m);
-    return m + log(tmp);
+    for (uint i = 0; i < n; ++i) {
+      tmp += exp(eta[i] - m);
+    }
+    if (tmp > 0) {
+      return m + log(tmp);
+    } else {
+      return negative_infinity();
+    }
   }
 
   double lse_fast(const Vector &eta) {

@@ -468,3 +468,110 @@ class GaussianSuf:
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+
+class RegSuf:
+    """
+    The sufficient statistics needed to specify a regression model.
+    """
+
+    def __init__(self, xtx, xty, sample_sd, sample_size=None, ybar=None,
+                 xbar=None):
+        """
+        In what follows X is the design matrix of predictors, and y is the
+        column vector of responses.  The matrix transpose of X is denoted X'.
+
+        Args:
+          xtx: The cross product matrix X'X.
+          xty: X'y
+          sample_sd:  The sample standard deviation of the y's.
+          sample_size: The number of observations covered by the sufficient
+            statistics.  If X contains a column of 1's in column 0 then
+            sample_size can be None.
+
+          ybar: The mean of the y's (a scalar).  If X contains a column of 1's
+            in column 0 then this can be None.
+
+          xbar: The mean of the X's (a vector).
+        """
+        xtx = np.array(xtx)
+        xty = np.array(xty)
+        xbar = np.array(xbar)
+
+        if xtx.shape[0] != xtx.shape[1]:
+            raise Exception("xtx must be square")
+        if xtx.shape[0] != xty.shape[0]:
+            raise Exception("xtx and xty must be the same size.")
+
+        if not sample_sd >= 0:
+            raise Exception("The sample_sd must be non-negative.")
+
+        if sample_size is None:
+            sample_size = xtx[0, 0]
+        if not sample_size >= 0:
+            raise Exception("The sample size must be non-negative.")
+
+        if xbar is None:
+            raise Exception("xbar must be supplied.")
+        if xbar.shape[0] != xty.shape[0]:
+            raise Exception("xbar has the wrong size.")
+
+        if ybar is None:
+            ybar = xty[0] / sample_size
+
+        self._xtx = xtx
+        self._xty = xty
+        self._sample_sd = sample_sd
+        self._sample_size = sample_size
+        self._ybar = ybar
+        self._xbar = xbar
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        import BayesBoom.R as R
+        return boom.RegSuf(xtx=R.to_boom_spd(self._xtx),
+                           xty=R.to_boom_vector(self._xty),
+                           sample_sd=self._sample_sd,
+                           sample_size=self._sample_size,
+                           ybar=self._ybar,
+                           xbar=self._xbar)
+
+    @property
+    def xtx(self):
+        return self._xtx
+
+    @property
+    def xty(self):
+        return self._xty
+
+    @property
+    def xdim(self):
+        return self._xtx.shape[0]
+
+    @property
+    def xbar(self):
+        return self._xbar
+
+    @property
+    def mean_x(self):
+        return self._xbar
+
+    @property
+    def mean_y(self):
+        return self._ybar
+
+    @property
+    def ybar(self):
+        return self._ybar
+
+    @property
+    def sample_sd(self):
+        return self._sample_sd
+
+    @property
+    def sample_variance(self):
+        return self._sample_sd**2
+
+    @property
+    def sample_size(self):
+        return self._sample_size

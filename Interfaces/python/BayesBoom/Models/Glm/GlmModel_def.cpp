@@ -55,6 +55,34 @@ namespace BayesBoom {
              },
              "Set a specific set of coefficients to nonzero values, "
              "setting all others to zero.")
+        .def("add_all",
+             [](GlmCoefs &coefs) {
+               coefs.add_all();
+             },
+             "Allow all model coefficients to be nonzero.")
+        .def("drop_all",
+             [](GlmCoefs &coefs) {
+               coefs.drop_all();
+             },
+             "Force all model coefficients to zero.")
+        .def("add",
+             [](GlmCoefs &coef, int i) {
+               coef.add(i);
+             },
+             py::arg("i"),
+             "Allow coefficient i to be nonzero.")
+        .def("drop",
+             [](GlmCoefs &coef, int i) {
+               coef.drop(i);
+             },
+             py::arg("i"),
+             "Force coefficient i to be zero.")
+        .def("flip",
+             [](GlmCoefs &coef, int i) {
+               coef.flip(i);
+             },
+             py::arg("i"),
+             "Flip the include/exclude status of coefficient i.")
         ;
 
     // A single data point for a regression model.
@@ -137,6 +165,59 @@ namespace BayesBoom {
     py::class_<RegSuf,
                Ptr<RegSuf>>(
                    boom, "RegSuf", py::multiple_inheritance())
+        .def(py::init(
+            [](int dim) {
+              return new NeRegSuf(dim);
+            }),
+             py::arg("dim"),
+             "Args:\n\n"
+             "  dim:  The dimension of the predictor variable ('x').\n")
+        .def(py::init(
+            [](const Matrix &X, const Vector &y) {
+              return new NeRegSuf(X, y);
+            }),
+             py::arg("X"),
+             py::arg("y"),
+             "Args:\n\n"
+             "  X:  The predictor matrix.  An explicit column of 1's is needed"
+             " if an intercept term is desired.\n"
+             "  y:  The response vector.  The lenght must match the number of "
+             "rows in X.\n")
+        .def(py::init(
+            [](const SpdMatrix &xtx, const Vector &xty, double sample_sd,
+               double sample_size, double ybar, const Vector &xbar) {
+
+              // E(X^2) = sigma^2 + mu^2
+              double yty = (sample_size - 1) * sample_sd * sample_sd
+                  + sample_size * ybar * ybar;
+
+              return new NeRegSuf(xtx, xty, yty, sample_size, ybar, xbar);
+            }),
+             py::arg("xtx"),
+             py::arg("xty"),
+             py::arg("sample_sd"),
+             py::arg("sample_size"),
+             py::arg("ybar"),
+             py::arg("xbar"),
+             "Args:\n\n"
+             "  xtx:  The cross product matrix X'X, where X is the matrix of "
+             "predictors.\n"
+             "  xty:  The X'y matrix, where y is the matrix of responses.\n"
+             "  sample_sd:  The sample standard deviation of the responses.\n"
+             "  sample_size:  The number of observations contained in the "
+             "sufficient statistics.\n"
+             "  ybar:  The mean of the response variable."
+             "  xbar:  The mean of each column of the predictor matrix X.\n")
+        .def_property_readonly(
+            "xtx", [](const RegSuf &suf) {return suf.xtx();})
+        .def_property_readonly(
+            "xty", [](const RegSuf &suf) {return suf.xty();})
+        .def_property_readonly(
+            "yty", [](const RegSuf &suf) {return suf.yty();})
+        .def_property_readonly(
+            "n", [](const RegSuf &suf) {return suf.n();})
+        .def_property_readonly(
+            "sample_size", [](const RegSuf &suf) {return suf.n();})
         .def_property_readonly(
             "sample_mean",
             [](const RegSuf &s) { return s.ybar(); },
@@ -168,6 +249,13 @@ namespace BayesBoom {
              "initialized to the maximum likelihood estimate (which will "
              "be undefined if X is less than full rank).  If False then "
              "model parameters begin at default levels.")
+        .def(py::init(
+            [](const Ptr<RegSuf> &suf) {
+              return new RegressionModel(suf);
+            }),
+             py::arg("suf"),
+             "Args:\n\n"
+             "  suf:  An object of class boom.RegSuf")
         .def_property_readonly(
             "suf",
             [](const RegressionModel &m) {return m.suf();},
@@ -530,7 +618,7 @@ namespace BayesBoom {
              "    ascending order.")
         .def("logp",
              [](const LoglinearModel &model,
-                const std::vector<int> data_values) {
+                const std::vector<int> &data_values) {
                return model.logp(data_values);
              },
              "Args:\n"

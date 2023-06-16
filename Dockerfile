@@ -11,8 +11,8 @@ COPY . /src/BOOM
 # Set the working directory for the container.
 WORKDIR /src/BOOM
 
-# Alias python3.7 on the container to 'python3'
-RUN ln -sf /opt/python/cp37-cp37m/bin/python /usr/local/bin/python3
+# Alias python3.8 on the container to 'python3'
+RUN ln -sf /opt/python/cp38-cp38/bin/python /usr/local/bin/python3
 
 # Run the install script.
 RUN ./install/pyboom

@@ -5,7 +5,7 @@ from pandas.api.types import is_numeric_dtype
 
 from numbers import Number
 
-from .R import (
+from .base import (
     data_range,
     remove_common_suffix,
     remove_common_prefix,
@@ -105,11 +105,11 @@ def plot_grid_shape(nplots: int):
     """
     Compute the number of rows and columns needed to plot 'nplots'.
 
-    :param nplots:
-        The desired number of plots.
+    Args:
+      nplots: The desired number of plots.
 
-    :return tuple:
-        The number of rows, and columns, needed to plot that many plots.
+    Returns:
+      The number of rows, and columns, needed to plot that many plots.
     """
     nr = int(max(1, np.sqrt(nplots)))
     nc = int(np.ceil(nplots / nr))

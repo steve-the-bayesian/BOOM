@@ -293,8 +293,9 @@ class AutoClean:
         if logscale and self._numeric_colnames:
             numeric_frame = np.log1p(numeric_frame)
 
-        fig, ax = plt.subplots(1, figsize=(10, 8))
-        g = sns.boxplot(y="variable", x="value", data=numeric_frame, orient="h")
+        _, ax = plt.subplots(1, figsize=(10, 8))
+        g = sns.boxplot(y="variable", x="value", data=numeric_frame,
+                        orient="h", ax=ax)
         xlab = "Value"
         if logscale:
             xlab += " (log1p scale)"

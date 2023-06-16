@@ -63,11 +63,11 @@ namespace BOOM {
     Vector value_iteration(int horizon, double discount_rate) const;
 
     // Args:
+    //   horizon:  The number of periods the MDP will run.
     //   discount_rate: A positive number giving the time value of money.  A
     //     discount rate of 1.0 means that one dollar tomorrow has equal value
     //     to one dollar today.  A discount rate of 0.9 means one dollar
     //     tomorrow is worth 90 cents today.
-    //   horizon:  The number of periods the MDP will run.
     //
     // Returns:
     //   A vector pi[s] giving the optimal action to take given the current

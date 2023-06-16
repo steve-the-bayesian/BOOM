@@ -82,6 +82,8 @@ namespace BOOM {
     // Column means of the design matrix.
     virtual Vector xbar() const = 0;
     virtual double n() const = 0;
+    double sample_variance() const;
+    double sample_sd() const { return sqrt(sample_variance()); }
 
     // Compute the sum of square errors using the given set of
     // coefficients, taking advantage of sparsity.
@@ -97,9 +99,11 @@ namespace BOOM {
 
     std::ostream &print(std::ostream &out) const override;
   };
+
   inline std::ostream &operator<<(std::ostream &out, const RegSuf &suf) {
     return suf.print(out);
   }
+
   //------------------------------------------------------------------
   class QrRegSuf : public RegSuf, public SufstatDetails<RegressionData> {
    public:
@@ -147,6 +151,7 @@ namespace BOOM {
     mutable bool current;
     mutable Vector x_column_sums_;
   };
+
   //------------------------------------------------------------------
   class NeRegSuf
       : public RegSuf,
@@ -162,7 +167,7 @@ namespace BOOM {
     // Build from the indiviudal sufficient statistic components.  The
     // 'n' is needed because X might not have an intercept term.
     NeRegSuf(const SpdMatrix &xtx, const Vector &xty, double yty, double n,
-             const Vector &xbar);
+             double ybar, const Vector &xbar);
 
     // Build from a sequence of Ptr<RegressionData>
     template <class Fwd>
@@ -297,6 +302,15 @@ namespace BOOM {
     //     their maximum likelihood estimate.  Otherwise the coefficients begin
     //     at zero.
     RegressionModel(const Matrix &X, const Vector &y, bool start_at_mle = true);
+
+
+    // Initialize a regression model using the sufficient statistics.  The
+    // coefficients wll be initialized at zero except for the intercept term,
+    // set to the mean.
+    //
+    // Args:
+    //   suf: An object containing the sufficient statistics for the model.
+    explicit RegressionModel(const Ptr<RegSuf> &suf);
 
     RegressionModel(const RegressionModel &rhs);
     RegressionModel *clone() const override;
