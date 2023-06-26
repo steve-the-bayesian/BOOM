@@ -142,6 +142,77 @@ class NormalPrior(DoubleModel):
         self.__dict__ = payload
 
 
+class GammaModel(DoubleModel):
+    def __init__(self, shape=None, scale=None, mu=None, a=None, b=None):
+        """
+        A GammaModel(a, b) can be defined either in terms of its shape (a) and
+        scale (b) paramaeters (with mean a/b, variance a/b^2), or it's mean
+        (mu) and shape parameters (so the mean is mu and the variance is
+        mu^2/a).
+
+        Args:
+          shape:  The shape parameter a.
+          scale:  The scale parameter b.
+          mu:  The mean of the distribution.
+          a:  Another name for the shape parameter.
+          b:  Another name for the scale parameter.
+
+        Only two of these parameters need to be specified.  If all three are
+        given, then 'mu' is ignored.
+        """
+        if a is not None:
+            shape = a
+        if b is not None:
+            scale = b
+
+        if (shape is None) + (scale is None) + (mu is None) > 1:
+            raise Exception("Two parameters must be specified.")
+
+        self._a = shape
+        if self._a is None:
+            self._a = scale * mu
+
+        self._b = scale
+        if self._b is None:
+            self._b = mu / shape
+
+        if self._a <= 0 or self._b <= 0:
+            raise Exception("GammaModel parameters must be positive.")
+
+    @property
+    def mean(self):
+        return self._a / self._b
+
+    @property
+    def variance(self):
+        return self._a / self._b**2
+
+    @property
+    def a(self):
+        return self._a
+
+    @property
+    def shape(self):
+        return self._a
+
+    @property
+    def b(self):
+        return self._b
+
+    @property
+    def scale(self):
+        return self._b
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.GammaModel(self.a, self.b)
+
+    def __repr__(self):
+        ans = f"A GammaModel with shape = {self._shape} "
+        ans += f"and scale = {self._scale}."
+        return ans
+
+
 class Ar1CoefficientPrior(DoubleModel):
     """
     Contains the information needed to create a prior distribution on an AR1

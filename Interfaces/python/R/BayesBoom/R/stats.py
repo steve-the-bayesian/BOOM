@@ -100,6 +100,14 @@ def sd(x, axis=None, na_rm=True):
             return np.std(x, ddof=1)
 
 
+def quantile(x, probs=np.linspace(0, 1, 5), **kwargs):
+    """
+    Return the requested quantiles.
+    """
+    x = pd.DataFrame(x)
+    return x.quantile(q=probs, **kwargs)
+
+
 def SparseSd(x, axis=None):
     """
     Args:

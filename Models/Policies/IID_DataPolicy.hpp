@@ -76,7 +76,7 @@ namespace BOOM {
     std::vector<std::function<void(void)> > observers_;
   };
   //======================================================================
-  // ake care to call virtual function add_data instead of adding
+  // Take care to call virtual function add_data instead of adding
   // things directly to dat_.  doing so allows models to overload
   // add_data, instead of having to modify the whole thing.
 

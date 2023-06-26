@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005-2022 Steven L. Scott
+  Copyright (C) 2005-2023 Steven L. Scott
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -25,55 +25,56 @@ namespace BOOM {
   namespace {
     using Visitor = PoissonFactor::Visitor;
     using Site = PoissonFactor::Site;
+    using Sampler = PoissonFactorModelPosteriorSampler;
   }
 
-  PoissonFactorModelPosteriorSampler::PoissonFactorModelPosteriorSampler(
+  Sampler::PoissonFactorModelPosteriorSampler(
       PoissonFactorModel *model,
-      const Vector &prior_class_membership_probabilities,
+      const Vector &default_prior_class_probabilities,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
-        prior_class_membership_probabilities_(
-            prior_class_membership_probabilities)
+        default_prior_class_probabilities_(
+            default_prior_class_probabilities)
   {}
 
-  void PoissonFactorModelPosteriorSampler::draw() {
+  void Sampler::draw() {
     impute_visitors();
     draw_site_parameters();
   }
 
-  void PoissonFactorModelPosteriorSampler::impute_visitors() {
-    Vector log_prior = log(prior_class_membership_probabilities());
-
-    std::cout << "Imputing values for "
-              << model_->visitors().size()
-              << " visitors.\n";
-    for (Ptr<Visitor> &visitor : model_->visitors()) {
-      Vector logprob = log_prior;
-      logprob -= model_->sum_of_lambdas();
-      for (const auto &it : visitor->sites_visited()) {
-        int site_visits = it.second;
-        const Ptr<Site> &site(it.first);
-        logprob += site_visits * site->log_lambda();
-        for (double el : logprob) {
-          if (!std::isfinite(el)) {
-            report_error("inf in logprob");
+  void Sampler::impute_visitors() {
+    for (auto &visitor_it : model_->visitors()) {
+      Ptr<Visitor> &visitor(visitor_it.second);
+      Vector prob = prior_class_probabilities(
+          visitor->id());
+      if (prob.max() > .9999) {
+        visitor->set_class_probabilities(prob);
+        visitor->set_class_member_indicator(prob.imax());
+      } else {
+        Vector logprob = log(prob);
+        logprob -= model_->sum_of_lambdas();
+        for (const auto &it : visitor->sites_visited()) {
+          int site_visits = it.second;
+          const Ptr<Site> &site(it.first);
+          logprob += site_visits * site->log_lambda();
+          for (double el : logprob) {
+            if (!std::isfinite(el)) {
+              report_error("inf in logprob");
+            }
           }
         }
+        prob = logprob.normalize_logprob();
+        visitor->set_class_probabilities(prob);
+        visitor->set_class_member_indicator(rmulti_mt(rng(), prob));
       }
-      Vector prob = logprob.normalize_logprob();
-      visitor->set_class_probabilities(prob);
-      visitor->set_class_member_indicator(rmulti_mt(rng(), prob));
     }
   }
 
-  void PoissonFactorModelPosteriorSampler::draw_site_parameters() {
+  void Sampler::draw_site_parameters() {
     Vector sum_of_lambdas(model_->number_of_classes());
-    std::cout << "Drawing values for "
-              << model_->sites().size()
-              << " sites.\n";
-
-    for (auto &site : model_->sites()) {
+    for (auto &site_it : model_->sites()) {
+      Ptr<Site> &site(site_it.second);
       Vector counts = site->prior_a();
       Vector exposures = site->prior_b();
       for (const auto &it : site->observed_visitors()) {
@@ -93,6 +94,35 @@ namespace BOOM {
     }
     model_->set_sum_of_lambdas(sum_of_lambdas);
   }
+
+  Vector Sampler::prior_class_probabilities(
+      const std::string &visitor_id) const {
+    const auto it = prior_class_probabilities_.find(
+        visitor_id);
+    if (it == prior_class_probabilities_.end()) {
+      return default_prior_class_probabilities_;
+    } else {
+      return it->second;
+    }
+  }
+
+  void Sampler::set_prior_class_probabilities(
+      const std::string &visitor_id,
+      const Vector &probs) {
+    if (probs.size() != model_->number_of_classes()) {
+      std::ostringstream err;
+      err << "Prior class membership probabilities have dimeension "
+          << probs.size()
+          << " but there are " << model_->number_of_classes()
+          << " latent classes.";
+      report_error(err.str());
+    }
+    if (fabs(probs.sum() - 1.0) > 1e-8) {
+      report_error("Probabilities must sum to 1.");
+    }
+    prior_class_probabilities_[visitor_id] = probs;
+  }
+
 
 
 }  // namespace BOOM

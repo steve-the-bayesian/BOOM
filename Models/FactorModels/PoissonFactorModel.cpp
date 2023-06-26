@@ -37,26 +37,14 @@ namespace BOOM {
         return lhs->id() < rhs->id();
       }
 
-      bool operator()(const Ptr<OBJ> &lhs, int64_t rhs) const {
+      bool operator()(const Ptr<OBJ> &lhs, const std::string &rhs) const {
         return lhs->id() < rhs;
       }
 
-      bool operator()(int64_t lhs, const Ptr<OBJ> &rhs) const {
+      bool operator()(const std::string &lhs, const Ptr<OBJ> &rhs) const {
         return lhs < rhs->id();
       }
     };
-
-    template <class OBJ>
-    Ptr<OBJ> get_by_id(int64_t id, const std::vector<Ptr<OBJ>> &things) {
-      auto it = std::lower_bound(
-          things.begin(), things.end(), id, IdLess<OBJ>());
-      if (it == things.end() || (*it)->id() != id) {
-        return nullptr;
-      } else {
-        return *it;
-      }
-    }
-
   }
 
   PoissonFactorData * PoissonFactorData::clone() const {
@@ -93,7 +81,7 @@ namespace BOOM {
       sites_visited_[site] += ntimes;
     }
 
-    Site::Site(int64_t id, int num_classes)
+    Site::Site(const std::string &id, int num_classes)
         : id_(id),
           visitation_rates_(new VectorParams(num_classes, 1.0)),
           log_lambda_(log(visitation_rates_->value())),
@@ -129,23 +117,25 @@ namespace BOOM {
 
   PoissonFactorModel & PoissonFactorModel::operator=(const PoissonFactorModel &rhs) {
     if (&rhs != this) {
-      for (const auto &visitor : rhs.visitors_) {
+      for (const auto &visitor_it : rhs.visitors_) {
+        const Ptr<Visitor> &visitor(visitor_it.second);
         for (const auto &it : visitor->sites_visited()) {
-          int64_t site_id = it.first->id();
+          const std::string &site_id = it.first->id();
           int ntimes = it.second;
           record_visit(visitor->id(), site_id, ntimes);
         }
       }
 
-      for (auto &visitor : visitors_) {
+      for (auto &visitor_it : visitors_) {
+        Ptr<Visitor> &visitor(visitor_it.second);
         Ptr<Visitor> parent = rhs.get_visitor(visitor->id());
         visitor->set_class_probabilities(parent->class_probabilities());
         visitor->set_class_member_indicator(parent->imputed_class_membership());
       }
 
-      for (auto &site : sites_) {
-        Ptr<Site> parent = rhs.get_site(site->id());
-        site->set_prior(parent->prior_a(), parent->prior_b());
+      for (auto &site_it : sites_) {
+        Ptr<Site> parent = rhs.get_site(site_it.first);
+        site_it.second->set_prior(parent->prior_a(), parent->prior_b());
       }
 
       sum_of_lambdas_ = rhs.sum_of_lambdas_;
@@ -158,64 +148,87 @@ namespace BOOM {
   }
 
   PoissonFactorModel::PoissonFactorModel(PoissonFactorModel &&rhs)
-      : DataPolicy(std::move(rhs)),
-        visitors_(std::move(rhs.visitors_)),
+      : visitors_(std::move(rhs.visitors_)),
         sites_(std::move(rhs.sites_)),
         sum_of_lambdas_(rhs.sum_of_lambdas_)
   {}
-
-  void PoissonFactorModel::add_data(const Ptr<PoissonFactorData> &data_point) {
-    record_visit(data_point->visitor_id(),
-                 data_point->site_id(),
-                 data_point->nvisits());
-  }
 
   void PoissonFactorModel::add_data(const Ptr<Data> &data_point) {
     Ptr<PoissonFactorData> native_data_point = data_point.dcast<PoissonFactorData>();
     if (!native_data_point) {
       report_error("Data point could not be cast to the native data type.");
     }
-    add_data(native_data_point);
+    record_visit(native_data_point->visitor_id(),
+                 native_data_point->site_id(),
+                 native_data_point->nvisits());
+  }
+
+  void PoissonFactorModel::clear_data() {
+    for (auto &site_it : sites_) {
+      site_it.second->clear();
+    }
+    sites_.clear();
+
+    for (auto &visitor_it : visitors_) {
+      visitor_it.second->clear();
+    }
+    visitors_.clear();
+  }
+
+  void PoissonFactorModel::combine_data(
+      const Model &, bool) {
+    report_error("combine_data is not implemented for PoissonFactorModel.");
   }
 
   void PoissonFactorModel::record_visit(
-      int64_t visitor_id, int64_t site_id, int nvisits) {
+      const std::string & visitor_id,
+      const std::string & site_id,
+      int nvisits) {
     // Get the Visitor pointer, or make a new one.
-    auto visitor_it = std::lower_bound(
-        visitors_.begin(), visitors_.end(), visitor_id, IdLess<Visitor>());
+    auto visitor_it = visitors_.find(visitor_id);
     Ptr<Visitor> visitor;
-    if (visitor_it == visitors_.end() || (*visitor_it)->id() != visitor_id) {
+    if (visitor_it == visitors_.end() || visitor_it->second->id() != visitor_id) {
       visitor.reset(new Visitor(visitor_id, number_of_classes()));
-      visitors_.insert(visitor_it, visitor);
+      visitors_[visitor_id] = visitor;
     } else {
-      visitor = *visitor_it;
+      visitor = visitor_it->second;
     }
 
-    auto site_it = std::lower_bound(
-        sites_.begin(), sites_.end(), site_id, IdLess<Site>());
+    auto site_it = sites_.find(site_id);
     Ptr<Site> site;
-    if (site_it == sites_.end() || (*site_it)->id() != site_id) {
+    if (site_it == sites_.end() || site_it->second->id() != site_id) {
       site.reset(new Site(site_id, number_of_classes()));
-      sites_.insert(site_it, site);
+      sites_[site_id] = site;
     } else {
-      site = *site_it;
+      site = site_it->second;
     }
     visitor->visit(site, nvisits);
     site->observe_visitor(visitor, nvisits);
   }
 
-  Ptr<Site> PoissonFactorModel::get_site(int64_t id) const {
-    return get_by_id(id, sites_);
+  Ptr<Site> PoissonFactorModel::get_site(const std::string &id) const {
+    auto it = sites_.find(id);
+    if (it == sites_.end()) {
+      return nullptr;
+    } else {
+      return it->second;
+    }
   }
 
-  Ptr<Visitor> PoissonFactorModel::get_visitor(int64_t id) const {
-    return get_by_id(id, visitors_);
+  Ptr<Visitor> PoissonFactorModel::get_visitor(const std::string &id) const {
+    auto it = visitors_.find(id);
+    if (it == visitors_.end()) {
+      return nullptr;
+    } else {
+      return it->second;
+    }
   }
 
   const Vector & PoissonFactorModel::sum_of_lambdas() const {
     if (!std::isfinite(sum_of_lambdas_[0])) {
       sum_of_lambdas_ = 0.0;
-      for (const auto &site : sites_) {
+      for (const auto &site_it : sites_) {
+        const Ptr<Site> &site(site_it.second);
         sum_of_lambdas_ += site->lambda();
       }
     }

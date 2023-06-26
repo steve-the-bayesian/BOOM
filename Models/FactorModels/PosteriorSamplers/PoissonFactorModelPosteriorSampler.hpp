@@ -28,12 +28,20 @@ namespace BOOM {
       : public PosteriorSampler
   {
    public:
+
+    // Args:
+    //   model:  The model to be posterior sampled.
+
+    //   default_prior_class_probabilities: The default prior to use
+    //     for visitors whose membership probabilities are not otherwise
+    //     decalred.
     PoissonFactorModelPosteriorSampler(
         PoissonFactorModel *model,
-        const Vector &prior_class_membership_probabilities,
+        const Vector &default_prior_class_probabilities,
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
+
     double logpri() const override {
       // Just to get things compiled.
       return negative_infinity();
@@ -42,14 +50,18 @@ namespace BOOM {
     void impute_visitors();
     void draw_site_parameters();
 
-    Vector prior_class_membership_probabilities() const {
-      return prior_class_membership_probabilities_;
-    }
+    Vector prior_class_probabilities(
+        const std::string &visitor_id) const;
+
+    void set_prior_class_probabilities(
+        const std::string &visitor_id,
+        const Vector &probs);
 
    private:
     PoissonFactorModel *model_;
 
-    Vector prior_class_membership_probabilities_;
+    Vector default_prior_class_probabilities_;
+    std::map<std::string, Vector> prior_class_probabilities_;
   };
 
 }

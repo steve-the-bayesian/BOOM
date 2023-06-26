@@ -110,6 +110,18 @@ namespace BayesBoom {
              "parameters given data.  The work for this draw is \n"
              "performed by any posterior samplers that have been assigned \n"
              "to this model by  'set_method'.\n")
+        .def_property_readonly("number_of_sampling_methods",
+             [](PriorPolicy &model) {
+               return model.number_of_sampling_methods();
+             },
+             "The number of posterior samplers that have been assigned to "
+             "this model.")
+        .def("clear_methods",
+             [](PriorPolicy &model) {
+               model.clear_methods();
+             },
+             "Clear all previously assigned posterior samplers from this "
+             "model.")
         ;
 
 

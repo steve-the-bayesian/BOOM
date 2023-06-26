@@ -510,18 +510,18 @@ namespace BayesBoom {
              "time point before the new data was observed).  On output it "
              "is the contemporaneous state mean of the time point "
              "corresponding to the new data.\n")
-        .ef("__repr__",
+        .def("__repr__",
             [](const MultivariateStateSpaceRegressionModel &model) {
               std::ostringstream out;
               out << "A boom.MultivariateStateSpaceRegressionModel with "
-                  << model.nstate()
+                  << model.number_of_state_models()
                   << " state component models, response dimension "
-                  << model.ydim() << ", input dimension "
+                  << model.nseries() << ", input dimension "
                   << model.xdim() << ", state dimension "
                   << model.state_dimension() << ", with "
                   << model.time_dimension() << " time points.";
               return out.str();
-            }
+            })
         ;
 
     py::class_<StudentMvssRegressionModel,

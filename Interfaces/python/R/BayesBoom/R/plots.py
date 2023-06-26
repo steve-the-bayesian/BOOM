@@ -304,6 +304,77 @@ def boxplot(x, labels=None, ax=None, **kwargs):
     return ax
 
 
+def AddSegments(x, y, ax, half_width_factor=.45, **kwargs):
+    dx = np.diff(x)
+    if not np.all(dx == dx[0]):
+        raise Exception("Equally spaced X's are needed in 'AddSegments'.")
+
+    dx = dx[0]
+    half_width = half_width_factor * dx
+    x0 = x - half_width
+    x1 = x + half_width
+
+    from matplotlib import collections as mc
+    lines = [[(x0[i], y[i]), (x1[i], y[i])] for i in range(len(y))]
+    line_collection = mc.LineCollection(lines, linewidths=2)
+    ax.add_collection(line_collection)
+    return ax
+
+
+def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
+    """
+    Create a (vertical) boxplot from a numpy matrix or pandas data frame, with
+    optional horizontal line segments indicating the values of the "true"
+    parameters.
+
+    Args:
+      x: The 2D numpy array, or pd.DataFrame (containing only numerical values)
+        to be plotted.  Each column of x will be shown as a boxplot.
+      truth: A vector (np.array or equivalent) containing the true values.  If
+        None then only the raw boxplot will be produced.
+      ax: The matplotlib.Axes object on which the plot will be produced.  If
+        None then a new object will be created.
+      vnames: The variable names used for the tick labels.  If None then the
+        column names will be used if x is a pd.DataFrame.  Default names will be
+        created otherwise.
+      center: If True then the columns of x will be centered around the values
+        of 'truth' before plotting.
+      **kwargs: Additional named arguments are passed to ax.boxplot.  Some
+        plotting parameters that follow R conventions are supported.
+
+    Effects:
+      A boxplot is drawn on the supplied (or newly created) ax.
+
+    Returns:
+      The ax object.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+
+    plot_options, kwargs = _skim_plot_options(**kwargs)
+    _set_plot_options(ax, **plot_options)
+
+    if vnames is None:
+        if isinstance(x, pd.DataFrame):
+            vnames = [str(colname) for colname in x.columns]
+            x = x.values
+        else:
+            vnames = ["V" + str(1 + pos) for pos in range(x.shape[1])]
+
+    if center:
+        x = x.copy()
+        x -= truth
+        truth *= 0
+
+    ax.boxplot(x, vert=True, labels=vnames, **kwargs)
+
+    if truth is not None:
+        ticks = ax.get_xticks()
+        AddSegments(ticks, truth, ax)
+
+    return ax
+
+
 def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
     """
     Plot side-by-side boxplots showing the evolution of a distribution over

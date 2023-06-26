@@ -27,7 +27,9 @@ namespace {
         for (int j = 0; j < site_lambdas.nrow(); ++j) {
           int nvisits = rpois(site_lambdas(j, class_indicators[i]));
           if (nvisits > 0) {
-            NEW(PoissonFactorData, data_point)(i, j, nvisits);
+            NEW(PoissonFactorData, data_point)(std::to_string(i),
+                                               std::to_string(j),
+                                               nvisits);
             ans.push_back(data_point);
           }
         }
@@ -48,15 +50,15 @@ namespace {
   }
 
   TEST_F(PoissonFactorModelTest, VisitorTest) {
-    Visitor visitor(123, 2);
-    EXPECT_EQ(visitor.id(), 123);
+    Visitor visitor("Larry", 2);
+    EXPECT_EQ(visitor.id(), "Larry");
 
-    NEW(Site, site1)(8, 2);
+    NEW(Site, site1)("8", 2);
     visitor.visit(site1, 4);
 
     EXPECT_EQ(visitor.sites_visited().size(), 1);
 
-    NEW(Site, site2)(6, 2);
+    NEW(Site, site2)("6", 2);
     visitor.visit(site2, 1);
     EXPECT_EQ(visitor.sites_visited().size(), 2);
 
@@ -68,17 +70,18 @@ namespace {
     EXPECT_EQ(visitor.imputed_class_membership(), 1);
   }
 
+  // Check that the
   TEST_F(PoissonFactorModelTest, SiteTest) {
-    Site site(867, 4);
+    Site site("867", 4);
 
-    EXPECT_EQ(867, site.id());
+    EXPECT_EQ("867", site.id());
 
     EXPECT_EQ(site.lambda().size(), 4);
     EXPECT_EQ(site.prior_a().size(), 4);
     EXPECT_EQ(site.prior_b().size(), 4);
 
-    NEW(Visitor, v1)(123, 4);
-    NEW(Visitor, v2)(456, 4);
+    NEW(Visitor, v1)("Larry", 4);
+    NEW(Visitor, v2)("Moe", 4);
     site.observe_visitor(v1, 1);
     EXPECT_EQ(site.observed_visitors().size(), 1);
     site.observe_visitor(v2, 1);
@@ -123,8 +126,8 @@ namespace {
     EXPECT_EQ(model.sites().size(), num_sites);
     EXPECT_EQ(model.visitors().size(), num_visitors);
 
-    EXPECT_EQ(model.get_site(12)->id(), 12);
-    EXPECT_EQ(model.get_visitor(12)->id(), 12);
+    EXPECT_EQ(model.get_site("12")->id(), "12");
+    EXPECT_EQ(model.get_visitor("12")->id(), "12");
 
     NEW(PoissonFactorModelPosteriorSampler, sampler)(
         &model, class_membership_probabilities);
@@ -134,9 +137,8 @@ namespace {
     //     Array lambda_draws({niter, num_sites, num_classes});
     for (int i = 0; i < niter; ++i) {
       model.sample_posterior();
-
       for (int j = 0; j < num_visitors; ++j) {
-        visitor_draws(i, j) = model.get_visitor(j)->imputed_class_membership();
+        visitor_draws(i, j) = model.get_visitor(std::to_string(j))->imputed_class_membership();
       }
     }
     std::ofstream visitor_out("visitor_draws.out");

@@ -2,7 +2,7 @@
 #define BOOM_MODELS_FACTOR_MODELS_POISSON_FACTOR_MODEL_HPP_
 
 /*
-  Copyright (C) 2005-2022 Steven L. Scott
+  Copyright (C) 2005-2023 Steven L. Scott
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -20,17 +20,19 @@
 */
 
 #include "Models/Policies/ManyParamPolicy.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
 #include <vector>
 #include <map>
-#include <set>
 
 /*
-  The PoissonFactorModel describes a matrix n_ij, containing the number of
-  visits by visitor i to site j.  There are K categories of visitors, with
+  The PoissonFactorModel describes a sparse matrix n_ij, containing the number
+  of visits by visitor i to site j.  There are K categories of visitors, with
   visitor category being a latent variable.
+
+  User i has a marginal probability theta[k] of belonging to class k.
+
+  Given
 
   Each site j has a site-specific set of parameters lambda_jk.  Given that user
   i is in latent class k, the n_ij visits on site j follow n_ij ~
@@ -45,8 +47,8 @@ namespace BOOM {
   class PoissonFactorData
       : public Data {
    public:
-    PoissonFactorData(int64_t visitor_id,
-                      int64_t site_id,
+    PoissonFactorData(const std::string &visitor_id,
+                      const std::string &site_id,
                       int nvisits)
         : visitor_id_(visitor_id),
           site_id_(site_id),
@@ -56,13 +58,13 @@ namespace BOOM {
     PoissonFactorData * clone() const override;
     std::ostream & display(std::ostream &out) const override;
 
-    int64_t site_id() const {return site_id_;}
-    int64_t visitor_id() const {return visitor_id_;}
+    const std::string & site_id() const {return site_id_;}
+    const std::string & visitor_id() const {return visitor_id_;}
     int nvisits() const {return nvisits_;}
 
    private:
-    int64_t visitor_id_;
-    int64_t site_id_;
+    std::string visitor_id_;
+    std::string site_id_;
     int nvisits_;
   };
 
@@ -74,20 +76,20 @@ namespace BOOM {
     void intrusive_ptr_release(Site *site);
     void intrusive_ptr_release(Visitor *visitor);
 
-    //----------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // A visitor belongs to one of K classes.
     class Visitor
         : public RefCounted
     {
      public:
-      Visitor(int64_t id, int num_classes)
+      Visitor(const std::string &id, int num_classes)
           : id_(id),
             class_probabilities_(new VectorParams(
                 Vector(num_classes, 1.0 / num_classes))),
             imputed_class_membership_(-1)
       {}
 
-      int64_t id() const {return id_;}
+      const std::string & id() const {return id_;}
 
       void visit(const Ptr<Site> &site, int ntimes);
 
@@ -110,12 +112,16 @@ namespace BOOM {
         imputed_class_membership_ = which_class;
       }
 
-      const std::map<Ptr<Site>, int> & sites_visited() const {
+      const std::map<Ptr<Site>, int> &sites_visited() const {
         return sites_visited_;
       }
 
+      void clear() {
+        sites_visited_.clear();
+      }
+
      private:
-      int64_t id_;
+      std::string id_;
 
       // The Visitor belongs to one of K unknown classes. The class
       // probabilities and imputed class membership are set by posterior
@@ -129,20 +135,29 @@ namespace BOOM {
     };
 
     //----------------------------------------------------------------------
+    // Profile for a visited site (e.g. a URL or a domain).
     class Site : public RefCounted {
      public:
-      Site(int64_t id, int num_classes);
 
-      // Record one or more visits by
+      // Args:
+      //   id:  The unique identifier for this site.  The "name".
+      //   num_classes:  The number of distinct values in the latent factor.
+      Site(const std::string &id, int num_classes);
+
+      // Record one or more visits by the given visitor.
       void observe_visitor(const Ptr<Visitor> &visitor, int ntimes);
 
-      int64_t id() const {return id_;}
+      const std::string & id() const {return id_;}
 
-      // The vector of
+      // The vector of rates
       const Vector &lambda() const {return visitation_rates_->value();}
       Vector log_lambda() const {return log_lambda_;}
       void set_lambda(const Vector &lambda);
 
+      // The prior distribution for the site's rate parameters, broken out by
+      // the discrete latent factor.
+      //
+      // a/b is the prior guess at the poisson rate.  a/b^2 is the variance.
       const Vector &prior_a() const {return prior_a_->value();}
       const Vector &prior_b() const {return prior_b_->value();}
       void set_prior(const Vector &prior_a, const Vector &prior_b);
@@ -151,8 +166,12 @@ namespace BOOM {
         return observed_visitors_;
       }
 
+      void clear() {
+        observed_visitors_.clear();
+      }
+
      private:
-      int64_t id_;
+      std::string id_;
 
       // Element k is the Poisson rate at which a visitor of class k visits the site.
       Ptr<VectorParams> visitation_rates_;
@@ -170,7 +189,6 @@ namespace BOOM {
   //===========================================================================
   class PoissonFactorModel
       : public ManyParamPolicy,
-        public IID_DataPolicy<PoissonFactorData>,
         public PriorPolicy
   {
    public:
@@ -186,19 +204,26 @@ namespace BOOM {
 
     PoissonFactorModel * clone() const override;
 
-    void record_visit(int64_t visitor_id, int64_t site_id, int ntimes = 1);
-    void add_data(const Ptr<PoissonFactorData> &data_point) override;
+    void record_visit(const std::string &visitor_id,
+                      const std::string &site_id,
+                      int ntimes = 1);
     void add_data(const Ptr<Data> &data_point) override;
+    void clear_data() override;
+    void combine_data(const Model &other_model, bool just_suf = true) override;
 
     // The number of latent classes being modeled.
     int number_of_classes() const {return sum_of_lambdas_.size();}
+    int number_of_visitors() const {return visitors_.size();}
+    int number_of_sites() const {return sites_.size();}
 
-    std::vector<Ptr<Site>> & sites() {return sites_;}
-    std::vector<Ptr<Visitor>> & visitors() {return visitors_;}
+    std::map<std::string, Ptr<Site>> & sites() {return sites_;}
+    const std::map<std::string, Ptr<Site>> & sites() const {return sites_;}
+    std::map<std::string, Ptr<Visitor>> & visitors() {return visitors_;}
+    const std::map<std::string, Ptr<Visitor>> & visitors() const {return visitors_;}
 
     // Return nullptr if the requested id is not available.
-    Ptr<Site> get_site(int64_t id) const;
-    Ptr<Visitor> get_visitor(int64_t id) const;
+    Ptr<Site> get_site(const std::string &id) const;
+    Ptr<Visitor> get_visitor(const std::string &id) const;
 
     const Vector &sum_of_lambdas() const;
 
@@ -208,8 +233,8 @@ namespace BOOM {
 
    private:
     // Both visitors_ and sites_ are stored in the order of their ID's.
-    std::vector<Ptr<Visitor>> visitors_;
-    std::vector<Ptr<Site>> sites_;
+    std::map<std::string, Ptr<Visitor>> visitors_;
+    std::map<std::string, Ptr<Site>> sites_;
 
     mutable Vector sum_of_lambdas_;
   };
