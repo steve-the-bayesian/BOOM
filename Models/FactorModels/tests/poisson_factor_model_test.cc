@@ -126,8 +126,8 @@ namespace {
     EXPECT_EQ(model.sites().size(), num_sites);
     EXPECT_EQ(model.visitors().size(), num_visitors);
 
-    EXPECT_EQ(model.get_site("12")->id(), "12");
-    EXPECT_EQ(model.get_visitor("12")->id(), "12");
+    EXPECT_EQ(model.site("12")->id(), "12");
+    EXPECT_EQ(model.visitor("12")->id(), "12");
 
     NEW(PoissonFactorModelPosteriorSampler, sampler)(
         &model, class_membership_probabilities);
@@ -138,7 +138,7 @@ namespace {
     for (int i = 0; i < niter; ++i) {
       model.sample_posterior();
       for (int j = 0; j < num_visitors; ++j) {
-        visitor_draws(i, j) = model.get_visitor(std::to_string(j))->imputed_class_membership();
+        visitor_draws(i, j) = model.visitor(std::to_string(j))->imputed_class_membership();
       }
     }
     std::ofstream visitor_out("visitor_draws.out");

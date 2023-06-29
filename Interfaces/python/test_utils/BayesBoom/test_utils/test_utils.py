@@ -42,19 +42,26 @@ def check_mcmc_vector(draws, truth, confidence=0.95):
 
 
 def check_mcmc_matrix(draws, truth, confidence: float = .95,
-                      control_multiple_comparisons: bool = True):
+                      control_multiple_comparisons: bool = True,
+                      verbose: bool = False):
     """
     Args:
       draws: numpy matrix of draws.  Each row is a draw.
       truth: numpy vector of true values, with length matching the number of
         columns in draws.
-     confidence: The probability content of the credibility interval used to
-       check coverage.
-     control_multiple_comparisons: If True, then the fraction of intervals
-       successfully covering the true value can be slightly less than
-       'confidence' as long as it is consistent with the null hypothesis of
-       'confidence'-level coverage, in the sense that it is no less than two
-       binomial standard errors below 'confidence'.
+      confidence: The probability content of the credibility interval used to
+        check coverage.
+      control_multiple_comparisons: If True, then the fraction of intervals
+        successfully covering the true value can be slightly less than
+        'confidence' as long as it is consistent with the null hypothesis of
+        'confidence'-level coverage, in the sense that it is no less than two
+        binomial standard errors below 'confidence'.
+      verbose: Should detailed coverage information be returned?
+
+    Returns:
+      If 'verbose' is False then a bool is returned indicating whether the check
+      passed.  If 'verbose' is True then detailed information about coverage
+      failures is returned (as a dict) instead.
     """
     if confidence <= 0 or confidence >= 1:
         raise Exception("Confidence must be between 0 and 1.")
@@ -83,7 +90,13 @@ def check_mcmc_matrix(draws, truth, confidence: float = .95,
         se = np.sqrt(confidence * (1 - confidence) / dim)
         coverage_rate_limit -= 2 * se
     failure_rate_limit = 1 - coverage_rate_limit
-    return fraction_failing_to_cover < failure_rate_limit
+    if verbose:
+        return {
+            "coverage_indicators": coverage_indicators,
+            "fraction_failing_to_cover": fraction_failing_to_cover
+        }
+    else:
+        return fraction_failing_to_cover < failure_rate_limit
 
 
 def check_stochastic_process(draws: np.ndarray,

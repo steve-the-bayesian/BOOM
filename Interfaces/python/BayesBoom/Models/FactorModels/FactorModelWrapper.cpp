@@ -18,6 +18,81 @@ namespace BayesBoom {
 
   void PoissonFactorModel_def(py::module &boom) {
 
+    py::class_<PoissonFactor::Site,
+               BOOM::Ptr<::BOOM::PoissonFactor::Site>>(
+                   boom, "PoissonFactorModelSite")
+        .def_property_readonly(
+            "id",
+            [](PoissonFactor::Site &site) {
+              return site.id();
+            },
+            "The ID of the site.")
+        .def_property_readonly(
+            "lambda",
+            [](PoissonFactor::Site &site) {
+              return site.lambda();
+            },
+            "The poisson rate parameters for the Site.")
+        .def_property_readonly(
+            "num_visits",
+            [](PoissonFactor::Site &site) {
+              size_t num_visits = 0;
+              for (const auto &it : site.observed_visitors()) {
+                num_visits += it.second;
+              }
+              return num_visits;
+            },
+            "The number of times the site was visited.")
+        .def_property_readonly(
+            "num_visitors",
+            [](PoissonFactor::Site &site) {
+              return site.observed_visitors().size();
+            },
+            "The number of distinct visitors to the site.")
+        .def_property_readonly(
+            "visitor_counts",
+            [](PoissonFactor::Site &site) {
+              return site.visitor_counts();
+            },
+            "Returns a 2-column matrix containing the visit counts (column 0) "
+            "and exposures (column 1) for each level of the latent category.\n")
+        ;
+
+    py::class_<PoissonFactor::Visitor, Ptr<PoissonFactor::Visitor>>(
+        boom, "PoissonFactorModelVisitor")
+        .def_property_readonly(
+            "id",
+            [](PoissonFactor::Visitor &visitor) {
+              return visitor.id();
+            },
+            "The ID of the visitor.")
+        .def_property_readonly(
+            "imputed_class",
+            [](PoissonFactor::Visitor &visitor) {
+              return visitor.imputed_class_membership();
+            },
+            "The class membership indicator assigned to the Visitor "
+            "in the most recent MCMC draw.")
+        .def_property_readonly(
+            "num_visits",
+            [](PoissonFactor::Visitor &visitor) {
+              size_t visits = 0;
+              for (const auto &it : visitor.sites_visited()) {
+                visits += it.second;
+              }
+              return visits;
+            },
+            "The number of visits (including repeat visits) the user "
+            "made to any site.\n")
+        .def_property_readonly(
+            "number_of_distinct_sites_visited",
+            [](PoissonFactor::Visitor &visitor) {
+              return visitor.sites_visited().size();
+            },
+            "The number of distinct sites visited by the user.")
+        ;
+
+
     py::class_<PoissonFactorModel,
                PriorPolicy,
                BOOM::Ptr<PoissonFactorModel>>(
@@ -96,7 +171,8 @@ namespace BayesBoom {
                 visitor_ids.push_back(visitor_it.first);
               }
               return visitor_ids;
-            })
+            },
+            "The visitor ID's, in the order stored by the model.\n")
         .def_property_readonly(
             "imputed_classes",
             [](PoissonFactorModel &model) {
@@ -117,6 +193,27 @@ namespace BayesBoom {
               }
               return ans;
             })
+        .def("site",
+             [](PoissonFactorModel &model,
+                const std::string &site_id) {
+               return model.site(site_id);
+             },
+             py::arg("site_id"),
+             "Args:\n\n"
+             "  site_id:  string giving the ID of the site to be extracted.\n"
+             "Returns:\n"
+             "  The Site object managed by the model, corresponding to "
+             "the requested ID.\n")
+        .def("user",
+             [](PoissonFactorModel &model,
+                const std::string &user_id) {
+               return model.visitor(user_id);
+             },
+             "Args:\n\n"
+             "  user_id:  string giving the ID of the user to be extracted.\n"
+             "Returns:\n"
+             "  The Visitor object managed by the model, corresponding to "
+             "the requested ID.\n")
         .def("set_prior_class_probabilities",
              [](PoissonFactorModel &model,
                 const std::vector<std::string> &visitor_ids,
@@ -130,7 +227,7 @@ namespace BayesBoom {
                               "the number of classes.");
                }
                for (size_t i = 0; i < visitor_ids.size(); ++i) {
-                 model.get_visitor(
+                 model.visitor(
                      visitor_ids[i])->set_class_probabilities(
                          prior_probs.row(i));
                }
@@ -166,7 +263,7 @@ namespace BayesBoom {
                               "match the number of latent classes.");
                }
                for (size_t i = 0; i < site_ids.size(); ++i) {
-                 model.get_site(site_ids[i])->set_prior(
+                 model.site(site_ids[i])->set_prior(
                      prior_a.row(i), prior_b.row(i));
                }
              },
@@ -180,8 +277,7 @@ namespace BayesBoom {
              "from users in each class.\n"
              "  prior_b:  A prior count representing the number of "
              "opportunites visitors in each class had to visit the site.  "
-             "A 'prior exposure'.\n"
-             )
+             "A 'prior exposure'.\n")
         .def("__repr__",
              [](PoissonFactorModel &model) {
                std::ostringstream out;

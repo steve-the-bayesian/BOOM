@@ -58,10 +58,18 @@ namespace BOOM {
         const Vector &probs);
 
    private:
+    // Initialize the sum_of_lambdas_ data element by looping over the model
+    // values.  This only needs to be called once, because the "draw" method
+    // will keep sum_of_lambdas_ current on an ongoing basis.
+    void initialize_sum_of_lambdas();
+
     PoissonFactorModel *model_;
 
     Vector default_prior_class_probabilities_;
     std::map<std::string, Vector> prior_class_probabilities_;
+
+    Vector exposure_counts_;
+    Vector sum_of_lambdas_;
   };
 
 }

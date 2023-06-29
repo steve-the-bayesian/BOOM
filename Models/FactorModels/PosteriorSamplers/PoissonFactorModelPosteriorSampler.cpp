@@ -35,15 +35,21 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng),
         model_(model),
         default_prior_class_probabilities_(
-            default_prior_class_probabilities)
+            default_prior_class_probabilities),
+        exposure_counts_(model->number_of_classes(), 0.0),
+        sum_of_lambdas_(model->number_of_classes(), negative_infinity())
   {}
 
   void Sampler::draw() {
+    if (!std::isfinite(sum_of_lambdas_[0])) {
+      initialize_sum_of_lambdas();
+    }
     impute_visitors();
     draw_site_parameters();
   }
 
   void Sampler::impute_visitors() {
+    exposure_counts_ *= 0.0;
     for (auto &visitor_it : model_->visitors()) {
       Ptr<Visitor> &visitor(visitor_it.second);
       Vector prob = prior_class_probabilities(
@@ -53,7 +59,7 @@ namespace BOOM {
         visitor->set_class_member_indicator(prob.imax());
       } else {
         Vector logprob = log(prob);
-        logprob -= model_->sum_of_lambdas();
+        logprob -= sum_of_lambdas_;
         for (const auto &it : visitor->sites_visited()) {
           int site_visits = it.second;
           const Ptr<Site> &site(it.first);
@@ -68,31 +74,28 @@ namespace BOOM {
         visitor->set_class_probabilities(prob);
         visitor->set_class_member_indicator(rmulti_mt(rng(), prob));
       }
+      ++exposure_counts_[visitor->imputed_class_membership()];
     }
   }
 
   void Sampler::draw_site_parameters() {
-    Vector sum_of_lambdas(model_->number_of_classes());
+    sum_of_lambdas_ = 0.0;
     for (auto &site_it : model_->sites()) {
       Ptr<Site> &site(site_it.second);
       Vector counts = site->prior_a();
-      Vector exposures = site->prior_b();
       for (const auto &it : site->observed_visitors()) {
         const Ptr<Visitor> &visitor(it.first);
         int visit_count = it.second;
         int mix = visitor->imputed_class_membership();
         counts[mix] += visit_count;
-        exposures[mix] += 1;
       }
-
       Vector lambdas(counts.size());
       for (int k = 0; k < counts.size(); ++k) {
-        lambdas[k] = rgamma_mt(rng(), counts[k], exposures[k]);
+        lambdas[k] = rgamma_mt(rng(), counts[k], exposure_counts_[k]);
       }
       site->set_lambda(lambdas);
-      sum_of_lambdas += lambdas;
+      sum_of_lambdas_ += lambdas;
     }
-    model_->set_sum_of_lambdas(sum_of_lambdas);
   }
 
   Vector Sampler::prior_class_probabilities(
@@ -123,6 +126,12 @@ namespace BOOM {
     prior_class_probabilities_[visitor_id] = probs;
   }
 
-
+  void Sampler::initialize_sum_of_lambdas() {
+    sum_of_lambdas_ = 0.0;
+    for (const auto &it : model_->sites()) {
+      const Ptr<Site> &site(it.second);
+      sum_of_lambdas_ += site->lambda();
+    }
+  }
 
 }  // namespace BOOM

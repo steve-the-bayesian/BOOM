@@ -120,6 +120,10 @@ namespace BOOM {
         sites_visited_.clear();
       }
 
+      int number_of_classes() const {
+        return class_probabilities_->size();
+      }
+
      private:
       std::string id_;
 
@@ -144,6 +148,8 @@ namespace BOOM {
       //   num_classes:  The number of distinct values in the latent factor.
       Site(const std::string &id, int num_classes);
 
+      int number_of_classes() const {return visitation_rates_->size();}
+
       // Record one or more visits by the given visitor.
       void observe_visitor(const Ptr<Visitor> &visitor, int ntimes);
 
@@ -162,9 +168,14 @@ namespace BOOM {
       const Vector &prior_b() const {return prior_b_->value();}
       void set_prior(const Vector &prior_a, const Vector &prior_b);
 
-      const std::map<Ptr<Visitor>, int> observed_visitors() const {
+      const std::map<Ptr<Visitor>, int> &observed_visitors() const {
         return observed_visitors_;
       }
+
+      // Returns a 2-column matrix.  Rows correspond to different levels of the
+      // latent category.  The columns are the number of visits and the number
+      // of visitor exposures to that category.
+      Matrix visitor_counts() const;
 
       void clear() {
         observed_visitors_.clear();
@@ -212,7 +223,7 @@ namespace BOOM {
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
     // The number of latent classes being modeled.
-    int number_of_classes() const {return sum_of_lambdas_.size();}
+    int number_of_classes() const {return num_classes_;}
     int number_of_visitors() const {return visitors_.size();}
     int number_of_sites() const {return sites_.size();}
 
@@ -222,21 +233,16 @@ namespace BOOM {
     const std::map<std::string, Ptr<Visitor>> & visitors() const {return visitors_;}
 
     // Return nullptr if the requested id is not available.
-    Ptr<Site> get_site(const std::string &id) const;
-    Ptr<Visitor> get_visitor(const std::string &id) const;
+    Ptr<Site> site(const std::string &id) const;
+    Ptr<Visitor> visitor(const std::string &id) const;
 
     const Vector &sum_of_lambdas() const;
 
-    void set_sum_of_lambdas(const Vector &sum_of_lambdas) {
-      sum_of_lambdas_ = sum_of_lambdas;
-    }
-
    private:
     // Both visitors_ and sites_ are stored in the order of their ID's.
+    int num_classes_;
     std::map<std::string, Ptr<Visitor>> visitors_;
     std::map<std::string, Ptr<Site>> sites_;
-
-    mutable Vector sum_of_lambdas_;
   };
 
 

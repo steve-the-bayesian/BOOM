@@ -208,8 +208,8 @@ class GammaModel(DoubleModel):
         return boom.GammaModel(self.a, self.b)
 
     def __repr__(self):
-        ans = f"A GammaModel with shape = {self._shape} "
-        ans += f"and scale = {self._scale}."
+        ans = f"A GammaModel with shape = {self.shape} "
+        ans += f"and scale = {self.scale}."
         return ans
 
 

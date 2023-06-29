@@ -17,7 +17,18 @@ class PoissonFactorModel:
 
         self._nlevels = int(nlevels)
         self._model = boom.PoissonFactorModel(nlevels)
+        self._site_ids = None
+        self._user_ids = None
+
+        # _default_site_prior is a list of GammaModel objects giving the prior
+        # distribution for each Poisson rate parameter in an arbitrary site.
+        # There is one GammaModel object for each level of the latent factor.
         self._default_site_prior = [R.GammaModel(1.0, 1.0)] * nlevels
+
+        # _site_specific_priors is a list of GammaModel objects giving the prior
+        # distribution of a specific site.  Keyed by site_id, the values are
+        # lists of priors -- one prior for each level of the latent factor.
+        self._site_specific_priors = {}
 
         self._prior_class_membership_probabilites = (
             np.full(nlevels, 1.0 / nlevels))
@@ -44,6 +55,8 @@ class PoissonFactorModel:
         The ID's of the stored users, in the order kept by the underlying C++
         object.  This is the order they're stored in self._user_classes.
         """
+        if self._user_ids is None:
+            self._user_ids = self._model.visitor_ids
         return self._user_ids
 
     @property
@@ -52,6 +65,8 @@ class PoissonFactorModel:
         The ID's of the sites, in the order they are kept by the underlying C++
         object.  This is the order used to store self._site_params.
         """
+        if self._site_ids is None:
+            self._site_ids = self._model.site_ids
         return self._site_ids
 
     def add_data(self, user, site, count):
@@ -75,6 +90,14 @@ class PoissonFactorModel:
 
         self._model.add_data(user, site, count)
 
+    def site(self, site_id: str):
+        ans = self._model.site(site_id)
+        return ans
+
+    def user(self, user_id, str):
+        ans = self._model.user(user_id)
+        return ans
+
     def set_known_user_demographics(self, users: pd.Series):
         """
         Args:
@@ -87,6 +110,26 @@ class PoissonFactorModel:
         """
         self._known_users = users
 
+    def set_site_priors(self, site_ids, prior_a, prior_b):
+        """
+        Set the prior distribution over Poisson model parameters for specific
+        sites.
+
+        Args:
+          site_ids: A list-like sequence of strings identifying the sites to be
+            set.
+          prior_a: A matrix of positive numbers.  Rows correspond to sites and
+            columns to levels of the latent factor.  Entries are the "shape"
+            parameter in a Gamma(shape, scale) prior distribution.
+          prior_b: A matrix of positive numbers.  Rows correspond to sites and
+            columns to levels of the latent factor.  Entries are the "scale"
+            parameter in a Gamma(shape, scale) prior distribution.
+        """
+        self._model.set_site_priors(
+            site_ids,
+            R.to_boom_matrix(prior_a),
+            R.to_boom_matrix(prior_b))
+
     def _initialize_model(self, nlevels: int):
         self._model = boom.PoissonFactorModel(self._nlevels)
 
@@ -98,6 +141,12 @@ class PoissonFactorModel:
         self._prior_class_membership_probabilites = prior_weights
 
     def set_default_site_prior(self, prior):
+        """
+        self._default_site_prior is a list of GammaModel objects giving the
+        prior shape and scale parameters for the Poisson rate in each latent
+        category.
+        """
+
         if isinstance(prior, R.GammaModel):
             prior = [prior] * self._nlevels
         if not hasattr(prior, "__len__"):
@@ -112,20 +161,21 @@ class PoissonFactorModel:
         self._user_ids = self._model.visitor_ids
         self._site_ids = self._model.site_ids
         for i in range(niter):
+            print(f"iteration {i+1} of {niter}")
             self._model.sample_posterior()
             self._record_draw(i)
 
-    def user(self, user_id):
+    def user_draws(self, user_id):
         idx = self._user_ids.index(user_id)
         if self._user_ids[idx] != user_id:
             raise ValueError(f"User {user_id} could not be found.")
-        return self._users[:, idx]
+        return self._user_draws[:, idx]
 
-    def site(self, site_id):
+    def site_draws(self, site_id):
         idx = np.searchsorted(self._site_ids, site_id)
         if self._site_ids[idx] != site_id:
             raise ValueError(f"Site {site_id} could not be found.")
-        return self._sites[:, idx, :]
+        return self._site_draws[:, idx, :]
 
     def _assign_sampler(self, model):
         sampler = boom.PoissonFactorModelPosteriorSampler(
@@ -145,14 +195,35 @@ class PoissonFactorModel:
                 known_users.index,
                 probs)
 
+        prior_a = np.empty((self.num_sites, self.num_categories))
+        prior_b = np.empty((self.num_sites, self.num_categories))
+        for k, prior in enumerate(self._default_site_prior):
+            prior_a[:, k] = prior.a
+            prior_b[:, k] = prior.b
+
+        site_ids = self.site_ids
+        if self._site_specific_priors:
+            prior_a = pd.DataFrame(prior_a, index=site_ids)
+            prior_b = pd.DataFrame(prior_b, index=site_ids)
+
+        for site_id, prior_list in self._site_specific_priors:
+            a = np.array([prior.a for prior in prior_list])
+            b = np.array([prior.b for prior in prior_list])
+            prior_a.loc[site_id, :] = a
+            prior_b.loc[site_id, :] = b
+        model.set_site_priors(
+            site_ids,
+            R.to_boom_matrix(prior_a),
+            R.to_boom_matrix(prior_b))
+
     def _allocate_space(self, niter):
         # users[i, j] is the imputed category for user j in iteration i.
-        self._users = np.empty((niter, self.num_users))
+        self._user_draws = np.empty((niter, self.num_users))
 
         # sites[i, j, k] is the poisson rate parameter for category k
         # on site j.
-        self._sites = np.empty((niter, self.num_sites, self.nlevels))
+        self._site_draws = np.empty((niter, self.num_sites, self.nlevels))
 
     def _record_draw(self, iteration):
-        self._users[iteration, :] = np.array(self._model.imputed_classes)
-        self._sites[iteration, :, :] = self._model.site_params.to_numpy()
+        self._user_draws[iteration, :] = np.array(self._model.imputed_classes)
+        self._site_draws[iteration, :, :] = self._model.site_params.to_numpy()

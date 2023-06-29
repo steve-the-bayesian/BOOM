@@ -103,12 +103,23 @@ namespace BOOM {
       prior_b_.reset(new VectorParams(prior_b));
     }
 
+    Matrix Site::visitor_counts() const {
+      Matrix ans(number_of_classes(), 2, 0.0);
+      for (const auto &it : observed_visitors_) {
+        int visit_count = it.second;
+        const Ptr<Visitor> visitor = it.first;
+        int level = visitor->imputed_class_membership();
+        ans(level, 0) += visit_count;
+        ans(level, 1) += 1;
+      }
+      return ans;
+    }
+
   }  // namespace PoissonFactor
 
 
-
   PoissonFactorModel::PoissonFactorModel(int num_classes)
-      : sum_of_lambdas_(num_classes, negative_infinity())
+      : num_classes_(num_classes)
   {}
 
   PoissonFactorModel::PoissonFactorModel(const PoissonFactorModel &rhs) {
@@ -128,17 +139,15 @@ namespace BOOM {
 
       for (auto &visitor_it : visitors_) {
         Ptr<Visitor> &visitor(visitor_it.second);
-        Ptr<Visitor> parent = rhs.get_visitor(visitor->id());
+        Ptr<Visitor> parent = rhs.visitor(visitor->id());
         visitor->set_class_probabilities(parent->class_probabilities());
         visitor->set_class_member_indicator(parent->imputed_class_membership());
       }
 
       for (auto &site_it : sites_) {
-        Ptr<Site> parent = rhs.get_site(site_it.first);
+        Ptr<Site> parent = rhs.site(site_it.first);
         site_it.second->set_prior(parent->prior_a(), parent->prior_b());
       }
-
-      sum_of_lambdas_ = rhs.sum_of_lambdas_;
     }
     return *this;
   }
@@ -149,8 +158,7 @@ namespace BOOM {
 
   PoissonFactorModel::PoissonFactorModel(PoissonFactorModel &&rhs)
       : visitors_(std::move(rhs.visitors_)),
-        sites_(std::move(rhs.sites_)),
-        sum_of_lambdas_(rhs.sum_of_lambdas_)
+        sites_(std::move(rhs.sites_))
   {}
 
   void PoissonFactorModel::add_data(const Ptr<Data> &data_point) {
@@ -206,7 +214,7 @@ namespace BOOM {
     site->observe_visitor(visitor, nvisits);
   }
 
-  Ptr<Site> PoissonFactorModel::get_site(const std::string &id) const {
+  Ptr<Site> PoissonFactorModel::site(const std::string &id) const {
     auto it = sites_.find(id);
     if (it == sites_.end()) {
       return nullptr;
@@ -215,7 +223,7 @@ namespace BOOM {
     }
   }
 
-  Ptr<Visitor> PoissonFactorModel::get_visitor(const std::string &id) const {
+  Ptr<Visitor> PoissonFactorModel::visitor(const std::string &id) const {
     auto it = visitors_.find(id);
     if (it == visitors_.end()) {
       return nullptr;
@@ -223,17 +231,5 @@ namespace BOOM {
       return it->second;
     }
   }
-
-  const Vector & PoissonFactorModel::sum_of_lambdas() const {
-    if (!std::isfinite(sum_of_lambdas_[0])) {
-      sum_of_lambdas_ = 0.0;
-      for (const auto &site_it : sites_) {
-        const Ptr<Site> &site(site_it.second);
-        sum_of_lambdas_ += site->lambda();
-      }
-    }
-    return sum_of_lambdas_;
-  }
-
 
 }  // namespace BOOM
