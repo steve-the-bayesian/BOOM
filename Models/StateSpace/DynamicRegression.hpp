@@ -43,7 +43,7 @@ namespace BOOM {
       //   xdim: The dimension of the predictor variable.  The default value of
       //   -1 is a signal that the dimension is unknown.  It will be set on the
       //   first call to add_data().
-      RegressionDataTimePoint(int xdim = -1):
+      explicit RegressionDataTimePoint(int xdim = -1):
           xdim_(xdim), yty_(0.0), suf_(nullptr) {}
 
       // Args:

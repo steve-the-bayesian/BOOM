@@ -206,7 +206,7 @@ namespace BOOM {
     using Site = PoissonFactor::Site;
     using Visitor = PoissonFactor::Visitor;
 
-    PoissonFactorModel(int num_classes);
+    explicit PoissonFactorModel(int num_classes);
 
     PoissonFactorModel(const PoissonFactorModel &rhs);
     PoissonFactorModel(PoissonFactorModel &&rhs);

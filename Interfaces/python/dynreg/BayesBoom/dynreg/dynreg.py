@@ -167,14 +167,14 @@ class SparseDynamicRegressionModel:
 
     def plot_residual_sd(self,
                          burn: int = None,
-                         type: str = "density",
+                         kind: str = "density",
                          ax=None,
                          **kwargs):
         """
         Args:
           burn: The number of MCMC iterations to discard as burn-in.  "None"
             indicates that an estimated default number should be used.
-          type: The type of plot.  "density" shows a kernel density estimate of
+          kind: The type of plot.  "density" shows a kernel density estimate of
             the residual SD draws.  "ts" shows a time series plot of the draws.
           ax: A plt.Axes object on which to draw the plot.  If None new Figure
             and Axes objects are created and drawn on function exit.
@@ -187,7 +187,7 @@ class SparseDynamicRegressionModel:
           The Axes object on which the plot is drawn.
         """
         plot_types = ["density", "ts"]
-        type = R.unique_match(type, plot_types)
+        kind = R.unique_match(kind, plot_types)
 
         if burn is None:
             burn = self.suggest_burn()
@@ -201,10 +201,10 @@ class SparseDynamicRegressionModel:
             fig, ax = plt.subplots(1, 1)
             show_plot = True
 
-        if type == "density":
+        if kind == "density":
             density = R.Density(sd)
             density.plot(ax=ax, xlab="Residual SD", ylab="Density")
-        elif type == "ts":
+        elif kind == "ts":
             iteration = np.arange(len(self._residual_sd_draws))
             if burn > 0:
                 iteration = iteration[burn:]

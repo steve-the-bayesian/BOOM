@@ -38,7 +38,7 @@ namespace BOOM {
         --pos;
       }
       if (pos == start) pos = start + width;
-      if (start > 0 || (start == 0 && pad_first)) out << blanks;
+      if (start > 0 || pad_first) out << blanks;
       out << s.substr(start, pos - start) << "\n";
       start = pos + 1;
       while (start < back && s[start] == ' ') ++start;

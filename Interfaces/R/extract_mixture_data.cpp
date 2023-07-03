@@ -34,16 +34,16 @@ namespace BOOM {
       virtual ~DataExtractor() {}
 
       // Extract one subject's data from supplied R object
-      virtual std::vector<BOOM::Ptr<BOOM::Data> > Extract(SEXP rdata) const = 0;
+      virtual std::vector<BOOM::Ptr<BOOM::Data>> Extract(SEXP rdata) const = 0;
     };
 
     class DoubleDataExtractor : public DataExtractor {
      public:
       // rdata is a an R vector
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         BOOM::Vector v = ToBoomVector(rdata);
         int n = v.size();
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         ans.reserve(n);
         for (int i = 0; i < n; ++i) {
           Ptr<Data> dp = new DoubleData(v[i]);
@@ -56,9 +56,9 @@ namespace BOOM {
 
     class FactorDataExtractor : public DataExtractor {
      public:
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         int n = Rf_length(rdata);
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         if (n == 0) {
           return ans;
         }
@@ -78,9 +78,9 @@ namespace BOOM {
 
     class MarkovDataExtractor : public DataExtractor {
      public:
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         int n = Rf_length(rdata);
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         if (n == 0) {
           return ans;
         }
@@ -110,10 +110,10 @@ namespace BOOM {
     class IntDataExtractor : public DataExtractor {
      public:
       // rdata is a an R vector
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         Vector v = ToBoomVector(rdata);
         int n = v.size();
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         ans.reserve(n);
         for (int i = 0; i < n; ++i) {
           bool missing = R_IsNA(v[i]);
@@ -129,10 +129,10 @@ namespace BOOM {
     class VectorDataExtractor : public DataExtractor {
      public:
       // rdata is an R matrix with each row
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         BOOM::Matrix y = ToBoomMatrix(rdata);
         int n = nrow(y);
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         ans.reserve(n);
         for (int i = 0; i < n; ++i) {
           Ptr<Data> dp = new VectorData(y.row(i));
@@ -158,11 +158,11 @@ namespace BOOM {
      public:
       // rdata is a list that contains two elements: a vector named y and
       // a matrix named x.
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         Vector y = ToBoomVector(getListElement(rdata, "y"));
         Matrix x = ToBoomMatrix(getListElement(rdata, "x"));
         int n = y.size();
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         ans.reserve(n);
         for (int i = 0; i < n; ++i) {
           Ptr<Data> dp = new RegressionData(y[i], x.row(i));
@@ -190,12 +190,12 @@ namespace BOOM {
       // rdata is a list that contains three elements: an integer vector
       // named y containing the number of successes, an integer vector
       // named n containing the number of trials, and a matrix named x.
-      virtual std::vector<Ptr<Data> > Extract(SEXP rdata) const {
+      virtual std::vector<Ptr<Data>> Extract(SEXP rdata) const {
         int *y = INTEGER(getListElement(rdata, "y"));
         int *n = INTEGER(getListElement(rdata, "n"));
         Matrix x = ToBoomMatrix(getListElement(rdata, "x"));
         int nobs = nrow(x);
-        std::vector<Ptr<Data> > ans;
+        std::vector<Ptr<Data>> ans;
         ans.reserve(nobs);
         for (int i = 0; i < nobs; ++i) {
           bool y_is_missing(y[i] == NA_INTEGER);
@@ -249,13 +249,13 @@ namespace BOOM {
     //   A vector of time series, each time series is represented as a
     //   vector of Ptr's to the abstract Data type.  Each time series
     //   corresponds to one entry in 'data'.
-    std::vector<std::vector<BOOM::Ptr<BOOM::Data> > > ExtractMixtureComponentData(
+    std::vector<std::vector<BOOM::Ptr<BOOM::Data>>> ExtractMixtureComponentData(
         SEXP rmixture_composite) {
       // No PROTECT is needed because data is protected by membership in
       // rmixture_composite.
       SEXP data = getListElement(rmixture_composite, "data");
       int number_of_subjects = Rf_length(data);
-      std::vector<std::vector<Ptr<Data> > > ans;
+      std::vector<std::vector<Ptr<Data>>> ans;
       ans.reserve(number_of_subjects);
       std::string data_type = GetStringFromList(
           rmixture_composite, "data.type").c_str();
@@ -280,12 +280,12 @@ namespace BOOM {
     //   If the return value is ans, then ans[i] contains the data for
     //   subject i, so that ans[i][j] is the j'th observation for
     //   subject i.
-    std::vector<std::vector<BOOM::Ptr<BOOM::Data> > >
+    std::vector<std::vector<BOOM::Ptr<BOOM::Data>>>
     ExtractCompositeDataFromMixtureComponentList(SEXP rmixture_component_list){
       int number_of_composites = Rf_length(rmixture_component_list);
       // The indices of packed_composite_data are
       // [composite_number][subject][time].
-      std::vector<std::vector<std::vector<Ptr<Data> > > > packed_composite_data(
+      std::vector<std::vector<std::vector<Ptr<Data>>>> packed_composite_data(
           number_of_composites);
       int number_of_subjects = -1;
       for (int m = 0; m < number_of_composites; ++m) {
@@ -295,7 +295,8 @@ namespace BOOM {
         if (number_of_subjects == -1) {
           number_of_subjects = current_number_of_subjects;
         }
-        if (number_of_subjects != current_number_of_subjects) {
+        if (number_of_subjects != current_number_of_subjects
+            || number_of_subjects < 0) {
           std::ostringstream err;
           err << "Mixture component composite " << m << " has "
               << current_number_of_subjects
@@ -305,7 +306,7 @@ namespace BOOM {
         }
       }
 
-      std::vector<std::vector<Ptr<Data> > > ans;
+      std::vector<std::vector<Ptr<Data>>> ans;
       ans.reserve(number_of_subjects);
       for (int subject = 0; subject < number_of_subjects; ++subject) {
         // This code block counts the number of observations for each
@@ -317,7 +318,7 @@ namespace BOOM {
           if (series_length == -1) {
             series_length = current_series_length;
           }
-          if (series_length != current_series_length) {
+          if (series_length != current_series_length || series_length < 0) {
             std::ostringstream err;
             err << "subject " << subject << " (counting from 0) has "
                 << current_series_length << " observations from data composite "
@@ -327,7 +328,7 @@ namespace BOOM {
             report_error(err.str());
           }
         }
-        std::vector<Ptr<Data> > subject_data;
+        std::vector<Ptr<Data>> subject_data;
         subject_data.reserve(series_length);
         for (int time = 0; time < series_length; ++time) {
           Ptr<CompositeData> dp = new CompositeData;

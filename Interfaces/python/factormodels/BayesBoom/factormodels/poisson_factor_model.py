@@ -2,9 +2,7 @@ import numpy as np
 import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
-import scipy.sparse
-
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 class PoissonFactorModel:
@@ -94,7 +92,7 @@ class PoissonFactorModel:
         ans = self._model.site(site_id)
         return ans
 
-    def user(self, user_id, str):
+    def user(self, user_id: str):
         ans = self._model.user(user_id)
         return ans
 
