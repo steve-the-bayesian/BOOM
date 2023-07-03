@@ -61,9 +61,9 @@ namespace BOOM {
         Vector logprob = log(prob);
         logprob -= sum_of_lambdas_;
         for (const auto &it : visitor->sites_visited()) {
-          int site_visits = it.second;
+          int visit_counts = it.second;
           const Ptr<Site> &site(it.first);
-          logprob += site_visits * site->log_lambda();
+          logprob += visit_counts * site->log_lambda();
           for (double el : logprob) {
             if (!std::isfinite(el)) {
               report_error("inf in logprob");
@@ -91,7 +91,20 @@ namespace BOOM {
       }
       Vector lambdas(counts.size());
       for (int k = 0; k < counts.size(); ++k) {
-        lambdas[k] = rgamma_mt(rng(), counts[k], exposure_counts_[k]);
+        double b = exposure_counts_[k] + site->prior_b()[k];
+        if (!std::isfinite(counts[k]) || !std::isfinite(b)) {
+          std::ostringstream err;
+          err << "site " << site->id()
+              << " had an infinite value in either counts "
+              << counts[k]
+              << " exposure_counts_ " << exposure_counts_[k]
+              << " or prior: ("
+              << site->prior_a()[k]
+              << ", " << site->prior_b()[k]
+              << ".\n";
+          report_error(err.str());
+        }
+        lambdas[k] = rgamma_mt(rng(), counts[k], b);
       }
       site->set_lambda(lambdas);
       sum_of_lambdas_ += lambdas;

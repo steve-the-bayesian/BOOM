@@ -99,8 +99,8 @@ namespace BOOM {
     }
 
     void Site::set_prior(const Vector &prior_a, const Vector &prior_b) {
-      prior_a_.reset(new VectorParams(prior_a));
-      prior_b_.reset(new VectorParams(prior_b));
+      prior_a_->set(prior_a);
+      prior_b_->set(prior_b);
     }
 
     Matrix Site::visitor_counts() const {

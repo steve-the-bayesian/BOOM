@@ -28,7 +28,7 @@ namespace BayesBoom {
             },
             "The ID of the site.")
         .def_property_readonly(
-            "lambda",
+            "rate_params",
             [](PoissonFactor::Site &site) {
               return site.lambda();
             },
@@ -56,6 +56,17 @@ namespace BayesBoom {
             },
             "Returns a 2-column matrix containing the visit counts (column 0) "
             "and exposures (column 1) for each level of the latent category.\n")
+        .def_property_readonly(
+            "prior_a",
+            [](const PoissonFactor::Site &site) {
+              return site.prior_a();
+            })
+        .def_property_readonly(
+            "prior_b",
+            [](const PoissonFactor::Site &site) {
+              return site.prior_b();
+            })
+
         ;
 
     py::class_<PoissonFactor::Visitor, Ptr<PoissonFactor::Visitor>>(
@@ -114,8 +125,6 @@ namespace BayesBoom {
                  report_error("visitor_id, site_id, and num_visits must "
                               "all have the same length.");
                }
-               std::cout << "calling add_data in glue code for "
-                         << visitor_id.size() << " data points.\n";
                for (size_t i = 0; i < visitor_id.size(); ++i) {
                  model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
                }

@@ -20,18 +20,36 @@ import matplotlib.pyplot as plt
 
 def simulate_user_classes(num_users, probs):
     num_classes = probs.shape[0]
-    return np.random.choice(num_classes, num_users, p=probs)
+    user_values = np.random.choice(num_classes, num_users, p=probs)
+    user_labels = random_strings(num_users, 10)
+    return pd.Series(user_values, index=user_labels)
 
 
 def simulate_site_params(num_sites, num_categories):
-    ans = np.random.rand(num_sites, num_categories)
-    return ans
+    values = np.random.rand(num_sites, num_categories)
+    labels = random_strings(num_sites, 20)
+    return pd.DataFrame(values, index=labels)
 
 
 def random_strings(num_strings, length):
+    """
+    Return a numpy array of lowercase ASCII strings.
+    Args:
+      num_strings: The length of the returned array.
+      length:  The length of each string in the array.
+    """
+    if num_strings > 26**length:
+        raise Exception("Too many strings requested")
     letters = list(string.ascii_lowercase)
     letter_matrix = np.random.choice(letters, (num_strings, length))
-    return np.array(["".join(x) for x in letter_matrix])
+    ans = np.array(["".join(x) for x in letter_matrix])
+    while len(np.unique(ans)) < num_strings:
+        levels, counts = np.unique(ans, return_counts=True)
+        duplicates = levels[counts > 1]
+        dup_counts = counts[counts > 1]
+        for i in range(len(duplicates)):
+            ans[ans==duplicates[i]] = random_strings(dup_counts[i], length)
+    return ans
 
 
 def simulate_pfm_data(user_classes, site_params):
@@ -43,35 +61,25 @@ def simulate_pfm_data(user_classes, site_params):
       site_params: A num_sites by num_classes matrix giving the Poisson rate
         parameters for users in each category.
     """
-    num_users = len(user_classes)
-    num_sites = site_params.shape[0]
-
-    user_ids = random_strings(num_users, length=10)
-    site_ids = random_strings(num_sites, length=20)
-
     frames = []
-
     for i, level in enumerate(user_classes):
-        lam = site_params[:, level]
+        lam = site_params.iloc[:, level]
         counts = np.random.poisson(lam)
         nvisits = np.sum(counts > 0)
 
         # Each frame is the data from a single user.
         frame = pd.DataFrame(
             {
-                "user": np.full(nvisits, user_ids[i]),
-                "site": site_ids[counts > 0],
+                "user": np.full(nvisits, user_classes.index[i]),
+                "site": site_params.index[counts > 0],
                 "count": counts[counts > 0]
             }
         )
         frames.append(frame)
 
-    observed = pd.concat(frames, axis=0, ignore_index=True)
-    return (
-        observed,
-        pd.Series(user_classes, index=user_ids),
-        pd.DataFrame(site_params, index=site_ids)
-    )
+    import pdb
+    #     pdb.set_trace()
+    return pd.concat(frames, axis=0, ignore_index=True)
 
 
 class PoissonFactorModelTest(unittest.TestCase):
@@ -80,18 +88,12 @@ class PoissonFactorModelTest(unittest.TestCase):
         self.simulate_data(num_users=1000, num_sites=50, num_classes=4)
 
     def simulate_data(self, num_users, num_sites, num_classes):
-        class_probs = np.random.randn(num_classes) ** 2
-        class_probs = class_probs / np.sum(class_probs)
-        self._class_probs = class_probs
+        self._class_probs = np.random.randn(num_classes) ** 2
+        self._class_probs = self._class_probs / np.sum(self._class_probs)
         self._user_classes = simulate_user_classes(
             num_users, self._class_probs)
         self._site_params = simulate_site_params(num_sites, num_classes)
-
-        (
-            self._data,
-            self._user_classes,
-            self._site_params
-        ) = simulate_pfm_data(self._user_classes, self._site_params)
+        self._data = simulate_pfm_data(self._user_classes, self._site_params)
 
     @property
     def num_classes(self):
@@ -110,7 +112,7 @@ class PoissonFactorModelTest(unittest.TestCase):
         return self._site_params.shape[0]
 
     def test_imputation(self):
-        self.simulate_data(num_users=10, num_classes=4, num_sites=500)
+        self.simulate_data(num_users=500, num_classes=4, num_sites=50)
         model = PoissonFactorModel(self.num_classes)
         model.set_default_user_prior(
             np.full(self.num_classes, 1.0 / self.num_classes))
@@ -120,15 +122,27 @@ class PoissonFactorModelTest(unittest.TestCase):
 
         site_ids = model.site_ids
         true_lam = self._site_params.loc[site_ids, :].values
-        prior_a = np.ones_like(true_lam) * 1e+8
+        prior_a = np.ones_like(true_lam) * 1e+6
         prior_b = prior_a/true_lam
         model.set_site_priors(site_ids, prior_a, prior_b)
+        niter = 200
 
-        niter = 1000
         model.run_mcmc(niter=niter)
-        import pdb
-        pdb.set_trace()
-        print("here")
+        self.assertTrue(np.allclose(
+            model._model.site(site_ids[0]).prior_a.to_numpy(),
+            prior_a[0, :]))
+        self.assertTrue(np.allclose(
+            model._model.site(site_ids[0]).prior_b.to_numpy(),
+            prior_b[0, :]))
+
+        ud = model.user_distribution()
+        ud["truth"] = self._user_classes[model.user_ids]
+        ud["chosen"] = np.argmax(ud.values[:, :4], axis=1)
+        xtab = pd.crosstab(ud["truth"], ud["chosen"])
+
+        # The correctly classified users are on the diagonal of the crosstab
+        # matrix.  Most of the users should be correctly classified.
+        self.assertGreater(np.sum(np.diag(xtab)), .9 * self.num_users)
 
     def test_site_params(self):
         model = PoissonFactorModel(self.num_classes)
@@ -166,7 +180,6 @@ class PoissonFactorModelTest(unittest.TestCase):
         # =====================================================================
         # Test that the data stored inside the C++ model agree with the data
         # stored in python.
-
         spot_check_sites = np.random.choice(self._site_params.index, 10)
         for sid in spot_check_sites:
             good = self._data["site"] == sid
@@ -199,28 +212,21 @@ class PoissonFactorModelTest(unittest.TestCase):
         # =====================================================================
         # For users that are unknown, check that the model is choosing the true
         # class as 'most likely' most of the time.
-        success_count = 0
-        trial_count = 0
-        for i in range(num_known, len(self._user_classes)):
-            trial_count += 1
-            uid = self._user_classes.index[i]
-            unknown_user_draws = model.user_draws(uid)
-            unknown_user_true_value = self._user_classes[uid]
-            count_distribution = R.table(unknown_user_draws)
-            success_count += (
-                count_distribution.argmax() == unknown_user_true_value
-            )
-        self.assertGreater(success_count / trial_count, .5)
+        ud = model.user_distribution()
+        ud["truth"] = self._user_classes[model.user_ids]
+        ud["chosen"] = np.argmax(ud.values[:, :4], axis=1)
+        xtab = pd.crosstab(ud["truth"], ud["chosen"])
+        self.assertGreater(np.sum(np.diag(xtab)), .9 * self.num_users)
 
         # =====================================================================
         # Check that the marginal distributions of the site parameters cover the
         # true values reasonably frequently.
 
         # Check for a single site.
-        sid = model._site_ids[-1]
-        lam = model.site(sid)
-        truth = self._site_params.loc[sid, :]
-        R.BoxplotTrue(lam, truth=truth)
+        # sid = model._site_ids[-1]
+        # lam = model.site(sid)
+        # truth = self._site_params.loc[sid, :]
+        # R.BoxplotTrue(lam, truth=truth)
 
         # Check for all sites.
         num_lam = self.num_classes * self.num_sites
@@ -230,15 +236,14 @@ class PoissonFactorModelTest(unittest.TestCase):
 
         self.assertTrue(test_utils.check_mcmc_matrix(all_lam, true_lam))
 
-
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa
 
     # Turn warnings into errors.
-    import warnings
-    warnings.simplefilter("error")
+    # import warnings
+    # warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an
@@ -251,7 +256,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_imputation()
+    rig.test_mcmc()
 
     print("Goodbye, cruel world!")
 

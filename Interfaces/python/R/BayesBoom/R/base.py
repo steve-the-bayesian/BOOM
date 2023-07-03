@@ -136,10 +136,13 @@ def table(*args):
         else:
             x = pd.Series(args[0])
             return x.value_counts()
+    elif len(args == 2):
+        x = args[0]
+        y = args[1]
+        return _fast_crosstab(x, y)
     else:
         x = pd.DataFrame(*args)
         return x.crosstab(margins=True)
-
 
 def order(input, decreasing=False):
     """

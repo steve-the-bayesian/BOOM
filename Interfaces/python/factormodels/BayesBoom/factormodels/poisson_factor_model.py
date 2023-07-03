@@ -125,10 +125,10 @@ class PoissonFactorModel:
             columns to levels of the latent factor.  Entries are the "scale"
             parameter in a Gamma(shape, scale) prior distribution.
         """
-        self._model.set_site_priors(
-            site_ids,
-            R.to_boom_matrix(prior_a),
-            R.to_boom_matrix(prior_b))
+        self._site_specific_priors = {
+            "prior_a": pd.DataFrame(prior_a, index=site_ids),
+            "prior_b": pd.DataFrame(prior_b, index=site_ids),
+        }
 
     def _initialize_model(self, nlevels: int):
         self._model = boom.PoissonFactorModel(self._nlevels)
@@ -161,7 +161,8 @@ class PoissonFactorModel:
         self._user_ids = self._model.visitor_ids
         self._site_ids = self._model.site_ids
         for i in range(niter):
-            print(f"iteration {i+1} of {niter}")
+            if (i % 100 == 0):
+                print(f"iteration {i} of {niter}")
             self._model.sample_posterior()
             self._record_draw(i)
 
@@ -170,6 +171,15 @@ class PoissonFactorModel:
         if self._user_ids[idx] != user_id:
             raise ValueError(f"User {user_id} could not be found.")
         return self._user_draws[:, idx]
+
+    def user_distribution(self, burn=None):
+        levels = np.arange(self.num_categories, dtype="float")
+        user_counts = [R.table(self._user_draws[:, x]).reindex(
+            levels, fill_value=0)
+                       for x in range(self._user_draws.shape[1])]
+        user_counts = pd.DataFrame(user_counts, index=self._user_ids)
+        totals = user_counts.sum(axis=1)
+        return user_counts.div(totals, axis=0)
 
     def site_draws(self, site_id):
         idx = np.searchsorted(self._site_ids, site_id)
@@ -195,22 +205,20 @@ class PoissonFactorModel:
                 known_users.index,
                 probs)
 
-        prior_a = np.empty((self.num_sites, self.num_categories))
-        prior_b = np.empty((self.num_sites, self.num_categories))
-        for k, prior in enumerate(self._default_site_prior):
-            prior_a[:, k] = prior.a
-            prior_b[:, k] = prior.b
-
         site_ids = self.site_ids
-        if self._site_specific_priors:
-            prior_a = pd.DataFrame(prior_a, index=site_ids)
-            prior_b = pd.DataFrame(prior_b, index=site_ids)
+        prior_a = pd.DataFrame(np.empty((self.num_sites, self.num_categories)),
+                               index=site_ids)
+        prior_b = pd.DataFrame(np.empty((self.num_sites, self.num_categories)),
+                               index=site_ids)
+        for k, prior in enumerate(self._default_site_prior):
+            prior_a.iloc[:, k] = prior.a
+            prior_b.iloc[:, k] = prior.b
 
-        for site_id, prior_list in self._site_specific_priors:
-            a = np.array([prior.a for prior in prior_list])
-            b = np.array([prior.b for prior in prior_list])
-            prior_a.loc[site_id, :] = a
-            prior_b.loc[site_id, :] = b
+        if self._site_specific_priors:
+            site_specific_ids = self._site_specific_priors["prior_a"].index
+            prior_a.loc[site_specific_ids, :] = self._site_specific_priors["prior_a"]
+            prior_b.loc[site_specific_ids, :] = self._site_specific_priors["prior_b"]
+
         model.set_site_priors(
             site_ids,
             R.to_boom_matrix(prior_a),
