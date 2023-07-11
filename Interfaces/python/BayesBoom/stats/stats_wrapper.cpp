@@ -139,7 +139,14 @@ namespace BayesBoom {
              },
              py::arg("x"),
              "Args:\n"
-             "  x: A data point to add to the empirical distribution.")
+             "  x: A data point to add to the empirical distribution.\n")
+        .def("add",
+             [](IQagent &agent, const Vector &x) {
+               agent.add(value);
+             },
+             py::arg("x"),
+             "Args:\n"
+             "  x:  A boom.Vector of data to add to the empirical distribution.\n")
         .def("quantile", &IQagent::quantile, py::arg("prob"),
              "Args:\n"
              "  prob:  The probability for which a quantile is desired.")

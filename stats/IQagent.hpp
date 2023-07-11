@@ -41,15 +41,38 @@ namespace BOOM {
     Vector fminus;
   };
 
+  // An approximate empirical distribution of continuous numeric data.
   class IQagent {
    public:
+    // Args:
+    //   bufsize: The number of data points to store before triggering a CDF
+    //     refresh.
     explicit IQagent(uint BufSize = 20);
+
+    // Args:
+    //   probs:  The focal quantiles of the empirical distribution.
+    //   bufsize: The number of data points to store before triggering a CDF
+    //     refresh.
     explicit IQagent(const Vector& probs, uint BufSize = 20);
+
+    // Args:
+    //   state:  The serialized state of a previously fit IQagent.
     explicit IQagent(const IqAgentState &state);
+
+    // Add a data point to the empirical distribution.
     void add(double x);
+
+    // Add a collection of data points to the empirical distribution.
     void add(const Vector &x);
+
+    // Return the approximate quantile associated with the given probability.
     double quantile(double prob) const;
+
+    // Return the approximate fraction of data less than the supplied x value.
     double cdf(double x) const;
+
+    // Incorporate any buffered data into the approximate CDF, emptying the
+    // buffer in the process.
     void update_cdf();
 
     IqAgentState save_state() const;
