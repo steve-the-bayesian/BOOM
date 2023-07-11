@@ -15,7 +15,7 @@ import pandas as pd
 # import pickle
 import string
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 def simulate_user_classes(num_users, probs):
@@ -48,7 +48,7 @@ def random_strings(num_strings, length):
         duplicates = levels[counts > 1]
         dup_counts = counts[counts > 1]
         for i in range(len(duplicates)):
-            ans[ans==duplicates[i]] = random_strings(dup_counts[i], length)
+            ans[ans == duplicates[i]] = random_strings(dup_counts[i], length)
     return ans
 
 
@@ -77,8 +77,6 @@ def simulate_pfm_data(user_classes, site_params):
         )
         frames.append(frame)
 
-    import pdb
-    #     pdb.set_trace()
     return pd.concat(frames, axis=0, ignore_index=True)
 
 
@@ -235,6 +233,7 @@ class PoissonFactorModelTest(unittest.TestCase):
                               (1, num_lam)).ravel()
 
         self.assertTrue(test_utils.check_mcmc_matrix(all_lam, true_lam))
+
 
 _debug_mode = False
 
