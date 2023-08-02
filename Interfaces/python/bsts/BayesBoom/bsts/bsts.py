@@ -11,6 +11,7 @@ from .state_models import StateModel
 import matplotlib.pyplot as plt
 import copy
 import patsy
+from datetime import datetime
 
 
 class Bsts:
@@ -159,6 +160,10 @@ class Bsts:
         self._allocate_space(niter)
 
         for i in range(niter):
+            if ping is not None and ping > 0 and i % ping == 0:
+                timestamp = datetime.now()
+                sep = "=" * 20
+                print(f"{sep} {timestamp} Iteration {i} of {niter} {sep}")
             self._model.sample_posterior()
             self._record_draws(i)
 
