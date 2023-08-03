@@ -42,8 +42,8 @@
 namespace BOOM {
 
   class Data {  // abstract base class
-   public:
     RefCounted rc_;
+   public:
     void up_count() { rc_.up_count(); }
     void down_count() { rc_.down_count(); }
     unsigned int ref_count() { return rc_.ref_count(); }

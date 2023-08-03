@@ -13,5 +13,5 @@ blah
 foo
 qux
 *.egg-info
-build
+*/python/*/build
 .bazelrc

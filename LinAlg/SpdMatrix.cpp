@@ -214,7 +214,13 @@ namespace BOOM {
     bool ok = true;
     SpdMatrix ans = inv(ok);
     if (!ok) {
-      report_error("Matrix not positive definite.");
+      std::ostringstream err;
+      err << "Matrix not positive definite...\n"
+          << *this
+          << "\nEigenvalues...\n"
+          << eigenvalues(*this)
+          << "\n";
+      report_error(err.str());
     }
     return ans;
   }
