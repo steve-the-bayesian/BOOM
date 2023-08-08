@@ -19,7 +19,8 @@ namespace {
   TEST_F(GpTest, MeanPredictionTest) {
     GaussianProcessRegressionModel model(
         new ZeroFunction,
-        new RadialBasisFunction(1.7));
+        new RadialBasisFunction(.17),
+        new UnivParams(49));
 
     int nobs = 20;
 

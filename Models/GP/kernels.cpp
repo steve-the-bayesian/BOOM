@@ -44,6 +44,7 @@ namespace BOOM {
           << ".";
       report_error(err.str());
     }
+    signal();
     scale_ = scale;
   }
 
@@ -70,6 +71,78 @@ namespace BOOM {
   Vector::const_iterator RadialBasisFunction::unvectorize(const Vector &v, bool minimal) {
     Vector::const_iterator it = v.cbegin();
     return unvectorize(it, minimal);
+  }
+
+  //===========================================================================
+
+  MahalanobisKernel::MahalanobisKernel(int dim, double scale)
+      : scale_(scale),
+        sample_size_(1.0),
+        xtx_inv_(dim, 1.0)
+  {}
+
+  MahalanobisKernel::MahalanobisKernel(const Matrix &X, double scale, double diagonal_shrinkage)
+      : scale_(1.0),
+        sample_size_(X.nrow()),
+        xtx_inv_(X.inner())
+  {
+    Vector diagonal = xtx_inv_.diag();
+    if (diagonal.min() <= 0.0) {
+      report_error("An all-zero column was passed as part of X.");
+    }
+    if (!xtx_inv_.all_finite()) {
+      report_error("The matrix X contains non-finite values.");
+    }
+
+    xtx_inv_ *= (1 - diagonal_shrinkage);
+    xtx_inv_.diag() += diagonal_shrinkage * diagonal;
+    xtx_inv_ = xtx_inv_.inv();
+  }
+
+  MahalanobisKernel * MahalanobisKernel::clone() const {
+    return new MahalanobisKernel(*this);
+  }
+
+  uint MahalanobisKernel::size(bool) const {
+      return 1;
+  }
+
+  void MahalanobisKernel::set_scale(double scale) {
+    if (scale <= 0.0) {
+      report_error("scale must be positive.");
+    }
+    if (!std::isfinite(scale)) {
+      report_error("scale must be finite.");
+    }
+    scale_ = scale;
+    signal();
+  }
+
+  double MahalanobisKernel::operator()(const ConstVectorView &x1,
+                                       const ConstVectorView &x2) const {
+    return xtx_inv_.Mdist(x1, x2) * scale_ * sample_size_;
+  }
+
+  std::ostream & MahalanobisKernel::display(std::ostream &out) const {
+    out << "MahalanobisKernel with respect to the matrix: \n"
+        << scale_ * sample_size_ * xtx_inv_;
+    return out;
+  }
+
+  Vector MahalanobisKernel::vectorize(bool) const {
+    return Vector(1, scale_);
+  }
+
+  Vector::const_iterator MahalanobisKernel::unvectorize(
+      Vector::const_iterator &v, bool) {
+    scale_ = *v;
+    return ++v;
+  }
+
+  Vector::const_iterator MahalanobisKernel::unvectorize(
+      const Vector &v, bool minimal) {
+    Vector::const_iterator b = v.begin();
+    return unvectorize(b, minimal);
   }
 
 }  // namespace BOOM

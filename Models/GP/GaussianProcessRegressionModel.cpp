@@ -23,8 +23,9 @@ namespace BOOM {
 
   GaussianProcessRegressionModel::GaussianProcessRegressionModel(
       const Ptr<FunctionParams> &mean_function,
-      const Ptr<KernelParams> &kernel)
-      : ParamPolicy(mean_function, kernel),
+      const Ptr<KernelParams> &kernel,
+      const Ptr<UnivParams> &sigsq)
+      : ParamPolicy(mean_function, kernel, sigsq),
         kernel_matrix_current_(false)
   {
     add_observers();
@@ -34,7 +35,8 @@ namespace BOOM {
       const GaussianProcessRegressionModel &rhs)
       : Model(rhs),
         ParamPolicy(Ptr<FunctionParams>(mean_param()->clone()),
-                    Ptr<KernelParams>(kernel_param()->clone())),
+                    Ptr<KernelParams>(kernel_param()->clone()),
+                    Ptr<UnivParams>(sigsq_param()->clone())),
         DataPolicy(rhs),
         PriorPolicy(rhs)
   {
@@ -74,7 +76,7 @@ namespace BOOM {
     SpdMatrix base_variance(nx);
     for (int i = 0; i < nx; ++i) {
       yhat[i] = mean_function(X.row(i));
-      for (int j = 0; j <= i; ++i) {
+      for (int j = 0; j <= i; ++j) {
         base_variance(i, j) = kernel(X.row(i), X.row(j));
         if (j < i) {
           base_variance(j, i) = base_variance(i, j);
@@ -97,8 +99,46 @@ namespace BOOM {
     auto obs = [this]() {this->kernel_matrix_current_ = false;};
     kernel_param()->add_observer(this, obs);
     mean_param()->add_observer(this, obs);
+    sigsq_param()->add_observer(this, obs);
   }
 
+  Vector GaussianProcessRegressionModel::posterior_residuals() const {
+    const std::vector<Ptr<RegressionData>> &data(dat());
+    size_t sample_size = data.size();
+    Vector ans(sample_size);
+    for (size_t i = 0; i < sample_size; ++i) {
+      ans[i] = data[i]->y() - predict(data[i]->x());
+    }
+    return ans;
+  }
+
+  double GaussianProcessRegressionModel::loglike(const Vector &theta) const {
+    Vector original_params = vectorize_params(true);
+    GaussianProcessRegressionModel *self =
+        const_cast<GaussianProcessRegressionModel *>(this);
+    self->unvectorize_params(theta, true);
+    double ans = self->evaluate_log_likelihood();
+    self->unvectorize_params(original_params, true);
+    return ans;
+  }
+
+  double GaussianProcessRegressionModel::evaluate_log_likelihood() const {
+    const std::vector<Ptr<RegressionData>> &data(dat());
+    if (data.size() == 0) {
+      return negative_infinity();
+    }
+    size_t sample_size = data.size();
+    int dim = data[0]->x().size();
+
+    Matrix X(sample_size, dim);
+    Vector y(sample_size);
+    for (size_t i = 0; i < sample_size; ++i) {
+      X.row(i) = data[i]->x();
+      y[i] = data[i]->y();
+    }
+    Ptr<MvnModel> pred = predict_distribution(X);
+    return pred->logp(y);
+  }
 
   void GaussianProcessRegressionModel::refresh_kernel_matrix() const {
     if (kernel_matrix_current_) {
@@ -117,6 +157,8 @@ namespace BOOM {
         K(i, j) = kernel(data[i]->x(), data[j]->x());
         if (j < i) {
           K(j, i) = K(i, j);
+        } else {
+          K(i, i) += residual_variance();
         }
       }
     }

@@ -92,7 +92,8 @@ namespace BOOM {
     Vector vectorize(bool minimal=true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
-    Vector::const_iterator unvectorize( const Vector &v, bool minimal = true) override;
+    Vector::const_iterator unvectorize(const Vector &v,
+                                       bool minimal = true) override;
 
    private:
     double scale_;
@@ -102,6 +103,40 @@ namespace BOOM {
   // TODO: implement the other kernels from :
   //
   // https://scikit-learn.org/stable/modules/gaussian_process.html#kernels-for-gaussian-processes
+
+
+  // A kernel using the design matrix X to create a distance matrix scale_factor
+  // * X'X / n
+  class MahalanobisKernel : public KernelParams {
+   public:
+    explicit MahalanobisKernel(int dim, double scale = 1.0);
+    explicit MahalanobisKernel(const Matrix &X,
+                               double scale = 1.0,
+                               double diagonal_shrinkage = 0.05);
+    MahalanobisKernel *clone() const override;
+
+    uint size(bool = true) const override;
+    double scale() const {
+      return scale_;
+    }
+    void set_scale(double scale);
+
+    double operator()(const ConstVectorView &x1,
+                      const ConstVectorView &x2) const override;
+
+    std::ostream &display(std::ostream &out) const override;
+    Vector vectorize(bool minimal=true) const override;
+    Vector::const_iterator unvectorize(Vector::const_iterator &v,
+                                       bool minimal = true) override;
+    Vector::const_iterator unvectorize(const Vector &v,
+                                       bool minimal = true) override;
+
+   private:
+    double scale_;
+    double sample_size_;
+    SpdMatrix xtx_inv_;
+
+  };
 
 
 }  // namespace BOOM
