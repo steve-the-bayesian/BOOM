@@ -78,25 +78,23 @@ namespace BOOM {
   MahalanobisKernel::MahalanobisKernel(int dim, double scale)
       : scale_(scale),
         sample_size_(1.0),
-        xtx_inv_(dim, 1.0)
+        scaled_shrunk_xtx_inv_(dim, 1.0)
   {}
 
   MahalanobisKernel::MahalanobisKernel(const Matrix &X, double scale, double diagonal_shrinkage)
       : scale_(1.0),
         sample_size_(X.nrow()),
-        xtx_inv_(X.inner())
+        scaled_shrunk_xtx_inv_(X.inner())
   {
-    Vector diagonal = xtx_inv_.diag();
-    if (diagonal.min() <= 0.0) {
+    if (scaled_shrunk_xtx_inv_.diag().min() <= 0.0) {
       report_error("An all-zero column was passed as part of X.");
     }
-    if (!xtx_inv_.all_finite()) {
+    if (!scaled_shrunk_xtx_inv_.all_finite()) {
       report_error("The matrix X contains non-finite values.");
     }
-
-    xtx_inv_ *= (1 - diagonal_shrinkage);
-    xtx_inv_.diag() += diagonal_shrinkage * diagonal;
-    xtx_inv_ = xtx_inv_.inv();
+    scaled_shrunk_xtx_inv_ *= scale / sample_size_;
+    self_diagonal_average_inplace(scaled_shrunk_xtx_inv_, diagonal_shrinkage);
+    scaled_shrunk_xtx_inv_ = scaled_shrunk_xtx_inv_.inv();
   }
 
   MahalanobisKernel * MahalanobisKernel::clone() const {
@@ -114,18 +112,20 @@ namespace BOOM {
     if (!std::isfinite(scale)) {
       report_error("scale must be finite.");
     }
-    scale_ = scale;
+    scaled_shrunk_xtx_inv_ *= scale_;  // undo the old scale
+    scaled_shrunk_xtx_inv_ /= scale;   // apply the new scale
+    scale_ = scale;                    // store the new scale
     signal();
   }
 
   double MahalanobisKernel::operator()(const ConstVectorView &x1,
                                        const ConstVectorView &x2) const {
-    return xtx_inv_.Mdist(x1, x2) * scale_ * sample_size_;
+    return scaled_shrunk_xtx_inv_.Mdist(x1, x2);
   }
 
   std::ostream & MahalanobisKernel::display(std::ostream &out) const {
     out << "MahalanobisKernel with respect to the matrix: \n"
-        << scale_ * sample_size_ * xtx_inv_;
+        << scaled_shrunk_xtx_inv_;
     return out;
   }
 

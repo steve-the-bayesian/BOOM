@@ -106,7 +106,10 @@ namespace BOOM {
 
 
   // A kernel using the design matrix X to create a distance matrix scale_factor
-  // * X'X / n
+  // * D(X'X, a) / n
+  //
+  // Where D(S, a) = (1-a) * S + a * diag(S) is an operator that averages the
+  // matrix S with its diagonal (using weight a applied to the diagonal).
   class MahalanobisKernel : public KernelParams {
    public:
     explicit MahalanobisKernel(int dim, double scale = 1.0);
@@ -134,7 +137,8 @@ namespace BOOM {
    private:
     double scale_;
     double sample_size_;
-    SpdMatrix xtx_inv_;
+
+    SpdMatrix scaled_shrunk_xtx_inv_;
 
   };
 
