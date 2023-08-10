@@ -18,6 +18,7 @@
 
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 #include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -128,16 +129,15 @@ namespace BOOM {
       return negative_infinity();
     }
     size_t sample_size = data.size();
-    int dim = data[0]->x().size();
 
-    Matrix X(sample_size, dim);
+    refresh_kernel_matrix();
+    Vector mu(sample_size);
     Vector y(sample_size);
     for (size_t i = 0; i < sample_size; ++i) {
-      X.row(i) = data[i]->x();
+      mu[i] = mean_function(data[i]->x());
       y[i] = data[i]->y();
     }
-    Ptr<MvnModel> pred = predict_distribution(X);
-    return pred->logp(y);
+    return dmvn(y, mu, Kinv_, true);
   }
 
   void GaussianProcessRegressionModel::refresh_kernel_matrix() const {

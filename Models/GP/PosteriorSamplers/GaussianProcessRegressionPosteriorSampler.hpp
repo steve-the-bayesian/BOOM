@@ -29,6 +29,7 @@ namespace BOOM {
         : private RefCounted {
      public:
       virtual void draw(RNG &rng) = 0;
+      virtual double logpri() const = 0;
 
       friend void intrusive_ptr_add_ref(ParameterSampler *sam) {
         sam->up_count();
@@ -45,6 +46,7 @@ namespace BOOM {
     class NullSampler : public ParameterSampler {
      public:
       void draw(RNG &) override {}
+      double logpri() const override {return 0.0;}
     };
   }  // namespace GP
 

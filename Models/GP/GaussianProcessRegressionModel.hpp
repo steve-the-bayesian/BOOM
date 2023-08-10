@@ -127,12 +127,21 @@ namespace BOOM {
     //----------- Prediction
     double predict(const Vector &x) const;
 
-    // Returns a (joint) distribution over the Y values of
+    // Args:
+    //   X: The matrix of points (rows in the matrix) where the predictive
+    //     distribution is desired.
+    //
+    // Returns:
+    //   A MvnModel object giving the predictive distribution at the locations
+    //   specified in X.
     Ptr<MvnModel> predict_distribution(const Matrix &X) const;
 
     Vector posterior_residuals() const;
 
     double loglike(const Vector &theta) const override;
+    double log_likelihood() const override {
+      return evaluate_log_likelihood();
+    }
 
    private:
     double evaluate_log_likelihood() const;

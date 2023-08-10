@@ -41,6 +41,12 @@ namespace BOOM {
         residual_variance_sampler_(residual_variance_prior)
   {}
 
+  double GPRPS::logpri() const {
+    return mean_function_sampler_->logpri()
+        + kernel_sampler_->logpri()
+        + residual_variance_sampler_.log_prior(model_->sigsq());
+  }
+
   void GPRPS::draw() {
     draw_residual_variance();
     kernel_sampler_->draw(rng());

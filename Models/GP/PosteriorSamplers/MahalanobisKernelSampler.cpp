@@ -25,6 +25,8 @@ namespace BOOM {
       GaussianProcessRegressionModel *model,
       const Ptr<DoubleModel> &prior)
       : kernel_(kernel),
+        model_(model),
+        prior_(prior),
         slice_(nullptr)
   {
 
@@ -44,6 +46,10 @@ namespace BOOM {
 
     slice_.reset(new ScalarSliceSampler(target));
     slice_->set_lower_limit(0.0);
+  }
+
+  double MahalanobisKernelSampler::logpri() const {
+    return prior_->logp(kernel_->scale());
   }
 
   void MahalanobisKernelSampler::draw(RNG &rng) {

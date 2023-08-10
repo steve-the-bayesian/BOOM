@@ -24,17 +24,20 @@
 
 namespace BOOM {
 
-  class MahalanobisKernelSampler : GP::ParameterSampler {
+  class MahalanobisKernelSampler : public GP::ParameterSampler {
    public:
     MahalanobisKernelSampler(
         MahalanobisKernel *kernel,
         GaussianProcessRegressionModel *model,
         const Ptr<DoubleModel> &prior);
 
+    double logpri() const override;
     void draw(RNG &rng) override;
 
    private:
     MahalanobisKernel *kernel_;
+    GaussianProcessRegressionModel *model_;
+    Ptr<DoubleModel> prior_;
     Ptr<ScalarSliceSampler> slice_;
   };
 

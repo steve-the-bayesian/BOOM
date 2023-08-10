@@ -31,6 +31,7 @@ namespace BOOM {
    public:
     virtual FunctionParams * clone() const override = 0;
     virtual double operator()(const ConstVectorView &x) const = 0;
+    virtual Vector operator()(const Matrix &X) const;
   };
 
   class ZeroFunction : public FunctionParams {
@@ -41,6 +42,8 @@ namespace BOOM {
     virtual double operator()(const ConstVectorView &x) const override {
       return 0;
     }
+
+    using FunctionParams::operator();
 
     std::ostream & display(std::ostream &out) const override {
       out << "ZeroFunction";
@@ -71,6 +74,8 @@ namespace BOOM {
     KernelParams * clone() const override = 0;
     virtual double operator()(const ConstVectorView &x1,
                               const ConstVectorView &x2) const = 0;
+
+    virtual SpdMatrix operator()(const Matrix &predictors) const;
   };
 
   //===========================================================================
@@ -87,6 +92,7 @@ namespace BOOM {
 
     double operator()(const ConstVectorView &x1,
                       const ConstVectorView &x2) const override;
+    using KernelParams::operator();
 
     std::ostream &display(std::ostream &out) const override;
     Vector vectorize(bool minimal=true) const override;
@@ -126,6 +132,7 @@ namespace BOOM {
 
     double operator()(const ConstVectorView &x1,
                       const ConstVectorView &x2) const override;
+    using KernelParams::operator();
 
     std::ostream &display(std::ostream &out) const override;
     Vector vectorize(bool minimal=true) const override;
