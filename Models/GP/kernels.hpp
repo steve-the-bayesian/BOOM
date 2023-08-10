@@ -111,8 +111,9 @@ namespace BOOM {
   // https://scikit-learn.org/stable/modules/gaussian_process.html#kernels-for-gaussian-processes
 
 
-  // A kernel using the design matrix X to create a distance matrix scale_factor
-  // * D(X'X, a) / n
+  // A kernel using the design matrix X to create a distance metric:
+  //
+  //   exp(-0.5 * scale_factor * D(X'X, a) / n)
   //
   // Where D(S, a) = (1-a) * S + a * diag(S) is an operator that averages the
   // matrix S with its diagonal (using weight a applied to the diagonal).

@@ -167,6 +167,4 @@ namespace BOOM {
     kernel_matrix_current_ = true;
   }
 
-
-
 }  // namespace BOOM

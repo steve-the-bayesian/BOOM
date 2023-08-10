@@ -49,7 +49,7 @@ namespace {
     Vector x2(dim);
     x2.randomize();
 
-    EXPECT_NEAR(k(x1, x2), M.Mdist(x1, x2), 1e-8)
+    EXPECT_NEAR(k(x1, x2), exp(-.5 * M.Mdist(x1, x2)), 1e-8)
         << "M = \n" << M
         << "kernel = \n"
         << k;
