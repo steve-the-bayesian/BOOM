@@ -125,6 +125,16 @@ glm_headers = (
     )
 boom_headers += glm_headers
 
+gp_sources = (
+    glob(BOOM_DIR + "Models/GP/*.cpp")
+    + glob(BOOM_DIR + "Models/GP/PosteriorSamplers/*.cpp")
+    )
+gp_headers = (
+    glob(BOOM_DIR + "Models/GP/*.hpp")
+    + glob(BOOM_DIR + "Models/GP/PosteriorSamplers/*.hpp")
+    )
+boom_headers += gp_headers
+
 factor_sources = (
     glob(BOOM_DIR + "Models/FactorModels/*.cpp")
     + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.cpp")
@@ -252,6 +262,7 @@ boom_library_sources = (
     + bart_sources
     + factor_sources
     + glm_sources
+    + gp_sources
     + hmm_sources
     + hierarchical_sources
     + impute_sources
@@ -268,6 +279,7 @@ boom_extension_sources = (
     [BOOM_DIR + "pybind11/module.cpp"]
     + glob(BOOM_DIR + "pybind11/Models/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/GP/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Impute/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Mixtures/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/FactorModels/*.cpp")
