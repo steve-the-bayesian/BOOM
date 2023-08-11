@@ -80,8 +80,13 @@ namespace BOOM {
 
   //===========================================================================
   // A radial basis function kernel.
+  // K(x1, x2) = exp(-.5 * ||x1 - x2||^2 / scale^2)
   class RadialBasisFunction : public KernelParams {
    public:
+
+    // Args:
+    //   scale: The size of a "standard deviation" over which the kernel should
+    //     reach.
     RadialBasisFunction(double scale);
     RadialBasisFunction *clone() const override;
 
