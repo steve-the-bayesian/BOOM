@@ -7,6 +7,7 @@
 #include "Models/GP/kernels.hpp"
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 #include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"
+#include "Models/GP/PosteriorSamplers/MahalanobisKernelSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -109,8 +110,191 @@ namespace BayesBoom {
              "  X:  TBD\n"
              "  scale:  TBD\n"
              "  diagonal_shrinkage:  TBD\n")
+        .def_property_readonly(
+            "scale",
+            [](const MahalanobisKernel &kernel) {
+              return kernel.scale();
+            })
         ;
 
-  }
+    py::class_<GaussianProcessRegressionModel,
+               PriorPolicy,
+               Ptr<GaussianProcessRegressionModel>>(
+                   boom, "GaussianProcessRegressionModel",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](FunctionParams &mean_function,
+               KernelParams &kernel,
+               double residual_sd) {
+              return new GaussianProcessRegressionModel(
+                  Ptr<FunctionParams>(&mean_function),
+                  Ptr<KernelParams>(&kernel),
+                  new UnivParams(square(residual_sd)));
+            }),
+             py::arg("mean_function"),
+             py::arg("kernel"),
+             py::arg("residual_sd"),
+             "Args:\n\n"
+             "  mean_function:  An object of class boom.FunctionParams "
+             "giving the prior mean of the Gaussian process.\n"
+             "  kernel: An objet of class boom.KernelParams giving the kernel "
+             "(variance) of the Gaussian process.\n"
+             "  residual_sd:  the residual standard deviation of the "
+             "Gaussian process.\n")
+        .def_property_readonly(
+            "kernel_param",
+            [](GaussianProcessRegressionModel *model) {
+              return model->kernel_param();
+            })
+        .def_property_readonly(
+            "mean_param",
+            [](GaussianProcessRegressionModel *model) {
+              return model->mean_param();
+            })
+        .def_property_readonly(
+            "sigsq_param",
+            [](GaussianProcessRegressionModel *model) {
+              return model->sigsq_param();
+            })
+        .def("kernel",
+             [](GaussianProcessRegressionModel *model,
+                const Vector &x1,
+                const Vector &x2) {
+               return model->kernel(x1, x2);
+             })
+        .def("mean_function",
+             [](GaussianProcessRegressionModel *model, const Vector &x) {
+               return model->mean_function(x);
+             })
+        .def_property_readonly(
+            "sigma",
+            [](const GaussianProcessRegressionModel *model) {
+              return model->sigma();})
+        .def_property_readonly(
+            "sigsq",
+            [](const GaussianProcessRegressionModel *model) {
+              return model->sigsq();})
+        .def_property_readonly(
+            "residual_variance",
+            [](const GaussianProcessRegressionModel *model) {
+              return model->sigsq();})
+        .def_property_readonly(
+            "residual_sd",
+            [](const GaussianProcessRegressionModel *model) {
+              return model->sigma();})
+        .def("add_data",
+             [](GaussianProcessRegressionModel *model,
+                const Matrix &X,
+                const Vector &y) {
+               if (X.nrow() <= 0) {
+                 report_error("X must have at least one row.");
+               }
+               if (X.nrow() != y.size()) {
+                 report_error("The number of rows in X must "
+                              "match the length of y.");
+               }
+
+               for (int i = 0; i < X.nrow(); ++i) {
+                 model->add_data(new RegressionData(y[i], X.row(i)));
+               }
+             })
+        .def("add_data",
+             [](GaussianProcessRegressionModel *model,
+                const Vector &y,
+                const Matrix &X) {
+               if (X.nrow() <= 0) {
+                 report_error("X must have at least one row.");
+               }
+               if (X.nrow() != y.size()) {
+                 report_error("The number of rows in X must "
+                              "match the length of y.");
+               }
+
+               for (int i = 0; i < X.nrow(); ++i) {
+                 model->add_data(new RegressionData(y[i], X.row(i)));
+               }
+             })
+        .def("predict",
+             [](GaussianProcessRegressionModel *model,
+                const Vector &x) {
+               return model->predict(x);
+             })
+        .def("predict_distribution",
+             [](GaussianProcessRegressionModel *model,
+                const Matrix &X) {
+               return model->predict_distribution(X);
+             })
+        ;
+
+    py::class_<GP::ParameterSampler, Ptr<GP::ParameterSampler>>(
+        boom, "GpParameterSampler")
+        .def("draw",
+             [](GP::ParameterSampler &sampler, RNG &rng) {
+               sampler.draw(rng);
+             },
+             py::arg("rng"),
+             "Args:\n\n",
+             "  rng:  A boom.RNG random number generator.\n")
+        .def("logpri",
+             [](const GP::ParameterSampler &sampler) {
+               return sampler.logpri();
+             })
+        ;
+
+    py::class_<GP::NullSampler,
+               GP::ParameterSampler,
+               Ptr<GP::NullSampler>>(boom, "GpNullSampler")
+        .def(py::init(
+            []() {
+              return new GP::NullSampler;
+            }),
+             "A NullSampler object can be used as a placeholder for "
+             "FunctionParams or KernelParams objects that have no "
+             "unknown parameters.\n"
+             )
+        ;
+
+    py::class_<MahalanobisKernelSampler,
+               GP::ParameterSampler,
+               Ptr<MahalanobisKernelSampler>>(
+                   boom, "MahalanobisKernelSampler")
+        .def(py::init(
+            [](MahalanobisKernel *kernel,
+               GaussianProcessRegressionModel *model,
+               DoubleModel *prior) {
+              return new MahalanobisKernelSampler(kernel, model, Ptr<DoubleModel>(prior));
+            }),
+             py::arg("kernel"),
+             py::arg("model"),
+             py::arg("prior"),
+             "A ParameterSampler object for sampling the 'scale' parameter in "
+             "a MahalanobisKernel.\n\n"
+             "Args:\n\n"
+             "  kernel:  The MahalanobisKernel object to be sampled.\n"
+             "  model:  The model that owns 'kernel'.\n"
+             "  prior:  A boom.DoubleModel giving the prior distribution "
+             "on the kernel's 'scale' parameter.\n")
+        ;
+
+    py::class_<GaussianProcessRegressionPosteriorSampler,
+               PosteriorSampler,
+               Ptr<GaussianProcessRegressionPosteriorSampler>>(
+                   boom, "GaussianProcessRegressionPosteriorSampler")
+        .def(py::init(
+            [](GaussianProcessRegressionModel *model,
+               GP::ParameterSampler &mean_function_sampler,
+               GP::ParameterSampler &kernel_sampler,
+               GammaModelBase &residual_variance_prior,
+               RNG &seeding_rng) {
+              return new GaussianProcessRegressionPosteriorSampler(
+                  model,
+                  Ptr<GP::ParameterSampler>(&mean_function_sampler),
+                  Ptr<GP::ParameterSampler>(&kernel_sampler),
+                  Ptr<GammaModelBase>(&residual_variance_prior),
+                  seeding_rng);
+            }))
+        ;
+
+  }  // GpModel_def
 
 }  // namespace BayesBoom
