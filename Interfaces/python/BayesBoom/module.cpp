@@ -32,6 +32,7 @@ namespace BayesBoom {
   void WishartModel_def(py::module &);
 
   void GlmModel_def(py::module &);
+  void GpModel_def(py::module &);
   void MultinomialLogitModel_def(py::module &);
 
   void Imputation_def(py::module &);
@@ -88,6 +89,7 @@ namespace BayesBoom {
     WishartModel_def(boom);
 
     GlmModel_def(boom);
+    GpModel_def(boom);
     MultinomialLogitModel_def(boom);
     TimeSeries_def(boom);
     StateSpaceModel_def(boom);

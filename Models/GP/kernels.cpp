@@ -147,7 +147,7 @@ namespace BOOM {
 
   double MahalanobisKernel::operator()(const ConstVectorView &x1,
                                        const ConstVectorView &x2) const {
-    return scaled_shrunk_xtx_inv_.Mdist(x1, x2);
+    return exp(-.5 * scaled_shrunk_xtx_inv_.Mdist(x1, x2));
   }
 
   std::ostream & MahalanobisKernel::display(std::ostream &out) const {

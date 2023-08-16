@@ -8,6 +8,7 @@
 #include "distributions.hpp"
 
 #include "test_utils/test_utils.hpp"
+#include "stats/moments.hpp"
 #include <fstream>
 
 namespace {
@@ -31,8 +32,6 @@ namespace {
     Matrix X(nobs, 1);
     X.randomize();
     Vector y = 3 * X.col(0) + rnorm_vector(nobs, 4, 7);
-
-    std::cout << cbind(y, X);
 
     for (int i = 0; i < nobs; ++i) {
       NEW(RegressionData, data_point)(y[i], X.row(i));
@@ -97,9 +96,12 @@ namespace {
 
     NEW(ZeroFunction, mean_param)();
     Vector mu = (*mean_param)(X);
-    NEW(MahalanobisKernel, kernel_param)(X);
+    NEW(MahalanobisKernel, kernel_param)(X, 2.3);
+    double true_kernel_scale = kernel_param->scale();
+
     SpdMatrix Sigma = (*kernel_param)(X);
-    NEW(UnivParams, residual_variance_param)(square(3.8));
+    double true_residual_sd = 3.8;
+    NEW(UnivParams, residual_variance_param)(square(true_residual_sd));
     SpdMatrix residual_variance_matrix(
         sample_size, residual_variance_param->value());
 
@@ -124,10 +126,33 @@ namespace {
         residual_precision_prior);
     model->set_method(sampler);
 
-    for (int i = 0; i < 100; ++i) {
-      model->sample_posterior();
-    }
+    int niter = 500;
 
+    // Start the parameters from the wrong values.
+    kernel_param->set_scale(.10);
+    residual_variance_param->set(.05);
+
+    Vector kernel_parameter_draws(niter);
+    Vector residual_sd_draws(niter);
+    for (int i = 0; i < niter; ++i) {
+      model->sample_posterior();
+      kernel_parameter_draws[i] = kernel_param->scale();
+      residual_sd_draws[i] = model->residual_sd();
+    }
+    EXPECT_TRUE(CheckMcmcVector(kernel_parameter_draws, true_kernel_scale))
+        << true_kernel_scale << " " << kernel_parameter_draws;
+    EXPECT_GT(sd(kernel_parameter_draws), 0.0)
+        << kernel_parameter_draws;
+
+    EXPECT_TRUE(CheckMcmcVector(residual_sd_draws, true_residual_sd))
+        << true_residual_sd << " " << residual_sd_draws;
+    EXPECT_GT(sd(residual_sd_draws), 0.0) << residual_sd_draws;
+
+    std::ofstream kernel_file("kernel_parameter_draws.out");
+    kernel_file << true_kernel_scale << " " << kernel_parameter_draws;
+
+    std::ofstream residual_sd_file("residual_sd_draws.out");
+    residual_sd_file << true_residual_sd << " " << residual_sd_draws;
   }
 
 }  // namespace

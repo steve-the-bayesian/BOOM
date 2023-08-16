@@ -37,6 +37,7 @@ mkdir -p $PACKAGE_DIR
 
 ## Copy non-cpp packages to the package directory
 cp -r Interfaces/python/R/BayesBoom/R $PACKAGE_DIR/R
+cp -r Interfaces/python/bayesreg/BayesBoom/bayesreg $PACKAGE_DIR/bayesreg
 cp -r Interfaces/python/bsts/BayesBoom/bsts $PACKAGE_DIR/bsts
 cp -r Interfaces/python/dynreg/BayesBoom/dynreg $PACKAGE_DIR/dynreg
 cp -r Interfaces/python/mixtures/BayesBoom/mixtures $PACKAGE_DIR/mixtures
