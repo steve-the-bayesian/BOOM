@@ -27,6 +27,7 @@ namespace BOOM {
                           ToBoomVector(getListElement(r_reg_suf, "xty")),
                           Rf_asReal(getListElement(r_reg_suf, "yty")),
                           Rf_asReal(getListElement(r_reg_suf, "n")),
+                          Rf_asReal(getListElement(r_reg_suf, "ybar")),
                           ToBoomVector(getListElement(r_reg_suf, "xbar")));
     }
   }  // namespace RInterface

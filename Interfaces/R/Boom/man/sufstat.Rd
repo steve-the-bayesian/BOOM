@@ -15,7 +15,8 @@
                 xty = crossprod(X, y),
                 yty = sum(y^2),
                 n = length(y),
-                xbar = colMeans(X))
+                xbar = colMeans(X),
+                ybar = mean(y))
 
   GaussianSuf(y)
 }
@@ -37,6 +38,8 @@
 
   \item{xbar}{A vector giving the average of each column in the
     predictor matrix.}
+
+  \item{ybar}{The (scalar) mean of the response variable y.}
 }
 
 \value{ The returned value is a function containing the sufficient
