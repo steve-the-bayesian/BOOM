@@ -33,8 +33,6 @@ namespace {
     X.randomize();
     Vector y = 3 * X.col(0) + rnorm_vector(nobs, 4, 7);
 
-    std::cout << cbind(y, X);
-
     for (int i = 0; i < nobs; ++i) {
       NEW(RegressionData, data_point)(y[i], X.row(i));
       model.add_data(data_point);
