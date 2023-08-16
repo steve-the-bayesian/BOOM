@@ -25,43 +25,6 @@
 
 namespace BOOM {
 
-  // FunctionParams describes a function mapping a vector of predictors X to a
-  // real number yhat.
-  class FunctionParams : public Params {
-   public:
-    virtual FunctionParams * clone() const override = 0;
-    virtual double operator()(const ConstVectorView &x) const = 0;
-    virtual Vector operator()(const Matrix &X) const;
-  };
-
-  class ZeroFunction : public FunctionParams {
-   public:
-    ZeroFunction * clone() const override;
-    uint size(bool) const override {return 0;}
-
-    virtual double operator()(const ConstVectorView &x) const override {
-      return 0;
-    }
-
-    using FunctionParams::operator();
-
-    std::ostream & display(std::ostream &out) const override {
-      out << "ZeroFunction";
-      return out;
-    }
-
-    Vector vectorize(bool minimal = true) const override {
-      return Vector();
-    }
-    Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override {return v;}
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override {
-      return v.cbegin();
-    }
-  };
-
-
   // A "kernel" is the parameter to a Gaussian process.  A kernel is a function
   // of two vector arguments: k(x1, x2), subject to the condition that a matrix
   // K with elements K_{ij} = k(xi, xj) must be positive defininte for arbitrary
