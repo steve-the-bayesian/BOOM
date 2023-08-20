@@ -16,5 +16,119 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/GP/kernels.hpp"
 #include "Models/GP/GpMeanFunction.hpp"
+#include "Models/GP/GaussianProcessRegressionModel.hpp"
+
+#include "Models/Glm/RegressionModel.hpp"
+
+namespace BOOM {
+
+    Vector FunctionParams::operator()(const Matrix &X) const {
+    size_t sample_size = X.nrow();
+    Vector ans(sample_size);
+    for (size_t i = 0; i < sample_size; ++i) {
+      ans[i] = (*this)(X.row(i));
+    }
+    return ans;
+  }
+
+  //===========================================================================
+
+  ZeroFunction * ZeroFunction::clone() const {
+    return new ZeroFunction(*this);
+  }
+
+  //===========================================================================
+
+  LinearMeanFunction::LinearMeanFunction(const Ptr<RegressionModel> &model)
+      : model_(model)
+  {}
+
+  LinearMeanFunction::LinearMeanFunction(const LinearMeanFunction &rhs)
+      : model_(rhs.model_->clone())
+  {}
+
+  LinearMeanFunction & LinearMeanFunction::operator=(const LinearMeanFunction &rhs) {
+    if (&rhs != this) {
+      model_.reset(rhs.model_->clone());
+    }
+    return *this;
+  }
+
+  LinearMeanFunction * LinearMeanFunction::clone() const {
+    return new LinearMeanFunction(*this);
+  }
+
+  uint LinearMeanFunction::size(bool minimal) const {
+    return model_->coef().size(minimal);
+  }
+
+  double LinearMeanFunction::operator()(const ConstVectorView &x) const {
+    return model_->predict(x);
+  }
+
+  std::ostream &LinearMeanFunction::display(std::ostream &out) const {
+    out << "LinearMeanFunction with coefficients: " << model_->coef();
+    return out;
+  }
+
+  Vector LinearMeanFunction::vectorize(bool minimal) const {
+    return model_->coef().vectorize(minimal);
+  }
+
+  Vector::const_iterator LinearMeanFunction::unvectorize(
+      Vector::const_iterator &v, bool minimal) {
+    return model_->coef().unvectorize(v, minimal);
+  }
+
+  //===========================================================================
+  GpMeanFunction::GpMeanFunction(const Ptr<GaussianProcessRegressionModel> &gp)
+      : gp_(gp)
+  {}
+
+  GpMeanFunction::GpMeanFunction(const GpMeanFunction &rhs)
+      : gp_(rhs.gp_->clone())
+  {}
+
+  GpMeanFunction & GpMeanFunction::operator=(const GpMeanFunction &rhs) {
+    if (&rhs != this) {
+      gp_.reset(rhs.gp_->clone());
+    }
+    return *this;
+  }
+
+  GpMeanFunction * GpMeanFunction::clone() const {
+    return new GpMeanFunction(*this);
+  }
+
+  double GpMeanFunction::operator()(const ConstVectorView &x) const {
+    return gp_->predict(x);
+  }
+
+  uint GpMeanFunction::size(bool minimal) const {
+    return gp_->mean_param()->size(minimal) + gp_->kernel_param()->size() + 1;
+  }
+
+  std::ostream &GpMeanFunction::display(std::ostream &out) const {
+    out << "GpMeanFunction with prior mean function: \n"
+        << *gp_->mean_param() << "\n"
+        << "kernel: \n"
+        << *gp_->kernel_param() << "\n"
+        << "and residual SD: "
+        << gp_->residual_sd() << "\n";
+    return out;
+  }
+
+  Vector GpMeanFunction::vectorize(bool minimal) const {
+    return gp_->vectorize_params(minimal);
+  }
+
+  Vector::const_iterator GpMeanFunction::unvectorize(
+      Vector::const_iterator &v, bool minimal) {
+    v = gp_->mean_param()->unvectorize(v, minimal);
+    v = gp_->kernel_param()->unvectorize(v, minimal);
+    v = gp_->sigsq_param()->unvectorize(v, minimal);
+    return v;
+  }
+
+}  // namespace BOOM

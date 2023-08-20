@@ -4,6 +4,7 @@
 
 #include <sstream>
 
+#include "Models/GP/GpMeanFunction.hpp"
 #include "Models/GP/kernels.hpp"
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 #include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"

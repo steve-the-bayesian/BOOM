@@ -21,23 +21,6 @@
 
 namespace BOOM {
 
-  Vector FunctionParams::operator()(const Matrix &X) const {
-    size_t sample_size = X.nrow();
-    Vector ans(sample_size);
-    for (size_t i = 0; i < sample_size; ++i) {
-      ans[i] = (*this)(X.row(i));
-    }
-    return ans;
-  }
-
-  //===========================================================================
-
-  ZeroFunction * ZeroFunction::clone() const {
-    return new ZeroFunction(*this);
-  }
-
-  //===========================================================================
-
   SpdMatrix KernelParams::operator()(const Matrix &X) const {
     size_t sample_size = X.nrow();
     SpdMatrix ans(sample_size);

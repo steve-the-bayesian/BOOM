@@ -18,14 +18,21 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/GP/kernels.hpp"
+#include "Models/ParamTypes.hpp"
+#include "LinAlg/Vector.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include <ostream>
+
+// #include "stats/Encoders.hpp"
 
 namespace BOOM {
+
+  // TODO: move this in parallel to other 'Params' files.
+
 
   // Forward declarations needed to prevent circular inclusions.
   class GaussianProcessRegressionModel;
   class RegressionModel;
-  class Encoder;
 
   // FunctionParams describes a function mapping a vector of predictors X to a
   // real number yhat.
@@ -36,14 +43,14 @@ namespace BOOM {
     virtual Vector operator()(const Matrix &X) const;
   };
 
-
+  //===========================================================================
   // A FunctionParams that alwas returns 0.
   class ZeroFunction : public FunctionParams {
    public:
     ZeroFunction * clone() const override;
     uint size(bool) const override {return 0;}
 
-    virtual double operator()(const ConstVectorView &x) const override {
+    double operator()(const ConstVectorView &x) const override {
       return 0;
     }
 
@@ -59,41 +66,91 @@ namespace BOOM {
     }
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override {return v;}
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override {
-      return v.cbegin();
-    }
+    using Params::unvectorize;
   };
 
+  //===========================================================================
   // A FunctionParams where the function is a linear regression.
   class LinearMeanFunction : public FunctionParams {
    public:
     LinearMeanFunction(const Ptr<RegressionModel> &model);
+    LinearMeanFunction(const LinearMeanFunction &rhs);
+    LinearMeanFunction & operator=(const LinearMeanFunction &rhs);
+    LinearMeanFunction(LinearMeanFunction &&rhs) = default;
+    LinearMeanFunction & operator=(LinearMeanFunction &&rhs) = default;
+    LinearMeanFunction * clone() const override;
+
+    double operator()(const ConstVectorView &x) const override;
+    using FunctionParams::operator();
+
+    uint size(bool minimal = true) const override;
+    std::ostream &display(std::ostream &out) const override;
+
+    // The vectorized parameters don't include the model's residual variance
+    // parameter.
+    Vector vectorize(bool minimal = true) const override;
+    Vector::const_iterator unvectorize(Vector::const_iterator &v,
+                                       bool minimal = true) override;
+    using Params::unvectorize;
+
+    Ptr<RegressionModel> model() {return model_;}
+    const Ptr<RegressionModel> model() const {return model_;}
 
    private:
     Ptr<RegressionModel> model_;
   };
 
+  //===========================================================================
+  // A FunctionParams where the function is a linear regression preceeded by a
+  // basis expansion or transformation.
   //
-  class ExpandedLinearMeanFunction : public FunctionParams {
-  };
+  // TODO: Need to work out a VectorEncoder encodign scheme before actually
+  // rolling this out.
+  //
+  // class ExpandedLinearMeanFunction : public FunctionParams {
+  //  public:
+  //   ExpandedLinearMeanFunction(
+  //       const Ptr<RegressionModel> &model,
+  //       const Ptr<VectorEncoder> &encoder);
+
+  //   double operator()(const ConstVectorView &x) const override;
+  //   using FunctionParams::operator();
+
+  //   std::ostream &display(std::ostream &out) const override;
+  //   Vector vectorize(bool minimal = true) const override;
+  //   Vector::const_iterator unvectorize(Vector::const_iterator &v,
+  //                                      bool minimal = true) override;
+  //   using Params::unvectorize;
+
+  // };
 
 
-  // A mean function that can be used with a GaussianProcessRegressionModel, where
-  // the mean is a GP regression.
+  //===========================================================================
+  // A mean function that can be used with a GaussianProcessRegressionModel,
+  // where the mean is a GP regression.
   class GpMeanFunction : public FunctionParams {
    public:
     GpMeanFunction(const Ptr<GaussianProcessRegressionModel> &gp);
-
+    GpMeanFunction(const GpMeanFunction &rhs);
+    GpMeanFunction &operator=(const GpMeanFunction &rhs);
+    GpMeanFunction(GpMeanFunction &&rhs) = default;
+    GpMeanFunction & operator=(GpMeanFunction &&rhs) = default;
     GpMeanFunction * clone() const override;
     double operator()(const ConstVectorView &x) const override;
     using FunctionParams::operator();
 
     uint size(bool minimal = true) const override;
 
+    std::ostream &display(std::ostream &out) const override;
+    Vector vectorize(bool minimal = true) const override;
+    Vector::const_iterator unvectorize(Vector::const_iterator &v,
+                                       bool minimal = true) override;
+    using Params::unvectorize;
+
    private:
     Ptr<GaussianProcessRegressionModel> gp_;
   };
 
 }  // namespace BOOM
+
 #endif //  BOOM_MODELS_GP_GP_MEAN_FUNCTION_HPP_

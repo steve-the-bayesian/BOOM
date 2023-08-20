@@ -18,6 +18,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/GP/GpMeanFunction.hpp"
 #include "Models/GP/kernels.hpp"
 #include "Models/Policies/ParamPolicy_3.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
@@ -115,6 +116,13 @@ namespace BOOM {
       sigsq_param()->set(sigsq);
     }
 
+    // The inverse of the kernel matrix (K(X) + sigsq) evaluated at the training
+    // data.
+    const SpdMatrix &inverse_kernel_matrix(bool include_residual_variance) const {
+      refresh_kernel_matrix();
+      return include_residual_variance ? Kinv_ : Kinv_func_;
+    }
+
     //----------- Data access
 
     using DataPolicy::add_data;
@@ -124,17 +132,46 @@ namespace BOOM {
       DataPolicy::add_data(data_point);
     }
 
+    size_t sample_size() const {return dat().size();}
+    size_t xdim() const {
+      return dat().empty() ? 0 : dat()[0]->xdim();
+    }
+
     //----------- Prediction
     double predict(const Vector &x) const;
 
+    // Compute the predictive distribution of the data at specific X points.
+    // This distribution incorporates the residual error around specific data
+    // points.
+    //
+    // Args:
+    //   X: The matrix of points (rows in the matrix) where the predictive
+    //     distribution is desired.
+    //   predict_data:
+    //
+    // Returns:
+    //   A MvnModel object giving the predictive distribution at the locations
+    //   specified in X.
+    Ptr<MvnModel> predict_distribution(const Matrix &X, bool predict_data = true) const;
+
+    // Compute the posterior distribution of the function values at specific X
+    // points.  This distribution omits residual error around specific data
+    // points and only focuses on the fuction values.
+    //
     // Args:
     //   X: The matrix of points (rows in the matrix) where the predictive
     //     distribution is desired.
     //
     // Returns:
-    //   A MvnModel object giving the predictive distribution at the locations
-    //   specified in X.
-    Ptr<MvnModel> predict_distribution(const Matrix &X) const;
+    //   A MvnModel object giving the posterior distribution of the function
+    //   values at the locations specified in X.
+    Ptr<MvnModel> predict_function(const Matrix &X) const;
+
+    // Returns:
+    //   A MvnModel object giving the posterior distribution of the function
+    //   values at the locations specified the training data.  The order of the
+    //   output matches the order of the training data stored in the model.
+    Ptr<MvnModel> predict_function() const;
 
     Vector posterior_residuals() const;
 
@@ -148,8 +185,17 @@ namespace BOOM {
 
     mutable bool kernel_matrix_current_;
 
-    // The inverse of the kernel matrix based on the training data.
+    // The inverse of the kernel matrix based on the training data.  This matrix
+    // includes contributions from the residual variance, so it describes
+    // individual data points.  This one is for "prediction intervals" not
+    // "confidence intervals."
     mutable SpdMatrix Kinv_;
+
+    // The inverse of the kernel matrix based on the training data.  This matrix
+    // omits contributions from the residual variance, so it describes the
+    // posterior mean function.  This one is for "confidence intervals" not
+    // "prediction intervals".
+    mutable SpdMatrix Kinv_func_;
 
     // The residuals from the prior mean function.
     mutable Vector residuals_;
@@ -158,7 +204,8 @@ namespace BOOM {
     // parameters change our kernel matrix will be invalidated.
     void add_observers();
 
-    // Refresh the mutable parameters
+    // Refresh the mutable parameters.  Fill a matrix K with K(X) + sigsq, where
+    // X is the matrix of predictors in the training data.
     void refresh_kernel_matrix() const;
   };
 

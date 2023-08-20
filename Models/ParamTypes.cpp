@@ -76,10 +76,10 @@ namespace BOOM {
     set(*v);
     return ++v;
   }
-  Vector::const_iterator UnivParams::unvectorize(const Vector &v, bool) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b);
-  }
+  // Vector::const_iterator UnivParams::unvectorize(const Vector &v, bool) {
+  //   Vector::const_iterator b = v.begin();
+  //   return unvectorize(b);
+  // }
 
   void UnivParamsObserver::set(const double &rhs, bool Signal) {
     report_error("set is disabled.");
@@ -109,10 +109,10 @@ namespace BOOM {
     return e;
   }
 
-  Vector::const_iterator VectorParams::unvectorize(const Vector &v, bool) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b);
-  }
+  // Vector::const_iterator VectorParams::unvectorize(const Vector &v, bool) {
+  //   Vector::const_iterator b = v.begin();
+  //   return unvectorize(b);
+  // }
 
   //============================================================
   typedef MatrixData MD;
@@ -140,9 +140,9 @@ namespace BOOM {
     set(tmp);
     return e;
   }
-  Vector::const_iterator MP::unvectorize(const Vector &v, bool) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b);
-  }
+  // Vector::const_iterator MP::unvectorize(const Vector &v, bool) {
+  //   Vector::const_iterator b = v.begin();
+  //   return unvectorize(b);
+  // }
 
 }  // namespace BOOM

@@ -128,8 +128,12 @@ namespace BOOM {
                           const MvnSuf &suf) const;
 
     virtual const Vector &mu() const = 0;
+    const Vector &mean() const {return mu();}
     virtual const SpdMatrix &Sigma() const = 0;
     virtual const SpdMatrix &siginv() const = 0;
+    virtual const SpdMatrix &precision() const {
+      return siginv();
+    }
     virtual double ldsi() const = 0;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
   };

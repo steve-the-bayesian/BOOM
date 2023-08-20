@@ -52,6 +52,10 @@ namespace BOOM {
     return prior_->logp(kernel_->scale());
   }
 
+  double MahalanobisKernelSampler::logpost() const {
+    return logpri() + model_->log_likelihood();
+  }
+
   void MahalanobisKernelSampler::draw(RNG &rng) {
     slice_->set_rng(&rng, false);
     double new_scale = slice_->draw(kernel_->scale());

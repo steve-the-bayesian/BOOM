@@ -1,5 +1,5 @@
-#ifndef BOOM_GP_MAHALANOBIS_KERNEL_SAMPLER_HPP_
-#define BOOM_GP_MAHALANOBIS_KERNEL_SAMPLER_HPP_
+#ifndef BOOM_MODELS_GP_LINEAR_MEAN_FUNCTION_POSTERIOR_SAMPLER_HPP_
+#define BOOM_MODELS_GP_LINEAR_MEAN_FUNCTION_POSTERIOR_SAMPLER_HPP_
 
 /*
   Copyright (C) 2005-2023 Steven L. Scott
@@ -20,30 +20,30 @@
 */
 
 #include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"
-#include "Samplers/ScalarSliceSampler.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM {
 
-  class MahalanobisKernelSampler : public GP::ParameterSampler {
+  class LinearMeanFunctionSampler : public GP::ParameterSampler {
    public:
-    MahalanobisKernelSampler(
-        MahalanobisKernel *kernel,
-        GaussianProcessRegressionModel *model,
-        const Ptr<DoubleModel> &prior);
 
+    // Args:
+    //   mean_function:  The mean function to be sampled.
+    //   model: The model that owns the mean function.
+    //   prior: The prior distribution over the coefficients of the mean
+    //     function.
+    LinearMeanFunctionSampler(LinearMeanFunction *mean_function,
+                              GaussianProcessRegressionModel *model,
+                              const Ptr<MvnBase> &prior);
     double logpri() const override;
     void draw(RNG &rng) override;
 
-    double logpost() const;
-
    private:
-    MahalanobisKernel *kernel_;
+    LinearMeanFunction *mean_function_;
     GaussianProcessRegressionModel *model_;
-    Ptr<DoubleModel> prior_;
-    Ptr<ScalarSliceSampler> slice_;
+    Ptr<MvnBase> prior_;
   };
 
 }  // namespace BOOM
 
-
-#endif  //  BOOM_GP_MAHALANOBIS_KERNEL_SAMPLER_HPP_
+#endif  //  BOOM_MODELS_GP_LINEAR_MEAN_FUNCTION_POSTERIOR_SAMPLER_HPP_
