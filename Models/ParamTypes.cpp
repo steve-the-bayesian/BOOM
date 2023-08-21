@@ -57,6 +57,11 @@ namespace BOOM {
 
   Params::Params(const Params &rhs) : Data(rhs) {}
 
+  Vector::const_iterator Params::unvectorize(const Vector &v, bool minimal) {
+    Vector::const_iterator it(v.begin());
+    return this->unvectorize(it, minimal);
+  }
+
   //======================================================================
 
   typedef UnivData<double> UDD;
@@ -75,10 +80,6 @@ namespace BOOM {
                                                  bool) {
     set(*v);
     return ++v;
-  }
-  Vector::const_iterator UnivParams::unvectorize(const Vector &v, bool) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b);
   }
 
   void UnivParamsObserver::set(const double &rhs, bool Signal) {
@@ -109,11 +110,6 @@ namespace BOOM {
     return e;
   }
 
-  Vector::const_iterator VectorParams::unvectorize(const Vector &v, bool) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b);
-  }
-
   //============================================================
   typedef MatrixData MD;
   typedef MatrixParams MP;
@@ -139,10 +135,6 @@ namespace BOOM {
     Matrix tmp(b, e, val.nrow(), val.ncol());
     set(tmp);
     return e;
-  }
-  Vector::const_iterator MP::unvectorize(const Vector &v, bool) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b);
   }
 
 }  // namespace BOOM
