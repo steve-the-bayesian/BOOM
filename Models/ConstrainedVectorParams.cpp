@@ -158,12 +158,6 @@ namespace BOOM {
     return e;
   }
 
-  Vector::const_iterator ConstrainedVectorParams::unvectorize(
-      const Vector &v, bool minimal) {
-    Vector::const_iterator b(v.begin());
-    return unvectorize(b, minimal);
-  }
-
   void ConstrainedVectorParams::set(const Vector &value, bool signal_change) {
     int n = value.size();
     if (n == size(true)) {

@@ -1,3 +1,6 @@
+#ifndef BOOM_SPD_PARAMS_HPP
+#define BOOM_SPD_PARAMS_HPP
+
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
@@ -17,8 +20,6 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#ifndef BOOM_SPD_PARAMS_HPP
-#define BOOM_SPD_PARAMS_HPP
 #include "Models/ParamTypes.hpp"
 #include "Models/SpdData.hpp"
 
@@ -41,8 +42,7 @@ namespace BOOM {
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
+    using Params::unvectorize;
   };
 
 }  // namespace BOOM

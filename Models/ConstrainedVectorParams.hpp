@@ -134,8 +134,7 @@ namespace BOOM {
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
+    using Params::unvectorize;
 
     bool check_constraint() const;
 

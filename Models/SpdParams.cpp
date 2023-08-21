@@ -38,8 +38,4 @@ namespace BOOM {
     return ans;
   }
 
-  Vector::const_iterator SP::unvectorize(const Vector &v, bool minimal) {
-    Vector::const_iterator b(v.begin());
-    return this->unvectorize(b, minimal);
-  }
 }  // namespace BOOM
