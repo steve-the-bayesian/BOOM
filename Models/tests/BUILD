@@ -76,6 +76,14 @@ cc_test(
 )
 
 cc_test(
+    name = "positive_semidefinite_data_test",
+    size = "small",
+    srcs = ["positive_semidefinite_data_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "spddata_test",
     size = "small",
     srcs = ["spddata_test.cc"],

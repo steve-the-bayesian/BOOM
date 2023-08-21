@@ -65,10 +65,7 @@ namespace BOOM {
     virtual Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                                bool minimal = true) = 0;
     virtual Vector::const_iterator unvectorize(const Vector &v,
-                                               bool minimal = true) {
-      Vector::const_iterator b = v.begin();
-      return unvectorize(b, minimal);
-    }
+                                               bool minimal = true);
   };
 
   //============================================================
@@ -95,8 +92,6 @@ namespace BOOM {
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
-    // Vector::const_iterator unvectorize(const Vector &v,
-    //                                    bool minimal = true) override;
     using Params::unvectorize;
   };
 
@@ -153,8 +148,6 @@ namespace BOOM {
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
-    // Vector::const_iterator unvectorize(const Vector &v,
-    //                                    bool minimal = true) override;
     using Params::unvectorize;
   };
 
@@ -170,8 +163,6 @@ namespace BOOM {
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
-    // Vector::const_iterator unvectorize(const Vector &v,
-    //                                    bool minimal = true) override;
     using Params::unvectorize;
   };
 

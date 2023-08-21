@@ -264,11 +264,6 @@ namespace BOOM {
     return VectorParams::unvectorize(v);
   }
 
-  Vector::const_iterator GlmCoefs::unvectorize(const Vector &v, bool min) {
-    Vector::const_iterator b = v.begin();
-    return unvectorize(b, min);
-  }
-
   namespace {
     template <class VECTOR>
     void add_to_impl(VECTOR &vec, const Vector &included_coefficients, const Selector &inc) {
