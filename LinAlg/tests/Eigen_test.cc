@@ -104,6 +104,73 @@ namespace {
     EXPECT_TRUE(fixed.is_pos_def())
         << "matrix should be positive definite:\n"
         << fixed;
+
+    // Verify that eigenvalues are always given in increasing order.
+    for (int i = 0; i < 100; ++i) {
+      int dim = rpois(10);
+      SpdMatrix S(dim);
+      S.randomize();
+
+      SymmetricEigen dcmp(S);
+      const Vector &values(dcmp.eigenvalues());
+      for (int j = 1; j < dim; ++j) {
+        EXPECT_LE(values[j-1], values[j]);
+      }
+    }
+  }
+
+  TEST_F(EigenTest, GenInverseTest) {
+    SpdMatrix S(5);
+    S.randomize();
+
+    SymmetricEigen eigen(S);
+    SpdMatrix Sinv = eigen.generalized_inverse(1e-8);
+    EXPECT_TRUE(MatrixEquals(S * Sinv, SpdMatrix(5, 1.0)))
+        << "Original Matrix: \n"
+        << S << "\n"
+        << "Inverse: \n"
+        << Sinv << "\n"
+        << "product: \n"
+        << S * Sinv;
+
+    Matrix A(8, 5);
+    A.randomize();
+
+    SpdMatrix V = A * S * A.transpose();
+    SymmetricEigen dcmp(V);
+    SpdMatrix Vinv = dcmp.generalized_inverse();
+
+    EXPECT_TRUE(MatrixEquals(V, V * Vinv * V))
+        << "Original Matrix: \n"
+        << V << "\n"
+        << "Generalized Inverse: \n"
+        << Vinv << "\n"
+        << "product V * Vinv * V: \n"
+        << V * Vinv * V;
+
+    EXPECT_TRUE(MatrixEquals(Vinv, Vinv * V * Vinv))
+        << "Generalized Inverse: \n"
+        << Vinv << "\n"
+        << "Original Matrix: \n"
+        << V << "\n"
+        << "product Vinv * V * Vinv: \n"
+        << Vinv * V * Vinv;
+  }
+
+  TEST_F(EigenTest, GeneralizedDeterminantTest) {
+    SpdMatrix S(3);
+    S.randomize();
+
+    SymmetricEigen dcmp(S);
+    EXPECT_NEAR(dcmp.generalized_inverse_logdet(), -S.logdet(), 1e-5);
+
+    Matrix A(8, 3);
+    A.randomize();
+    SpdMatrix V = A * S * A.transpose();
+
+    SymmetricEigen eigen(V);
+    EXPECT_TRUE(std::isfinite(eigen.generalized_inverse_logdet()));
+    EXPECT_FALSE(std::isfinite(V.logdet()));
   }
 
 }  // namespace

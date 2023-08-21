@@ -85,9 +85,12 @@ namespace BOOM {
     //     computed.  If false only the eigenvalues are computed.
     explicit SymmetricEigen(const SpdMatrix &matrix, bool compute_vectors = true);
 
+    // The eigenvalues of the decomposed matrix.  The eigenvalues are in
+    // increasing order so eigenvalues_[0] is smallest.
     const Vector &eigenvalues() const { return eigenvalues_; }
 
-    // This matrix is size zero if eigenvectors were not requested.
+    // This matrix is size zero if eigenvectors were not requested.  Otherwise
+    // the columns of the matrix are the right-eigenvectors.
     const Matrix &eigenvectors() const { return right_vectors_; }
 
     // Reconstruct the original matrix that was decomposed.
@@ -97,7 +100,33 @@ namespace BOOM {
     // name, an SpdMatrix might not actually be positive definite.
     SpdMatrix closest_positive_definite() const;
 
+    // The generalized_inverse is taken by inverting the nonzero eigenvalues,
+    // leaving the eigenvectors the same.
+    //
+    // The definition of a generalized inverse (G) of a symmetric matrix A is
+    // that A G A = A.  If A = E V E', where V is a diagonal matrix of
+    // eigenvalues, then replacing the nonzero eigenvalues with their
+    // reciprocals satisfies this requirement.
+    //
+    // Args:
+    //   threshold: A positive real value.  After scaling by the largest
+    //     eigenvalue, eigenvalues smaller than threshold are treated as zero,
+    //     and not inverted.
+    //
+    // Returns:
+    //   The generalized inverse of the decomposed matrix.
+    SpdMatrix generalized_inverse(double threshold = 1e-8) const;
+
+    // Args:
+    //   threshold: A positive real value.  After scaling by the largest
+    //     eigenvalue, eigenvalues smaller than threshold are treated as zero.
+    //
+    // Returns:
+    //   The sum of the (negative) logs of the nonzero (absolute) eigenvalues.
+    double generalized_inverse_logdet(double threshold = 1e-8) const;
+
    private:
+    // Eigenvalues of the decomposed matrix.  Stored smallest to largest.
     Vector eigenvalues_;
 
     // The eigenvectors are the columns of right_vectors.  This matrix will be

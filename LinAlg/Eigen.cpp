@@ -140,4 +140,28 @@ namespace BOOM {
     return sandwich_transpose(right_vectors_, new_values);
   }
 
+  SpdMatrix SymmetricEigen::generalized_inverse(double threshold) const {
+    Vector new_values = eigenvalues_;
+    // Eigenvalues are stored in increasing order, so the largest eigenvalue is
+    // in the .back() slot.
+    double limit = fabs(eigenvalues_.back() * threshold);
+    for (size_t i = 0; i < new_values.size(); ++i) {
+      if (fabs(new_values[i]) > limit) {
+        new_values[i] = 1.0 / new_values[i];
+      }
+    }
+    return sandwich_transpose(right_vectors_, new_values);
+  }
+
+  double SymmetricEigen::generalized_inverse_logdet(double threshold) const {
+    double ans = 0;
+    double limit = fabs(eigenvalues_.back() * threshold);
+    for (double value : eigenvalues_) {
+      if (fabs(value) > limit) {
+        ans -= log(fabs(value));
+      }
+    }
+    return ans;
+  }
+
 }  // namespace BOOM
