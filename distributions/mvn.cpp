@@ -137,8 +137,10 @@ namespace BOOM {
 
   //======================================================================
   Vector &impute_mvn(Vector &observation,
-                     const Vector &mean, const SpdMatrix &variance,
-                     const Selector &observed, RNG &rng) {
+                     const Vector &mean,
+                     const SpdMatrix &variance,
+                     const Selector &observed,
+                     RNG &rng) {
     if (observed.nvars() == observed.nvars_possible()) {
       return observation;
     } else if (observed.nvars() == 0) {

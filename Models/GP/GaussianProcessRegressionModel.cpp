@@ -63,7 +63,7 @@ namespace BOOM {
     return mean_function(x) + Kstrip.dot(Kinv_ * residuals_);
   }
 
-  Ptr<MvnModel> GaussianProcessRegressionModel::predict_distribution(
+  Ptr<MvnBase> GaussianProcessRegressionModel::predict_distribution(
       const Matrix &X, bool predict_data) const {
     refresh_kernel_matrix();
 
@@ -81,6 +81,8 @@ namespace BOOM {
         base_variance(i, j) = kernel(X.row(i), X.row(j));
         if (j < i) {
           base_variance(j, i) = base_variance(i, j);
+        } else if(i == j && predict_data) {
+          base_variance(i, i) += residual_variance();
         }
       }
     }
@@ -93,8 +95,13 @@ namespace BOOM {
 
     Vector mean = yhat + Kstrip.Tmult(Kinv_ * residuals_);
     SpdMatrix variance = base_variance + Kstrip.Tmult(
-        inverse_kernel_matrix(predict_data) * Kstrip);
-    return new MvnModel(mean, variance);
+        inverse_kernel_matrix() * Kstrip);
+
+    if (predict_data) {
+      return new MvnModel(mean, variance);
+    } else {
+      return new LowRankMvnModel(mean, variance);
+    }
   }
 
   void GaussianProcessRegressionModel::add_observers() {
@@ -162,7 +169,7 @@ namespace BOOM {
       }
     }
 
-    Kinv_func_ = K.inv();
+    Kfunc_ = K;
     K.diag() += residual_variance();
     Kinv_ = K.inv();
     kernel_matrix_current_ = true;

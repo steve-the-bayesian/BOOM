@@ -29,7 +29,6 @@ namespace BOOM {
 
   // TODO: move this in parallel to other 'Params' files.
 
-
   // Forward declarations needed to prevent circular inclusions.
   class GaussianProcessRegressionModel;
   class RegressionModel;

@@ -24,6 +24,7 @@
 
 namespace BOOM {
 
+  // TODO:  Do we need to draw the residual variance parameter?
   class LinearMeanFunctionSampler : public GP::ParameterSampler {
    public:
 

@@ -52,7 +52,7 @@ namespace BOOM {
       y[i] = data_point->y();
     }
 
-    const SpdMatrix &Kinv(model_->inverse_kernel_matrix(true));
+    const SpdMatrix &Kinv(model_->inverse_kernel_matrix());
 
     SpdMatrix posterior_precision =
         prior_->precision() + sandwich_transpose(X, Kinv);

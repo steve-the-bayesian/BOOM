@@ -2,7 +2,9 @@
 
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 #include "Models/GP/PosteriorSamplers/MahalanobisKernelSampler.hpp"
+#include "Models/GP/PosteriorSamplers/LinearMeanFunctionSampler.hpp"
 #include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"
+#include "Models/GP/GpMeanFunction.hpp"
 #include "Models/GP/kernels.hpp"
 #include "Models/ChisqModel.hpp"
 #include "distributions.hpp"
@@ -42,7 +44,18 @@ namespace {
     Matrix Xnew(nnew, 1);
     Vector ynew = 3 * Xnew.col(0) + rnorm_vector(nnew, 4, 7);
 
-    Ptr<MvnModel> predictive_distribution = model.predict_distribution(Xnew);
+    Ptr<MvnBase> predictive_distribution = model.predict_distribution(
+        Xnew, true);
+    Ptr<MvnBase> function_prediction = model.predict_distribution(
+        Xnew, false);
+
+    EXPECT_TRUE(VectorEquals(predictive_distribution->mu(),
+                             function_prediction->mu()));
+
+    for (int i = 0; i < predictive_distribution->dim(); ++i) {
+      EXPECT_GT(predictive_distribution->Sigma()(i, i),
+                function_prediction->Sigma()(i, i));
+    }
   }
 
   // Verify that the log likelihood calculation is being done correctly.
@@ -153,6 +166,72 @@ namespace {
 
     std::ofstream residual_sd_file("residual_sd_draws.out");
     residual_sd_file << true_residual_sd << " " << residual_sd_draws;
+  }
+
+  // Test that the linear mean function works as expected, and that the
+  // posterior sampler for the linear mean function recovers the parameters.
+  TEST_F(GpTest, TestLinearMeanFunction) {
+
+    // ----------------------------------------------------------------------
+    // Simulate the data
+    // ----------------------------------------------------------------------
+    int sample_size = 100;
+    int xdim = 3;
+    Matrix X(sample_size, xdim);
+    X.randomize();
+
+    Vector beta = {1.0, -2.0, 3.0};
+    Vector y = X * beta + rnorm_vector(sample_size, 0.0, 0.3);
+
+    // ----------------------------------------------------------------------
+    // Build the model objects.
+    // ----------------------------------------------------------------------
+    NEW(RegressionModel, mean_function_model)(beta, 1.0);
+    NEW(LinearMeanFunction, mean_function)(mean_function_model);
+
+    NEW(RadialBasisFunction, kernel)(1.0);
+    NEW(UnivParams, residual_variance)(1.0);
+    NEW(GaussianProcessRegressionModel, model)(
+        mean_function, kernel, residual_variance);
+
+    // ----------------------------------------------------------------------
+    // Add the data to the model.
+    // ----------------------------------------------------------------------
+    for (int i = 0; i < sample_size; ++i) {
+      NEW(RegressionData, data_point)(y[i], X.row(i));
+      model->add_data(data_point);
+    }
+
+    // ----------------------------------------------------------------------
+    // Set the priors.
+    // ----------------------------------------------------------------------
+    NEW(MvnModel, beta_prior)(Vector(xdim, 0.0), SpdMatrix(xdim, 1.0));
+    NEW(ChisqModel, residual_precision_prior)(0.3, 1.0);
+    NEW(GaussianProcessRegressionPosteriorSampler, sampler)(
+        model.get(),
+        new LinearMeanFunctionSampler(
+            mean_function.get(), model.get(), beta_prior),
+        new GP::NullSampler,
+        residual_precision_prior);
+    model->set_method(sampler);
+
+    // ----------------------------------------------------------------------
+    // Run the MCMC
+    // ----------------------------------------------------------------------
+    int niter = 500;
+    Matrix beta_draws(niter, xdim);
+    Matrix fun_draws(niter, sample_size);
+    for (int i = 0; i < niter; ++i) {
+      model->sample_posterior();
+      beta_draws.row(i) = mean_function_model->Beta();
+
+    }
+
+    auto status = CheckMcmcMatrix(beta_draws, beta);
+    EXPECT_TRUE(status.ok) << status.error_message();
+
+    std::ofstream out("beta_draws.out");
+    out << beta << "\n" << beta_draws;
   }
 
 }  // namespace

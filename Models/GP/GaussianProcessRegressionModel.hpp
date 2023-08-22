@@ -30,6 +30,7 @@
 
 #include "Models/Glm/Glm.hpp"
 #include "Models/MvnModel.hpp"
+#include "Models/LowRankMvnModel.hpp"
 
 namespace BOOM {
 
@@ -63,19 +64,19 @@ namespace BOOM {
 
     //----------- Parameter access
 
-    Ptr<KernelParams> kernel_param() {
-      return ParamPolicy::prm2();
-    }
-    const Ptr<KernelParams> kernel_param() const {
-      return ParamPolicy::prm2();
-    }
-
     Ptr<FunctionParams> mean_param() {
       return ParamPolicy::prm1();
     }
 
     const Ptr<FunctionParams> mean_param() const {
       return ParamPolicy::prm1();
+    }
+
+    Ptr<KernelParams> kernel_param() {
+      return ParamPolicy::prm2();
+    }
+    const Ptr<KernelParams> kernel_param() const {
+      return ParamPolicy::prm2();
     }
 
     Ptr<UnivParams> sigsq_param() {
@@ -88,12 +89,12 @@ namespace BOOM {
 
     //--------------- Using the parameters
 
-    double kernel(const ConstVectorView &x1, const ConstVectorView &x2) const {
-      return prm2_ref()(x1, x2);
-    }
-
     double mean_function(const ConstVectorView &x) const {
       return ParamPolicy::prm1_ref()(x);
+    }
+
+    double kernel(const ConstVectorView &x1, const ConstVectorView &x2) const {
+      return prm2_ref()(x1, x2);
     }
 
     double sigma() const {
@@ -118,9 +119,9 @@ namespace BOOM {
 
     // The inverse of the kernel matrix (K(X) + sigsq) evaluated at the training
     // data.
-    const SpdMatrix &inverse_kernel_matrix(bool include_residual_variance) const {
+    const SpdMatrix &inverse_kernel_matrix() const {
       refresh_kernel_matrix();
-      return include_residual_variance ? Kinv_ : Kinv_func_;
+      return Kinv_;
     }
 
     //----------- Data access
@@ -147,31 +148,16 @@ namespace BOOM {
     // Args:
     //   X: The matrix of points (rows in the matrix) where the predictive
     //     distribution is desired.
-    //   predict_data:
+    //   predict_data: If true then the predictive distribution is an MvnModel
+    //     describing the distribution of individual data points at the
+    //     locations in X.  If false then the predictive distribution is a
+    //     LowRankMvnModel describing the function values a the locations in X.
     //
     // Returns:
     //   A MvnModel object giving the predictive distribution at the locations
     //   specified in X.
-    Ptr<MvnModel> predict_distribution(const Matrix &X, bool predict_data = true) const;
-
-    // Compute the posterior distribution of the function values at specific X
-    // points.  This distribution omits residual error around specific data
-    // points and only focuses on the fuction values.
-    //
-    // Args:
-    //   X: The matrix of points (rows in the matrix) where the predictive
-    //     distribution is desired.
-    //
-    // Returns:
-    //   A MvnModel object giving the posterior distribution of the function
-    //   values at the locations specified in X.
-    Ptr<MvnModel> predict_function(const Matrix &X) const;
-
-    // Returns:
-    //   A MvnModel object giving the posterior distribution of the function
-    //   values at the locations specified the training data.  The order of the
-    //   output matches the order of the training data stored in the model.
-    Ptr<MvnModel> predict_function() const;
+    Ptr<MvnBase> predict_distribution(
+        const Matrix &X, bool predict_data = true) const;
 
     Vector posterior_residuals() const;
 
@@ -191,11 +177,11 @@ namespace BOOM {
     // "confidence intervals."
     mutable SpdMatrix Kinv_;
 
-    // The inverse of the kernel matrix based on the training data.  This matrix
-    // omits contributions from the residual variance, so it describes the
-    // posterior mean function.  This one is for "confidence intervals" not
-    // "prediction intervals".
-    mutable SpdMatrix Kinv_func_;
+    // The kernel matrix based on the training data.  This matrix omits
+    // contributions from the residual variance, so it describes covariance of
+    // the posterior mean function.  As such, its values may be highly
+    // correlated.  It should not be inverted directly.
+    mutable SpdMatrix Kfunc_;
 
     // The residuals from the prior mean function.
     mutable Vector residuals_;
