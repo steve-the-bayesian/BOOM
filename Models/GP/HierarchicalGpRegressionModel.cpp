@@ -109,6 +109,8 @@ namespace BOOM {
     Ptr<RegressionData> regression_data(data_point);
     it->second->add_data(regression_data);
     prior()->add_data(regression_data);
+
+    data_store_[it->second.get()].push_back(data_point);
   }
 
   void HierarchicalGpRegressionModel::add_data(const Ptr<Data> &dp) {
@@ -156,6 +158,11 @@ namespace BOOM {
       report_error(err.str());
     }
     return it->second.get();
+  }
+
+  std::vector<Ptr<HierarchicalRegressionData>> &
+  HierarchicalGpRegressionModel::data_set(GaussianProcessRegressionModel *model) {
+    return data_store_[model];
   }
 
 }  // namespace BOOM

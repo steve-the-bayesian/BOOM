@@ -126,11 +126,6 @@ namespace BOOM {
     std::vector<Ptr<HierarchicalRegressionData>> &data_set(
         GaussianProcessRegressionModel *model);
 
-    std::map<std::string, Ptr<GaussianProcessRegressionModel>> &models() {
-      return models_;
-    }
-
-
    private:
     std::map<std::string, Ptr<GaussianProcessRegressionModel>> models_;
     std::vector<std::string> group_names_;

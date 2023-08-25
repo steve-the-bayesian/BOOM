@@ -186,8 +186,8 @@ namespace {
     // ----------------------------------------------------------------------
     // Build the model objects.
     // ----------------------------------------------------------------------
-    NEW(RegressionModel, mean_function_model)(beta, 1.0);
-    NEW(LinearMeanFunction, mean_function)(mean_function_model);
+    NEW(GlmCoefs, mean_function_coefs)(beta, 1.0);
+    NEW(LinearMeanFunction, mean_function)(mean_function_coefs);
 
     NEW(RadialBasisFunction, kernel)(1.0);
     NEW(UnivParams, residual_variance)(1.0);
@@ -223,7 +223,7 @@ namespace {
     Matrix fun_draws(niter, sample_size);
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
-      beta_draws.row(i) = mean_function_model->Beta();
+      beta_draws.row(i) = mean_function_coefs->Beta();
 
     }
 
