@@ -127,6 +127,10 @@ namespace BOOM {
   //===========================================================================
   // A mean function that can be used with a GaussianProcessRegressionModel,
   // where the mean is a GP regression.
+  //
+  // This mean function is useful in the context of a hierarchical Gaussian
+  // process.  It really can't be used as the mean function of a regular GP
+  // because it wouldn't be identified.
   class GpMeanFunction : public FunctionParams {
    public:
     GpMeanFunction(const Ptr<GaussianProcessRegressionModel> &gp);

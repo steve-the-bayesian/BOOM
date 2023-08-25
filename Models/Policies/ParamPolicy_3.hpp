@@ -51,7 +51,8 @@ namespace BOOM {
 
     void set_params(const Ptr<P1> &p1, Ptr<P2> p2, Ptr<P3> p3) {
       prm1_ = p1;
-      prm2_ = p2, prm3_ = p3;
+      prm2_ = p2;
+      prm3_ = p3;
       set_t();
     }
 
