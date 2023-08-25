@@ -33,8 +33,17 @@ namespace BOOM {
     double logpri() const override;
     void draw() override;
 
+    // For each data point in the training data for 'model', simulate the
+    // model's posterior function values, and adjust the data point by
+    // subtracting the imputed function value from the observed y value.
+    void adjust_function_values(GaussianProcessRegressionModel *model);
+
+    // Reset all data adjustments to 0.
+    void clear_data_adjustments();
+
    private:
     HierarchicalGpRegressionModel *model_;
+
   };
 
 }  // namespace BOOM

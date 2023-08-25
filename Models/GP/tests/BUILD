@@ -18,6 +18,13 @@ cc_test(
 )
 
 cc_test(
+    name = "hierarchical_gp_test",
+    srcs = ["hierarchical_gp_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "kernel_test",
     srcs = ["kernel_test.cc"],
     copts = COPTS,

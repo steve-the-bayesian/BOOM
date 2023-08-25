@@ -99,7 +99,8 @@ namespace BOOM {
     uint size(bool minimal = true) const override;
 
     Vector vectorize(bool minimal = true) const override;
-    Vector::const_iterator unvectorize(Vector::const_iterator &v, bool minimal = true);
+    Vector::const_iterator unvectorize(
+        Vector::const_iterator &v, bool minimal = true) override;
     using Params::unvectorize;
   };
 

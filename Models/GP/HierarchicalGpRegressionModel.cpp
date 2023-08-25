@@ -90,6 +90,7 @@ namespace BOOM {
       idx = index_maker.str();
     }
     models_[idx] = model;
+    group_names_.push_back(index);
     model->set_params(shared_mean_function_param_,
                       model->kernel_param(),
                       model->sigsq_param());
@@ -121,7 +122,7 @@ namespace BOOM {
     prior()->clear_data();
   }
 
-  void combine_data(const Model &, bool) {
+  void HierarchicalGpRegressionModel::combine_data(const Model &, bool) {
     report_error("combine data is not yet implemented.");
   }
 

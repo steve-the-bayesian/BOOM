@@ -20,7 +20,7 @@
 
 #include "Models/ParamTypes.hpp"
 #include "LinAlg/Vector.hpp"
-#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
 #include <ostream>
 
 // #include "stats/Encoders.hpp"
@@ -31,7 +31,6 @@ namespace BOOM {
 
   // Forward declarations needed to prevent circular inclusions.
   class GaussianProcessRegressionModel;
-  class RegressionModel;
 
   // FunctionParams describes a function mapping a vector of predictors X to a
   // real number yhat.
@@ -72,7 +71,7 @@ namespace BOOM {
   // A FunctionParams where the function is a linear regression.
   class LinearMeanFunction : public FunctionParams {
    public:
-    LinearMeanFunction(const Ptr<RegressionModel> &model);
+    LinearMeanFunction(const Ptr<GlmCoefs> &coefficients);
     LinearMeanFunction(const LinearMeanFunction &rhs);
     LinearMeanFunction & operator=(const LinearMeanFunction &rhs);
     LinearMeanFunction(LinearMeanFunction &&rhs) = default;
@@ -92,11 +91,11 @@ namespace BOOM {
                                        bool minimal = true) override;
     using Params::unvectorize;
 
-    Ptr<RegressionModel> model() {return model_;}
-    const Ptr<RegressionModel> model() const {return model_;}
+    Ptr<GlmCoefs> & coef() {return coefficients_;}
+    const Ptr<GlmCoefs> & coef() const {return coefficients_;}
 
    private:
-    Ptr<RegressionModel> model_;
+    Ptr<GlmCoefs> coefficients_;
   };
 
   //===========================================================================

@@ -19,8 +19,6 @@
 #include "Models/GP/GpMeanFunction.hpp"
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 
-#include "Models/Glm/RegressionModel.hpp"
-
 namespace BOOM {
 
     Vector FunctionParams::operator()(const Matrix &X) const {
@@ -40,17 +38,17 @@ namespace BOOM {
 
   //===========================================================================
 
-  LinearMeanFunction::LinearMeanFunction(const Ptr<RegressionModel> &model)
-      : model_(model)
+  LinearMeanFunction::LinearMeanFunction(const Ptr<GlmCoefs> &coef)
+      : coefficients_(coef)
   {}
 
   LinearMeanFunction::LinearMeanFunction(const LinearMeanFunction &rhs)
-      : model_(rhs.model_->clone())
+      : coefficients_(rhs.coefficients_->clone())
   {}
 
   LinearMeanFunction & LinearMeanFunction::operator=(const LinearMeanFunction &rhs) {
     if (&rhs != this) {
-      model_.reset(rhs.model_->clone());
+      coefficients_.reset(rhs.coefficients_->clone());
     }
     return *this;
   }
@@ -60,25 +58,25 @@ namespace BOOM {
   }
 
   uint LinearMeanFunction::size(bool minimal) const {
-    return model_->coef().size(minimal);
+    return coefficients_->size(minimal);
   }
 
   double LinearMeanFunction::operator()(const ConstVectorView &x) const {
-    return model_->predict(x);
+    return coefficients_->predict(x);
   }
 
   std::ostream &LinearMeanFunction::display(std::ostream &out) const {
-    out << "LinearMeanFunction with coefficients: " << model_->coef();
+    out << "LinearMeanFunction with coefficients: " << *coefficients_;
     return out;
   }
 
   Vector LinearMeanFunction::vectorize(bool minimal) const {
-    return model_->coef().vectorize(minimal);
+    return coefficients_->vectorize(minimal);
   }
 
   Vector::const_iterator LinearMeanFunction::unvectorize(
       Vector::const_iterator &v, bool minimal) {
-    return model_->coef().unvectorize(v, minimal);
+    return coefficients_->unvectorize(v, minimal);
   }
 
   //===========================================================================

@@ -94,10 +94,6 @@ namespace BOOM {
     HierarchicalGpRegressionModel & operator=(HierarchicalGpRegressionModel &&rhs);
     HierarchicalGpRegressionModel * clone() const override;
 
-    void add_model(const Ptr<GaussianProcessRegressionModel> &model,
-                   const std::string &index="");
-    size_t number_of_groups() const {return models_.size();}
-
     // Data Policy overrides
 
     // The same data point is added to both the relevant model and the prior.
@@ -106,16 +102,46 @@ namespace BOOM {
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
+    // Adding and working with sub-models.
+
+    // Add a model and a corresponding hierarchy node to the model hierarchy.
+    // Args:
+    //   model:  The model to add to the hierarchy.
+    //   index: The name of the data group for which the model is responsible.
+    //     This name must match the "group" method
+    void add_model(const Ptr<GaussianProcessRegressionModel> &model,
+                   const std::string &index="");
+    size_t number_of_groups() const {return group_names_.size();}
+    const std::vector<std::string> &group_names() const { return group_names_; }
+
+
     GaussianProcessRegressionModel *prior();
     const GaussianProcessRegressionModel *prior() const;
 
     GaussianProcessRegressionModel *data_model(const std::string &index);
     const GaussianProcessRegressionModel *data_model(const std::string &index) const;
 
+    // The data set owned by the given model.  The data are stored in the same
+    // order as the model.
+    std::vector<Ptr<HierarchicalRegressionData>> &data_set(
+        GaussianProcessRegressionModel *model);
+
+    std::map<std::string, Ptr<GaussianProcessRegressionModel>> &models() {
+      return models_;
+    }
+
+
    private:
     std::map<std::string, Ptr<GaussianProcessRegressionModel>> models_;
+    std::vector<std::string> group_names_;
+
     Ptr<GaussianProcessRegressionModel> shared_mean_function_model_;
     Ptr<GpMeanFunction> shared_mean_function_param_;
+
+    // As far as the component models are concerned, they hold RegressionData.
+    // But in reality they hold HierarchicalRegressionData.
+    std::map<GaussianProcessRegressionModel *,
+             std::vector<Ptr<HierarchicalRegressionData>>> data_store_;
 
   };
 

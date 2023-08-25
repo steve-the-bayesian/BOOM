@@ -96,7 +96,7 @@ namespace BOOM {
 
     // Fill the matrix with N(mu, sd^2) random numbers.
     virtual Matrix &randomize_gaussian(
-        double mean, double sd, RNG &rng = GlobalRng::rng);
+        double mean = 0.0, double sd = 1.0, RNG &rng = GlobalRng::rng);
 
     // Returns true if empty, or if std::isfinite returns 'true' on
     // all elements.  Returns false otherwise.

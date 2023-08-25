@@ -32,7 +32,7 @@ namespace BOOM {
   {}
 
   double LinearMeanFunctionSampler::logpri() const {
-    return prior_->logp(mean_function_->model()->coef().Beta());
+    return prior_->logp(mean_function_->coef()->Beta());
   }
 
   // The model is Y ~ N(mu(X), K(X)) where mu(X) = beta'X.
@@ -61,7 +61,7 @@ namespace BOOM {
         prior_->precision() * prior_->mean() + X.Tmult(Kinv * y);
     Vector posterior_mean = posterior_precision.solve(unscaled_posterior_mean);
     Vector beta = rmvn_ivar_mt(rng, posterior_mean, posterior_precision);
-    mean_function_->model()->set_Beta(beta);
+    mean_function_->coef()->set_Beta(beta);
   }
 
 }  // namespace BOOM

@@ -50,7 +50,7 @@ namespace BOOM {
     // Args:
     //   scale: The size of a "standard deviation" over which the kernel should
     //     reach.
-    RadialBasisFunction(double scale);
+    RadialBasisFunction(double scale = 1.0);
     RadialBasisFunction *clone() const override;
 
     uint size(bool = true) const override {return 1;}

@@ -34,14 +34,35 @@ namespace BOOM {
   }
 
   void HierarchicalGpPosteriorSampler::draw() {
-
-    for (int i = 0; i < model_->number_of_groups(); ++i) {
-      // model_->data_model(i)->sample_posterior();
-      // model_->data_model(i)->sample_function_values();
-      // model_->adjust_data(i)
+    clear_data_adjustments();
+    for (const std::string &group_name : model_->group_names()) {
+      GaussianProcessRegressionModel *data_model
+          = model_->data_model(group_name);
+      data_model->sample_posterior();
+      adjust_function_values(data_model);
     }
 
+    model_->prior()->sample_posterior();
+    clear_data_adjustments();
+  }
 
+  void HierarchicalGpPosteriorSampler::adjust_function_values(
+      GaussianProcessRegressionModel *specific_model) {
+
+    std::vector<Ptr<HierarchicalRegressionData>> &data(
+        model_->data_set(specific_model));
+
+    Matrix predictors(data.size(), specific_model->xdim());
+    for (size_t i = 0; i < data.size(); ++i) {
+      predictors.row(i) = data[i]->x();
+    }
+
+    Ptr<MvnBase> function_distribution = specific_model->predict_distribution(
+        predictors, false);
+    Vector function_values = function_distribution->sim(rng());
+    for (size_t i = 0; i < data.size(); ++i) {
+      data[i]->adjust_y(function_values[i]);
+    }
   }
 
 
