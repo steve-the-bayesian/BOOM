@@ -227,6 +227,40 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<HierarchicalRegressionData,
+               RegressionData,
+               Ptr<HierarchicalRegressionData>>(boom, "HierarchicalRegressionData")
+        .def(py::init(
+            [](double y, const Vector &x, const std::string &group) {
+              return new HierarchicalRegressionData(y, x, group);
+            }),
+             py::arg("y"),
+             py::arg("x"),
+             py::arg("group"),
+             "Regression data that is part of a hierarchical model.\n"
+             "Args:\n\n"
+             "  y:  The response variable.\n"
+             "  x:  A boom.Vector containing the predictors.\n"
+             "  group:  The position in the hierarchy containing the observation.\n"
+             )
+        .def_property_readonly(
+            "group",
+            [](const HierarchicalRegressionData &data_point) {
+              return data_point.group();
+            })
+        ;
+
+    py::class_<HierarchicalGpRegressionModel,
+               PriorPolicy,
+               Ptr<HierarchicalGpRegressionModel>>(
+                   boom, "HierarchicalGpRegressionModel")
+        .def(py::init(
+            [](const Ptr<GaussianProcessRegressionModel> &mean_function_model) {
+              return new HierarchicalGpRegressionModel(mean_function_model);
+            }),
+             py::arg("mean_function_model")
+        ;
+
     py::class_<GP::ParameterSampler, Ptr<GP::ParameterSampler>>(
         boom, "GpParameterSampler")
         .def("draw",
@@ -295,6 +329,7 @@ namespace BayesBoom {
                   seeding_rng);
             }))
         ;
+
 
   }  // GpModel_def
 
