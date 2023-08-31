@@ -70,6 +70,8 @@ from .frequency_distribution import FrequencyDistribution
 
 from .graphics_device import get_current_graphics_device
 
+from .lm import LinearModel, lm, AnovaTable
+
 from .mcmc import suggest_burn, report_progress
 
 from .plots import (

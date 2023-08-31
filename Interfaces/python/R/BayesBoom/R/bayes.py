@@ -262,7 +262,11 @@ class Ar1CoefficientPrior(DoubleModel):
         self.__dict__ = payload
 
 
-class MvnPrior:
+class MvnBase(ABC):
+    pass
+
+
+class MvnPrior(MvnBase):
     """
     Encodes a multivariate normal distribution.
     """
@@ -307,7 +311,7 @@ class MvnPrior:
                              boom.SpdMatrix(self._Sigma))
 
 
-class MvnGivenSigma:
+class MvnGivenSigma(MvnBase):
     """
     Encodes a conditional multivariate normal distribution given an external
     variance matrix Sigma.  This model describes y ~ Mvn(mu, Sigma / kappa).
