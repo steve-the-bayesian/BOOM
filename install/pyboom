@@ -146,7 +146,7 @@ fi
 echo "Time to build the package!"
 
 cd python_package
-python3 setup.py sdist bdist_wheel
+python setup.py sdist bdist_wheel
 # python3 -m pip install dist/BayesBoom-*.whl
 # CC="ccache clang++" CXX="ccache"
 # pip3 --verbose install ./BayesBoom
