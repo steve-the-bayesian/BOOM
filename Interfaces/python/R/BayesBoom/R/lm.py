@@ -84,6 +84,12 @@ class LinearModel:
     """
 
     def __init__(self, y, X):
+        X = np.array(X)
+        if len(X.shape) == 1:
+            X = X.reshape(-1, 1)
+
+        y = np.array(y).ravel()
+
         xtx = X.T @ X
         xty = X.T @ y
         beta = np.linalg.solve(xtx, xty).ravel()

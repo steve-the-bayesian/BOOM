@@ -8,8 +8,9 @@
 #include "Models/GP/kernels.hpp"
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 #include "Models/GP/HierarchicalGpRegressionModel.hpp"
-#include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"
 
+#include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"
+#include "Models/GP/PosteriorSamplers/HierarchicalGpPosteriorSampler.hpp"
 #include "Models/GP/PosteriorSamplers/MahalanobisKernelSampler.hpp"
 #include "Models/GP/PosteriorSamplers/LinearMeanFunctionSampler.hpp"
 
@@ -458,6 +459,7 @@ namespace BayesBoom {
              py::arg("model"),
              py::arg("mean_function_sampler"),
              py::arg("kernel_sampler"),
+             py::arg("residual_variance_prior"),
              py::arg("seeding_rng") = GlobalRng::rng,
              "Args:\n\n"
              "   model:  The model to be posterior sampled.\n"

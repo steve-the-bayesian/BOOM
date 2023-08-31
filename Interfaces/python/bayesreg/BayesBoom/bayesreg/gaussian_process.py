@@ -78,7 +78,11 @@ class GaussianProcessRegression:
     def create_sampler(self, boom_model):
         kernel_sampler = self._kernel.create_sampler(boom_model)
         mean_function_sampler = self._mean_function.create_sampler(
-            boom_model)
+            boom_model.mean_function, boom_model)
+        if self._residual_sd_prior is None:
+            self._residual_sd_prior = R.SdPrior(
+                .5 * np.std(self._y, ddof=1))
+
         sampler = boom.GaussianProcessRegressionPosteriorSampler(
             boom_model,
             mean_function_sampler,

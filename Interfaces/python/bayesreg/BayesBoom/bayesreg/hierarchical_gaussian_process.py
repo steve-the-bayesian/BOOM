@@ -4,6 +4,7 @@ import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
 
+import copy
 # import matplotlib.pyplot as plt
 # import patsy
 
@@ -112,11 +113,11 @@ class HierarchicalGaussianProcessRegression:
         """
         prior = self._create_prior_mean_function()
         model = boom.HierarchicalGpRegressionModel(prior)
-        model = self._add_data_models(model)
+        self._add_data_models(model)
         if self._X is not None:
             model.add_data(
-                R.to_boom_matrix(self._X),
                 R.to_boom_vector(self._y),
+                R.to_boom_matrix(self._X),
                 self._group
             )
         else:
@@ -138,11 +139,13 @@ class HierarchicalGaussianProcessRegression:
         for group in unique_groups:
             py_data_model = GaussianProcessRegression(
                 zero_fun,
-                self._data_kernel_prototype.copy(),
+                copy.deepcopy(self._data_kernel_prototype),
                 residual_sd)
             self._group_models[group] = py_data_model
+            py_data_model.set_prior(R.SdPrior(residual_sd))
             boom_data_model = py_data_model.boom()
             boom_model.add_model(boom_data_model, str(group))
+        return boom_model
 
     def _create_prior_mean_function(self):
         """
@@ -172,7 +175,8 @@ class HierarchicalGaussianProcessRegression:
         if self._X is None:
             raise Exception("No data has been assigned.")
         reg = R.lm(self._y, self._X)
-        return LinearMeanFunction(reg.coefficients)
+        prior = R.ScottZellnerMvnPrior(R.RegSuf.from_data(self._X, self._y))
+        return LinearMeanFunction(reg.coefficients, prior)
 
     def _create_prior_kernel(self):
         """
