@@ -106,6 +106,10 @@ class LinearModel:
         return self._beta
 
     @property
+    def coefficients(self):
+        return self._beta
+
+    @property
     def residuals(self):
         return self._residuals
 

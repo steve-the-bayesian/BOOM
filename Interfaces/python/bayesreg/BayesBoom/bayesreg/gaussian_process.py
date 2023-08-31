@@ -7,7 +7,6 @@ import BayesBoom.spikeslab as spikeslab
 
 import matplotlib.pyplot as plt
 import patsy
-from datetime import datetime
 
 
 class GaussianProcessRegression:
@@ -28,8 +27,7 @@ class GaussianProcessRegression:
         bayesreg.ZeroFunction(),
         bayesreg.MahalanobisKernel(X, 1.0),
         1.2)
-    model.add_data(X, data["y"])
-
+    model.add_data(data["y"], X)
 
     model.mcmc(niter=100)
     """
@@ -47,7 +45,7 @@ class GaussianProcessRegression:
     def set_prior(self, prior: R.SdPrior):
         self._residual_sd_prior = prior
 
-    def add_data(self, predictors: np.ndarray, response: np.ndarray):
+    def add_data(self, response: np.ndarray, predictors: np.ndarray):
         """
         Args:
           predictors: A matrix of predictors.
@@ -58,6 +56,14 @@ class GaussianProcessRegression:
         self._y = response
 
     def mcmc(self, niter: int, ping: int = 100):
+        self.boom()
+        self.allocate_space(niter)
+        for iteration in range(niter):
+            R.print_timestamp(iteration, ping)
+            self._boom_model.sample_posterior()
+            self._record_draws(iteration)
+
+    def boom(self):
         self._boom_model = boom.GaussianProcessRegressionModel(
             self._mean_function.boom(),
             self._kernel.boom(),
@@ -66,31 +72,31 @@ class GaussianProcessRegression:
         if self._X is not None:
             self._boom_model.add_data(R.to_boom_matrix(self._X),
                                       R.to_boom_vector(self._y))
-        self._create_samplers()
-        self._allocate_space(niter)
-        for iteration in range(niter):
-            R.print_timestamp(iteration, ping)
-            self._boom_model.sample_posterior()
-            self._record_draws(iteration)
+        self._assign_samplers()
+        return self._boom_model
 
-    def _create_samplers(self):
-        kernel_sampler = self._kernel.create_sampler(self._boom_model)
+    def create_sampler(self, boom_model):
+        kernel_sampler = self._kernel.create_sampler(boom_model)
         mean_function_sampler = self._mean_function.create_sampler(
-            self._boom_model)
+            boom_model)
         sampler = boom.GaussianProcessRegressionPosteriorSampler(
-            self._boom_model,
+            boom_model,
             mean_function_sampler,
             kernel_sampler,
             self._residual_sd_prior.boom(),
             boom.GlobalRng.rng)
+        return sampler
+
+    def _assign_samplers(self):
+        sampler = self.create_sampler(self._boom_model)
         self._boom_model.set_method(sampler)
 
-    def _allocate_space(self, niter: int):
+    def allocate_space(self, niter: int):
         self._mean_function.allocate_space(niter)
         self._kernel.allocate_space(niter)
         self._residual_sd_draws = np.empty(niter)
 
-    def _record_draws(self, iteration):
+    def record_draws(self, iteration):
         self._kernel.record_draw(self._boom_model.kernel_param, iteration)
         self._mean_function.record_draw(self._boom_model.mean_param, iteration)
         self._residual_sd_draws[iteration] = self._boom_model.residual_sd

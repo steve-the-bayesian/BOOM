@@ -7,8 +7,11 @@
 #include "Models/GP/GpMeanFunction.hpp"
 #include "Models/GP/kernels.hpp"
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
+#include "Models/GP/HierarchicalGpRegressionModel.hpp"
 #include "Models/GP/PosteriorSamplers/GaussianProcessRegressionPosteriorSampler.hpp"
+
 #include "Models/GP/PosteriorSamplers/MahalanobisKernelSampler.hpp"
+#include "Models/GP/PosteriorSamplers/LinearMeanFunctionSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -21,6 +24,7 @@ namespace BayesBoom {
 
   void GpModel_def(py::module &boom) {
 
+    //==========================================================================
     py::class_<FunctionParams,
                Params,
                Ptr<FunctionParams>>(boom, "FunctionParams")
@@ -44,12 +48,30 @@ namespace BayesBoom {
              "returning a boom.Vector.\n")
         ;
 
+    //==========================================================================
     py::class_<ZeroFunction,
                FunctionParams,
                Ptr<ZeroFunction>>(boom, "ZeroFunction")
         .def(py::init([](){ return new ZeroFunction; }))
         ;
 
+    //==========================================================================
+    py::class_<LinearMeanFunction,
+               FunctionParams,
+               Ptr<LinearMeanFunction>>(boom, "LinearMeanFunction")
+        .def(py::init([](const Vector &coefficients) {
+          return new LinearMeanFunction(new GlmCoefs(coefficients));
+        }),
+          "Args:\n\n"
+          "   coefficients:  The coefficients for the linear mean function.\n")
+
+        .def_property_readonly(
+            "coefficients",
+            [](const LinearMeanFunction &fun) {
+              return fun.coef()->Beta();
+            })
+        ;
+    //==========================================================================
     py::class_<KernelParams,
                Params,
                Ptr<KernelParams>>(boom, "KernelParams")
@@ -75,6 +97,7 @@ namespace BayesBoom {
              "returning a boom.SpdMatrix.\n")
         ;
 
+    //==========================================================================
     py::class_<RadialBasisFunction,
                KernelParams,
                Ptr<RadialBasisFunction>>(boom, "RadialBasisFunction")
@@ -88,6 +111,7 @@ namespace BayesBoom {
             "the kernel should reach.\n")
         ;
 
+    //==========================================================================
     py::class_<MahalanobisKernel,
                KernelParams,
                Ptr<MahalanobisKernel>>(boom, "MahalanobisKernel")
@@ -118,6 +142,7 @@ namespace BayesBoom {
             })
         ;
 
+    //==========================================================================
     py::class_<GaussianProcessRegressionModel,
                PriorPolicy,
                Ptr<GaussianProcessRegressionModel>>(
@@ -227,6 +252,7 @@ namespace BayesBoom {
              })
         ;
 
+    //==========================================================================
     py::class_<HierarchicalRegressionData,
                RegressionData,
                Ptr<HierarchicalRegressionData>>(boom, "HierarchicalRegressionData")
@@ -250,6 +276,7 @@ namespace BayesBoom {
             })
         ;
 
+    //==========================================================================
     py::class_<HierarchicalGpRegressionModel,
                PriorPolicy,
                Ptr<HierarchicalGpRegressionModel>>(
@@ -258,9 +285,83 @@ namespace BayesBoom {
             [](const Ptr<GaussianProcessRegressionModel> &mean_function_model) {
               return new HierarchicalGpRegressionModel(mean_function_model);
             }),
-             py::arg("mean_function_model")
+             py::arg("mean_function_model"),
+             "Args:\n\n"
+             "  mean_function_model: The GaussianProcessRegressionModel to use "
+             "as the prior mean function.\n")
+        .def("add_model",
+             [](HierarchicalGpRegressionModel &model,
+                GaussianProcessRegressionModel &data_model,
+                const std::string &group_id) {
+               Ptr<GaussianProcessRegressionModel> data_model_ptr(&data_model);
+               model.add_model(data_model_ptr, group_id);
+             },
+             py::arg("data_model"),
+             py::arg("group"),
+             "Args:\n\n"
+             "  data_model: the boom.GaussianProcessRegressionModel object "
+             "responsible for modeling the specified group in the hierarchy.\n"
+             "  group:  The name of the hierarchy group to be modeled.\n")
+        .def("add_data",
+             [](HierarchicalGpRegressionModel &model,
+                const Vector &response,
+                const Matrix &predictors,
+                const std::vector<std::string> &group) {
+               size_t sample_size = response.size();
+               if (predictors.nrow() != sample_size) {
+                 std::ostringstream err;
+                 err << "The number of rows in 'predictors' ("
+                     << predictors.nrow()
+                     << ") did not match the length of 'response' ("
+                     << sample_size << ").\n";
+                 report_error(err.str());
+               }
+               if (group.size() != sample_size) {
+                 std::ostringstream err;
+                 err << "The length of 'group' ("
+                     << group.size()
+                     << ") must match the length of 'response' ("
+                     << sample_size
+                     << ").\n";
+                 report_error(err.str());
+               }
+               for (size_t i = 0; i < sample_size; ++i) {
+                 NEW(HierarchicalRegressionData, data_point)(
+                     response[i], predictors.row(i), group[i]);
+                 model.add_data(data_point);
+               }
+             },
+             py::arg("response"),
+             py::arg("predictors"),
+             py::arg("group"),
+             "Args:\n\n"
+             "  response:  A boom.Vector of responses.\n"
+             "  predictors:  A boom.Matrix of predictor variables.\n"
+             "  group:  A sequqnce of strings, giving the group id of "
+             "each observation.\n"
+             " The number of rows in 'predictors' must match the lengths of "
+             "'response' and 'group'.\n")
+        .def("data_model",
+             [](HierarchicalGpRegressionModel &model, const std::string &group) {
+               return model.data_model(group);
+             },
+             py::arg("group"),
+             "Args:\n\n"
+             "  group:  The group id of the desired model.\n"
+             "Returns:\n"
+             "  The GaussianProcessRegressionModel describing the "
+             "requested group.\n")
+        .def_property_readonly(
+            "prior",
+            [](HierarchicalGpRegressionModel &model) {
+              return model.prior();
+            },
+            "Returns:\n"
+            "  The GaussianProcessRegressionModel describing the "
+            "prior mean function.\n")
         ;
 
+    //===========================================================================
     py::class_<GP::ParameterSampler, Ptr<GP::ParameterSampler>>(
         boom, "GpParameterSampler")
         .def("draw",
@@ -276,6 +377,7 @@ namespace BayesBoom {
              })
         ;
 
+    //===========================================================================
     py::class_<GP::NullSampler,
                GP::ParameterSampler,
                Ptr<GP::NullSampler>>(boom, "GpNullSampler")
@@ -289,6 +391,30 @@ namespace BayesBoom {
              )
         ;
 
+    //===========================================================================
+    py::class_<LinearMeanFunctionSampler,
+               GP::ParameterSampler,
+               Ptr<LinearMeanFunctionSampler>>(
+                   boom, "LinearMeanFunctionSampler")
+        .def(py::init(
+            [](LinearMeanFunction &mean_function,
+               GaussianProcessRegressionModel &model,
+               MvnBase &prior) {
+              return new LinearMeanFunctionSampler(
+                  &mean_function, &model, Ptr<MvnBase>(&prior));
+            }),
+             py::arg("mean_function"),
+             py::arg("model"),
+             py::arg("prior"),
+             "Args:\n\n"
+             "   mean_function:  The LinearMeanFunction object whose coefficients "
+             "are to be sampled.\n"
+             "   model:  The model that owns the 'mean_function'.\n"
+             "   prior:  An MvnBase object giving the prior distribution for "
+             "the coefficients of the mean function.\n")
+        ;
+
+    //===========================================================================
     py::class_<MahalanobisKernelSampler,
                GP::ParameterSampler,
                Ptr<MahalanobisKernelSampler>>(
@@ -311,6 +437,7 @@ namespace BayesBoom {
              "on the kernel's 'scale' parameter.\n")
         ;
 
+    //===========================================================================
     py::class_<GaussianProcessRegressionPosteriorSampler,
                PosteriorSampler,
                Ptr<GaussianProcessRegressionPosteriorSampler>>(
@@ -327,9 +454,36 @@ namespace BayesBoom {
                   Ptr<GP::ParameterSampler>(&kernel_sampler),
                   Ptr<GammaModelBase>(&residual_variance_prior),
                   seeding_rng);
-            }))
+            }),
+             py::arg("model"),
+             py::arg("mean_function_sampler"),
+             py::arg("kernel_sampler"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "Args:\n\n"
+             "   model:  The model to be posterior sampled.\n"
+             "   mean_function_sampler:  A boom.GpParameterSampler for drawing the parameters of the mean function.\n"
+             "   kernel_sampler:  A boom.GpParameterSampler for drawing the parameters of the kernel.\n"
+             "   seeding_rng:  A random number generator used to see the RNG "
+             "in this sampler.\n")
         ;
 
+    py::class_<HierarchicalGpPosteriorSampler,
+               PosteriorSampler,
+               Ptr<HierarchicalGpPosteriorSampler>>(
+                   boom, "HierarchicalGpPosteriorSampler")
+        .def(py::init(
+            [](HierarchicalGpRegressionModel &model, RNG &seeding_rng) {
+              return new HierarchicalGpPosteriorSampler(&model, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("rng") = GlobalRng::rng,
+             "Args:\n\n"
+             "   model:  The model to be posterior sampled.  All subcomponents "
+             "(the prior and all data_model components) must have posterior "
+             "samplers assigned to them.\n"
+             "   seeding_rng:  A random number generator used to see the RNG "
+             "in this sampler.\n")
+        ;
 
   }  // GpModel_def
 

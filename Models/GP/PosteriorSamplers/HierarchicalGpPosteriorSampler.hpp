@@ -27,6 +27,8 @@ namespace BOOM {
 
   class HierarchicalGpPosteriorSampler : public PosteriorSampler {
    public:
+    // The prior and all the 'data model' subcomponents of 'model' should have
+    // posterior samplers assigned to them.
     HierarchicalGpPosteriorSampler(HierarchicalGpRegressionModel *model,
                                    RNG &seeding_rng = GlobalRng::rng);
 

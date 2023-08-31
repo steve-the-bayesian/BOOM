@@ -1,6 +1,7 @@
 import BayesBoom.R as R
 import BayesBoom.boom as boom
 import numpy as np
+from abc import ABC, abstractmethod
 
 
 """
@@ -8,21 +9,21 @@ Python wrappers for C++ objects relating to kernels and mean functions.
 """
 
 
-class ZeroFunction:
+class Kernel(ABC):
+    @abstractmethod
     def boom(self):
-        return boom.ZeroFunction()
+        """
+        Create the corresponding boom object.
+        """
 
-    def allocate_space(self, niter: int):
-        pass
-
-    def record_draw(self, boom_mean_function, iteration: int):
-        pass
-
-    def create_sampler(self, boom_model):
-        return boom.GpNullSampler()
+    @abstractmethod
+    def create_sampler(self, boom_gp_model):
+        """
+        Create a boom sampler object appropriate for the class of kernel.
+        """
 
 
-class MahalanobisKernel:
+class MahalanobisKernel(Kernel):
     def __init__(self,
                  predictor_matrix: np.ndarray,
                  scale: float = 1.0,
