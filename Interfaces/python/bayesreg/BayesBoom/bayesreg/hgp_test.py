@@ -7,12 +7,9 @@ import pdb
 
 # import matplotlib.pyplot as plt
 
-import BayesBoom.R as R
+# import BayesBoom.R as R
 
 from BayesBoom.bayesreg import (
-    MahalanobisKernel,
-    ZeroFunction,
-    GaussianProcessRegression,
     HierarchicalGaussianProcessRegression,
 )
 
@@ -52,18 +49,18 @@ class TestHGP(unittest.TestCase):
 
         hgp = HierarchicalGaussianProcessRegression()
         full_data = pd.concat(group_data)
-        hgp.add_data(predictors=full_data["x"], response = full_data["y"], group=full_data["group"])
-        hgp.mcmc(niter=10)
+        hgp.add_data(predictors=full_data["x"],
+                     response=full_data["y"],
+                     group=full_data["group"])
+        hgp.mcmc(niter=10, ping=2)
 
 
 _debug_mode = True
 
 if _debug_mode:
-    import pdb  # noqa
-
     # Turn warnings into errors.
-#    import warnings
-#    warnings.simplefilter("error")
+    #    import warnings
+    #    warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an
@@ -80,6 +77,8 @@ if _debug_mode:
     rig.test_mcmc()
 
     print("Goodbye, cruel world!")
+    if False:
+        pdb.set_trace()
 
 else:
     if __name__ == "__main__":

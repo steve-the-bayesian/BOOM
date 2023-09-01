@@ -50,9 +50,8 @@ class MahalanobisKernel(Kernel):
           boom_model:  A boom.GaussianProcessRegressionModel object
         """
         if self._scale_prior is not None:
-            boom_kernel = boom_model.kernel_param
             sampler = boom.MahalanobisKernelSampler(
-                boom_kernel,
+                boom_model.kernel,
                 boom_model,
                 self._scale_prior.boom())
         else:

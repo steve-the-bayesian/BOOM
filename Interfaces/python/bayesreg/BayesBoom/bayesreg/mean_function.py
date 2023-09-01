@@ -60,7 +60,7 @@ class LinearMeanFunction(MeanFunction):
 
     def allocate_space(self, niter):
         dim = len(self._coefficients)
-        self._draws = np.array(niter, dim)
+        self._draws = np.empty((niter, dim))
 
     def record_draw(self, boom_mean_function, iteration: int):
         self._draws[iteration, :] = R.to_numpy(boom_mean_function.coefficients)

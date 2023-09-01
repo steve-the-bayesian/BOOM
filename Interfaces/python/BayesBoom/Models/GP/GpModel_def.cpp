@@ -169,12 +169,12 @@ namespace BayesBoom {
              "  residual_sd:  the residual standard deviation of the "
              "Gaussian process.\n")
         .def_property_readonly(
-            "kernel_param",
+            "kernel",
             [](GaussianProcessRegressionModel *model) {
               return model->kernel_param();
             })
         .def_property_readonly(
-            "mean_param",
+            "mean_function",
             [](GaussianProcessRegressionModel *model) {
               return model->mean_param();
             })
@@ -183,16 +183,6 @@ namespace BayesBoom {
             [](GaussianProcessRegressionModel *model) {
               return model->sigsq_param();
             })
-        .def("kernel",
-             [](GaussianProcessRegressionModel *model,
-                const Vector &x1,
-                const Vector &x2) {
-               return model->kernel(x1, x2);
-             })
-        .def("mean_function",
-             [](GaussianProcessRegressionModel *model, const Vector &x) {
-               return model->mean_function(x);
-             })
         .def_property_readonly(
             "sigma",
             [](const GaussianProcessRegressionModel *model) {

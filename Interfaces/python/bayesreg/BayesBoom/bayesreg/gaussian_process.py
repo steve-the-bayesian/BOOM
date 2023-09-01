@@ -101,6 +101,7 @@ class GaussianProcessRegression:
         self._residual_sd_draws = np.empty(niter)
 
     def record_draws(self, iteration):
-        self._kernel.record_draw(self._boom_model.kernel_param, iteration)
-        self._mean_function.record_draw(self._boom_model.mean_param, iteration)
+        self._kernel.record_draw(self._boom_model.kernel, iteration)
+        self._mean_function.record_draw(
+            self._boom_model.mean_function, iteration)
         self._residual_sd_draws[iteration] = self._boom_model.residual_sd

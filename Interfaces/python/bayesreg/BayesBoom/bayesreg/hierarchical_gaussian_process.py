@@ -111,8 +111,11 @@ class HierarchicalGaussianProcessRegression:
         Returns:
           A boom.HierarchicalGpRegressionModel that is ready to support MCMC.
         """
-        prior = self._create_prior_mean_function()
-        model = boom.HierarchicalGpRegressionModel(prior)
+        sdy = np.std(self._y, ddof=1)
+        self._prior = self._create_prior_mean_function()
+        self._prior.set_prior(R.SdPrior(
+            sdy * np.sqrt(1 - self._expected_R2)))
+        model = boom.HierarchicalGpRegressionModel(self._prior.boom())
         self._add_data_models(model)
         if self._X is not None:
             model.add_data(
@@ -122,6 +125,7 @@ class HierarchicalGaussianProcessRegression:
             )
         else:
             raise Exception("Model has no data assigned")
+
         return model
 
     def _add_data_models(self, boom_model: boom.HierarchicalGpRegressionModel):
@@ -162,9 +166,9 @@ class HierarchicalGaussianProcessRegression:
         sample_sd = np.std(self._y, ddof=1)
         residual_sd = sample_sd * np.sqrt(1 - self._expected_R2)
 
-        return boom.GaussianProcessRegressionModel(
-            self._hyperprior_mean_function.boom(),
-            self._prior_kernel.boom(),
+        return GaussianProcessRegression(
+            self._hyperprior_mean_function,
+            self._prior_kernel,
             residual_sd)
 
     def _default_hyperprior_mean_function(self):
@@ -186,11 +190,11 @@ class HierarchicalGaussianProcessRegression:
         return MahalanobisKernel(self._X)
 
     def _allocate_space(self, niter: int):
-        self._prior._allocate_space(niter)
+        self._prior.allocate_space(niter)
         for data_model in self._group_models.values():
             data_model.allocate_space(niter)
 
     def _record_draws(self, iteration):
-        self._prior._record_draws(iteration)
+        self._prior.record_draws(iteration)
         for data_model in self._group_models.values():
-            data_model._record_draws(iteration)
+            data_model.record_draws(iteration)
