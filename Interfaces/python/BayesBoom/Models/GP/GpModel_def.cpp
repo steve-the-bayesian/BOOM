@@ -77,10 +77,10 @@ namespace BayesBoom {
                Params,
                Ptr<KernelParams>>(boom, "KernelParams")
         .def("__call__",
-             [](const KernelParams &k,
+             [](const KernelParams &kernel,
                 const Vector &x1,
                 const Vector &x2) {
-               return k(x1, x2);
+               return kernel(x1, x2);
              },
              py::is_operator(),
              py::arg("x1"),
@@ -88,9 +88,9 @@ namespace BayesBoom {
              "Evaluate the kernel function at the given arguments, "
              "returning a scalar.\n")
         .def("__call__",
-             [](const KernelParams &k,
+             [](const KernelParams &kernel,
                 const Matrix &X) {
-               return k(X);
+               return kernel(X);
              },
              py::is_operator(),
              py::arg("X"),
@@ -133,9 +133,11 @@ namespace BayesBoom {
              py::arg("scale") = 1.0,
              py::arg("diagonal_shrinkage") = 0.05,
              "Args:\n\n"
-             "  X:  TBD\n"
-             "  scale:  TBD\n"
-             "  diagonal_shrinkage:  TBD\n")
+             "  X:  The boom.Matrix of predictors on which to base the distance "
+             "metric.\n"
+             "  scale:  The scale factor multiplying X'X / n.\n"
+             "  diagonal_shrinkage:  A number between 0 and 1 indicating how "
+             "much the X'X matrix should be shrunk towards its diagonal.\n")
         .def_property_readonly(
             "scale",
             [](const MahalanobisKernel &kernel) {
@@ -144,6 +146,8 @@ namespace BayesBoom {
         ;
 
     //==========================================================================
+    // A Gaussian process regression model with a specified prior mean function
+    // and kernel.
     py::class_<GaussianProcessRegressionModel,
                PriorPolicy,
                Ptr<GaussianProcessRegressionModel>>(
