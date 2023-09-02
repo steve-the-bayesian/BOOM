@@ -94,6 +94,20 @@ class HierarchicalGaussianProcessRegression:
             self._y = np.concatenate([self._y, np.array(response).ravel()])
             self._group = pd.Categorical(self._group.to_list() + list(group))
 
+    @property
+    def prior(self):
+        return self._prior
+
+    @property
+    def groups(self):
+        """
+        The unique set of group labels in the leaves of the hierarchy.
+        """
+        return list(self._group_models.keys())
+
+    def data_model(self, group):
+        return self._group_models.get(group, None)
+
     def mcmc(self, niter: int, ping: int = 100):
         self._boom_model = self._create_model()
         self._allocate_space(niter)

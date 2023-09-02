@@ -52,7 +52,12 @@ class TestHGP(unittest.TestCase):
         hgp.add_data(predictors=full_data["x"],
                      response=full_data["y"],
                      group=full_data["group"])
-        hgp.mcmc(niter=10, ping=2)
+        hgp.mcmc(niter=1000, ping=100)
+
+        pdb.set_trace()
+        ### Look at the prior and a couple of the data models.  Make sure their
+        ### parameter posteriors are reasonable.
+        print("hgp")
 
 
 _debug_mode = True
