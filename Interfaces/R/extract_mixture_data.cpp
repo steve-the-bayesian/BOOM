@@ -307,7 +307,7 @@ namespace BOOM {
       }
 
       std::vector<std::vector<Ptr<Data>>> ans;
-      ans.reserve(number_of_subjects);
+      ans.reserve(std::max<int>(number_of_subjects, 0));
       for (int subject = 0; subject < number_of_subjects; ++subject) {
         // This code block counts the number of observations for each
         // subject, and verifies that each subject has the same number
@@ -326,10 +326,11 @@ namespace BOOM {
                 << " (also counting from 0).  Earlier data composites had "
                 << series_length << " observations for this subject.";
             report_error(err.str());
+            return ans;  // Never reached.
           }
         }
         std::vector<Ptr<Data>> subject_data;
-        subject_data.reserve(series_length);
+        subject_data.reserve(std::max<int>(series_length, 0));
         for (int time = 0; time < series_length; ++time) {
           Ptr<CompositeData> dp = new CompositeData;
           for (int m = 0; m < number_of_composites; ++m) {
