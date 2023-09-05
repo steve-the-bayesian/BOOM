@@ -272,7 +272,6 @@ namespace FFT {
                          int m,
                          int p)
     {
-      int u,k,q1,q;
       const std::complex<double> * twiddles = config.twiddles.data();
       std::complex<double> t;
       int Norig = config.nfft;
@@ -280,9 +279,9 @@ namespace FFT {
       //      std::complex<double> * scratch = (std::complex<double>*)KISS_FFT_TMP_ALLOC(sizeof(std::complex<double>)*p);
       std::vector<std::complex<double>> scratch(p);
 
-      for ( u=0; u<m; ++u ) {
-        k=u;
-        for ( q1=0 ; q1<p ; ++q1 ) {
+      for (int u = 0; u < m; ++u) {
+        int k = u;
+        for (int q1 = 0 ; q1 < p ; ++q1 ) {
           scratch[q1] = Fout[ k  ];
           // C_FIXDIV(scratch[q1],p);
           scratch[q1] /= p;
@@ -290,10 +289,10 @@ namespace FFT {
         }
 
         k=u;
-        for ( q1=0 ; q1<p ; ++q1 ) {
+        for (int q1 = 0 ; q1 < p ; ++q1) {
           int twidx=0;
           Fout[ k ] = scratch[0];
-          for (q=1;q<p;++q ) {
+          for (int q = 1; q < p; ++q) {
             twidx += fstride * k;
             if (twidx>=Norig) twidx-=Norig;
             t = scratch[q] * twiddles[twidx];
