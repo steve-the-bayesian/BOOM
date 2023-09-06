@@ -312,7 +312,7 @@ namespace FFT {
                  int in_stride,
                  const int * factors,
                  const Config &config) {
-      std::complex<double> * Fout_beg=Fout;
+      std::complex<double> *Fout_beg=Fout;
       const int p=*factors++; /* the radix  */
       const int m=*factors++; /* stage's fft length/p */
       const std::complex<double> * Fout_end = Fout + p * m;
@@ -320,7 +320,7 @@ namespace FFT {
       if (m==1) {
         do {
           *Fout = *f;
-          f += fstride*in_stride;
+          f += fstride * in_stride;
         } while(++Fout != Fout_end );
       } else {
         do{
@@ -422,7 +422,7 @@ namespace FFT {
     }
   }
 
-  void kiss_fft_stride(const Config &config,
+  void kiss_fft_stride(Config &config,
                        const std::vector<std::complex<double>> &fin,
                        std::vector<std::complex<double>> &fout,
                        int in_stride)
@@ -446,7 +446,7 @@ namespace FFT {
     }
   }
 
-  void kiss_fft(const Config &cfg,
+  void kiss_fft(Config &cfg,
                 const std::vector<std::complex<double>> &fin,
                 std::vector<std::complex<double>> &fout)
   {
@@ -469,7 +469,8 @@ namespace FFT {
     ncfft = config.nfft;
 
     /*perform the parallel fft of two real signals packed in real,imag*/
-    std::vector<std::complex<double>> timedata_as_complex(ncfft / 2);
+    //    std::vector<std::complex<double>> timedata_as_complex(ncfft / 2 + 1);
+    std::vector<std::complex<double>> timedata_as_complex(ncfft);
     for (int i = 0; i < config.nfft / 2; ++i) {
       timedata_as_complex[i].real(timedata[2 * i]);
       timedata_as_complex[i].imag(timedata[2 * i + 1]);
@@ -594,9 +595,4 @@ namespace FFT {
       timedata[i + 1] = timedata_as_complex[i/2].imag();
     }
   }
-
-
-
-
-
 }  // namespace FFT

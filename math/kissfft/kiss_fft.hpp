@@ -136,9 +136,9 @@ namespace FFT {
     input timedata has nfft scalar points
     output freqdata has nfft/2+1 complex points
   */
-  void kiss_fftr(const RealConfig &cfg,
+  void kiss_fftr(RealConfig &cfg,
                  const std::vector<double> &timedata,
-                 const std::vector<std::complex<double>> &freqdata);
+                 std::vector<std::complex<double>> &freqdata);
 
   /*
     input freqdata has  nfft/2+1 complex points

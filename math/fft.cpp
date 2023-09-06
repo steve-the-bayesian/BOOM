@@ -34,11 +34,12 @@
 
 namespace BOOM {
 
-  std::vector<std::complex<double>> FastFourierTransform::transform(const Vector &time_domain) {
-
+  std::vector<std::complex<double>>
+  FastFourierTransform::transform(const Vector &time_domain) {
     size_t nfft = time_domain.size();
     FFT::RealConfig config(time_domain.size(), false);
-    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
+    //    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
+    std::vector<std::complex<double>> freq_domain(nfft);
     FFT::kiss_fftr(config, time_domain, freq_domain);
     return freq_domain;
 

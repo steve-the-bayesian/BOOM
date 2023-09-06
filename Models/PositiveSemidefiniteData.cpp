@@ -116,6 +116,10 @@ namespace BOOM {
     ldsi_ = eigen.generalized_inverse_logdet();
   }
 
+  double PositiveSemidefiniteData::generalized_ldsi() const {
+    return ldsi_;
+  }
+
   //
   PositiveSemidefiniteParams::PositiveSemidefiniteParams(const SpdMatrix &S)
       : PositiveSemidefiniteData(S)
