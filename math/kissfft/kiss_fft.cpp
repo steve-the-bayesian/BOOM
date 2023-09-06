@@ -381,8 +381,6 @@ namespace FFT {
     }
   }  // namespace
 
-
-
   Config::Config(int nfft_val, bool inverse_val)
       : twiddles(nfft_val)
   {

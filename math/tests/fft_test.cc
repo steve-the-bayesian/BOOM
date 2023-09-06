@@ -37,6 +37,20 @@ namespace {
     FastFourierTransform fft;
     std::vector<std::complex<double>> z = fft.transform(x);
 
+    EXPECT_EQ(z.size(), x.size());
+    Matrix entries(x.size(), 5);
+    for (int i = 0; i < x.size(); ++i) {
+      entries(i, 0) = x[i];
+      entries(i, 1) = real_z[i];
+      entries(i, 2) = imag_z[i];
+      entries(i, 3) = z[i].real();
+      entries(i, 4) = z[i].imag();
+    }
+
+    for (int i = 0; i < x.size(); ++i) {
+      EXPECT_NEAR(real_z[i], z[i].real(), 1e-6) << "\n" << entries;
+      EXPECT_NEAR(imag_z[i], z[i].imag(), 1e-6) << "\n" << entries;
+    }
   }
 
 }  // namespace
