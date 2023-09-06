@@ -19,7 +19,8 @@
 */
 
 #include "LinAlg/Vector.hpp"
-#include <memory>
+#include <vector>
+#include <complex>
 
 namespace FFT {
   class RealConfig;
@@ -29,8 +30,9 @@ namespace BOOM {
 
   class FastFourierTransform {
    public:
-    Vector transform(const Vector &time_domain);
-    Vector inverse_transform(const Vector &frequency_domain);
+    std::vector<std::complex<double>> transform(const Vector &time_domain);
+    Vector inverse_transform(
+        const std::vector<std::complex<double>> &frequency_domain);
   };
 
 }  // namespace BOOM

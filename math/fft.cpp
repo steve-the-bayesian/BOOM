@@ -34,32 +34,34 @@
 
 namespace BOOM {
 
-  Vector FastFourierTransform::transform(const Vector &time_domain) {
+  std::vector<std::complex<double>> FastFourierTransform::transform(const Vector &time_domain) {
 
     size_t nfft = time_domain.size();
     FFT::RealConfig config(time_domain.size(), false);
     std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
     FFT::kiss_fftr(config, time_domain, freq_domain);
+    return freq_domain;
 
-    Vector ans(time_domain.size());
-    for (int i = 0; i < nfft; ++i) {
-      ans[2 * i] = freq_domain[i].real();
-      ans[2 * i + 1] = freq_domain[i].imag();
-    }
-    return ans;
+    // Vector ans(time_domain.size());
+    // for (int i = 0; i < nfft; ++i) {
+    //   ans[2 * i] = freq_domain[i].real();
+    //   ans[2 * i + 1] = freq_domain[i].imag();
+    // }
+    // return ans;
   }
 
-  Vector FastFourierTransform::inverse_transform(const Vector &freq_domain) {
+  Vector FastFourierTransform::inverse_transform(
+      const std::vector<std::complex<double>> &freq_domain) {
     size_t nfft = freq_domain.size();
     Vector ans(nfft);
-    std::vector<std::complex<double>> complex_freq(nfft / 2 + 1);
-    for (int i = 0; i < nfft; ++i){
-      complex_freq[i / 2].real(freq_domain[i]);
-      complex_freq[i / 2].imag(freq_domain[i + 1]);
-    }
+    // std::vector<std::complex<double>> complex_freq(nfft / 2 + 1);
+    // for (int i = 0; i < nfft; ++i){
+    //   complex_freq[i / 2].real(freq_domain[i]);
+    //   complex_freq[i / 2].imag(freq_domain[i + 1]);
+    // }
 
     FFT::RealConfig config(nfft, true);
-    FFT::kiss_fftri(config, complex_freq, ans);
+    FFT::kiss_fftri(config, freq_domain, ans);
     return ans;
   }
 
