@@ -317,6 +317,11 @@ namespace FFT {
       const int m=*factors++; /* stage's fft length/p */
       const std::complex<double> * Fout_end = Fout + p * m;
 
+      if (m == 0) {
+        std::cout << "problem with m! Config = \n"
+                  << config;
+      }
+
       if (m==1) {
         do {
           *Fout = *f;
@@ -429,6 +434,7 @@ namespace FFT {
       return;
     }
     nfft >>= 1;
+    Config::resize(nfft);
     tmpbuf.resize(nfft);
     super_twiddles.resize(nfft);
 
