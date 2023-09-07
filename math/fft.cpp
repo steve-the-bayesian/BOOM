@@ -20,6 +20,7 @@
 #include "math/kissfft/kiss_fft.hpp"
 #include <vector>
 #include <complex>
+#include <iostream>
 
 // namespace FFT {
 //   void kiss_fftr(const RealConfig &cfg,
@@ -34,11 +35,12 @@
 
 namespace BOOM {
 
-  std::vector<std::complex<double>> FastFourierTransform::transform(const Vector &time_domain) {
-
+  std::vector<std::complex<double>>
+  FastFourierTransform::transform(const Vector &time_domain) {
     size_t nfft = time_domain.size();
     FFT::RealConfig config(time_domain.size(), false);
-    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
+    //    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
+    std::vector<std::complex<double>> freq_domain(nfft);
     FFT::kiss_fftr(config, time_domain, freq_domain);
     return freq_domain;
 
@@ -65,6 +67,10 @@ namespace BOOM {
     return ans;
   }
 
+  void FastFourierTransform::print_config(int data_size, bool inverse) {
+    FFT::RealConfig config(data_size, inverse);
+    std::cout << config;
+  }
 
 
 }  // namespace BOOM

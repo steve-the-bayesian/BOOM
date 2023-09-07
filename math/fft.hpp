@@ -33,6 +33,8 @@ namespace BOOM {
     std::vector<std::complex<double>> transform(const Vector &time_domain);
     Vector inverse_transform(
         const std::vector<std::complex<double>> &frequency_domain);
+
+    void print_config(int data_size, bool inverse);
   };
 
 }  // namespace BOOM

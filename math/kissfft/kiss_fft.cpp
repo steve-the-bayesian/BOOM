@@ -312,7 +312,7 @@ namespace FFT {
                  int in_stride,
                  const int * factors,
                  const Config &config) {
-      std::complex<double> * Fout_beg=Fout;
+      std::complex<double> *Fout_beg=Fout;
       const int p=*factors++; /* the radix  */
       const int m=*factors++; /* stage's fft length/p */
       const std::complex<double> * Fout_end = Fout + p * m;
@@ -320,7 +320,7 @@ namespace FFT {
       if (m==1) {
         do {
           *Fout = *f;
-          f += fstride*in_stride;
+          f += fstride * in_stride;
         } while(++Fout != Fout_end );
       } else {
         do{
@@ -382,11 +382,14 @@ namespace FFT {
   }  // namespace
 
   Config::Config(int nfft_val, bool inverse_val)
-      : twiddles(nfft_val)
+      : inverse(inverse_val)
   {
-    nfft = nfft_val;
-    inverse = inverse_val;
+    resize(nfft_val);
+  }
 
+  void Config::resize(int nfft_val) {
+    nfft = nfft_val;
+    twiddles.resize(nfft);
     for (int i = 0; i < nfft; ++i) {
       constexpr double pi=3.141592653589793238462643383279502884197169399375105820974944;
       double phase = -2 * pi * i / nfft;
@@ -395,22 +398,41 @@ namespace FFT {
       }
       kf_cexp(twiddles[i], phase);
     }
-
+    for (int i = 0; i < 64; ++i) {
+      factors[i] = 0;
+    }
     kf_factor(nfft, factors);
   }
 
+  std::ostream &Config::print(std::ostream &out) const {
+    out << "nfft: " << nfft << "\n"
+        << "inverse: " << inverse << "\n"
+        << "factors:  ";
+    for (int i =0; i < 64; ++i) {
+      out << factors[i] << "  ";
+    }
+    out << "\n";
+    out << "twiddles:\n";
+    for (int i = 0; i < twiddles.size(); ++i) {
+      out << "    " << twiddles[i].real()
+          << "    " << twiddles[i].imag() << "\n";
+    }
+    return out;
+  }
 
-  RealConfig::RealConfig(int nfft, bool inverse)
-      : Config(nfft, inverse),
-        tmpbuf(nfft),
-        super_twiddles(nfft)
+  RealConfig::RealConfig(int nfft_arg, bool inverse)
+      : Config(0, inverse)
   {
+    nfft = nfft_arg;
     if (nfft & 1) {
       report_error("nfft must be even.\n");
       return;
     }
+    nfft >>= 1;
+    tmpbuf.resize(nfft);
+    super_twiddles.resize(nfft);
 
-    for (int i = 0; i < nfft/2; ++i) {
+    for (int i = 0; i < nfft / 2; ++i) {
         double phase =
             -3.14159265358979323846264338327 * ((double) (i+1) / nfft + .5);
         if (inverse) {
@@ -420,7 +442,24 @@ namespace FFT {
     }
   }
 
-  void kiss_fft_stride(const Config &config,
+  std::ostream &RealConfig::print(std::ostream &out) const {
+    Config::print(out);
+    out << "tmpbuf:\n";
+    for (auto el : tmpbuf) {
+      out << "   " << el.real()
+          << "   " << el.imag()
+          << "\n";
+    }
+    out << "super_twiddles:\n";
+    for (auto el : super_twiddles) {
+      out << "   " << el.real()
+          << "   " << el.imag()
+          << "\n";
+    }
+    return out;
+  }
+
+  void kiss_fft_stride(Config &config,
                        const std::vector<std::complex<double>> &fin,
                        std::vector<std::complex<double>> &fout,
                        int in_stride)
@@ -444,7 +483,7 @@ namespace FFT {
     }
   }
 
-  void kiss_fft(const Config &cfg,
+  void kiss_fft(Config &cfg,
                 const std::vector<std::complex<double>> &fin,
                 std::vector<std::complex<double>> &fout)
   {
@@ -467,7 +506,8 @@ namespace FFT {
     ncfft = config.nfft;
 
     /*perform the parallel fft of two real signals packed in real,imag*/
-    std::vector<std::complex<double>> timedata_as_complex(ncfft / 2);
+    //    std::vector<std::complex<double>> timedata_as_complex(ncfft / 2 + 1);
+    std::vector<std::complex<double>> timedata_as_complex(ncfft);
     for (int i = 0; i < config.nfft / 2; ++i) {
       timedata_as_complex[i].real(timedata[2 * i]);
       timedata_as_complex[i].imag(timedata[2 * i + 1]);
@@ -592,9 +632,4 @@ namespace FFT {
       timedata[i + 1] = timedata_as_complex[i/2].imag();
     }
   }
-
-
-
-
-
 }  // namespace FFT

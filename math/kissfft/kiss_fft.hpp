@@ -64,17 +64,23 @@
 #include <cmath>
 #include <complex>
 #include <vector>
+#include <iostream>
+#include <ostream>
 
 namespace FFT {
 
   // A configuration for a complex to complex FFT.
   class Config {
    public:
-    Config(int nfft, bool inverse);
+    explicit Config(int nfft = 0, bool inverse = false);
     int nfft;
     int inverse;
     int factors[64];
     std::vector<std::complex<double>> twiddles;
+
+    virtual std::ostream & print(std::ostream &out) const;
+   protected:
+    void resize(int nfft_arg);
   };
 
   // A configuration for a real to complex FFT.
@@ -83,8 +89,13 @@ namespace FFT {
     RealConfig(int nfft, bool inverse);
     std::vector<std::complex<double>> tmpbuf;
     std::vector<std::complex<double>> super_twiddles;
+
+    std::ostream & print(std::ostream &out) const override;
   };
 
+  inline std::ostream & operator<<(std::ostream &out, const Config &cfg) {
+    return cfg.print(out);
+  }
 
   /*
    * kiss_fft(cfg,in_out_buf)
@@ -136,9 +147,9 @@ namespace FFT {
     input timedata has nfft scalar points
     output freqdata has nfft/2+1 complex points
   */
-  void kiss_fftr(const RealConfig &cfg,
+  void kiss_fftr(RealConfig &cfg,
                  const std::vector<double> &timedata,
-                 const std::vector<std::complex<double>> &freqdata);
+                 std::vector<std::complex<double>> &freqdata);
 
   /*
     input freqdata has  nfft/2+1 complex points
