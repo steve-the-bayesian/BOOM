@@ -35,6 +35,12 @@ namespace BOOM {
         const std::vector<std::complex<double>> &frequency_domain);
 
     void print_config(int data_size, bool inverse);
+
+   protected:
+    // Reflect the sequence of complex numbers in the first half of the vector
+    // to the second half.  The real component values match.  The imaginary
+    // component matches after multiplying by -1.
+    void reflect(std::vector<std::complex<double>> &freq) const;
   };
 
 }  // namespace BOOM

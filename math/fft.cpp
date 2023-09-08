@@ -38,13 +38,22 @@ namespace BOOM {
   std::vector<std::complex<double>>
   FastFourierTransform::transform(const Vector &time_domain) {
     size_t nfft = time_domain.size();
-    FFT::RealConfig config(time_domain.size(), false);
-    //    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
     std::vector<std::complex<double>> freq_domain(nfft);
-    FFT::kiss_fftr(config, time_domain, freq_domain);
-    reflect(freq_domain);
+    if (nfft %2 == 0) {
+      FFT::RealConfig config(time_domain.size(), false);
+      //    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
+      FFT::kiss_fftr(config, time_domain, freq_domain);
+      reflect(freq_domain);
+    } else {
+      std::vector<std::complex<double>> odd_complex;
+      std::vector<std::complex<double>> freq_domain;
+      for (auto &el : time_domain) {
+        odd_complex.push_back(std::complex<double>(el, 0.0));
+      }
+      FFT::Config config(time_domain.size(), false);
+      FFT::kiss_fft(config, odd_complex, freq_domain);
+    }
     return freq_domain;
-
     // Vector ans(time_domain.size());
     // for (int i = 0; i < nfft; ++i) {
     //   ans[2 * i] = freq_domain[i].real();
@@ -53,7 +62,7 @@ namespace BOOM {
     // return ans;
   }
 
-  void FastFourierTransform::reflect(std::vector<std::complex<double>> &freq) {
+  void FastFourierTransform::reflect(std::vector<std::complex<double>> &freq) const {
     size_t half_size = freq.size() / 2;
     if (half_size % 2) {
       // odd case
