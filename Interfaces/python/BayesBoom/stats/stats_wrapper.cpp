@@ -141,8 +141,8 @@ namespace BayesBoom {
              "Args:\n"
              "  x: A data point to add to the empirical distribution.\n")
         .def("add",
-             [](IQagent &agent, const Vector &value) {
-               agent.add(value);
+             [](IQagent &agent, const Vector &x) {
+               agent.add(x);
              },
              py::arg("x"),
              "Args:\n"
