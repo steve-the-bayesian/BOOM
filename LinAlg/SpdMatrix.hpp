@@ -121,10 +121,10 @@ namespace BOOM {
     // symmetry.
     void fix_near_symmetry();
 
-    // Returns the Mahalinobis distance:  (x - y)^T (*this) (x - y).
+    // Returns the Mahalanobis distance:  (x - y)^T (*this) (x - y).
     double Mdist(const Vector &x, const Vector &y) const;
 
-    // Mahalinobis distance from 0:  x^T (*this) x
+    // Mahalanobis distance from 0:  x^T (*this) x
     double Mdist(const Vector &x) const;
 
     // Increment *this by w * x * x.transpose().
@@ -167,6 +167,10 @@ namespace BOOM {
     SpdMatrix &add_outer2(const Vector &x, const Vector &y, double w = 1.0);
 
     //--------- Matrix multiplication ------------
+
+    // Multiply all off diagonal elements by 'scale', then return *this.
+    SpdMatrix &scale_off_diagonal(double scale);
+
     Matrix &mult(const Matrix &B, Matrix &ans,
                  double scal = 1.0) const override;
     Matrix &Tmult(const Matrix &B, Matrix &ans,
@@ -209,8 +213,6 @@ namespace BOOM {
                                   RNG &rng = GlobalRng::rng) override;
   };
 
-  typedef SpdMatrix Spd;
-
   //______________________________________________________________________
   template <class Fwd>
   SpdMatrix::SpdMatrix(Fwd b, Fwd e) {
@@ -251,6 +253,19 @@ namespace BOOM {
   //   A * V * A^T
   SpdMatrix sandwich(const Matrix &A, const SpdMatrix &V);
   SpdMatrix sandwich(const Matrix &A, const Vector &V);
+
+  // Args:
+  //   X: A matrix to be adjusted by averaging with its own diagonal.
+  //   diagonal_shrinkage: A number between 0 and 1 giving the weight assigned
+  //     to the diagonal.  If 0 then the original matrix is returned.  If 1 then
+  //     the diagonal matrix is returned
+  //
+  // Returns:
+  //  (1 - a) * X + a * diag(X), where a is 'diagonal_shrinkage'.
+  SpdMatrix self_diagonal_average(const SpdMatrix &X,
+                                  double diagonal_shrinkage);
+  void self_diagonal_average_inplace(SpdMatrix &X,
+                                     double diagonal_shrinkage);
 
   // Args:
   //   A: the outer matrix doing the sandwiching.

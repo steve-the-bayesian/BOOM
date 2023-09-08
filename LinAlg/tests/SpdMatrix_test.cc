@@ -359,4 +359,53 @@ namespace {
       }
     }
   }
+
+  TEST_F(SpdMatrixTest, TestScaleOffDiagonal) {
+    SpdMatrix X(3);
+    X.randomize();
+    SpdMatrix Y(X);
+
+    double scale = .3;
+    X.scale_off_diagonal(scale);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        if (i == j) {
+          EXPECT_DOUBLE_EQ(X(i, j), Y(i, j));
+        } else {
+          EXPECT_DOUBLE_EQ(X(i, j), Y(i, j) * .3);
+        }
+      }
+    }
+  }
+
+  TEST_F(SpdMatrixTest, TestSelfDiagonalAverage) {
+    SpdMatrix X(3);
+    X.randomize();
+    SpdMatrix D(3);
+    D.diag() = X.diag();
+
+    SpdMatrix X1 = self_diagonal_average(X, 0);
+    SpdMatrix target = X;
+    EXPECT_TRUE(MatrixEquals(X1, target))
+        << "diagonal_shrinkage = " << 0.0
+        << "\n"
+        << "X1 = \n" << X1
+        << "target = \n" << target;
+
+    SpdMatrix X2 = self_diagonal_average(X, 1.0);
+    EXPECT_TRUE(MatrixEquals(X2, D))
+        << "diagonal_shrinkage = " << 0.0
+        << "\n"
+        << "X2 = \n" << X2
+        << "target = \n" << D;
+
+    SpdMatrix X3 = self_diagonal_average(X, .7);
+    target = .3 * X + .7 * D;
+    EXPECT_TRUE(MatrixEquals(X3, target))
+        << "diagonal_shrinkage = " << 0.0
+        << "\n"
+        << "X3 = \n" << X3
+        << "target = \n" << target;
+  }
+
 }  // namespace

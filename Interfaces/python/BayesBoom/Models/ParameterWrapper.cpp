@@ -23,6 +23,16 @@ namespace BayesBoom {
                out << prm;
                return out.str();
              })
+        .def("size",
+             [](const Params &prm, bool minimal) {
+               return prm.size(minimal);
+             },
+             py::arg("minimal") = true,
+             "Args:\n\n"
+             "  minimal:  If True the returned value is the minimal size "
+             "required to store the parameter.  Otherwise the parameter size "
+             "may be larger if the parameter contains redundant information "
+             "(e.g. probabilities summing to 1, or a symmetric matrix.\n")
         ;
 
 

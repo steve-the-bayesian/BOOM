@@ -2,6 +2,8 @@ import numpy as np
 from abc import ABC, abstractmethod
 import copy
 
+from .boom_py_utils import to_boom_vector, to_boom_spd
+
 """
 Wrapper classes to encapsulate and expand models and prior distributions
 from the Boom library.
@@ -262,7 +264,35 @@ class Ar1CoefficientPrior(DoubleModel):
         self.__dict__ = payload
 
 
-class MvnPrior:
+class MvnBase(ABC):
+    @property
+    @abstractmethod
+    def dim(self):
+        """
+        The dimension of the variable described by the distribution.
+        """
+    @property
+    @abstractmethod
+    def mean(self):
+        """
+        The mean of the distribution.
+        """
+
+    @property
+    @abstractmethod
+    def variance(self):
+        """
+        The variance of the distribution, as a 2-d numpy array.
+        """
+
+    @abstractmethod
+    def boom(self):
+        """
+        Return the corresponding boom object.
+        """
+
+
+class MvnPrior(MvnBase):
     """
     Encodes a multivariate normal distribution.
     """
@@ -307,7 +337,7 @@ class MvnPrior:
                              boom.SpdMatrix(self._Sigma))
 
 
-class MvnGivenSigma:
+class MvnGivenSigma(MvnBase):
     """
     Encodes a conditional multivariate normal distribution given an external
     variance matrix Sigma.  This model describes y ~ Mvn(mu, Sigma / kappa).
@@ -322,7 +352,8 @@ class MvnGivenSigma:
 
     def boom(self):
         import BayesBoom.boom as boom
-        return boom.MvnGivenSigma(self._mu, self._sample_size)
+        return boom.MvnGivenSigma(to_boom_vector(self._mu),
+                                  self._sample_size)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -597,6 +628,26 @@ class RegSuf:
         self._ybar = ybar
         self._xbar = xbar
 
+    @classmethod
+    def from_data(cls, X, y):
+        X = np.array(X)
+        if len(X.shape) == 1:
+            X = X.reshape(-1, 1)
+        y = np.array(y).ravel()
+
+        if X.shape[0] != y.shape[0]:
+            raise Exception(
+                f"The length of y ({len(y)}) must match the number of rows "
+                f"in X ({X.shape[0]}).")
+
+        xtx = X.T @ X
+        xty = X.T @ y
+        sample_size = len(y)
+        sample_sd = np.std(y, ddof=1)
+        ybar = np.mean(y)
+        xbar = X.mean(axis=0)
+        return cls(xtx, xty, sample_sd, sample_size, ybar, xbar)
+
     def boom(self):
         import BayesBoom.boom as boom
         import BayesBoom.R as R
@@ -646,3 +697,75 @@ class RegSuf:
     @property
     def sample_size(self):
         return self._sample_size
+
+
+class ScottZellnerMvnPrior(MvnBase):
+    """
+    A Zellner prior on a set of regression coefficients, shrunk towards the
+    diagonal by a parameterized amount.
+
+    The Zellner prior is a multivariate normal distribution with mean mu and
+    precision matrix A = g * X'X / sigsq, where g is a number specified by the
+    modeler, and sigsq is the residual variance parameter in the regression
+    model.
+
+    The ScottZellnerPrior is a modified version of the Zellner prior with X'X
+    replaced by (1 - a) * X'X + a * diag(X'X).  That is, a weighted average of
+    X'X with its diagonal.
+
+    The coefficient 'g' in the ordinary Zellner prior is replaced by
+    'prior_nobs' / n where n is the sample size.  Because X'X is the total
+    information from the data available in a regression problem, X'X/n is the
+    average information available from a single data point.  Thus 'prior_nobs'
+    can be interpreted as the number of data points worth of information you
+    want the prior to weigh.
+
+    """
+
+    def __init__(self,
+                 suf: RegSuf,
+                 diagonal_shrinkage: float = .05,
+                 prior_nobs: float = 1.0,
+                 sigma: float = 1.0):
+        """
+        Args:
+          suf: The sufficient statistics of the regression model.
+          diagonal_shrinkage: The 'a' parameter in the class description.  The
+            amount by which to shrink towards the diagonal of X'X.  A real
+            number between 0 and 1.
+          prior_nobs: The number of observations worth of weight to assign the
+            prior.  A positive scalar.
+          sigma: A scale factor for the prior.  In some applications sigma must
+            be determined outside this class.  Child classes may obtain sigma
+            from a callback, for example.
+        """
+        omega = suf.xtx
+        weight = diagonal_shrinkage
+        omega = (1 - weight) * omega + weight * np.diag(np.diag(omega))
+
+        omega = omega * (prior_nobs / suf.sample_size)
+        self._precision = omega / sigma**2
+
+        self._mean = np.zeros(omega.shape[0])
+        self._mean[0] = suf.ybar
+
+        self._variance = None
+
+    @property
+    def dim(self):
+        return self._mean.shape[0]
+
+    @property
+    def mean(self):
+        return self._mean
+
+    @property
+    def variance(self):
+        if self._variance is None:
+            self._variance = np.linalg.inv(self._precision)
+        return self._variance
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.MvnModel(to_boom_vector(self.mean),
+                             to_boom_spd(self.variance))

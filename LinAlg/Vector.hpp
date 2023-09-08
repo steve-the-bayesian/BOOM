@@ -116,7 +116,7 @@ namespace BOOM {
 
     // Fill the Vector with N(mu, sd^2) random numbers.
     Vector &randomize_gaussian(
-        double mean, double sd, RNG &rng = GlobalRng::rng);
+        double mean = 0.0, double sd = 1.0, RNG &rng = GlobalRng::rng);
 
     //-------------- STL vector stuff ---------------------
     double *data();

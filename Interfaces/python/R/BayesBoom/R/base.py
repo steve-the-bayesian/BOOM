@@ -124,7 +124,7 @@ def ls(*args, hide_underscore=True, maxwidth=80):
 # data too.
 def table(*args):
     """
-    Compute a frequency table of one or more categorial variables.
+    Compute a frequency table of one or more categorical variables.
     """
     if len(args) == 1:
         if isinstance(args[0], pd.DataFrame):
@@ -136,13 +136,66 @@ def table(*args):
         else:
             x = pd.Series(args[0])
             return x.value_counts()
-    elif len(args == 2):
+    elif len(args) == 2:
         x = args[0]
         y = args[1]
         return _fast_crosstab(x, y)
     else:
-        x = pd.DataFrame(*args)
-        return x.crosstab(margins=True)
+        # the return value is a pd.DataFrame with args[0] as the index and the
+        # cartesian product of the other args as columns.  This isn't the most
+        # useful form, but improving it is a TODO.
+        return pd.crosstab(args[0], list(args)[1:], margins=True)
+
+
+def _fast_crosstab(x1, x2, xname="X", yname="Y", dropna=False):
+    """
+    Args:
+       x1, x2:
+          pd.Categorical data, or objects convertable to such.
+    """
+    x1 = pd.Categorical(x1)
+    x2 = pd.Categorical(x2)
+
+    n = len(x1)
+    if len(x2) != n:
+        raise Exception("x1 and x2 must have the same length")
+
+    xindex = x1.categories.tolist()
+    yindex = x2.categories.tolist()
+
+    nlev = [len(xindex), len(yindex)]
+    has_na = [False, False]
+    if dropna:
+        x1 = x1.dropna()
+        x2 = x2.dropna()
+
+    else:
+        if x1.codes.min() == -1:
+            nlev[0] += 1
+            has_na[0] = True
+        if x2.codes.min() == -1:
+            nlev[1] += 1
+            has_na[1] = True
+
+    X1 = np.zeros((n, nlev[0]))
+    X1[np.arange(n), x1.codes] = 1
+
+    X2 = np.zeros((n, nlev[1]))
+    X2[np.arange(n), x2.codes] = 1
+
+    xtabs = X1.T @ X2
+    xindex = x1.categories.tolist()
+    yindex = x2.categories.tolist()
+    if has_na[0]:
+        xindex.append("NA")
+    if has_na[1]:
+        yindex.append("NA")
+
+    ans = pd.DataFrame(xtabs, index=xindex, columns=yindex, dtype=int)
+    ans.index.name = xname
+    ans.columns.name = yname
+    return ans
+
 
 def order(input, decreasing=False):
     """

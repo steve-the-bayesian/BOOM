@@ -150,6 +150,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     using Params::unvectorize;
   };
+
   //------------------------------------------------------------
   class MatrixParams : public MatrixData, virtual public Params {
    public:

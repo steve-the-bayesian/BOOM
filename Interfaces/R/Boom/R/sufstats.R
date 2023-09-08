@@ -15,7 +15,8 @@ RegressionSuf <- function(X = NULL,
                           xty = crossprod(X, y),
                           yty = sum(y^2),
                           n = length(y),
-                          xbar = colMeans(X)) {
+                          xbar = colMeans(X),
+                          ybar = mean(y)) {
   ## Sufficient statistics for a regression model.
   ## Args:
   ##   X:  The predictor matrix for a regression problem.
@@ -59,4 +60,3 @@ RegressionSuf <- function(X = NULL,
   class(ans) <- c("RegressionSuf", "Suf")
   return(ans)
 }
-

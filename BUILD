@@ -66,6 +66,16 @@ STATS_SRCS = glob(["stats/*.cpp"])
 
 STATS_HDRS = glob(["stats/*.hpp"])
 
+GP_SRCS = glob([
+    "Models/GP/*.cpp",
+    "Models/GP/PosteriorSamplers/*.cpp"
+])
+
+GP_HDRS = glob([
+    "Models/GP/*.hpp",
+    "Models/GP/PosteriorSamplers/*.hpp"
+])
+
 GLM_SRCS = glob([
     "Models/Glm/*.cpp",
     "Models/Glm/PosteriorSamplers/*.cpp",
@@ -202,6 +212,7 @@ BOOM_SRCS = BMATH_SRCS + \
             NUMOPT_SRCS + \
             STATS_SRCS + \
             GLM_SRCS + \
+            GP_SRCS + \
             FACTOR_SRCS + \
             HMM_SRCS + \
             HIERARCHICAL_SRCS + \
@@ -226,6 +237,7 @@ BOOM_HDRS = TOP_HDRS + \
             NUMOPT_HDRS + \
             STATS_HDRS + \
             GLM_HDRS + \
+            GP_HDRS + \
             FACTOR_HDRS + \
             HMM_HDRS + \
             HIERARCHICAL_HDRS + \

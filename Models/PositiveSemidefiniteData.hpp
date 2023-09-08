@@ -70,7 +70,7 @@ namespace BOOM {
     // The sum of the logs of the reciprocals of the (absolute) nonzero
     // eigenvalues in the original matrix.  If the original matrix is positive
     // definite this is the log determinant of the inverse matrix.
-    double generalized_ldsi() const;
+    double generalized_ldsi() const { return ldsi_; }
 
    private:
     // Update the values of root_ and generalized_inverse_
@@ -99,8 +99,8 @@ namespace BOOM {
     uint size(bool minimal = true) const override;
 
     Vector vectorize(bool minimal = true) const override;
-    Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
+    Vector::const_iterator unvectorize(
+        Vector::const_iterator &v, bool minimal = true) override;
     using Params::unvectorize;
   };
 

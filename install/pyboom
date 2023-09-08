@@ -144,32 +144,32 @@ fi
 ## Build and install the package:
 echo "Time to build the package!"
 
+if command -v python &> /dev/null
+then
+    PYTHON=python
+    PIP=pip
+else
+    PYTHON=python3
+    PIP=pip3
+fi
+
 cd python_package
-python setup.py sdist bdist_wheel
-# python3 -m pip install dist/BayesBoom-*.whl
+$PYTHON setup.py sdist bdist_wheel
+# python -m pip install dist/BayesBoom-*.whl
 # CC="ccache clang++" CXX="ccache"
-# pip3 --verbose install ./BayesBoom
+# pip --verbose install ./BayesBoom
 
 echo "======================================================================"
 cd dist
-if command -v pip3 &> /dev/null
-then
-    echo "Installing the package with pip3"
-    pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
-elif command -v pip &> /dev/null
-then
-    echo "Installing the package with pip"
-    pip install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
-else
-    echo "Package has been built, but you need to install it manually."
-fi
+echo "Installing the package with pip"
+$PIP install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages
 # cd ..
-# pip3 install Interfaces/python/R
-# pip3 install Interfaces/python/bsts
-# pip3 install Interfaces/python/spikeslab
+# pip install Interfaces/python/R
+# pip install Interfaces/python/bsts
+# pip install Interfaces/python/spikeslab
 echo "======================================================================"
 echo "To publish to pypi:"
 echo "twine upload dist/BayesBoom-VERSION.*"

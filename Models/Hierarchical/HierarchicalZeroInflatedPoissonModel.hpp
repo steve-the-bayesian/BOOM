@@ -52,7 +52,7 @@ namespace BOOM {
   // A zero-inflated Poisson model for group-level data.  The data
   // from group i obeys the model
   //
-  //    y[i, j] - p[i] * I(0) + (1-p[i]) * Poisson(lambda[i])
+  //    y[i, j] ~ p[i] * I(0) + (1-p[i]) * Poisson(lambda[i])
   //
   // The number p[i] is called the "zero probability" and lambda[i] is
   // the Poisson rate.  We assume

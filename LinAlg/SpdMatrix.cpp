@@ -214,7 +214,13 @@ namespace BOOM {
     bool ok = true;
     SpdMatrix ans = inv(ok);
     if (!ok) {
-      report_error("Matrix not positive definite.");
+      std::ostringstream err;
+      err << "Matrix not positive definite...\n"
+          << *this
+          << "\nEigenvalues...\n"
+          << eigenvalues(*this)
+          << "\n";
+      report_error(err.str());
     }
     return ans;
   }
@@ -503,6 +509,20 @@ namespace BOOM {
 
   //-------------- multiplication --------------------
 
+  SpdMatrix &SpdMatrix::scale_off_diagonal(double scale) {
+    size_t dim = nrow();
+    double *el = data();
+    for (size_t i = 0; i < dim; ++i) {
+      for (size_t j = 0; j < dim; ++j) {
+        if (i != j) {
+          *el *= scale;
+        }
+        ++el;
+      }
+    }
+    return *this;
+  }
+
   //---------- general_Matrix ---------
   Matrix &SpdMatrix::mult(const Matrix &B, Matrix &ans, double scal) const {
     assert(can_mult(B, ans));
@@ -686,6 +706,21 @@ namespace BOOM {
   SpdMatrix sandwich_transpose(const Matrix &A, const Vector &diagonal) {
     Matrix tmp(A * DiagonalMatrix(diagonal));
     return(tmp.multT(A));
+  }
+
+  SpdMatrix self_diagonal_average(const SpdMatrix &X,
+                                  double diagonal_shrinkage) {
+    SpdMatrix ans(X);
+    self_diagonal_average_inplace(ans, diagonal_shrinkage);
+    return ans;
+  }
+
+  void self_diagonal_average_inplace(SpdMatrix &X,
+                                     double diagonal_shrinkage) {
+    if (diagonal_shrinkage < 0.0 || diagonal_shrinkage > 1.0) {
+      report_error("The diagonal_shrinkage argument must be between 0 and 1.");
+    }
+    X.scale_off_diagonal(1 - diagonal_shrinkage);
   }
 
   SpdMatrix as_symmetric(const Matrix &A) {

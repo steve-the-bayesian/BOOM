@@ -268,7 +268,8 @@ namespace BOOM {
   //   rng: A U(0, 1) random number generator to use as a source of random
   //     numbers.
   Vector &impute_mvn(Vector &observation,
-                     const Vector &mean, const SpdMatrix &variance,
+                     const Vector &mean,
+                     const SpdMatrix &variance,
                      const Selector &observed,
                      RNG &rng = GlobalRng::rng);
 
