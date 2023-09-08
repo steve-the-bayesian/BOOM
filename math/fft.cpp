@@ -42,6 +42,7 @@ namespace BOOM {
     //    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
     std::vector<std::complex<double>> freq_domain(nfft);
     FFT::kiss_fftr(config, time_domain, freq_domain);
+    reflect(freq_domain);
     return freq_domain;
 
     // Vector ans(time_domain.size());
@@ -50,6 +51,20 @@ namespace BOOM {
     //   ans[2 * i + 1] = freq_domain[i].imag();
     // }
     // return ans;
+  }
+
+  void FastFourierTransform::reflect(std::vector<std::complex<double>> &freq) {
+    size_t half_size = freq.size() / 2;
+    if (half_size % 2) {
+      // odd case
+      for (size_t i = 1; i < half_size; ++i) {
+        freq[half_size + i].real(freq[half_size - i].real());
+        freq[half_size + i].imag(-freq[half_size - i].imag());
+      }
+    } else {
+      // even case
+    }
+
   }
 
   Vector FastFourierTransform::inverse_transform(

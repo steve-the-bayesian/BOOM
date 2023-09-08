@@ -8,6 +8,8 @@
 
 
 #include "kiss_fft.hpp"
+#include <iomanip>
+#include <ostream>
 
 namespace BOOM {
   void report_error(const std::string &message);
@@ -16,6 +18,28 @@ namespace BOOM {
 /* The guts header contains all the multiplication and addition macros that are defined for
  fixed or floating point complex numbers.  It also delares the kf_ internal functions.
  */
+
+std::ostream &print_complex_vector(std::ostream &out,
+                                   const std::complex<double> *data,
+                                   size_t length) {
+  for (size_t i = 0; i < length; ++i) {
+    out << "   " << std::setw(10) << data[i].real()
+        << "   " << std::setw(10) << data[i].imag()
+        << " i\n";
+  }
+  return out;
+}
+
+std::ostream & print_complex_vector(std::ostream &out,
+                                    const std::vector<std::complex<double>> &cv) {
+  return print_complex_vector(out, cv.data(), cv.size());
+}
+
+std::ostream & operator << (std::ostream &out,
+                            const std::vector<std::complex<double>> &cv) {
+  return print_complex_vector(out, cv);
+}
+
 
 namespace FFT {
   using BOOM::report_error;
@@ -35,8 +59,8 @@ namespace FFT {
       do{
         // C_FIXDIV(*Fout,2);
         // C_FIXDIV(*Fout2,2);
-        *Fout /= 2.0;
-        *Fout2 /= 2.0;
+        // *Fout /= 2.0;
+        // *Fout2 /= 2.0;
 
         //        C_MUL (t,  *Fout2 , *tw1);
         t = *Fout2 * *tw1;
@@ -72,10 +96,10 @@ namespace FFT {
         // C_FIXDIV(Fout[m],4);
         // C_FIXDIV(Fout[m2],4);
         // C_FIXDIV(Fout[m3],4);
-        *Fout /= 4.0;
-        Fout[m] /= 4.0;
-        Fout[m2] /= 4.0;
-        Fout[m3] /= 4.0;
+        // *Fout /= 4.0;
+        // Fout[m] /= 4.0;
+        // Fout[m2] /= 4.0;
+        // Fout[m3] /= 4.0;
 
         // C_MUL(scratch[0],Fout[m] , *tw1 );
         // C_MUL(scratch[1],Fout[m2] , *tw2 );
@@ -139,9 +163,9 @@ namespace FFT {
         // C_FIXDIV(*Fout,3);
         // C_FIXDIV(Fout[m],3);
         // C_FIXDIV(Fout[m2],3);
-        *Fout /= 3.0;
-        Fout[m] /= 3.0;
-        Fout[m2] /= 3.0;
+        // *Fout /= 3.0;
+        // Fout[m] /= 3.0;
+        // Fout[m2] /= 3.0;
 
         // C_MUL(scratch[1],Fout[m] , *tw1);
         // C_MUL(scratch[2],Fout[m2] , *tw2);
@@ -179,6 +203,8 @@ namespace FFT {
                   const size_t fstride,
                   const Config &config,
                   int m) {
+      std::cout << "in kf_bfly5:\n";
+
       std::complex<double> *Fout0,*Fout1,*Fout2,*Fout3,*Fout4;
       int u;
       std::complex<double> scratch[13];
@@ -194,6 +220,9 @@ namespace FFT {
       Fout3=Fout0+3*m;
       Fout4=Fout0+4*m;
 
+      std::cout << "----- in kf_bfly5 with Fout = \n";
+      print_complex_vector(std::cout, Fout, config.nfft);
+
       tw=config.twiddles.data();
       for ( u=0; u<m; ++u ) {
         // C_FIXDIV( *Fout0,5);
@@ -201,11 +230,14 @@ namespace FFT {
         // C_FIXDIV( *Fout2,5);
         // C_FIXDIV( *Fout3,5);
         // C_FIXDIV( *Fout4,5);
-        *Fout0 /= 5.0;
-        *Fout1 /= 5.0;
-        *Fout2 /= 5.0;
-        *Fout3 /= 5.0;
-        *Fout4 /= 5.0;
+        // *Fout0 /= 5.0;
+        // *Fout1 /= 5.0;
+        // *Fout2 /= 5.0;
+        // *Fout3 /= 5.0;
+        // *Fout4 /= 5.0;
+
+        printf("after fixed division: Fout = \n");
+        print_complex_vector(std::cout, Fout, config.nfft);
 
         scratch[0] = *Fout0;
 
@@ -256,6 +288,9 @@ namespace FFT {
         scratch[12].real(-scratch[10].imag() * yb.imag() + scratch[9].imag() * ya.imag());
         scratch[12].imag(scratch[10].real() * yb.imag() - scratch[9].real() * ya.imag());
 
+        std::cout << "in kf_bfly5 with u = " << u << "and scratch = \n";
+        print_complex_vector(std::cout, scratch, 13);
+
         // C_ADD(*Fout2,scratch[11],scratch[12]);
         // C_SUB(*Fout3,scratch[11],scratch[12]);
         *Fout2 = scratch[11] + scratch[12];
@@ -284,7 +319,7 @@ namespace FFT {
         for (int q1 = 0 ; q1 < p ; ++q1 ) {
           scratch[q1] = Fout[ k  ];
           // C_FIXDIV(scratch[q1],p);
-          scratch[q1] /= p;
+          // scratch[q1] /= p;
           k += m;
         }
 
@@ -322,6 +357,12 @@ namespace FFT {
                   << config;
       }
 
+      std::cout << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+                << "in kf_work with p = " << p
+                << ", m = " << m
+                << ", and input data:\n";
+      print_complex_vector(std::cout, f, config.nfft);
+
       if (m==1) {
         do {
           *Fout = *f;
@@ -348,6 +389,13 @@ namespace FFT {
         case 5: kf_bfly5(Fout, fstride, config, m); break;
         default: kf_bfly_generic(Fout, fstride, config, m, p); break;
       }
+
+      std::cout << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+                << "in kf_work with p = " << p
+                << ", m = " << m
+                << ", and output data:\n";
+      print_complex_vector(std::cout, Fout, config.nfft);
+
     }  // kf_work
 
     //----------------------------------------------------------------------
@@ -416,12 +464,8 @@ namespace FFT {
     for (int i =0; i < 64; ++i) {
       out << factors[i] << "  ";
     }
-    out << "\n";
-    out << "twiddles:\n";
-    for (int i = 0; i < twiddles.size(); ++i) {
-      out << "    " << twiddles[i].real()
-          << "    " << twiddles[i].imag() << "\n";
-    }
+    out << std::string("\ntwiddles:\n");
+    print_complex_vector(out, twiddles);
     return out;
   }
 
@@ -436,7 +480,7 @@ namespace FFT {
     nfft >>= 1;
     Config::resize(nfft);
     tmpbuf.resize(nfft);
-    super_twiddles.resize(nfft);
+    super_twiddles.resize(nfft / 2);
 
     for (int i = 0; i < nfft / 2; ++i) {
         double phase =
@@ -457,11 +501,7 @@ namespace FFT {
           << "\n";
     }
     out << "super_twiddles:\n";
-    for (auto el : super_twiddles) {
-      out << "   " << el.real()
-          << "   " << el.imag()
-          << "\n";
-    }
+    print_complex_vector(out, super_twiddles);
     return out;
   }
 
@@ -485,7 +525,13 @@ namespace FFT {
       fout = tmpbuf;
       // memcpy(fout, tmpbuf, sizeof(std::complex<double>)* config.nfft);
     } else {
+      std::cout << "kiss_fft_stride: input data\n";
+      print_complex_vector(std::cout, fin);
+
       kf_work( fout.data(), fin.data(), 1, in_stride, config.factors, config );
+
+      std::cout << "kiss_fft_stride: output data\n";
+      print_complex_vector(std::cout, fout);
     }
   }
 
@@ -511,13 +557,20 @@ namespace FFT {
 
     ncfft = config.nfft;
 
+    std::cout << "This is what config looks like BEFORE the FFT in kiss_fftr (C++ version).\n"
+              << config;
+
     /*perform the parallel fft of two real signals packed in real,imag*/
     //    std::vector<std::complex<double>> timedata_as_complex(ncfft / 2 + 1);
     std::vector<std::complex<double>> timedata_as_complex(ncfft);
-    for (int i = 0; i < config.nfft / 2; ++i) {
+    for (int i = 0; i < config.nfft; ++i) {
       timedata_as_complex[i].real(timedata[2 * i]);
       timedata_as_complex[i].imag(timedata[2 * i + 1]);
     }
+
+    std::cout << "time data as complex before the FFT:\n";
+    print_complex_vector(std::cout, timedata_as_complex);
+
     kiss_fft(config,
              timedata_as_complex,
              config.tmpbuf);
@@ -530,11 +583,13 @@ namespace FFT {
      * The difference of tdc.r - tdc.i is the sum of the input (dot product) [1,-1,1,-1...
      *      yielding Nyquist bin of input time sequence
      */
+    std::cout << "This is what config looks like after the FFT in kiss_fftr (C++ version).\n"
+              << config;
 
     tdc.real(config.tmpbuf[0].real());
     tdc.imag(config.tmpbuf[0].imag());
-    tdc /= 2.0;
     //     C_FIXDIV(tdc,2);
+    // tdc /= 2.0;
 
     // CHECK_OVERFLOW_OP(tdc.real() ,+, tdc.imag());
     double sum = tdc.real() + tdc.imag();
@@ -559,8 +614,8 @@ namespace FFT {
       fpnk.imag(-config.tmpbuf[ncfft-k].imag());
       //       C_FIXDIV(fpk,2);
       //       C_FIXDIV(fpnk,2);
-      fpk /= 2.0;
-      fpnk /= 2.0;
+      // fpk /= 2.0;
+      // fpnk /= 2.0;
 
       // C_ADD( f1k, fpk , fpnk );
       // C_SUB( f2k, fpk , fpnk );
@@ -594,7 +649,7 @@ namespace FFT {
     config.tmpbuf[0].real(freqdata[0].real() + freqdata[ncfft].real());
     config.tmpbuf[0].imag(freqdata[0].real() - freqdata[ncfft].real());
     //    C_FIXDIV(st->tmpbuf[0],2);
-    config.tmpbuf[0] /= 2.0;
+    // config.tmpbuf[0] /= 2.0;
 
     for (k = 1; k <= ncfft / 2; ++k) {
       std::complex<double> fk, fnkc, fek, fok, tmp;
@@ -603,8 +658,8 @@ namespace FFT {
       fnkc.imag(-freqdata[ncfft - k].imag());
       // C_FIXDIV( fk , 2 );
       // C_FIXDIV( fnkc , 2 );
-      fk /= 2.0;
-      fnkc /= 2.0;
+      // fk /= 2.0;
+      // fnkc /= 2.0;
 
       // C_ADD (fek, fk, fnkc);
       // C_SUB (tmp, fk, fnkc);

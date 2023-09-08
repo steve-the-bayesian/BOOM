@@ -67,6 +67,8 @@
 #include <iostream>
 #include <ostream>
 
+std::ostream & operator<<(std::ostream &out, const std::vector<std::complex<double>> &cv);
+
 namespace FFT {
 
   // A configuration for a complex to complex FFT.
