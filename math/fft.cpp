@@ -20,7 +20,7 @@
 #include "math/kissfft/kiss_fft.hpp"
 #include <vector>
 #include <complex>
-#include <iostream>
+#include <sstream>
 
 // namespace FFT {
 //   void kiss_fftr(const RealConfig &cfg,
@@ -36,7 +36,7 @@
 namespace BOOM {
 
   std::vector<std::complex<double>>
-  FastFourierTransform::transform(const Vector &time_domain) {
+  FastFourierTransform::transform(const Vector &time_domain) const {
     size_t nfft = time_domain.size();
     std::vector<std::complex<double>> freq_domain(nfft);
     if (nfft %2 == 0) {
@@ -46,7 +46,7 @@ namespace BOOM {
       reflect(freq_domain);
     } else {
       std::vector<std::complex<double>> odd_complex;
-      std::vector<std::complex<double>> freq_domain;
+
       for (auto &el : time_domain) {
         odd_complex.push_back(std::complex<double>(el, 0.0));
       }
@@ -77,7 +77,7 @@ namespace BOOM {
   }
 
   Vector FastFourierTransform::inverse_transform(
-      const std::vector<std::complex<double>> &freq_domain) {
+      const std::vector<std::complex<double>> &freq_domain) const {
     size_t nfft = freq_domain.size();
     Vector ans(nfft);
     // std::vector<std::complex<double>> complex_freq(nfft / 2 + 1);
@@ -91,10 +91,17 @@ namespace BOOM {
     return ans;
   }
 
-  void FastFourierTransform::print_config(int data_size, bool inverse) {
-    FFT::RealConfig config(data_size, inverse);
-    std::cout << config;
+  std::string FastFourierTransform::print_config(
+      int data_size, bool inverse) const {
+    std::ostringstream out;
+    if (data_size % 2 == 0) {
+      FFT::RealConfig config(data_size, inverse);
+      out << config;
+    } else {
+      FFT::Config config(data_size, inverse);
+      out << config;
+    }
+    return out.str();
   }
-
 
 }  // namespace BOOM

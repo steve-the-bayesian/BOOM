@@ -18,7 +18,11 @@ namespace {
   };
 
   /*
-    format.vector <- function(x, z) {
+    test.fft <- function(size) {
+      ## An R function for generating data that can be passed to CheckResults.
+      x <- rnorm(size)
+      z <- rnorm(x)
+
       s1 <- "Vector x = {"
       s2 <- paste(x, collapse = ", ")
       s3 <- "};"
@@ -49,8 +53,6 @@ namespace {
   void CheckResults(const Vector &x, const Vector &real_z, const Vector &imag_z) {
     FastFourierTransform fft;
     std::vector<std::complex<double>> z = fft.transform(x);
-
-    fft.print_config(x.size(), false);
 
     EXPECT_EQ(z.size(), x.size());
     Matrix entries(x.size(), 5);

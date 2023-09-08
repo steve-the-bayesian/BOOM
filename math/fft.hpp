@@ -30,11 +30,12 @@ namespace BOOM {
 
   class FastFourierTransform {
    public:
-    std::vector<std::complex<double>> transform(const Vector &time_domain);
+    std::vector<std::complex<double>> transform(
+        const Vector &time_domain) const;
     Vector inverse_transform(
-        const std::vector<std::complex<double>> &frequency_domain);
+        const std::vector<std::complex<double>> &frequency_domain) const;
 
-    void print_config(int data_size, bool inverse);
+    std::string print_config(int data_size, bool inverse) const;
 
    protected:
     // Reflect the sequence of complex numbers in the first half of the vector
