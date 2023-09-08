@@ -16,7 +16,7 @@ class MeanFunction(ABC):
         pass
 
     @abstractmethod
-    def create_sampler(self, param, gp_model):
+    def create_sampler(self, gp_model):
         pass
 
     @abstractmethod
@@ -38,7 +38,7 @@ class ZeroFunction(MeanFunction):
     def record_draw(self, boom_mean_function, iteration: int):
         pass
 
-    def create_sampler(self, boom_mean_function, boom_model):
+    def create_sampler(self, boom_model):
         return boom.GpNullSampler()
 
 
@@ -60,12 +60,15 @@ class LinearMeanFunction(MeanFunction):
 
     def allocate_space(self, niter):
         dim = len(self._coefficients)
-        self._draws = np.empty((niter, dim))
+        self._coefficient_draws = np.empty((niter, dim))
 
     def record_draw(self, boom_mean_function, iteration: int):
-        self._draws[iteration, :] = R.to_numpy(boom_mean_function.coefficients)
+        self._coefficient_draws[iteration, :] = (
+            R.to_numpy(boom_mean_function.coefficients)
+        )
 
-    def create_sampler(self, boom_mean_function, boom_gp_model):
+    def create_sampler(self, boom_gp_model):
+        boom_mean_function = boom_gp_model.mean_function
         return boom.LinearMeanFunctionSampler(
             boom_mean_function,
             boom_gp_model,
