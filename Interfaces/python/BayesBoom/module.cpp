@@ -13,6 +13,7 @@ namespace BayesBoom {
   void distribution_def(py::module &);
   void cpputil_def(py::module &);
   void LinAlg_def(py::module &);
+  void boom_math_def(py::module &);
   void stats_def(py::module &);
   void numopt_def(py::module &);
   void Model_def(py::module &);
@@ -69,6 +70,7 @@ namespace BayesBoom {
     // stats includes DataTable, which inherits from Data.  Thus it must be
     // defined after Models, where the Data class is defined.
 
+    boom_math_def(boom);
     stats_def(boom);
     numopt_def(boom);
 

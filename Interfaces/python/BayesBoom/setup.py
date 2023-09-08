@@ -65,6 +65,7 @@ boom_headers += linalg_headers
 
 math_sources = glob(BOOM_DIR + "math/*.cpp")
 math_sources += glob(BOOM_DIR + "math/cephes/*.cpp")
+math_sources += glob(BOOM_DIR + "math/kissfft/*.cpp")
 
 numopt_sources = glob(BOOM_DIR + "numopt/*.cpp")
 numopt_headers = [BOOM_DIR + "numopt.hpp"] + glob(BOOM_DIR + "numopt/*.hpp")
