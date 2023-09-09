@@ -42,7 +42,7 @@
  */
 
 /*
- *  THe following notice applies to the C++ adaptation:
+ *  The following notice applies to the C++ adaptation:
  *
   Copyright (C) 2005-2023 Steven L. Scott
 

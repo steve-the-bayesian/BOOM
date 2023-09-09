@@ -1,10 +1,63 @@
+
 /*
  *  Copyright (c) 2003-2010, Mark Borgerding. All rights reserved.
- *  This file is part of KISS FFT - https://github.com/mborgerding/kissfft
- *
- *  SPDX-License-Identifier: BSD-3-Clause
- *  See COPYING file for more information.
  */
+
+/*
+ * The C++ code in this file was adapted from the KISS FFT project (written in
+ * C) - found at https://github.com/mborgerding/kissfft
+ *
+ * The adaptation was done under the
+ * under the BSD-3-Clause license, reproduced in the LICENSE section below.
+
+ * LICENSE
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ *  The following notice applies to the C++ adaptation:
+ *
+  Copyright (C) 2005-2023 Steven L. Scott
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License along
+  with this library; if not, write to the Free Software Foundation, Inc., 51
+  Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+*/
 
 
 #include "kiss_fft.hpp"
@@ -16,6 +69,8 @@ namespace BOOM {
 }  // namespace BOOM
 
 namespace {
+  using ComplexVector = std::vector<std::complex<double>>;
+
   std::ostream &print_complex_vector(std::ostream &out,
                                      const std::complex<double> *data,
                                      size_t length) {
@@ -28,7 +83,7 @@ namespace {
   }
 
   std::ostream & print_complex_vector(std::ostream &out,
-                                      const std::vector<std::complex<double>> &cv) {
+                                      const ComplexVector &cv) {
     return print_complex_vector(out, cv.data(), cv.size());
   }
 
@@ -209,7 +264,7 @@ namespace FFT {
       std::complex<double> t;
       int Norig = config.nfft;
 
-      std::vector<std::complex<double>> scratch(p);
+      ComplexVector scratch(p);
       for (int u = 0; u < m; ++u) {
         int k = u;
         for (int q1 = 0 ; q1 < p ; ++q1 ) {
@@ -381,15 +436,15 @@ namespace FFT {
   }
 
   void kiss_fft_stride(Config &config,
-                       const std::vector<std::complex<double>> &fin,
-                       std::vector<std::complex<double>> &fout,
+                       const ComplexVector &fin,
+                       ComplexVector &fout,
                        int in_stride)
   {
     if (&fin == &fout) {
       //NOTE: this is not really an in-place FFT algorithm.
       //It just performs an out-of-place FFT into a temp buffer
 
-      std::vector<std::complex<double>> tmpbuf(config.nfft);
+      ComplexVector tmpbuf(config.nfft);
 
       kf_work(tmpbuf.data(),
               fin.data(),
@@ -404,8 +459,8 @@ namespace FFT {
   }
 
   void kiss_fft(Config &cfg,
-                const std::vector<std::complex<double>> &fin,
-                std::vector<std::complex<double>> &fout)
+                const ComplexVector &fin,
+                ComplexVector &fout)
   {
     kiss_fft_stride(cfg, fin, fout, 1);
   }
@@ -413,7 +468,7 @@ namespace FFT {
   //----------------------------------------------------------------------
   void kiss_fftr(RealConfig &config,
                  const std::vector<double> &timedata,
-                 std::vector<std::complex<double>> &freqdata) {
+                 ComplexVector &freqdata) {
     /* input buffer timedata is stored row-wise */
     int ncfft;
     std::complex<double> fpnk,fpk,f1k,f2k,tw,tdc;
@@ -426,8 +481,8 @@ namespace FFT {
     ncfft = config.nfft;
 
     /*perform the parallel fft of two real signals packed in real,imag*/
-    //    std::vector<std::complex<double>> timedata_as_complex(ncfft / 2 + 1);
-    std::vector<std::complex<double>> timedata_as_complex(ncfft);
+    //    ComplexVector timedata_as_complex(ncfft / 2 + 1);
+    ComplexVector timedata_as_complex(ncfft);
     for (int i = 0; i < config.nfft; ++i) {
       timedata_as_complex[i].real(timedata[2 * i]);
       timedata_as_complex[i].imag(timedata[2 * i + 1]);
@@ -481,7 +536,7 @@ namespace FFT {
 
   //----------------------------------------------------------------------
   void kiss_fftri(RealConfig &config,
-                  const std::vector<std::complex<double>> &freqdata,
+                  const ComplexVector &freqdata,
                   std::vector<double>  &timedata) {
     /* input buffer timedata is stored row-wise */
     int k, ncfft;
@@ -510,11 +565,12 @@ namespace FFT {
       config.tmpbuf[ncfft - k].imag(config.tmpbuf[ncfft - k].imag() * -1);
     }
 
-    std::vector<std::complex<double>> timedata_as_complex(config.nfft);
+    ComplexVector timedata_as_complex(config.nfft);
     kiss_fft (config, config.tmpbuf, timedata_as_complex);
-    for (int i = 0; i < config.nfft; ++i) {
-      timedata[i] = timedata_as_complex[i/2].real();
-      timedata[i + 1] = timedata_as_complex[i/2].imag();
+    for (int i = 0; i < ncfft; ++i){
+      int I = 2 * i;
+      timedata[I] = timedata_as_complex[i].real();
+      timedata[I + 1] = timedata_as_complex[i].imag();
     }
   }
 }  // namespace FFT

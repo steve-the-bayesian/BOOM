@@ -21,31 +21,41 @@
 #include <vector>
 #include <complex>
 #include <sstream>
+#include "cpputil/report_error.hpp"
+#include "LinAlg/Matrix.hpp"
 
-// namespace FFT {
-//   void kiss_fftr(const RealConfig &cfg,
-//                  const std::vector<double> &timedata,
-//                  const std::vector<std::complex<double>> &freqdata);
+namespace {
 
-//   void kiss_fftri(RealConfig &cfg,
-//                   const std::vector<std::complex<double>> &freqdata,
-//                   std::vector<double> &timedata);
+  using ComplexVector = std::vector<std::complex<double>>;
 
-// }  // namespace FFT
+  // The following function is unused in active code, but is useful for
+  // debugging.
+  //
+  // std::string print_complex_vector(const ComplexVector &z) {
+  //   std::ostringstream out;
+  //   for (size_t i = 0; i < z.size(); ++i) {
+  //     out << std::setw(10) << z[i].real() << "   " << z[i].imag()
+  //         << "  i\n";
+  //   }
+  //   return out.str();
+  // }
+
+} // namespace
 
 namespace BOOM {
 
-  std::vector<std::complex<double>>
-  FastFourierTransform::transform(const Vector &time_domain) const {
+  // Transform a time domain vector to the frequency domain.
+  ComplexVector FastFourierTransform::transform(
+      const Vector &time_domain) const {
     size_t nfft = time_domain.size();
-    std::vector<std::complex<double>> freq_domain(nfft);
+    ComplexVector freq_domain(nfft);
     if (nfft %2 == 0) {
       FFT::RealConfig config(time_domain.size(), false);
-      //    std::vector<std::complex<double>> freq_domain(nfft / 2 + 1);
+      //    ComplexVector freq_domain(nfft / 2 + 1);
       FFT::kiss_fftr(config, time_domain, freq_domain);
       reflect(freq_domain);
     } else {
-      std::vector<std::complex<double>> odd_complex;
+      ComplexVector odd_complex;
 
       for (auto &el : time_domain) {
         odd_complex.push_back(std::complex<double>(el, 0.0));
@@ -54,40 +64,59 @@ namespace BOOM {
       FFT::kiss_fft(config, odd_complex, freq_domain);
     }
     return freq_domain;
-    // Vector ans(time_domain.size());
-    // for (int i = 0; i < nfft; ++i) {
-    //   ans[2 * i] = freq_domain[i].real();
-    //   ans[2 * i + 1] = freq_domain[i].imag();
-    // }
-    // return ans;
   }
 
-  void FastFourierTransform::reflect(std::vector<std::complex<double>> &freq) const {
+  // Transform a complex valued input sequence.
+  ComplexVector FastFourierTransform::complex_transform(
+      const ComplexVector &input) const {
+    FFT::Config config(input.size(), false);
+    ComplexVector ans(input.size());
+    FFT::kiss_fft(config, input, ans);
+    return ans;
+  }
+
+  // Invserse-transform a complex valued sequence.
+  ComplexVector FastFourierTransform::inverse_complex_transform(
+      const ComplexVector &input) const {
+    FFT::Config config(input.size(), true);
+    ComplexVector ans(input.size());
+    FFT::kiss_fft(config, input, ans);
+    return ans;
+  }
+
+  // Reflect the values of a series around the halfway point.
+  void FastFourierTransform::reflect(ComplexVector &freq) const {
     size_t half_size = freq.size() / 2;
-    if (half_size % 2) {
-      // odd case
-      for (size_t i = 1; i < half_size; ++i) {
-        freq[half_size + i].real(freq[half_size - i].real());
-        freq[half_size + i].imag(-freq[half_size - i].imag());
-      }
-    } else {
-      // even case
+    for (size_t i = 1; i < half_size; ++i) {
+      freq[half_size + i].real(freq[half_size - i].real());
+      freq[half_size + i].imag(-freq[half_size - i].imag());
     }
-
   }
 
+  // The inverse transform of a complex valued series (known to correspond to a
+  // real-valued time domain) to the real valued time domain.
   Vector FastFourierTransform::inverse_transform(
-      const std::vector<std::complex<double>> &freq_domain) const {
+      const ComplexVector &freq_domain) const {
     size_t nfft = freq_domain.size();
     Vector ans(nfft);
-    // std::vector<std::complex<double>> complex_freq(nfft / 2 + 1);
-    // for (int i = 0; i < nfft; ++i){
-    //   complex_freq[i / 2].real(freq_domain[i]);
-    //   complex_freq[i / 2].imag(freq_domain[i + 1]);
-    // }
 
-    FFT::RealConfig config(nfft, true);
-    FFT::kiss_fftri(config, freq_domain, ans);
+    if (nfft % 2 == 0) {
+      FFT::RealConfig config(nfft, true);
+      FFT::kiss_fftri(config, freq_domain, ans);
+    } else {
+      ComplexVector output(nfft);
+      FFT::Config config(nfft, true);
+      FFT::kiss_fft(config, freq_domain, output);
+      for (int i = 0; i < nfft; ++i) {
+        ans[i] = output[i].real();
+        if (fabs(output[i].imag() > 1e-5)) {
+          std::ostringstream err;
+          err << "Possibly nonzero output discovered in position "
+              << i << ".  " << output[i] << ".";
+          report_error(err.str());
+        }
+      }
+    }
     return ans;
   }
 
