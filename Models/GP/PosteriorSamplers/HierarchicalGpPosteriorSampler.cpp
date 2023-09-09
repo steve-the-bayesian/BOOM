@@ -67,8 +67,6 @@ namespace BOOM {
 
   void HierarchicalGpPosteriorSampler::clear_data_adjustments() {
     for (const std::string &group_name : model_->group_names()) {
-      GaussianProcessRegressionModel *data_model
-          = model_->data_model(group_name);
       // This check runs every iteration, but only in debug mode.
       assert(data_model->dat().size() == model_->data_set(data_model).size());
       std::vector<Ptr<HierarchicalRegressionData>> &data(
