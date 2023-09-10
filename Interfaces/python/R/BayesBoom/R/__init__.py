@@ -108,7 +108,7 @@ from .probability import (
     rmarkov,
 )
 
-from .stats import density, sd, mean
+from .stats import density, sd, mean, acf
 
 from .summary import (
     summary,

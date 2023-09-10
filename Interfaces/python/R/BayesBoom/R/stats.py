@@ -157,3 +157,37 @@ def density(x):
 
     """
     return ss.gaussian_kde(x)
+
+
+def acf(x, lags=40, ax=None, plot=True, correlation=True):
+    """
+    Compute (and optionally plot) the autocorrelation function (or
+    autocovariance function) of a variable x.
+
+    Args:
+      x:  A sequence of numbers whose autocorrelation is desired.
+      lags:  The number of lags to compute in the ACF.
+      ax: A matplotlib.Axes object on which to draw the ACF.  If None and plot
+        is True then a new Axes object is created.
+      plot:  Should the results be plotted?
+      correlation: If True then the autocorrelation function is compuated.
+        Otherwise the autocovariance function is computed.
+
+    Returns:
+      The autocorrelation or autocovariance function, as a 1-D numpy array.
+    """
+
+    import BayesBoom.boom as boom
+    from .boom_py_utils import to_boom_vector
+    if lags > len(x):
+        lags = len(x) - 1
+
+    boom_acf = boom.acf(to_boom_vector(x), lags, correlation).to_numpy()
+    if plot:
+        if ax is None:
+            import matplotlib.pyplot as plt
+            _, ax = plt.subplots(1, 1)
+        lags = np.arange(len(boom_acf))
+        ax.vlines(lags, ymin=0, ymax=boom_acf)
+
+    return boom_acf
