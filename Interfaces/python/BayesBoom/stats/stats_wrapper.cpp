@@ -13,6 +13,7 @@
 #include "stats/IQagent.hpp"
 #include "stats/Encoders.hpp"
 #include "stats/hexbin.hpp"
+#include "stats/acf.hpp"
 
 #include "Models/DataTypes.hpp"
 #include "cpputil/Ptr.hpp"
@@ -38,6 +39,18 @@ namespace BayesBoom {
              "Returns the variance of a boom.Vector.");
     boom.def("sd", [](const Vector &m){return sd(m);},
              "Returns the standard deviation of a boom.Vector.");
+
+    boom.def("acf", [](const Vector &x, int lags, bool correlation) {
+      return acf(x, lags, correlation);},
+      py::arg("x"),
+      py::arg("lags") = 40,
+      py::arg("correlation") = true,
+      "Args:\n\n"
+      "  x:  The time series of data whose autocorrelation function is "
+      "desired.\n"
+      "  lags:  The number of lags to compute.\n"
+      "  correlation:  If true the autocorrelation function is returned.  "
+      "If false the autocovariance function is returned.\n");
 
     //===========================================================================
     py::class_<SplineBase> (boom, "SplineBase")

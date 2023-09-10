@@ -67,8 +67,13 @@ namespace BOOM {
 
   void HierarchicalGpPosteriorSampler::clear_data_adjustments() {
     for (const std::string &group_name : model_->group_names()) {
-      // This check runs every iteration, but only in debug mode.
+      // This check runs every iteration, which is wasteful, but it only runs in
+      // in debug mode.
+      #ifndef NDEBUG
+      GaussianProcessRegressionModel *data_model = model_->data_model(group_name);
+      #endif
       assert(data_model->dat().size() == model_->data_set(data_model).size());
+
       std::vector<Ptr<HierarchicalRegressionData>> &data(
           model_->data_set(model_->data_model(group_name)));
       for (Ptr<HierarchicalRegressionData> &data_point : data) {
