@@ -51,12 +51,13 @@ namespace BOOM {
     //   scale: The size of a "standard deviation" over which the kernel should
     //     reach.
     RadialBasisFunction(double scale = 1.0);
+    RadialBasisFunction(const Vector &scale);
     RadialBasisFunction *clone() const override;
 
     uint size(bool = true) const override {return 1;}
 
-    double scale() const {return scale_;}
-    void set_scale(double scale);
+    const Vector &scale() const {return scale_;}
+    void set_scale(const Vector &scale);
 
     double operator()(const ConstVectorView &x1,
                       const ConstVectorView &x2) const override;
@@ -70,7 +71,7 @@ namespace BOOM {
                                        bool minimal = true) override;
 
    private:
-    double scale_;
+    mutable Vector scale_;
   };
 
   //===========================================================================

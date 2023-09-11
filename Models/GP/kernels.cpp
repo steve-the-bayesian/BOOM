@@ -38,6 +38,9 @@ namespace BOOM {
   //===========================================================================
 
   RadialBasisFunction::RadialBasisFunction(double scale)
+      : scale_(1, scale)  { }
+
+  RadialBasisFunction::RadialBasisFunction(const Vector &scale)
   {
     set_scale(scale);
   }
@@ -46,13 +49,15 @@ namespace BOOM {
     return new RadialBasisFunction(*this);
   }
 
-  void RadialBasisFunction::set_scale(double scale) {
-    if (scale <= 0) {
-      std::ostringstream err;
-      err << "Scale parameter for RadialBasisFunction must be positive.  Got "
-          << scale
-          << ".";
-      report_error(err.str());
+  void RadialBasisFunction::set_scale(const Vector &scale) {
+    for (int i = 0; i < scale.size(); ++i) {
+      if (scale[i] <= 0) {
+        std::ostringstream err;
+        err << "Scale parameter for RadialBasisFunction must be positive.  "
+            << "Got scale[" << i << "] = " << scale[i]
+            << ".";
+        report_error(err.str());
+      }
     }
     signal();
     scale_ = scale;
@@ -60,8 +65,14 @@ namespace BOOM {
 
   double RadialBasisFunction::operator()(
       const ConstVectorView &x, const ConstVectorView &y) const {
-    double length = (x - y).normsq();
-    return exp( -2 * length / (scale_ * scale_));
+    if (scale_.size() == 1  && x.size() > 1) {
+      double scalar = scale_[0];
+      scale_.resize(x.size());
+      scale_ = scalar;
+    }
+    Vector delta = (x - y) / scale_;
+    double distance = delta.normsq();
+    return exp( -2 * distance);
   }
 
   std::ostream &RadialBasisFunction::display(std::ostream &out) const {
@@ -70,12 +81,15 @@ namespace BOOM {
   }
 
   Vector RadialBasisFunction::vectorize(bool) const {
-    return Vector(1, scale_);
+    return scale_;
   }
 
   Vector::const_iterator RadialBasisFunction::unvectorize(Vector::const_iterator &v, bool) {
-    scale_ = *v;
-    return ++v;
+    for (size_t i = 0; i < scale_.size(); ++i) {
+      scale_[i] = *v;
+      ++v;
+    }
+    return v;
   }
 
   Vector::const_iterator RadialBasisFunction::unvectorize(const Vector &v, bool minimal) {
