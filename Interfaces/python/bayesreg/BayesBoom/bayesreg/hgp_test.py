@@ -5,9 +5,8 @@ import pandas as pd
 # pylint: disable=unused-import
 import pdb
 
-# import matplotlib.pyplot as plt
-
-# import BayesBoom.R as R
+import matplotlib.pyplot as plt
+import BayesBoom.R as R
 
 from BayesBoom.bayesreg import (
     HierarchicalGaussianProcessRegression,
@@ -54,9 +53,10 @@ class TestHGP(unittest.TestCase):
                      group=full_data["group"])
         hgp.mcmc(niter=1000, ping=100)
 
-        pdb.set_trace()
+#         pdb.set_trace()
         ### Look at the prior and a couple of the data models.  Make sure their
         ### parameter posteriors are reasonable.
+        prior = hgp.prior
         print("hgp")
 
 

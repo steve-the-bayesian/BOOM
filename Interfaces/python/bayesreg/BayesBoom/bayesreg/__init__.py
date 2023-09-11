@@ -1,5 +1,6 @@
 from .kernels import (
     MahalanobisKernel,
+    RadialBasisFunction
 )
 
 from .mean_function import (
@@ -19,6 +20,7 @@ __all__ = [
     "ZeroFunction",
     "LinearMeanFunction",
     "MahalanobisKernel",
+    "RadialBasisFunction",
     "GaussianProcessRegression",
     "HierarchicalGaussianProcessRegression"
 ]

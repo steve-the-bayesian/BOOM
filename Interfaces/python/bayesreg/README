@@ -1,5 +1,4 @@
-A python library that wraps the BayesBoom utilities for various types of
-Bayesian regression.  The first example is Gaussian process regression, but I
-expect others to follow, including heirarchical regression models, spline
-regressions and who knows, maybe Bart?  I expect the collection to grow over
-time.
+A python library for various types of Bayesian regression.  The first example is
+Gaussian process regression, but I expect others to follow, including
+heirarchical regression models, spline regressions and who knows, maybe Bart?  I
+expect the collection to grow over time.

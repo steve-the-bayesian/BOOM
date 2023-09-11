@@ -1,17 +1,22 @@
 import numpy as np
-import pandas as pd
+# import pandas as pd
 
 import BayesBoom.boom as boom
 import BayesBoom.R as R
-import BayesBoom.spikeslab as spikeslab
+# import BayesBoom.spikeslab as spikeslab
 
-import matplotlib.pyplot as plt
-import patsy
+# import matplotlib.pyplot as plt
+# import patsy
+
+from .mean_function import MeanFunction, ZeroFunction
+from .kernels import Kernel, MahalanobisKernel, RadialBasisFunction
 
 
 class GaussianProcessRegression:
     """
-    A Gaussian process regression model.
+    A Gaussian process regression model.  This class is intended to be used both
+    as a freestanding model, and as a component in the
+    HierarchicalGaussianProcessRegression model.
 
     Expected usage:
 
@@ -32,7 +37,20 @@ class GaussianProcessRegression:
     model.mcmc(niter=100)
     """
 
-    def __init__(self, mean_function, kernel, residual_sd: float = 1.0):
+    def __init__(self,
+                 mean_function: MeanFunction = None,
+                 kernel: Kernel = None,
+                 residual_sd: float = 1.0):
+        """
+        Args:
+          mean_function: An object inheriting from bayesreg.MeanFunction, giving
+            the prior mean function for the model.  Common choices for mean
+            functions include ZeroFunction and LinearMeanFunction.
+          kernel: An object inheriting from bayesreg.Kernel, giving the kernel
+            function that defines the covariance between neighboring points.
+          residual_sd: The residual standard deviation of the response variable
+            around the Gaussian Process regression function.
+        """
         self._mean_function = mean_function
         self._kernel = kernel
         self._initial_residual_sd = float(residual_sd)
@@ -61,9 +79,21 @@ class GaussianProcessRegression:
         for iteration in range(niter):
             R.print_timestamp(iteration, ping)
             self._boom_model.sample_posterior()
-            self._record_draws(iteration)
+            self.record_draws(iteration)
 
     def boom(self):
+        if self._mean_function is None:
+            self._mean_function = self._default_mean_function()
+        if not isinstance(self._mean_function, MeanFunction):
+            raise Exception(
+                "The mean function must inherit from bayesreg.MeanFunction.")
+
+        if self._kernel is None:
+            self._kernel = self._default_kernel()
+        if not isinstance(self._kernel, Kernel):
+            raise Exception(
+                "The kernel must inherit from bayesreg.Kernel.")
+
         self._boom_model = boom.GaussianProcessRegressionModel(
             self._mean_function.boom(),
             self._kernel.boom(),
@@ -77,8 +107,8 @@ class GaussianProcessRegression:
 
     def create_sampler(self, boom_model):
         """
-        Create a boom.PosteriorSampler object suitable for the boom_model, but do
-        not assign it.
+        Create a boom.PosteriorSampler object suitable for the boom_model,
+        but do not assign it.
         """
         kernel_sampler = self._kernel.create_sampler(boom_model)
         mean_function_sampler = self._mean_function.create_sampler(boom_model)
@@ -108,3 +138,12 @@ class GaussianProcessRegression:
         self._mean_function.record_draw(
             self._boom_model.mean_function, iteration)
         self._residual_sd_draws[iteration] = self._boom_model.residual_sd
+
+    def _default_mean_function(self):
+        return ZeroFunction()
+
+    def _default_kernel(self):
+        if self._X is not None:
+            return MahalanobisKernel(self._X)
+        else:
+            return RadialBasisFunction(1.0)

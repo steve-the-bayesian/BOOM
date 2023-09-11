@@ -22,6 +22,41 @@ class Kernel(ABC):
         Create a boom sampler object appropriate for the class of kernel.
         """
 
+    @abstractmethod
+    def allocate_space(self, niter: int):
+        """
+        Allocate space in the object to store 'niter' MCMC draws.
+        """
+
+    @abstractmethod
+    def record_draw(self, boom_kernel, iteration: int):
+        """
+        Collect the relevant parameters from the boom_kernel object
+        (a boom object), and store it in the correct slot in memory
+        previously allocated by self.allocate_space().
+        """
+
+
+class RadialBasisFunction(Kernel):
+    def __init__(self, scale_factors: np.array):
+        self._scale_factors = scale_factors
+
+    def boom(self):
+        if isinstance(self._scale_factors, np.ndarray):
+            return boom.RadialBasisFunction(
+                R.to_boom_vector(self._scale_factors))
+        else:
+            return boom.RadialBasisFunction(self._scale_factors)
+
+    def create_sampler(self, boom_gp_model):
+        return boom.NullSampler()
+
+    def allocate_space(self, niter: int):
+        pass
+
+    def record_draw(self, boom_kernel, iteration: int):
+        pass
+
 
 class MahalanobisKernel(Kernel):
     def __init__(self,
