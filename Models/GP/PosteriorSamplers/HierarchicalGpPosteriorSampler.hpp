@@ -29,8 +29,9 @@ namespace BOOM {
    public:
     // The prior and all the 'data model' subcomponents of 'model' should have
     // posterior samplers assigned to them.
-    HierarchicalGpPosteriorSampler(HierarchicalGpRegressionModel *model,
-                                   RNG &seeding_rng = GlobalRng::rng);
+    explicit HierarchicalGpPosteriorSampler(
+        HierarchicalGpRegressionModel *model,
+        RNG &seeding_rng = GlobalRng::rng);
 
     double logpri() const override;
     void draw() override;

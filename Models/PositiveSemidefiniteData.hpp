@@ -89,7 +89,7 @@ namespace BOOM {
       public PositiveSemidefiniteData,
       virtual public Params {
    public:
-    PositiveSemidefiniteParams(const SpdMatrix &S);
+    explicit PositiveSemidefiniteParams(const SpdMatrix &S);
     PositiveSemidefiniteParams(const PositiveSemidefiniteParams &rhs);
     PositiveSemidefiniteParams(PositiveSemidefiniteParams &&rhs);
     PositiveSemidefiniteParams &operator=(const PositiveSemidefiniteParams &rhs);

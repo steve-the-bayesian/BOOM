@@ -71,7 +71,7 @@ namespace BOOM {
   // A FunctionParams where the function is a linear regression.
   class LinearMeanFunction : public FunctionParams {
    public:
-    LinearMeanFunction(const Ptr<GlmCoefs> &coefficients);
+    explicit LinearMeanFunction(const Ptr<GlmCoefs> &coefficients);
     LinearMeanFunction(const LinearMeanFunction &rhs);
     LinearMeanFunction & operator=(const LinearMeanFunction &rhs);
     LinearMeanFunction(LinearMeanFunction &&rhs) = default;
@@ -132,7 +132,7 @@ namespace BOOM {
   // because it wouldn't be identified.
   class GpMeanFunction : public FunctionParams {
    public:
-    GpMeanFunction(const Ptr<GaussianProcessRegressionModel> &gp);
+    explicit GpMeanFunction(const Ptr<GaussianProcessRegressionModel> &gp);
     GpMeanFunction(const GpMeanFunction &rhs);
     GpMeanFunction &operator=(const GpMeanFunction &rhs);
     GpMeanFunction(GpMeanFunction &&rhs) = default;

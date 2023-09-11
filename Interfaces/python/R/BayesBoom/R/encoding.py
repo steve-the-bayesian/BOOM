@@ -234,15 +234,15 @@ class EffectEncoder(MainEffectEncoder):
     def dim(self):
         return len(self._levels)
 
-    def encode(self, factor):
-        if not isinstance(factor, (np.ndarray, pd.Series)):
-            factor = np.array(factor)
-        nobs = len(factor)
+    def encode(self, x):
+        if not isinstance(x, (np.ndarray, pd.Series)):
+            x = np.array(x)
+        nobs = len(x)
         dim = self.dim
         ans = np.zeros((nobs, dim), dtype=float)
         for i in range(dim):
-            ans[:, i] = (factor == self._levels[i]).astype(float)
-        baseline = factor == self._baseline
+            ans[:, i] = (x == self._levels[i]).astype(float)
+        baseline = x == self._baseline
         ans[baseline, :] = -1
         return ans
 
@@ -296,10 +296,10 @@ class OneHotEncoder(MainEffectEncoder):
         else:
             return len(self._levels)
 
-    def encode(self, factor):
-        if not isinstance(factor, (np.ndarray, pd.Series)):
-            factor = np.array(factor)
-        nobs = len(factor)
+    def encode(self, x):
+        if not isinstance(x, (np.ndarray, pd.Series)):
+            x = np.array(x)
+        nobs = len(x)
         levels = [x for x in self._levels if x != self._baseline]
         dim = self.dim
         if dim != len(levels):
@@ -307,7 +307,7 @@ class OneHotEncoder(MainEffectEncoder):
 
         ans = np.zeros((nobs, dim), dtype=float)
         for i in range(dim):
-            ans[:, i] = (factor == levels[i]).astype(float)
+            ans[:, i] = (x == levels[i]).astype(float)
 
         return ans
 
@@ -393,7 +393,7 @@ class MissingDummyEncoder(MainEffectEncoder):
 
     def encode(self, x):
         """
-        X is a numpy array of dtype either 'float' or 'object'.  If x is float then
+        X is a numpy array of dtype either 'float' or 'object'.
         """
         missing = pd.isna(x)
         sample_size = len(x)
@@ -459,8 +459,8 @@ class SuccessEncoder(MainEffectEncoder):
         super().__init__(variable_name)
         self._success_values = success_values
 
-    def encode(self, y):
-        output = np.isin(y, self._success_values)
+    def encode(self, x):
+        output = np.isin(x, self._success_values)
         return output.astype(float).reshape((-1, 1))
 
     @property
@@ -496,6 +496,7 @@ register_encoding_json_encoder(
     "SuccessEncoder",
     SuccessEncoderJsonEncoder,
     SuccessEncoderJsonDecoder)
+
 
 # ===========================================================================
 class InteractionEncoder(Encoder):
@@ -565,6 +566,7 @@ class InteractionEncoder(Encoder):
 
     def __repr__(self):
         return f"Interaction between {self._encoder1} and {self._encoder2}."
+
 
 class InteractionEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -702,6 +704,7 @@ class DatasetEncoder(Encoder):
         for enc in self._encoders:
             ans += str(enc) + "\n"
         return ans
+
 
 class DatasetEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):

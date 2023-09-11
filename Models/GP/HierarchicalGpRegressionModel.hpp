@@ -86,7 +86,7 @@ namespace BOOM {
       : public CompositeParamPolicy,
         public PriorPolicy {
    public:
-    HierarchicalGpRegressionModel(
+    explicit HierarchicalGpRegressionModel(
         const Ptr<GaussianProcessRegressionModel> &mean_function_model);
     HierarchicalGpRegressionModel(const HierarchicalGpRegressionModel &rhs);
     HierarchicalGpRegressionModel & operator=(const HierarchicalGpRegressionModel &rhs);
