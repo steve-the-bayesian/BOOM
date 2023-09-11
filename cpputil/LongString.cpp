@@ -44,7 +44,7 @@ namespace BOOM {
       while (start < back && s[start] == ' ') ++start;
     }
     if (back - start > 0) {
-      if (start > 0 || (start == 0 && pad_first)) out << blanks;
+      if (start > 0 || pad_first) out << blanks;
       out << s.substr(start, back - start) << "\n";
     }
     return out;
