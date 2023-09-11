@@ -168,7 +168,7 @@ class SpikeSlabArPrior:
             upper_limit=sigma_upper_limit)
 
     def __repr__(self):
-        f"""
+        return f"""
         SpikeSlabArPrior with...
         inclusion_probabilities: {self._prior_inclusion_probabilities}
         max flips: {self._max_flips}

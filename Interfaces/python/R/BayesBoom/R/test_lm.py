@@ -1,7 +1,7 @@
 import unittest
 import BayesBoom.R as R
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import scipy.sparse
 
 

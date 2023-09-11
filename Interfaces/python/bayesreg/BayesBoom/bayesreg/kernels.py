@@ -4,9 +4,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 
-"""
-Python wrappers for C++ objects relating to kernels and mean functions.
-"""
+# Python wrappers for C++ objects relating to kernels and mean functions.
 
 
 class Kernel(ABC):
@@ -79,15 +77,15 @@ class MahalanobisKernel(Kernel):
             self._scale,
             self._diagonal_shrinkage)
 
-    def create_sampler(self, boom_model):
+    def create_sampler(self, boom_gp_model):
         """
         Args:
-          boom_model:  A boom.GaussianProcessRegressionModel object
+          boom_gp_model:  A boom.GaussianProcessRegressionModel object
         """
         if self._scale_prior is not None:
             sampler = boom.MahalanobisKernelSampler(
-                boom_model.kernel,
-                boom_model,
+                boom_gp_model.kernel,
+                boom_gp_model,
                 self._scale_prior.boom())
         else:
             sampler = boom.NullSampler()
