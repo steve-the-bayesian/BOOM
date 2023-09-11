@@ -16,7 +16,7 @@ class MeanFunction(ABC):
         pass
 
     @abstractmethod
-    def create_sampler(self, gp_model):
+    def create_sampler(self, boom_gp_model):
         pass
 
     @abstractmethod
@@ -38,7 +38,7 @@ class ZeroFunction(MeanFunction):
     def record_draw(self, boom_mean_function, iteration: int):
         pass
 
-    def create_sampler(self, boom_model):
+    def create_sampler(self, boom_gp_model):
         return boom.GpNullSampler()
 
 

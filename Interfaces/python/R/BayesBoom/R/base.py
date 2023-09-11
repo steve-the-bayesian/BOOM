@@ -197,18 +197,18 @@ def _fast_crosstab(x1, x2, xname="X", yname="Y", dropna=False):
     return ans
 
 
-def order(input, decreasing=False):
+def order(input_sequence, decreasing=False):
     """
     Given an input sequence, return a vector of integers that will put the
     sequence in order.
 
     """
-    x = pd.Series(input).reset_index(drop=True).sort_values(
+    x = pd.Series(input_sequence).reset_index(drop=True).sort_values(
         ascending=(not decreasing))
     return x.index
 
 
-def invert_order(ord):
+def invert_order(ordr):
     """
     Put entries that have been sorted by a call to 'order' back in their
     original order.
@@ -219,8 +219,8 @@ def invert_order(ord):
     Returns:
       ans: A permutation of the numbers 0..n such that ans[ord] = 0...n.
     """
-    n = len(ord)
-    return pd.Series(range(n), index=ord).sort_index().values
+    n = len(ordr)
+    return pd.Series(range(n), index=ordr).sort_index().values
 
 
 def data_range(x):
