@@ -145,14 +145,49 @@ fi
 ## Build and install the package:
 echo "Time to build the package!"
 
+PYTHON="python3"
 if command -v python &> /dev/null
 then
-    PYTHON=python
-    PIP=pip
-else
-    PYTHON=python3
-    PIP=pip3
+    # This branch gets entered if the python command exists on the path.  We
+    # still need to check that it is python3 and not python 2.something.
+    echo "Checking if python is version 2 or 3"
+    python_version=$(python --version)
+    major_version=$(echo ${python_version:7:1})
+    if [[ major_version -ge 3 ]]
+    then
+	echo "python is version 3"
+	PYTHON="python"
+    fi
 fi
+
+##---------------------------------------------------------------------------
+## Find the right 'pip' command.
+
+$PYTHON -m ensurepip --upgrade
+
+if command -v pip &> /dev/null
+then
+    # pip --version prints something like
+    # pip 23.2.1 from /lib/python3.9/site-packages/pip (python 3.9)
+    # The thing in spot 6 is the python version number that pip works with.
+    echo "pip command exists -- checking whether it installs to python3"
+    pip_version=$(pip --version | awk -F' ' '{print $6}')
+    pip_major_version=${pip_version:0:1}
+    if [[ $pip_major_version -ge 3 ]]
+    then
+	echo "pip installs to python3.  Setting PIP = pip"
+	PIP="pip"
+    else
+	echo "pip does not install to python3.  Setting PIP = pip3"
+	PIP="pip3"
+    fi
+else
+    echo "pip command not found -- assuming that pip3 exists"
+    PIP="pip3"
+fi
+
+echo "python is $PYTHON"
+echo "pip is $PIP"
 
 cd python_package
 $PYTHON setup.py sdist bdist_wheel
