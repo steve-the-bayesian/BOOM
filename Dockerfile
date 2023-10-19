@@ -1,6 +1,7 @@
 # Use this base image from dockerhub.  This image is set up with the minimal
 # linux environment to support manylinux distribution.
-FROM quay.io/pypa/manylinux2010_x86_64
+# FROM quay.io/pypa/manylinux2010_x86_64
+FROM quay.io/pypa/manylinux2014_x86_64
 
 # Create the /output directory inside the container.
 RUN mkdir /output

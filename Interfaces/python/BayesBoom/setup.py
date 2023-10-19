@@ -314,8 +314,9 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
 
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
     # parallel code
-    nthreads = 64  # number of parallel compilations
     import multiprocessing.pool
+    import multiprocessing as mp
+    nthreads = mp.cpu_count()
 
     def _single_compile(obj):
         try:
