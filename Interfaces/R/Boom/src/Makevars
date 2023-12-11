@@ -4,7 +4,11 @@ all:	libboom.a
 # passed to make can be specified here.
 # -k:  keep going
 # -j 16: use 16 threads
-MAKEFLAGS=" -j 32 "
+#
+# NOTE: A better way to supply the -j flag is with the Ncpu's argument to
+# install.packages.
+# MAKEFLAGS=" -j 32 "
+
 
 # An explanation for the cflags listed below:
 # - ADD_ is probably no longer needed.  It was necessary for communicating with
@@ -114,4 +118,4 @@ OBJECTS = ${CXX_SRCS:.cpp=.o}
 # of 100), uncomment the "strip" command below.
 libboom.a: ${OBJECTS}
 	   ${AR} rc $@ $^
-#	   strip $@
+	   strip $@
