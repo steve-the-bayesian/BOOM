@@ -12,3 +12,4 @@ Suggests: testthat
 LinkingTo: Boom (>= 0.9.11)
 License: LGPL-2.1 | MIT + file LICENSE
 Encoding: UTF-8
+BugReports: https://github.com/steve-the-bayesian/BOOM/issues

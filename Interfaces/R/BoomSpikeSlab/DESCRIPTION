@@ -18,3 +18,4 @@ Depends: Boom (>= 0.9.8) , R (>= 3.5.0)
 LinkingTo: Boom(>= 0.9.8)
 Suggests: MASS, testthat, mlbench, igraph
 Encoding: UTF-8
+BugReports: https://github.com/steve-the-bayesian/BOOM/issues
