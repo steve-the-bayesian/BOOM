@@ -10,3 +10,4 @@ Depends: R(>= 3.1.0), Boom(>= 0.8)
 Encoding: UTF-8
 SystemRequirements: GNU Make, C++11
 Suggests: testthat
+BugReports: https://github.com/steve-the-bayesian/BOOM/issues
