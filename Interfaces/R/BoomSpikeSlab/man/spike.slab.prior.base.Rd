@@ -69,26 +69,27 @@ SpikeSlabPriorBase(number.of.variables,
 
 \value{Returns an object of class \code{SpikeSlabPriorBase}, which is a
   list with the following elements.
-\itemize{
-  \item{prior.inclusion.probabilities}{A vector giving the prior
-    probability of inclusion for each coefficient. }
 
-  \item{mu}{A vector giving the prior mean of each coefficient
-    conditional on inclusion. }
+  \itemize{
+    \item prior.inclusion.probabilities: A vector giving the prior
+    probability of inclusion for each coefficient.
 
-  \item{sigma.guess}{A prior estimate of the residual standard
-    deviation.}
+    \item mu: A vector giving the prior mean of each coefficient
+    conditional on inclusion.
 
-  \item{prior.df}{The number of observations worth of weight to be
-    given to \code{sigma.guess}.}
-}
+    \item sigma.guess: A prior estimate of the residual standard
+    deviation.
+
+    \item prior.df: The number of observations worth of weight to be
+    given to \code{sigma.guess}.
+  }
 }
 
 \references{
   George and McCulloch (1997), "Approaches to Bayesian Variable
   Selection", \emph{Statistica Sinica}, \bold{7}, 339 -- 373.
 
-  \url{http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n26.pdf}
+  \url{https://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n26.pdf}
 }
 
 \author{

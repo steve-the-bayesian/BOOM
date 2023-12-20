@@ -211,6 +211,15 @@ bsts(formula,
   exposure times.  }
 
 \references{
+  Scott and Varian (2014)
+  "Predicting the Present with Bayesian Structural Time Series",
+  International Journal of Mathematical Modelling and Numerical
+  Optimization.  4--23.
+
+  Scott and Varian (2015)
+  "Bayesian Variable Selection for Nowcasting Economic Time Series",
+  Economic Analysis of the Digital Economy, pp 119-135.
+
   Harvey (1990), "Forecasting, structural time series, and the Kalman
   filter", Cambridge University Press.
 
@@ -220,12 +229,6 @@ bsts(formula,
   George and McCulloch (1997)
   "Approaches for Bayesian variable selection", Statistica Sinica pp
   339--374.
-
-  Ghosh and Clyde (2011)
-  "Rao-Blackwellization for Bayesian variable selection and model averaging
-  in linear and binary regression: a novel data augmentation approach",
-  JASA pp 1041 --1052.
-
 }
 
 \author{

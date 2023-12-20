@@ -106,25 +106,24 @@ CoefficientGroup(indices, mean.hyperprior = NULL, sd.hyperprior = NULL,
   the posterior distribution of model parameters.  Each of the following
   is a matrix, with rows corresponding to MCMC draws, and columsn to
   distinct parameters.
-
   \itemize{
-    \item{coefficients: regression coefficients.}
+    \item coefficients: regression coefficients.
 
-    \item{residual.sd: the residual standard deviation from the
-      regression model.}
+    \item residual.sd: the residual standard deviation from the
+      regression model.
 
-    \item{group.means:  The posterior distribution of the mean of each
+    \item group.means: The posterior distribution of the mean of each
       coefficient group.  If no mean hyperprior was assigned to a
       particular group, then the value here will be a constant (the
       values supplied by the \code{prior} argument to
-      \code{CoefficientGroup} for that group).}
+      \code{CoefficientGroup} for that group).
 
-    \item{group.sds}{The posterior distribution of the standard
+    \item group.sds: The posterior distribution of the standard
       deviation of each coefficient group.  If no sd.hyperprior was
       assigned to a particular group, then the value here will be a
       constant (the values supplied by the \code{prior} argument to
-      \code{CoefficientGroup} for that group).}
-  }
+      \code{CoefficientGroup} for that group).
+    }
 
   \code{CoefficientGroup} is a configuration utility used to define
   which coefficients should be shrunk together.  It returns an object

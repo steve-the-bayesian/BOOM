@@ -74,31 +74,31 @@
   Returns a list with the following elements
   \itemize{
 
-    \item{coefficients: A five-column matrix summarizing the model
+    \item coefficients: A five-column matrix summarizing the model
       coefficients, produced by
-      \code{\link{SummarizeSpikeSlabCoefficients}}.}
+      \code{\link{SummarizeSpikeSlabCoefficients}}.
 
-    \item{null.log.likelihood: The log likelihood of the null binomial
-      model evaluated at the MLE.}
+    \item null.log.likelihood: The log likelihood of the null binomial
+      model evaluated at the MLE.
 
-    \item{mean.log.likelihood: The average value of log likelihood
-      visited by the sampler.}
+    \item mean.log.likelihood: The average value of log likelihood
+      visited by the sampler.
 
-    \item{max.log.likelihood: The largest log likelihood value visited
-      by the sampler.}
+    \item max.log.likelihood: The largest log likelihood value visited
+      by the sampler.
 
-    \item{deviance.r2: The deviance R-square obtained by taking
+    \item deviance.r2: The deviance R-square obtained by taking
       \code{(null.likelihood - mean.log.likelihood) /
-        null.log.likelihood}}
+        null.log.likelihood}
 
-    \item{deviance.r2.distribution: The value of the deviance R-square
+    \item deviance.r2.distribution: The value of the deviance R-square
       statistic at each point visited by the MCMC chain.  This is not
-      printed by the print method.}
+      printed by the print method.
 
-    \item{predicted.vs.actual}{A table obtained by paritioning the data
+    \item predicted.vs.actual: A table obtained by paritioning the data
       into buckets, and comparing the aveage predicted probability with
-      the empirical success rate in each bucket.}
-  }
+      the empirical success rate in each bucket.
+}
 }
 
 \author{
