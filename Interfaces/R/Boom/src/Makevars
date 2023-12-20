@@ -115,7 +115,11 @@ OBJECTS = ${CXX_SRCS:.cpp=.o}
 ############################################################################
 
 # To remove debug symbols from the library (reducing its size by about a factor
-# of 100), uncomment the "strip" command below.
+# of 100), uncomment the "strip" command below.  The command should stay
+# commented by default though, because removing symbols from the library is
+# prohibited by CRAN.
+#
+# To strip the library in a CRAN friendly way
 libboom.a: ${OBJECTS}
-	   ${AR} rc $@ $^
-	   strip $@
+	   ${AR} rcs $@ $^
+#	   strip --strip-debug $@

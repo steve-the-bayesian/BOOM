@@ -1,13 +1,14 @@
 \name{bsts-package}
 \alias{bsts-package}
-\alias{bsts}
 \docType{package}
 \title{
-\packageTitle{bsts}
+bsts
 }
 
 \description{
-\packageDescription{bsts}
+  Time series regression using dynamic linear models fit using
+  MCMC. See Scott and Varian (2014) <DOI:10.1504/IJMMNO.2014.059942>, among many
+  other sources.
 }
 
 \details{
@@ -17,16 +18,11 @@
   \code{Ncpus} argument to a large number.  Windows and Mac users can
   ignore this advice.  }
 
-The DESCRIPTION file:
-\packageDESCRIPTION{bsts}
-
-\packageIndices{bsts}
 }
 
 \author{
-\packageAuthor{bsts}
-
-Maintainer: \packageMaintainer{bsts}
+Author: Steven L. Scott <steve.the.bayesian@gmail.com>
+Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
 }
 
 \references{
