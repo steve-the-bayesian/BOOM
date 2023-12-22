@@ -9,5 +9,4 @@ LinkingTo:  Boom (>= 0.8.0), BH (>= 1.15.0-2)
 Version: 0.1
 License: LGPL-2.1 | file LICENSE
 Encoding: UTF-8
-
-
+BugReports: https://github.com/steve-the-bayesian/BOOM/issues

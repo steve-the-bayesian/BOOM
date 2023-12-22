@@ -151,7 +151,7 @@ ConditionalZellnerPrior(xdim,
   George and McCulloch (1997), "Approaches to Bayesian Variable
   Selection", \emph{Statistica Sinica}, \bold{7}, 339 -- 373.
 
-  \url{http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n26.pdf}
+  \url{https://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n26.pdf}
 }
 
 \examples{

@@ -109,7 +109,7 @@ namespace BOOM {
       FFT::kiss_fft(config, freq_domain, output);
       for (int i = 0; i < nfft; ++i) {
         ans[i] = output[i].real();
-        if (fabs(output[i].imag() > 1e-5)) {
+        if (fabs(output[i].imag()) > 1e-5) {
           std::ostringstream err;
           err << "Possibly nonzero output discovered in position "
               << i << ".  " << output[i] << ".";

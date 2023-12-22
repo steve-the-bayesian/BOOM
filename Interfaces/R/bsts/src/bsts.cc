@@ -98,7 +98,7 @@ extern "C" {
                     << "Time used was "
                     << double(current_time - start_time) / CLOCKS_PER_SEC
                     << " seconds.";
-            Rf_warning(warning.str().c_str());
+            Rf_warning("%s", warning.str().c_str());
             return BOOM::appendListElement(
                 ans,
                 ToRVector(BOOM::Vector(1, i + 1)),

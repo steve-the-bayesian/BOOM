@@ -35,7 +35,7 @@ extern "C" {
   using namespace BOOM;
   using namespace BOOM::RInterface;
   using namespace BOOM::bsts;
-  
+
   SEXP analysis_common_r_fit_dirm_(
       SEXP r_data_list,
       SEXP r_state_specification,
@@ -55,7 +55,7 @@ extern "C" {
           r_data_list,
           r_state_specification,
           r_prior,
-          r_options, 
+          r_options,
           &io_manager));
 
       // Do one posterior sampling step before getting ready to write.  This
@@ -88,7 +88,7 @@ extern "C" {
                     << "Time used was "
                     << double(current_time - start_time) / CLOCKS_PER_SEC
                     << " seconds.";
-            Rf_warning(warning.str().c_str());
+            Rf_warning("%s", warning.str().c_str());
             return BOOM::appendListElement(
                 ans,
                 ToRVector(BOOM::Vector(1, i + 1)),

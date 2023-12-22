@@ -89,6 +89,7 @@ namespace {
                        ToBoomVector(getListElement(r_gaussian_suf, "xty")),
                        Rf_asReal(getListElement(r_gaussian_suf, "yty")),
                        Rf_asReal(getListElement(r_gaussian_suf, "n")),
+                       Rf_asReal(getListElement(r_gaussian_suf, "ybar")),
                        ToBoomVector(getListElement(r_gaussian_suf, "xbar")));
 
     NEW(RegressionModel, model)(suf->size());

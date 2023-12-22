@@ -120,6 +120,6 @@ StudentIndependentSpikeSlabPrior(
   selection and model averaging in linear and binary regression: A novel
   data augmentation approach", \emph{Journal of the American Statistical
   Association}, \bold{106} 1041-1052.
-  \url{http://homepage.stat.uiowa.edu/~jghsh/ghosh_clyde_2011_jasa.pdf}
+  \url{https://homepage.stat.uiowa.edu/~jghsh/ghosh_clyde_2011_jasa.pdf}
 
 }
