@@ -185,12 +185,19 @@ class PoissonFactorModel:
             raise ValueError(f"Site {site_id} could not be found.")
         return self._site_draws[:, idx, :]
 
+    def impute_visitors(self):
+        self._posterior_sampler.impute_visitors()
+
+    def draw_site_parameters(self):
+        self._posterior_sampler.draw_site_parameters()
+
     def _assign_sampler(self, model):
         sampler = boom.PoissonFactorModelPosteriorSampler(
             model,
             self._prior_class_membership_probabilites,
             boom.GlobalRng.rng)
         self._model.set_method(sampler)
+        self._posterior_sampler = sampler
 
         known_users = getattr(self, "_known_users", None)
         if known_users is not None:
@@ -214,8 +221,12 @@ class PoissonFactorModel:
 
         if self._site_specific_priors:
             site_specific_ids = self._site_specific_priors["prior_a"].index
-            prior_a.loc[site_specific_ids, :] = self._site_specific_priors["prior_a"]
-            prior_b.loc[site_specific_ids, :] = self._site_specific_priors["prior_b"]
+            prior_a.loc[site_specific_ids, :] = (
+                self._site_specific_priors["prior_a"]
+            )
+            prior_b.loc[site_specific_ids, :] = (
+                self._site_specific_priors["prior_b"]
+            )
 
         model.set_site_priors(
             site_ids,
