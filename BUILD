@@ -68,12 +68,12 @@ STATS_HDRS = glob(["stats/*.hpp"])
 
 GP_SRCS = glob([
     "Models/GP/*.cpp",
-    "Models/GP/PosteriorSamplers/*.cpp"
+    "Models/GP/PosteriorSamplers/*.cpp",
 ])
 
 GP_HDRS = glob([
     "Models/GP/*.hpp",
-    "Models/GP/PosteriorSamplers/*.hpp"
+    "Models/GP/PosteriorSamplers/*.hpp",
 ])
 
 GLM_SRCS = glob([
