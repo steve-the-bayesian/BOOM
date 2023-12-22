@@ -461,7 +461,7 @@ class NumericSummary(UnivariateSummary):
                     frequency_distribution.index[candidates].tolist()
                 )
 
-    def __str__(self):
+    def __repr__(self):
         ans = f"""
         Nobs: {self._number_observed}
         Nmis: {self._number_missing}
@@ -636,7 +636,7 @@ class CategoricalSummary(UnivariateSummary):
         """
         return self.frequency_distribution / self.sample_size
 
-    def __str__(self):
+    def __repr__(self):
         return f"""
 
 
@@ -647,9 +647,6 @@ class CategoricalSummary(UnivariateSummary):
 Frequency Distribution:
 {pad(self._frequency_distribution)}
             """
-
-    def __repr__(self):
-        return self.__str__()
 
     def _promote_frequency_distribution(self, max_levels, other_name):
         """
@@ -786,7 +783,7 @@ class DateTimeSummary(UnivariateSummary):
             message += "Original error message: " + str(e)
             raise Exception(message)
 
-    def __str__(self):
+    def __repr__(self):
         ans = f"""
     Nobs:       {self.number_observed}
     Nmis:       {self.number_missing}
@@ -812,9 +809,6 @@ Monthly seasonality:
 {pad(self._month_counts, 4)}
         """
         return ans
-
-    def __repr__(self):
-        return self.__str__()
 
     @property
     def sample_size(self):

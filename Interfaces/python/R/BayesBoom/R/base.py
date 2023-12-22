@@ -91,13 +91,58 @@ def pretty(list_of_strings, width=80, hide_underscore=True):
     print(line)
 
 
-def print_timestamp(iteration_number, ping):
-    if ping <= 0:
-        return
-    if iteration_number % ping == 0:
+def print_timestamp(iteration_number=None, ping=None):
+    sep = ' =-=-=-=-=-=-=-=-=-=-= '
+    if iteration_number is None:
+        print(sep, time.asctime(), sep)
+    elif (ping > 0) and (iteration_number % ping == 0):
         timestamp = time.asctime()
-        sep = ' =-=-=-=-=-=-=-=-=-=-= '
         print(sep + timestamp + f" Iteration {iteration_number} " + sep)
+
+
+def print_time_interval(seconds: float, print_output=True):
+    """
+    Print a time interval in English, using days, hours, minutes and seconds.
+    """
+    seconds_in_minute = 60
+    seconds_in_hour = seconds_in_minute * 60
+    seconds_in_day = seconds_in_hour * 24
+    remaining_seconds = seconds
+
+    days = int(remaining_seconds / seconds_in_day)
+    remaining_seconds = remaining_seconds % seconds_in_day
+
+    hours = int(remaining_seconds / seconds_in_hour)
+    remaining_seconds = remaining_seconds & seconds_in_hour
+
+    minutes = int(remaining_seconds / seconds_in_minute)
+    remaining_seconds = remaining_seconds & seconds_in_minute
+
+    integer_seconds = int(remaining_seconds)
+    fractional_seconds = remaining_seconds % 1
+
+    ans = ""
+    day_unit = "day" if days == 0 else "days"
+    hour_unit = "hour" if hours == 1 else "hours"
+    minute_unit = "minute" if minutes == 1 else "minutes"
+
+    if days > 0:
+        ans += str(days) + " " + day_unit
+    if hours > 0 or days > 0:
+        ans += " " if len(ans) > 0 else ""
+        ans += str(hours) + " " + hour_unit
+    if days > 0 or hours > 0 or minutes > 0:
+        ans += " " if len(ans) > 0 else ""
+        ans += str(minutes) + " " + minute_unit
+    ans += " " if len(ans) > 0 else ""
+    if fractional_seconds == seconds:
+        ans += str(fractional_seconds)
+    else:
+        ans += f"{integer_seconds + fractional_seconds:.2f}"
+        ans += " seconds"
+    if print_output:
+        print(ans)
+    return ans
 
 
 def ls(*args, hide_underscore=True, maxwidth=80):

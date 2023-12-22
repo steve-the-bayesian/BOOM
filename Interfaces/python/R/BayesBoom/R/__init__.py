@@ -13,6 +13,7 @@ from .base import (
     order,
     paste,
     paste0,
+    print_time_interval,
     print_timestamp,
     recycle,
     remove_common_prefix,
