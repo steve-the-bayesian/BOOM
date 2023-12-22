@@ -312,11 +312,11 @@ namespace BayesBoom {
              py::arg("model"),
              py::arg("default_prior_class_membership_probabilities"),
              py::arg("seeding_rng") = GlobalRng::rng)
-        .def("impute_visitors":
+        .def("impute_visitors",
              [](PoissonFactorModelPosteriorSampler &sampler) {
                sampler.impute_visitors();
              })
-        .def("draw_site_parameters":
+        .def("draw_site_parameters",
              [](PoissonFactorModelPosteriorSampler &sampler) {
                sampler.draw_site_parameters();
              })
