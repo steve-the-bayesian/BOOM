@@ -436,8 +436,12 @@ namespace {
       innovation_sd_draws.row(i) = sqrt(model->unscaled_innovation_variances());
       final_beta_draws.row(i) = model->coef(time_dimension - 1).Beta();
     }
-    // EXPECT_NE(residual_sd_draws[0], residual_sd_draws.back());
-    // EXPECT_NE(innovation_sd_draws(0, 0), innovation_sd_draws(niter - 1, 0));
+    EXPECT_NE(residual_sd_draws[0], residual_sd_draws.back())
+        << "residual_sd_draws = "
+        << residual_sd_draws;
+    EXPECT_NE(innovation_sd_draws(0, 0), innovation_sd_draws(niter - 1, 0))
+        << "innovation_sd_draws = "
+        << innovation_sd_draws;
 
     std::cout << final_beta_draws << beta_path.last_col() << std::endl;
   }

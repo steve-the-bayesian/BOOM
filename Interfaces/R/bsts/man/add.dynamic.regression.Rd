@@ -197,6 +197,7 @@ DynamicRegressionArOptions(lags = 1, sigma.prior = SdPrior(1, 1))
 }
 
 \examples{
+\dontrun{
 ## Setting the seed to avoid small sample effects resulting from small
 ## number of iterations.
 set.seed(8675309)
@@ -229,6 +230,7 @@ plot(model, "dynamic", burn = 10)
 xx <- rnorm(10)
 pred <- predict(model, newdata = xx)
 plot(pred)
+}
 }
 
 \seealso{

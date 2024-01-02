@@ -416,7 +416,7 @@ namespace BoomStateSpaceTesting {
 
     StudentTestFramework sim(xdim, nseries, nfactors, sample_size,
                              test_size, residual_sd, tail_thickness);
-    int niter = 100;
+    int niter = 500;
     int burn = 10;
 
     // The observation model parameters are fixed at the true values.
