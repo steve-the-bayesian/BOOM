@@ -34,47 +34,11 @@
 
 namespace BOOM {
 
-  namespace StateSpace {
-    // A data type representing one or more RegressionData observations at the
-    // same time point.
-    class MultiplexedRegressionData : public MultiplexedData {
-     public:
-      MultiplexedRegressionData();
-      MultiplexedRegressionData(double y, const Vector &x);
-      explicit MultiplexedRegressionData(
-          const std::vector<Ptr<RegressionData>> &data);
-      MultiplexedRegressionData *clone() const override;
-      std::ostream &display(std::ostream &out) const override;
-
-      // Add a RegressionData observation to this data point.  If dp
-      void add_data(const Ptr<RegressionData> &dp);
-
-      double adjusted_observation(const GlmCoefs &coefficients) const;
-      const RegressionData &regression_data(int i) const;
-      Ptr<RegressionData> regression_data_ptr(int i);
-
-      double state_model_offset() const { return state_model_offset_; }
-      void set_state_model_offset(double offset) {
-        state_model_offset_ = offset;
-      }
-
-      // The total number of data points, both missing and observed.
-      int total_sample_size() const override { return regression_data_.size(); }
-
-      const Matrix &predictors() const { return predictors_; }
-
-     private:
-      std::vector<Ptr<RegressionData>> regression_data_;
-      double state_model_offset_;
-      Matrix predictors_;
-    };
-  }  // namespace StateSpace
-
   // A contemporaneous regression model, where y[t] =
   // beta.dot(X.row(t)) + state space.
   class StateSpaceRegressionModel
       : public ScalarStateSpaceModelBase,
-        public IID_DataPolicy<StateSpace::MultiplexedRegressionData>,
+        public IID_DataPolicy<RegressionData>,
         public PriorPolicy {
    public:
     // xdim is the dimension of the x's in the regression part of the
@@ -135,26 +99,6 @@ namespace BOOM {
     Matrix simulate_forecast_components(RNG &rng, const Matrix &newX,
                                         const Vector &final_state);
 
-    // Simulate a forecast based on multiplexed data, where multiple
-    // observations can have the same timestamp.
-    //
-    // Args:
-    //   rng:  The random number generator.
-    //   newX:  The matrix of predictors where forecasts are needed.
-    //   final_state: Contains the simulated state values for the model as of
-    //     the time of the final observation in the training data.
-    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
-    //     gives the number of time periods after time_dimension() at which to
-    //     make the prediction.  A zero-value in timestamps corresponds to one
-    //     period after the end of the training data.
-    //
-    // Returns:
-    //   A vector of forecasts simulated from the posterior predictive
-    //   distribution.  Each entry corresponds to a row of newX.
-    Vector simulate_multiplex_forecast(RNG &rng, const Matrix &newX,
-                                       const Vector &final_state,
-                                       const std::vector<int> &timestamps);
-
     // Contribution of the regression model to the overall mean of y at each
     // time point.  In the case of multiplexed data, the average regression
     // contribution for each time point is computed (averaging across
@@ -190,14 +134,8 @@ namespace BOOM {
     // regression model.
     void add_data(const Ptr<Data> &dp) override;
 
-    // Promotes dp to a MultiplexedRegressionData containing a single
-    // observation, then calls add_multiplexed_data.
+    // Explicit version of add_data.
     void add_regression_data(const Ptr<RegressionData> &dp);
-
-    // Adds dp to the vector of data, as the most recent observation, and adds
-    // the regression data in 'dp' to the underlying regression model.
-    void add_multiplexed_data(
-        const Ptr<StateSpace::MultiplexedRegressionData> &dp);
 
    private:
     // The regression model holds the regression coefficients and the

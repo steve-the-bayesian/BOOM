@@ -56,10 +56,7 @@ namespace BOOM {
     // zbar_t that gets imputed, along with its variance
     //
     //       V_t = 1.0 / sum_i(1.0 / v_{it}).
-    //
-    // In the case of multiplexed data each binomial observation y_jt gets
-    // imputed as above, with a corresponding zbar_jt and V_jt.
-    class AugmentedBinomialRegressionData : public MultiplexedData {
+    class AugmentedBinomialRegressionData : public Data {
      public:
       // Constructs an empty data point.  Observations can be added later using
       // add_data().
@@ -69,31 +66,22 @@ namespace BOOM {
       // time period.
       AugmentedBinomialRegressionData(double y, double n, const Vector &x);
 
-      // A constructor for the multiplexed case, where there are multiple
-      // observations at each time point.
-      explicit AugmentedBinomialRegressionData(
-          const std::vector<Ptr<BinomialRegressionData>> &binomial_data);
-
       AugmentedBinomialRegressionData *clone() const override;
       std::ostream &display(std::ostream &out) const override;
 
       void add_data(const Ptr<BinomialRegressionData> &binomial_data);
 
-      // Set the latent data and precision for the specific observation owned by
-      // this data object.
+      // Set the latent data and precision.
       //
       // Args:
       //   value:  The value of zbar_t as described in the class comments.
       //   precision: The precision 1.0 / V_t, as described in the class
       //     comments.
-      //   observation: The observation number.  This will be zero except in the
-      //     case of multiplexed data.
-      void set_latent_data(double value, double precision, int observation);
+      void set_latent_data(double value, double precision);
 
       double latent_data_variance(int observation) const;
       double latent_data_value(int observation) const;
       double adjusted_observation(const GlmCoefs &coefficients) const;
-      double latent_data_overall_variance() const;
 
       void set_state_model_offset(double offset);
       double state_model_offset() const { return state_model_offset_; }
@@ -106,20 +94,19 @@ namespace BOOM {
         return binomial_data_[observation];
       }
 
-      double total_trials() const;
-      double total_successes() const;
-      int total_sample_size() const override { return binomial_data_.size(); }
+      double trials() const;
+      double successes() const;
 
      private:
-      std::vector<Ptr<BinomialRegressionData>> binomial_data_;
+      Ptr<BinomialRegressionData> binomial_data_;
 
       // The precision weighted mean of the underlying Gaussian observations
       // associated with each binomial observation.
-      Vector latent_continuous_values_;
+      double latent_continuous_value_;
 
       // The sum of the precisions of the underlying latent Gaussians associated
       // with each binomial observation.
-      Vector precisions_;
+      precision_;
 
       // The state contribution (minus the static regression effect) to the mean
       // of latent_continuous_values_.
@@ -231,36 +218,6 @@ namespace BOOM {
         const Matrix &forecast_predictors,
         const Vector &trials,
         const Vector &final_state);
-
-    // Returns a vector of draws from the posterior predictive distribution for
-    // a multiplexed prediction problem.  That is, a prediction problem where
-    // some time periods to be predicted have more than one observation with
-    // different covariates.
-    //
-    // Args:
-    //   forecast_predictors: A matrix of predictors to use for the
-    //     forecast period.  If no regression component is desired,
-    //     then a single column matrix of 1's (an intercept) should be
-    //     supplied so that the length of the forecast period can be
-    //     determined.
-    //   trials: A vector of non-negative integers giving the number
-    //     of trials that will take place at each point in the
-    //     forecast period.
-    //   final_state: A draw of the value of the state vector at the
-    //     final time period in the training data.
-    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
-    //     gives the number of time periods after time_dimension() at which to
-    //     make the prediction.  A zero-value in timestamps corresponds to one
-    //     period after the end of the training data.
-    //
-    // Returns:
-    //   A vector of draws with length equal to nrow(forecast_predictors), from
-    //   the posterior distribution of the conditional state at time t.
-    Vector simulate_multiplex_forecast(RNG &rng,
-                                       const Matrix &forecast_predictors,
-                                       const Vector &trials,
-                                       const Vector &final_state,
-                                       const std::vector<int> &timestamps);
 
     // Args:
     //   rng:  A U(0,1) random number generator.

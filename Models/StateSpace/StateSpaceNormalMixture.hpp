@@ -54,10 +54,6 @@ namespace BOOM {
     // vector gives the contribution of the regression component at
     // each time point, on the "linear predictor" scale.  I.e. the
     // return value is x * beta at each time point.
-    //
-    // In the case of multiplexed data, the value at each time point is the
-    // average of the regression contributions to each of the sub-observations
-    // at that time point.
     Vector regression_contribution() const override;
 
    private:

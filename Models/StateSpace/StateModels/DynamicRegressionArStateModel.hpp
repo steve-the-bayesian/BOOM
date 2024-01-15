@@ -135,7 +135,6 @@ namespace BOOM {
     void set_initial_state_variance(const SpdMatrix &sigma);
 
     void add_forecast_data(const Matrix &predictors);
-    void add_multiplexed_forecast_data(const std::vector<Matrix> &predictors);
 
     void increment_expected_gradient(
         VectorView gradient, int t, const ConstVectorView &state_error_mean,
@@ -160,7 +159,7 @@ namespace BOOM {
     Ptr<GenericSparseMatrixBlock> expanded_predictors(int t) const {
       return expanded_predictors_[t];
     }
-    
+
    private:
     // Compute the state dimension from arguments passed to the constructor.
     int compute_state_dimension(const std::vector<Matrix> &predictors,

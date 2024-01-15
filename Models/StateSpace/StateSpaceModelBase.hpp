@@ -32,7 +32,6 @@
 #include "Models/StateSpace/Filters/ScalarKalmanFilter.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
-#include "Models/StateSpace/MultiplexedData.hpp"
 #include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"

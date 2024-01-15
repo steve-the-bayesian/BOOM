@@ -76,15 +76,7 @@ namespace BOOM {
     // (after un-mixing the mixture) we have u_2t ~ N(mu_t + m2, v2).  The
     // "value" of point t is
     // {[(u_1t - m1)/ v1] + [(u_2t - m2) / v2]} / (1/v1 + 1/v2).
-    //
-    // In the case of multiple observations at the same time point, the
-    // information content is simply a precision weighted average of the
-    // information content in each observation.  In the language of
-    // StateSpaceModelBase, the "adjusted_observation" for this data point is
-    //
-    //  \sum_i ((u_{1i} - m_{1i1}) / v_{1i}) + ((u_{2i} - m_{2i}) / v_{2i}) /
-    //         (sum_j (1/v_{1j}) + (1/v_{2j}))
-    class AugmentedPoissonRegressionData : public MultiplexedData {
+    class AugmentedPoissonRegressionData : public Data {
      public:
       // Starts with an empty data point, with observations to be added later
       // using add_data.
@@ -95,11 +87,6 @@ namespace BOOM {
       AugmentedPoissonRegressionData(double count, double exposure,
                                      const Vector &predictors);
 
-      // A constructor for the multiplexed case, where there are multiple
-      // observations at each time point.
-      explicit AugmentedPoissonRegressionData(
-          const std::vector<Ptr<PoissonRegressionData>> &data);
-
       AugmentedPoissonRegressionData *clone() const override;
       std::ostream &display(std::ostream &out) const override;
 
@@ -109,8 +96,9 @@ namespace BOOM {
       // (which will be zero except in the case of multiplexed data).
       //
       // Args:
-      //   value: The latent data value.  If y > 0 then this is the precision
-      //     weighted average
+      //   value: The latent data value.
+      //   precision: ???
+      //   observation:  ???
       void set_latent_data(double value, double precision, int observation);
 
       double latent_data_variance(int observation) const;
@@ -122,10 +110,10 @@ namespace BOOM {
       void set_state_model_offset(double offset);
       double state_model_offset() const { return state_model_offset_; }
 
-      const PoissonRegressionData &poisson_data(int i) const {
+      const PoissonRegressionData &poisson_data() const {
         return *(poisson_data_[i]);
       }
-      Ptr<PoissonRegressionData> poisson_data_ptr(int i) const {
+      Ptr<PoissonRegressionData> poisson_data_ptr() const {
         return poisson_data_[i];
       }
 
@@ -147,7 +135,7 @@ namespace BOOM {
       // regression component.
       double state_model_offset_;
 
-      std::vector<Ptr<PoissonRegressionData>> poisson_data_;
+      Ptr<PoissonRegressionData> poisson_data_;
     };
   }  // namespace StateSpace
 
@@ -202,17 +190,11 @@ namespace BOOM {
     // Set the state model offset in the data to the state contribution.
     void observe_data_given_state(int t) override;
 
-    Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
-                             const Vector &exposure, const Vector &final_state);
-
     Matrix simulate_forecast_components(
         RNG &rng, const Matrix &forecast_predictors,
         const Vector &exposure, const Vector &final_state);
 
-    // Returns a vector of draws from the posterior predictive distribution for
-    // a multiplexed prediction problem.  That is, a prediction problem where
-    // some time periods to be predicted have more than one observation with
-    // different covariates.
+    // Returns a vector of draws from the posterior predictive distribution.
     //
     // Args:
     //   forecast_predictors: A matrix of predictors to use for the forecast
@@ -223,19 +205,14 @@ namespace BOOM {
     //     each time point in the forecast period.
     //   final_state: A draw of the value of the state vector at the final time
     //     period in the training data.
-    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
-    //     gives the number of time periods after time_dimension() at which to
-    //     make the prediction.  A zero-value in timestamps corresponds to one
-    //     period after the end of the training data.
     //
     // Returns:
     //   A vector of draws with length equal to nrow(forecast_predictors), from
     //   the posterior distribution of the conditional state at time t.
-    Vector simulate_multiplex_forecast(RNG &rng,
-                                       const Matrix &forecast_predictors,
-                                       const Vector &exposure,
-                                       const Vector &final_state,
-                                       const std::vector<int> &timestamps);
+    Vector simulate_forecast(RNG &rng,
+                             const Matrix &forecast_predictors,
+                             const Vector &exposure,
+                             const Vector &final_state);
 
     Vector one_step_holdout_prediction_errors(RNG &rng,
                                               PoissonDataImputer &data_imputer,

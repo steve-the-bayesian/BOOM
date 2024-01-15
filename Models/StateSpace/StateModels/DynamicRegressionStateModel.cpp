@@ -33,45 +33,20 @@ namespace BOOM {
       : xdim_(ncol(X)),
         initial_state_mean_(xdim_, 0.0),
         initial_state_variance_(xdim_, 1.0),
-        transition_matrix_(new IdentityMatrix(xdim_)) {
+        transition_matrix_(new IdentityMatrix(xdim_)),
+        predictor_variance_(ncol(X))
+  {
     setup_models_and_transition_variance_matrix();
     sparse_predictor_vectors_.reserve(nrow(X));
     for (int i = 0; i < nrow(X); ++i) {
       sparse_predictor_vectors_.push_back(SparseVector(X.row(i)));
-      sparse_predictor_matrices_.push_back(
-          new DenseMatrix(Matrix(1, xdim_, X.row(i))));
     }
-    compute_predictor_variance();
+    for (int i = 0; i < ncol(X); ++i) {
+      predictor_variance_[i] = var(X.col(i));
+    }
   }
 
   //============================================================================
-  DRSM::DynamicRegressionStateModel(const std::vector<Matrix> &predictors)
-      : xdim_(check_columns(predictors)),
-        initial_state_mean_(xdim_, 0.0),
-        initial_state_variance_(xdim_, 1.0),
-        transition_matrix_(new IdentityMatrix(xdim_)) {
-    setup_models_and_transition_variance_matrix();
-    for (int i = 0; i < predictors.size(); ++i) {
-      const Matrix &X(predictors[i]);
-      sparse_predictor_matrices_.push_back(new DenseMatrix(X));
-      for (int j = 0; j < X.nrow(); ++j) {
-        sparse_predictor_vectors_.push_back(SparseVector(X.row(j)));
-      }
-    }
-    compute_predictor_variance();
-  }
-
-  void DRSM::compute_predictor_variance() {
-    predictor_variance_.reserve(xdim_);
-    Matrix X(0, xdim_);
-    for (int i = 0; i < sparse_predictor_matrices_.size(); ++i) {
-      X.rbind(sparse_predictor_matrices_[i]->dense());
-    }
-    for (int i = 0; i < xdim_; ++i) {
-      predictor_variance_.push_back(var(X.col(i)));
-    }
-  }
-
   void DRSM::setup_models_and_transition_variance_matrix() {
     std::vector<Ptr<UnivParams> > diagonal_variances;
     diagonal_variances.reserve(xdim_);
@@ -259,26 +234,6 @@ namespace BOOM {
     }
     for (int i = 0; i < nrow(predictors); ++i) {
       sparse_predictor_vectors_.push_back(SparseVector(predictors.row(i)));
-      sparse_predictor_matrices_.push_back(
-          new DenseMatrix(Matrix(1, xdim_, predictors.row(i))));
-    }
-  }
-
-  void DRSM::add_multiplexed_forecast_data(
-      const std::vector<Matrix> &predictors) {
-    if (predictors.empty()) {
-      report_error("Forecast data is empty.");
-    }
-    for (int t = 0; t < predictors.size(); ++t) {
-      NEW(DenseMatrix, predictor_matrix)(predictors[t]);
-      if (!sparse_predictor_matrices_.empty() &&
-          predictor_matrix->ncol() != sparse_predictor_matrices_[0]->ncol()) {
-        report_error(
-            "Multiplexed forecast data has the wrong "
-            "number of columns.");
-      }
-      sparse_predictor_matrices_.push_back(predictor_matrix);
-      sparse_predictor_vectors_.push_back(SparseVector(predictors[t].row(0)));
     }
   }
 
@@ -310,19 +265,4 @@ namespace BOOM {
     }
   }
 
-
-  // Ptr<SparseMatrixBlock>
-  // DRSM::dynamic_intercept_regression_observation_coefficients(
-  //     int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
-  //   Ptr<DenseMatrix> ans = sparse_predictor_matrices_[t];
-  //   if (data_point.sample_size() != ans->nrow()) {
-  //     report_error(
-  //         "Mismatch between model data and "
-  //         "DynamicRegressionStateModel data.");
-  //   }
-  //   return ans;
-  // }
-
-
-  
 }  // namespace BOOM

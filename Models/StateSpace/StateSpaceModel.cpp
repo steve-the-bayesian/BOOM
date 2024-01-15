@@ -26,56 +26,8 @@
 namespace BOOM {
   namespace {
     typedef StateSpaceModel SSM;
-    typedef StateSpace::MultiplexedDoubleData MDD;
+    typedef DoubleData DD;
   }  // namespace
-
-  MDD::MultiplexedDoubleData() {}
-
-  MDD::MultiplexedDoubleData(double y) { add_data(new DoubleData(y)); }
-
-  MDD *MDD::clone() const { return new MDD(*this); }
-
-  std::ostream &MDD::display(std::ostream &out) const {
-    for (int i = 0; i < data_.size(); ++i) {
-      data_[i]->display(out) << std::endl;
-    }
-    return out;
-  }
-
-  void MDD::add_data(const Ptr<DoubleData> &data_point) {
-    MultiplexedData::add_data(data_point);
-    data_.push_back(data_point);
-  }
-
-  double MDD::adjusted_observation() const {
-    if (data_.empty() || missing() == Data::completely_missing ||
-        observed_sample_size() == 0) {
-      return negative_infinity();
-    }
-    double ans = 0;
-    for (int i = 0; i < data_.size(); ++i) {
-      if (data_[i]->missing() == Data::observed) {
-        ans += data_[i]->value();
-      }
-    }
-    return ans / observed_sample_size();
-  }
-
-  const DoubleData &MDD::double_data(int i) const { return *(data_[i]); }
-
-  Ptr<DoubleData> MDD::double_data_ptr(int i) { return data_[i]; }
-
-  void MDD::set_value(double value, int i) { data_[i]->set(value); }
-
-  bool MDD::all_missing() const {
-    if (data_.empty()) return true;
-    for (int i = 0; i < data_.size(); ++i) {
-      if (data_[i]->missing() != Data::completely_missing) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   //======================================================================
   void SSM::setup() {
@@ -91,10 +43,9 @@ namespace BOOM {
             new ZeroMeanGaussianModel(sqrt(var(y, y_is_observed)) / 10)) {
     setup();
     for (int i = 0; i < y.size(); ++i) {
-      NEW(MDD, dp)(y[i]);
+      NEW(DD, dp)(y[i]);
       if (!y_is_observed.empty() && !y_is_observed[i]) {
         dp->set_missing_status(Data::completely_missing);
-        dp->double_data_ptr(0)->set_missing_status(Data::completely_missing);
       }
       add_data(dp);
     }
@@ -116,16 +67,7 @@ namespace BOOM {
   }
 
   double SSM::observation_variance(int t) const {
-    double sigsq = observation_model_->sigsq();
-    if (t >= dat().size()) {
-      return sigsq;
-    }
-    const Ptr<MDD> &data_point(dat()[t]);
-    if (is_missing_observation(t) || data_point->observed_sample_size() <= 1) {
-      return sigsq;
-    } else {
-      return sigsq / data_point->observed_sample_size();
-    }
+    return sigsq = observation_model_->sigsq();
   }
 
   double SSM::adjusted_observation(int t) const {
@@ -133,8 +75,7 @@ namespace BOOM {
   }
 
   bool SSM::is_missing_observation(int t) const {
-    return dat()[t]->missing() == Data::completely_missing ||
-           dat()[t]->observed_sample_size() == 0;
+    return dat()[t]->missing() == Data::completely_missing;
   }
 
   ZeroMeanGaussianModel *SSM::observation_model() {
@@ -148,13 +89,11 @@ namespace BOOM {
   void SSM::observe_data_given_state(int t) {
     // Assuming ignorable missing data.
     if (!is_missing_observation(t)) {
-      const Ptr<MDD> &data_point(dat()[t]);
+      const Ptr<DD> &data_point(dat()[t]);
       double mu = observation_matrix(t).dot(state(t));
-      for (int j = 0; j < data_point->total_sample_size(); ++j) {
-        if (data_point->double_data(j).missing() == Data::observed) {
-          double residual = data_point->double_data(j).value() - mu;
-          observation_model_->suf()->update_raw(residual);
-        }
+      if (data_point->missing() == Data::observed) {
+        double residual = data_point->value() - mu;
+        observation_model_->suf()->update_raw(residual);
       }
     }
   }
@@ -235,7 +174,7 @@ namespace BOOM {
     SubMatrix holdout_prediction_errors(
         ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
     std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
-    std::vector<Ptr<StateSpace::MultiplexedDoubleData>> holdout_data(
+    std::vector<Ptr<DoubleData>> holdout_data(
         dat().begin() + cutpoint_number, dat().end());
     clear_data();
     for (const auto &data_point : training_data) {
@@ -243,11 +182,7 @@ namespace BOOM {
     }
     Vector holdout_data_vector;
     for (const auto &data_point : holdout_data) {
-      if (data_point->total_sample_size() != 1) {
-        report_error("Can't compute holdout prediction errors for "
-                     "multiplex data.");
-      }
-      holdout_data_vector.push_back(data_point->double_data(0).value());
+      holdout_data_vector.push_back(data_point->value());
     }
 
     sample_posterior();

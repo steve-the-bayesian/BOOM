@@ -29,34 +29,9 @@
 
 namespace BOOM {
 
-  namespace StateSpace {
-    class MultiplexedDoubleData : public MultiplexedData {
-     public:
-      MultiplexedDoubleData();
-      explicit MultiplexedDoubleData(double y);
-      MultiplexedDoubleData *clone() const override;
-      std::ostream &display(std::ostream &out) const override;
-      void add_data(const Ptr<DoubleData> &data_point);
-
-      double adjusted_observation() const;
-      const DoubleData &double_data(int i) const;
-      Ptr<DoubleData> double_data_ptr(int i);
-      void set_value(double value, int i);
-
-      // Returns true if data_ is empty, or if all elements of data_ are
-      // missing.
-      bool all_missing() const;
-
-      int total_sample_size() const override { return data_.size(); }
-
-     private:
-      std::vector<Ptr<DoubleData>> data_;
-    };
-  }  // namespace StateSpace
-
   class StateSpaceModel
       : public ScalarStateSpaceModelBase,
-        public IID_DataPolicy<StateSpace::MultiplexedDoubleData>,
+        public IID_DataPolicy<DoubleData>,
         public PriorPolicy {
    public:
     StateSpaceModel();

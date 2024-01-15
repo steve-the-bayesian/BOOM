@@ -65,7 +65,6 @@ namespace BOOM {
   // Initial values for latent data are arbitrary, but must be legal
   // values.
   void ABRD::add_data(const Ptr<BinomialRegressionData> &binomial_data) {
-    MultiplexedData::add_data(binomial_data);
     binomial_data_.push_back(binomial_data);
     latent_continuous_values_.push_back(0);
     precisions_.push_back(binomial_data->missing() == Data::observed
@@ -73,39 +72,26 @@ namespace BOOM {
                               : 0);
   }
 
-  void ABRD::set_latent_data(double value, double precision, int observation) {
-    if (precision < 0) {
-      report_error("precision must be non-negative.");
-    }
-    precisions_[observation] = precision;
-    latent_continuous_values_[observation] = value;
+  void ABRD::set_latent_data(double value, double precision) {
+    precision_ = precision;
+    latent_continuous_value_ = value;
   }
 
-  double ABRD::latent_data_variance(int observation) const {
-    return 1.0 / precisions_[observation];
+  double ABRD::latent_data_variance() const {
+    return 1.0 / precision_;
   }
 
-  double ABRD::latent_data_value(int observation) const {
-    return latent_continuous_values_[observation];
+  double ABRD::latent_data_value() const {
+    return latent_continuous_values_;
   }
 
   double ABRD::adjusted_observation(const GlmCoefs &coefficients) const {
     if (missing() == Data::completely_missing || binomial_data_.empty()) {
       return negative_infinity();
     }
+    return latent_continuous_value_;
     double total_precision = 0;
-    double ans = 0;
-    for (int i = 0; i < binomial_data_.size(); ++i) {
-      if (binomial_data(i).missing() == Data::observed) {
-        ans += precisions_[i] * (latent_continuous_values_[i] -
-                                 coefficients.predict(binomial_data_[i]->x()));
-        total_precision += precisions_[i];
-      }
-    }
-    if (total_precision <= 0 || !std::isfinite(total_precision)) {
-      return negative_infinity();
-    }
-    return ans / total_precision;
+    double ans = latent_continuous_value_;
   }
 
   double ABRD::latent_data_overall_variance() const {
@@ -137,20 +123,12 @@ namespace BOOM {
     state_model_offset_ = offset;
   }
 
-  double ABRD::total_trials() const {
-    double ans = 0;
-    for (int i = 0; i < binomial_data_.size(); ++i) {
-      ans += binomial_data_[i]->n();
-    }
-    return ans;
+  double ABRD::trials() const {
+    return binomial_data_->n();
   }
 
   double ABRD::total_successes() const {
-    double ans = 0;
-    for (int i = 0; i < binomial_data_.size(); ++i) {
-      ans += binomial_data_[i]->y();
-    }
-    return ans;
+    return binomial_data_->y();
   }
 
   //======================================================================
@@ -218,19 +196,10 @@ namespace BOOM {
     }
   }
 
-  Vector SSLM::simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
+  Vector SSLM::simulate_forecast(RNG &rng,
+                                 const Matrix &forecast_predictors,
                                  const Vector &trials,
                                  const Vector &final_state) {
-    return simulate_multiplex_forecast(rng, forecast_predictors, trials,
-                                       final_state,
-                                       seq<int>(0, nrow(forecast_predictors) - 1));
-  }
-
-  Vector SSLM::simulate_multiplex_forecast(RNG &rng,
-                                           const Matrix &forecast_predictors,
-                                           const Vector &trials,
-                                           const Vector &final_state,
-                                           const std::vector<int> &timestamps) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
@@ -238,7 +207,7 @@ namespace BOOM {
     // The time stamp of "final state" is t0 - 1.
     int time = -1;
     for (int i = 0; i < ans.size(); ++i) {
-      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      advance_to_timestamp(rng, time, state, i, i);
       double eta = observation_matrix(t0 + time).dot(state) +
                    observation_model_->predict(forecast_predictors.row(i));
       double probability = plogis(eta);
@@ -350,10 +319,6 @@ namespace BOOM {
     Vector holdout_successes(holdout_data.size());
     Vector holdout_trials(holdout_data.size());
     for (int i = 0; i < holdout_data.size(); ++i) {
-      if (holdout_data[i]->total_sample_size() != 1) {
-        report_error("simulate_holdout_prediction_errors does "
-                     "not work with multiplex data.");
-      }
       holdout_successes[i] = holdout_data[i]->total_successes();
       holdout_trials[i] = holdout_data[i]->total_trials();
       holdout_predictors.row(i) = holdout_data[i]->binomial_data(0).x();

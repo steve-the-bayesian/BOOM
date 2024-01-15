@@ -26,10 +26,6 @@ namespace BOOM {
   }  // namespace
 
   DRASM::DynamicRegressionArStateModel(const Matrix &predictors, int lags)
-      : DynamicRegressionArStateModel(split_predictors(predictors), lags) {}
-
-  DRASM::DynamicRegressionArStateModel(const std::vector<Matrix> &predictors,
-                                       int lags)
       : transition_matrix_(new BlockDiagonalMatrixBlock),
         state_error_expander_(new StackedMatrixBlock),
         state_error_variance_(new DiagonalMatrixParamView),
@@ -41,7 +37,7 @@ namespace BOOM {
     if (lags < 1) {
       report_error("An AR model must have a lag of at least 1.");
     }
-    int xdim = ncol(predictors[0]);
+    int xdim = ncol(predictors);
     if (xdim < 1) {
       report_error("Dynamic regression model has no data.");
     }
@@ -149,12 +145,7 @@ namespace BOOM {
   }
 
   void DRASM::add_forecast_data(const Matrix &predictors) {
-    add_multiplexed_forecast_data(split_predictors(predictors));
-  }
-
-  void DRASM::add_multiplexed_forecast_data(
-      const std::vector<Matrix> &predictors) {
-    add_to_predictors(predictors);
+    /////////////// TODO
   }
 
   void DRASM::increment_expected_gradient(
@@ -197,14 +188,14 @@ namespace BOOM {
   //---------------------------------------------------------------------------
   // Private methods implemented below this line.
 
-  void DRASM::add_to_predictors(const std::vector<Matrix> &predictors) {
-    if (predictors.empty()) {
+  void DRASM::add_to_predictors(const Matrix &predictors) {
+    if (predictors.nrow() == 0) {
       report_error("Empty predictor set.");
     }
-    int xdim = predictors[0].ncol();
-    for (int t = 0; t < predictors.size(); ++t) {
+    int xdim = predictors.ncol();
+    for (int t = 0; t < predictors.nrow(); ++t) {
       NEW(GenericSparseMatrixBlock, predictor_matrix)
-      (predictors[t].nrow(), xdim * number_of_lags());
+          (predictors.row(t), xdim * number_of_lags());
       for (int i = 0; i < predictors[t].nrow(); ++i) {
         predictor_matrix->set_row(expand_predictor(predictors[t].row(i)), i);
       }
@@ -257,5 +248,5 @@ namespace BOOM {
     }
   }
 
-  
+
 }  // namespace BOOM

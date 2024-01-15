@@ -62,7 +62,6 @@ namespace BOOM {
   }
 
   void APRD::add_data(const Ptr<PoissonRegressionData> &observation) {
-    MultiplexedData::add_data(observation);
     poisson_data_.push_back(observation);
     latent_continuous_values_.push_back(0);
     precisions_.push_back(observation->missing() == Data::observed ? 1.0 : 0.0);
@@ -212,19 +211,10 @@ namespace BOOM {
     }
   }
 
-  Vector SSPM::simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
+  Vector SSPM::simulate_forecast(RNG &rng,
+                                 const Matrix &forecast_predictors,
                                  const Vector &exposure,
                                  const Vector &final_state) {
-    return simulate_multiplex_forecast(rng, forecast_predictors, exposure,
-                                       final_state,
-                                       seq<int>(0, nrow(forecast_predictors) - 1));
-  }
-
-  Vector SSPM::simulate_multiplex_forecast(RNG &rng,
-                                           const Matrix &forecast_predictors,
-                                           const Vector &exposure,
-                                           const Vector &final_state,
-                                           const std::vector<int> &timestamps) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
@@ -232,7 +222,7 @@ namespace BOOM {
     // The time stamp of "final state" is t0 - 1.
     int time = -1;
     for (int i = 0; i < ans.size(); ++i) {
-      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      advance_to_timestamp(rng, time, state, i, i);
       double eta = observation_matrix(time + t0).dot(state) +
                    observation_model_->predict(forecast_predictors.row(i));
       double mu = exp(eta);
@@ -363,11 +353,7 @@ namespace BOOM {
     Vector holdout_counts(holdout_data.size());
     Vector holdout_exposure(holdout_data.size());
     for (int i = 0; i < holdout_data.size(); ++i) {
-      if (holdout_data[i]->total_sample_size() != 1) {
-        report_error("simulate_holdout_prediction_errors does "
-                     "not work with multiplex data.");
-      }
-      const PoissonRegressionData &poisson_data(holdout_data[i]->poisson_data(0));
+      const PoissonRegressionData &poisson_data(holdout_data->poisson_data());
       holdout_counts[i] = poisson_data.y();
       holdout_exposure[i] = poisson_data.exposure();
       holdout_predictors.row(i) = poisson_data.x();

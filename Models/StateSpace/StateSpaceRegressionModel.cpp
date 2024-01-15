@@ -26,63 +26,8 @@
 namespace BOOM {
   namespace {
     typedef StateSpaceRegressionModel SSRM;
-    typedef StateSpace::MultiplexedRegressionData MRD;
+    typedef RegressionData RD;
   }  // namespace
-
-  MRD::MultiplexedRegressionData() : state_model_offset_(0) {}
-  MRD::MultiplexedRegressionData(double y, const Vector &x)
-      : state_model_offset_(0) {
-    NEW(RegressionData, data_point)(y, x);
-    add_data(data_point);
-  }
-
-  MRD::MultiplexedRegressionData(const std::vector<Ptr<RegressionData>> &data)
-      : state_model_offset_(0) {
-    for (const auto &d : data) {
-      add_data(d);
-    }
-  }
-
-  MRD *MRD::clone() const { return new MRD(*this); }
-
-  std::ostream &MRD::display(std::ostream &out) const {
-    out << "state model offset: " << state_model_offset_ << std::endl
-        << std::setw(10) << " response "
-        << " predictors " << std::endl;
-    for (int i = 0; i < regression_data_.size(); ++i) {
-      out << std::setw(10) << regression_data_[i]->y() << " "
-          << regression_data_[i]->x() << std::endl;
-    }
-    return out;
-  }
-
-  void MRD::add_data(const Ptr<RegressionData> &dp) {
-    MultiplexedData::add_data(dp);
-    regression_data_.push_back(dp);
-    predictors_.rbind(dp->x());
-  }
-
-  double MRD::adjusted_observation(const GlmCoefs &coefficients) const {
-    if (missing() == Data::completely_missing || observed_sample_size() == 0) {
-      return negative_infinity();
-    }
-    double ans = 0;
-    for (int i = 0; i < regression_data_.size(); ++i) {
-      const RegressionData &observation(regression_data(i));
-      if (observation.missing() == Data::observed) {
-        ans += observation.y() - coefficients.predict(observation.x());
-      }
-    }
-    return ans / observed_sample_size();
-  }
-
-  const RegressionData &MRD::regression_data(int i) const {
-    return *(regression_data_[i]);
-  }
-
-  Ptr<RegressionData> MRD::regression_data_ptr(int i) {
-    return regression_data_[i];
-  }
 
   //======================================================================
   void SSRM::setup() {
@@ -137,31 +82,12 @@ namespace BOOM {
 
   void SSRM::add_data(const Ptr<Data> &dp) {
     Ptr<RegressionData> regression_data = dp.dcast<RegressionData>();
-    if (!!regression_data) {
-      add_regression_data(regression_data);
-      return;
-    }
-
-    Ptr<MRD> multiplexed_data = dp.dcast<MRD>();
-    if (!!multiplexed_data) {
-      add_multiplexed_data(multiplexed_data);
-      return;
-    }
-    report_error("Could not cast to an appropriate data type.");
+    add_regression_data(regression_data);
   }
 
   void SSRM::add_regression_data(const Ptr<RegressionData> &dp) {
-    NEW(MRD, multiplexed_data)();
-    multiplexed_data->add_data(dp);
-    multiplexed_data->set_missing_status(dp->missing());
-    add_data(multiplexed_data);
-  }
-
-  void SSRM::add_multiplexed_data(const Ptr<MRD> &dp) {
     DataPolicy::add_data(dp);
-    for (int i = 0; i < dp->total_sample_size(); ++i) {
-      regression_model()->add_data(dp->regression_data_ptr(i));
-    }
+    regression_model()->add_data(dp->regression_data_ptr(i));
   }
 
   double SSRM::observation_variance(int t) const {
@@ -213,13 +139,6 @@ namespace BOOM {
     return ans;
   }
 
-  // TODO:  test simulate_forecast
-  Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX,
-                                 const Vector &final_state) {
-    return simulate_multiplex_forecast(rng, newX, final_state,
-                                       seq<int>(0, nrow(newX) - 1));
-  }
-
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     kalman_filter();
@@ -254,22 +173,18 @@ namespace BOOM {
     return ans;
   }
 
-  Vector SSRM::simulate_multiplex_forecast(RNG &rng,
-                                           const Matrix &newX,
-                                           const Vector &final_state,
-                                           const std::vector<int> &timestamps) {
+  Vector SSRM::simulate_forecast(RNG &rng,
+                                 const Matrix &newX,
+                                 const Vector &final_state) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
-    int forecast_dimension = timestamps.size();
-    if (nrow(newX) != forecast_dimension) {
-      report_error("Dimensions of timestamps and newX don't agree.");
-    }
+    int forecast_dimension = newX.nrow();
     Vector ans(forecast_dimension);
     int t0 = time_dimension();
     Vector state = final_state;
     // The time stamp of "final state" is t0 - 1.
     int time = -1;
     for (int i = 0; i < forecast_dimension; ++i) {
-      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      advance_to_timestamp(rng, time, state, i, i);
       ans[i] = rnorm_mt(rng, observation_matrix(t0 + time).dot(state),
                         sqrt(observation_variance(t0 + time)));
       ans[i] += regression_->predict(newX.row(i));
@@ -312,8 +227,9 @@ namespace BOOM {
     SubMatrix holdout_prediction_errors(
         ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
     std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
-    std::vector<Ptr<StateSpace::MultiplexedRegressionData>> holdout_data(
-        dat().begin() + cutpoint_number, dat().end());
+    std::vector<Ptr<RegressionData>> holdout_data(
+        dat().begin() + cutpoint_number,
+        dat().end());
     clear_data();
     for (const auto &data_point : training_data) {
       add_data(data_point);
@@ -321,12 +237,8 @@ namespace BOOM {
     Matrix holdout_predictors(holdout_data.size(), xdim());
     Vector holdout_response(holdout_data.size());
     for (int i = 0; i < holdout_data.size(); ++i) {
-      if (holdout_data[i]->total_sample_size() != 1) {
-        report_error("simulate_holdout_prediction_errors does "
-                     "not work with multiplex data.");
-      }
-      holdout_response[i] = holdout_data[i]->regression_data(0).y();
-      holdout_predictors.row(i) = holdout_data[i]->regression_data(0).x();
+      holdout_response[i] = holdout_data[i]->y();
+      holdout_predictors.row(i) = holdout_data[i]->x();
     }
 
     for (int i = 0; i < niter; ++i) {

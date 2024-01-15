@@ -66,10 +66,6 @@ namespace BOOM {
     // assumes a single observation for each time point.
     explicit DynamicRegressionStateModel(const Matrix &X);
 
-    // Each element of 'predictors' is the set of time points for that time
-    // period.
-    explicit DynamicRegressionStateModel(const std::vector<Matrix> &predictors);
-
     DynamicRegressionStateModel(const DynamicRegressionStateModel &rhs);
     DynamicRegressionStateModel *clone() const override;
 
@@ -115,7 +111,6 @@ namespace BOOM {
     const Ptr<UnivParams> Sigsq_prm(int i) const;
 
     void add_forecast_data(const Matrix &predictors);
-    void add_multiplexed_forecast_data(const std::vector<Matrix> &predictors);
 
     void increment_expected_gradient(
         VectorView gradient, int t, const ConstVectorView &state_error_mean,
@@ -148,12 +143,8 @@ namespace BOOM {
     // Each model is the prior for the differences in regression coefficients.
     std::vector<Ptr<ZeroMeanGaussianModel>> coefficient_transition_model_;
 
-    // Predictor variables for use with scalar, non-multiplexed state space
-    // models.
+    // Sparse representation of the predictor variables.
     std::vector<SparseVector> sparse_predictor_vectors_;
-
-    // Predictor variables for use with multiplexed data.
-    std::vector<Ptr<DenseMatrix>> sparse_predictor_matrices_;
 
     // Each element of predictor_variance_ contains the sample variance (across
     // observations) of the corresponding predictor variable.
@@ -162,7 +153,7 @@ namespace BOOM {
     Ptr<IdentityMatrix> transition_matrix_;
     Ptr<UpperLeftDiagonalMatrix> transition_variance_matrix_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_
