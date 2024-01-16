@@ -17,6 +17,9 @@
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 
+
+#include "stats/moments.hpp"
+
 #include "test_utils/test_utils.hpp"
 #include "Models/StateSpace/tests/state_space_test_utils.hpp"
 #include <fstream>
@@ -25,7 +28,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class DynamicRegressionStateModelTest : public ::testing::Test {
    protected:
     DynamicRegressionStateModelTest()
@@ -120,7 +123,7 @@ namespace {
     Matrix coefficient_draws_3(niter, sample_size_);
     Matrix coefficient_draws_4(niter, sample_size_);
     Matrix regression_draws(niter, sample_size_);
-    
+
     for (int i = 0; i < 100; ++i) {
       model_->sample_posterior();
     }
@@ -155,11 +158,77 @@ namespace {
 
     auto regression_status = CheckMcmcMatrix(regression_draws, regression_);
     EXPECT_TRUE(regression_status.ok) << regression_status;
-    
+
     // Check for wildness
     double sample_var = var(data_);
     for (int t = 0; t < sample_size_; ++t) {
       EXPECT_LT(var(regression_draws.col(t)), sample_var);
     }
   }
+
+  // The MCMC example for bsts using dynamic regression causes an ASAN error
+  // when run on CRAN.
+  TEST_F(DynamicRegressionStateModelTest, CRAN_Example) {
+    // Step 1: simulate some fake data---
+    int n = 1000;
+    Vector x = rnorm_vector(n, 0, 1.0);
+    double sdx = sd(x);
+
+    Vector beta = rnorm_vector(n, 0, .1);
+    beta[0] = -12;
+    beta = cumsum(beta);
+
+    Vector level = rnorm_vector(n, 0, .1);
+    level[0] = 18;
+    level = cumsum(level);
+
+    Vector error = rnorm_vector(n, 0, .1);
+
+    Vector y = level + error + x * beta;
+    double sdy = sd(y);
+
+    // Step 2:  Build the model object.
+    NEW(StateSpaceModel, model)();
+
+    // Step 2a: Add in the state models. Each state model needs a posterior
+    // sampler and an initial distribution.
+    NEW(LocalLevelStateModel, level_state_model)();
+    level_state_model->set_initial_state_mean(Vector(1, 18.0));
+    level_state_model->set_initial_state_variance(SpdMatrix(1, 1.0));
+    NEW(ChisqModel, level_sigma_prior)(1.0, .01 * sdy);
+    NEW(ZeroMeanGaussianConjSampler, level_posterior_sampler)(
+        level_state_model.get(), level_sigma_prior);
+    level_state_model->set_method(level_posterior_sampler);
+    model->add_state(level_state_model);
+
+    NEW(DynamicRegressionStateModel, dreg)(Matrix(x.begin(), x.end(), n, 1));
+    NEW(ChisqModel, dr_sigma_prior)(1.0, .01 * sdy / sdx);
+    NEW(DynamicRegressionIndependentPosteriorSampler, dreg_posterior_sampler)(
+        dreg.get(), std::vector<Ptr<GammaModelBase>>{dr_sigma_prior});
+    dreg->set_method(dreg_posterior_sampler);
+    dreg->set_initial_state_mean(Vector(1, -12.0));
+    dreg->set_initial_state_variance(SpdMatrix(1, 1.0));
+    model->add_state(dreg);
+
+    // Step 2b: Set the observation model posterior sampler.
+    NEW(ChisqModel, residual_variance_prior)(1.0, 0.1);
+    NEW(ZeroMeanGaussianConjSampler, observation_model_sampler)(
+        model->observation_model(), residual_variance_prior);
+    model->observation_model()->set_method(observation_model_sampler);
+
+    // Step 2c:  Set the posterior sampler for the model.
+    NEW(StateSpacePosteriorSampler, sampler)(model.get());
+    model->set_method(sampler);
+
+    // Step 3: Assign data to the model.
+    for (int i = 0; i < y.size(); ++i) {
+      model->add_data(new DoubleData(y[i]));
+    }
+
+    // Step 4 do some mcmc.
+    for (int i = 0; i < 100; ++i) {
+      model->sample_posterior();
+    }
+  }
+
 }  // namespace
