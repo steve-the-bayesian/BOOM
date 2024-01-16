@@ -56,12 +56,8 @@ namespace BOOM {
     // zbar_t that gets imputed, along with its variance
     //
     //       V_t = 1.0 / sum_i(1.0 / v_{it}).
-    class AugmentedBinomialRegressionData : public Data {
+    class AugmentedBinomialRegressionData : public BinomialRegressionData {
      public:
-      // Constructs an empty data point.  Observations can be added later using
-      // add_data().
-      AugmentedBinomialRegressionData();
-
       // A constructor for the usual case where there is only one data point per
       // time period.
       AugmentedBinomialRegressionData(double y, double n, const Vector &x);
@@ -79,34 +75,24 @@ namespace BOOM {
       //     comments.
       void set_latent_data(double value, double precision);
 
-      double latent_data_variance(int observation) const;
-      double latent_data_value(int observation) const;
+      double latent_data_variance() const;
+      double latent_data_value() const;
       double adjusted_observation(const GlmCoefs &coefficients) const;
 
       void set_state_model_offset(double offset);
       double state_model_offset() const { return state_model_offset_; }
 
-      const BinomialRegressionData &binomial_data(int observation) const {
-        return *(binomial_data_[observation]);
-      }
-
-      Ptr<BinomialRegressionData> binomial_data_ptr(int observation) {
-        return binomial_data_[observation];
-      }
-
       double trials() const;
       double successes() const;
 
      private:
-      Ptr<BinomialRegressionData> binomial_data_;
-
       // The precision weighted mean of the underlying Gaussian observations
       // associated with each binomial observation.
       double latent_continuous_value_;
 
-      // The sum of the precisions of the underlying latent Gaussians associated
-      // with each binomial observation.
-      precision_;
+      // The precision of the underlying latent Gaussians associated
+      // with this binomial observation.
+      double precision_;
 
       // The state contribution (minus the static regression effect) to the mean
       // of latent_continuous_values_.
@@ -133,14 +119,11 @@ namespace BOOM {
       ans->copy_samplers(*this);
       return ans;
     }
-    int total_sample_size(int time) const override {
-      return dat()[time]->total_sample_size();
-    }
 
     int xdim() const { return observation_model()->xdim(); }
 
-    const BinomialRegressionData &data(int t, int observation) const override {
-      return dat()[t]->binomial_data(observation);
+    const BinomialRegressionData &data(int t) const override {
+      return *(dat()[t]);
     }
 
     int time_dimension() const override;

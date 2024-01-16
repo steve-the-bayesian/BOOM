@@ -32,8 +32,8 @@ namespace BOOM {
         state_variance_matrix_(new SparseDiagonalMatrixBlockParamView(
             compute_state_dimension(predictors, lags))),
         initial_state_mean_(compute_state_dimension(predictors, lags), 0.0),
-        initial_state_variance_(compute_state_dimension(predictors, lags),
-                                1.0) {
+        initial_state_variance_(compute_state_dimension(predictors, lags), 1.0)
+  {
     if (lags < 1) {
       report_error("An AR model must have a lag of at least 1.");
     }
@@ -42,14 +42,18 @@ namespace BOOM {
       report_error("Dynamic regression model has no data.");
     }
 
-    // Set up the models.  This needs to be done before calling
-    // add_to_predictors.
+    // Set up the models.
     for (int i = 0; i < xdim; ++i) {
       add_model(new ArModel(lags), xdim);
     }
 
     // Set up the predictors.
-    add_to_predictors(predictors);
+    expanded_predictors_.reset(new GenericSparseMatrixBlock(
+        nrow(predictors), ncol(predictors) * lags));
+    for (int i = 0; i < nrow(predictors); ++i) {
+      expanded_predictors_->set_row(expand_predictor(predictors.row(i)),
+                                    i);
+    }
 
     xnames_.reserve(xdim);
     for (int i = 0; i < xdim; ++i) {
@@ -65,15 +69,12 @@ namespace BOOM {
     if (&rhs != this) {
       coefficient_transition_model_.clear();
       transition_components_.clear();
-      expanded_predictors_.clear();
-      for (int i = 0; i < rhs.expanded_predictors_.size(); ++i) {
-        expanded_predictors_.push_back(rhs.expanded_predictors_[i]->clone());
-      }
+      expanded_predictors_.reset(rhs.expanded_predictors_->clone());
       transition_matrix_.reset(new BlockDiagonalMatrixBlock);
       state_error_expander_.reset(new StackedMatrixBlock);
       state_error_variance_.reset(new DiagonalMatrixParamView);
       state_variance_matrix_.reset(new SparseDiagonalMatrixBlockParamView(
-          expanded_predictors_[0]->ncol()));
+          expanded_predictors_->ncol()));
       int xdim = rhs.coefficient_transition_model_.size();
       for (int i = 0; i < xdim; ++i) {
         add_model(rhs.coefficient_transition_model_[i]->clone(), xdim);
@@ -169,43 +170,19 @@ namespace BOOM {
   }
 
   Matrix DRASM::predictors() const {
-    int number_of_time_points = expanded_predictors_.size();
-    int number_of_observations = 0;
-    for (int t = 0; t < number_of_time_points; ++t) {
-      number_of_observations += expanded_predictors_[t]->nrow();
-    }
+    int number_of_time_points = expanded_predictors_->nrow();
+    int number_of_observations = number_of_time_points;
     Matrix ans(number_of_observations, xdim());
     int row = 0;
     for (int t = 0; t < number_of_time_points; ++t) {
-      for (int r = 0; r < expanded_predictors_[t]->nrow(); ++r) {
-        state_error_expander_->Tmult(ans.row(row++),
-                                     expanded_predictors_[t]->row(r).dense());
-      }
+      state_error_expander_->Tmult(
+          ans.row(row++), expanded_predictors_->row(t).dense());
     }
     return ans;
   }
 
   //---------------------------------------------------------------------------
   // Private methods implemented below this line.
-
-  void DRASM::add_to_predictors(const Matrix &predictors) {
-    if (predictors.nrow() == 0) {
-      report_error("Empty predictor set.");
-    }
-    int xdim = predictors.ncol();
-    for (int t = 0; t < predictors.nrow(); ++t) {
-      NEW(GenericSparseMatrixBlock, predictor_matrix)
-          (predictors.row(t), xdim * number_of_lags());
-      for (int i = 0; i < predictors[t].nrow(); ++i) {
-        predictor_matrix->set_row(expand_predictor(predictors[t].row(i)), i);
-      }
-      if (!expanded_predictors_.empty() &&
-          (expanded_predictors_[0]->ncol() != predictor_matrix->ncol())) {
-        report_error("All predictors must be the same dimension.");
-      }
-      expanded_predictors_.push_back(predictor_matrix);
-    }
-  }
 
   std::vector<Matrix> DRASM::split_predictors(const Matrix &predictors) const {
     std::vector<Matrix> ans;

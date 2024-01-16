@@ -100,9 +100,7 @@ namespace BOOM {
                                         const Vector &final_state);
 
     // Contribution of the regression model to the overall mean of y at each
-    // time point.  In the case of multiplexed data, the average regression
-    // contribution for each time point is computed (averaging across
-    // observations with potentially different predictors).
+    // time point.
     Vector regression_contribution() const override;
     bool has_regression() const override { return true; }
 

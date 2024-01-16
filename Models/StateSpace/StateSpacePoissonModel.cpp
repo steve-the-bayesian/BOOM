@@ -32,106 +32,46 @@ namespace BOOM {
     typedef StateSpace::AugmentedPoissonRegressionData APRD;
   }  // namespace
 
-  APRD::AugmentedPoissonRegressionData() : state_model_offset_(0.0) {}
 
   APRD::AugmentedPoissonRegressionData(double count, double exposure,
                                        const Vector &predictors)
-      : AugmentedPoissonRegressionData() {
-    NEW(PoissonRegressionData, observation)(count, predictors, exposure);
-    add_data(observation);
-  }
-
-  APRD::AugmentedPoissonRegressionData(
-      const std::vector<Ptr<PoissonRegressionData>> &data)
-      : AugmentedPoissonRegressionData() {
-    for (int i = 0; i < data.size(); ++i) {
-      add_data(data[i]);
-    }
-  }
+      : PoissonRegressionData(count, predictors, exposure),
+        latent_continuous_value_(0.0),
+        precision_(1.0),
+        state_model_offset_(0.0)
+  {}
 
   APRD *APRD::clone() const { return new APRD(*this); }
 
   std::ostream &APRD::display(std::ostream &out) const {
-    for (int i = 0; i < poisson_data_.size(); ++i) {
-      out << poisson_data(i) << std::endl;
-    }
-    out << "latent continuous values\tprecisions " << std::endl
-        << cbind(latent_continuous_values_, precisions_) << std::endl
+    out << *this << std::endl
+        << "latent continuous value: " << latent_continuous_value_ << std::endl
+        << "precision:               " << precision_ << std::endl
         << "state model offset     : " << state_model_offset_ << std::endl;
     return out;
   }
 
-  void APRD::add_data(const Ptr<PoissonRegressionData> &observation) {
-    poisson_data_.push_back(observation);
-    latent_continuous_values_.push_back(0);
-    precisions_.push_back(observation->missing() == Data::observed ? 1.0 : 0.0);
-  }
-
-  void APRD::set_latent_data(double value, double precision, int observation) {
+  void APRD::set_latent_data(double value, double precision) {
     if (precision < 0) {
       report_error("precision must be non-negative.");
     }
-    latent_continuous_values_[observation] = value;
-    precisions_[observation] = precision;
+    latent_continuous_value_ = value;
+    precision_ = precision;
   }
 
-  double APRD::latent_data_variance(int observation) const {
-    return 1.0 / precisions_[observation];
+  double APRD::latent_data_variance() const {
+    return 1.0 / precision_;
   }
 
-  double APRD::latent_data_value(int observation) const {
-    return latent_continuous_values_[observation];
+  double APRD::latent_data_value() const {
+    return latent_continuous_value_;
   }
 
   double APRD::adjusted_observation(const GlmCoefs &coefficients) const {
-    if (missing() == Data::completely_missing ||
-        latent_continuous_values_.empty()) {
+    if (missing() != Data::observed) {
       return negative_infinity();
     }
-    double ans = 0;
-    double total_precision = 0;
-    for (int i = 0; i < latent_continuous_values_.size(); ++i) {
-      if (poisson_data_[i]->missing() == Data::observed) {
-        ans += precisions_[i] * (latent_continuous_values_[i] -
-                                 coefficients.predict(poisson_data_[i]->x()));
-        total_precision += precisions_[i];
-      }
-    }
-    if (total_precision <= 0 || !std::isfinite(total_precision)) {
-      return negative_infinity();
-    }
-    return ans / total_precision;
-  }
-
-  double APRD::latent_data_overall_variance() const {
-    double total_precision = 0;
-    if (missing() == Data::observed && observed_sample_size() > 0) {
-      total_precision = sum(precisions_);
-    } else if (missing() == Data::completely_missing ||
-               observed_sample_size() == 0) {
-      // In the event that there is NO observed data for this observation at
-      // all, the latent variance is determined by the marginal variance of a
-      // single latent observation, which is the negative log of an exponential
-      // random variable.  This is a standard type 1 extreme value distribution,
-      // which has variance pi^2 / 6.
-      return Constants::pi_squared_over_6;
-    } else {
-      // If neither case above holds, then we have partial information, with
-      // some missing and some observed values.
-      for (int i = 0; i < total_sample_size(); ++i) {
-        if (poisson_data_[i]->missing() == Data::observed) {
-          total_precision += precisions_[i];
-        }
-      }
-    }
-    if (total_precision <= 0 || !std::isfinite(total_precision)) {
-      // This will likely lead to an exception later in the program when the
-      // variance is square-rooted into a standard deviation.
-      //
-      // TODO: Should an exception be thrown here?
-      return negative_infinity();
-    }
-    return 1.0 / total_precision;
+    return latent_continuous_value_ - coefficients.predict(x());
   }
 
   void APRD::set_state_model_offset(double offset) {
@@ -168,8 +108,6 @@ namespace BOOM {
                     design_matrix.row(i));
       if (missing) {
         dp->set_missing_status(Data::missing_status::completely_missing);
-        dp->poisson_data_ptr(0)->set_missing_status(
-            Data::missing_status::completely_missing);
       }
       add_data(dp);
     }
@@ -188,7 +126,7 @@ namespace BOOM {
       // Variance of Poisson latent variable, on the log scale.
       return Constants::pi_squared_over_6;
     }
-    return dat()[t]->latent_data_overall_variance();
+    return dat()[t]->latent_data_variance();
   }
 
   double SSPM::adjusted_observation(int t) const {
@@ -199,9 +137,7 @@ namespace BOOM {
   }
 
   bool SSPM::is_missing_observation(int t) const {
-    return t >= time_dimension() ||
-           dat()[t]->missing() == Data::completely_missing ||
-           dat()[t]->observed_sample_size() == 0;
+    return t >= time_dimension() || dat()[t]->missing() != Data::observed;
   }
 
   void SSPM::observe_data_given_state(int t) {
@@ -353,7 +289,7 @@ namespace BOOM {
     Vector holdout_counts(holdout_data.size());
     Vector holdout_exposure(holdout_data.size());
     for (int i = 0; i < holdout_data.size(); ++i) {
-      const PoissonRegressionData &poisson_data(holdout_data->poisson_data());
+      const PoissonRegressionData &poisson_data(*holdout_data[i]);
       holdout_counts[i] = poisson_data.y();
       holdout_exposure[i] = poisson_data.exposure();
       holdout_predictors.row(i) = poisson_data.x();

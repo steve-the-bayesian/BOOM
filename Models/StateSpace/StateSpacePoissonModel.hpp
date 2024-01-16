@@ -76,66 +76,48 @@ namespace BOOM {
     // (after un-mixing the mixture) we have u_2t ~ N(mu_t + m2, v2).  The
     // "value" of point t is
     // {[(u_1t - m1)/ v1] + [(u_2t - m2) / v2]} / (1/v1 + 1/v2).
-    class AugmentedPoissonRegressionData : public Data {
+    class AugmentedPoissonRegressionData : public PoissonRegressionData {
      public:
-      // Starts with an empty data point, with observations to be added later
-      // using add_data.
-      AugmentedPoissonRegressionData();
-
-      // A constructor for the typical case, where there is a single observation
-      // at each time point.
-      AugmentedPoissonRegressionData(double count, double exposure,
+      // Args:
+      //  count:  The Poisson count at this time point.
+      //  exposure:  The exposure "time" accompanying 'count'.
+      //  predictors:  The vector of X variables explaining 'count'.
+      AugmentedPoissonRegressionData(double count,
+                                     double exposure,
                                      const Vector &predictors);
 
       AugmentedPoissonRegressionData *clone() const override;
       std::ostream &display(std::ostream &out) const override;
 
-      void add_data(const Ptr<PoissonRegressionData> &observation);
-
-      // Set the latent data value and precision, for a specific observation
-      // (which will be zero except in the case of multiplexed data).
+      // Set the latent data value and precision.
       //
       // Args:
       //   value: The latent data value.
-      //   precision: ???
-      //   observation:  ???
-      void set_latent_data(double value, double precision, int observation);
+      //   precision: ???  NOT sure we still need this.
+      void set_latent_data(double value, double precision);
 
-      double latent_data_variance(int observation) const;
-      double latent_data_value(int observation) const;
-
+      double latent_data_variance() const;
+      double latent_data_value() const;
       double adjusted_observation(const GlmCoefs &coefficients) const;
-      double latent_data_overall_variance() const;
 
       void set_state_model_offset(double offset);
       double state_model_offset() const { return state_model_offset_; }
 
-      const PoissonRegressionData &poisson_data() const {
-        return *(poisson_data_[i]);
-      }
-      Ptr<PoissonRegressionData> poisson_data_ptr() const {
-        return poisson_data_[i];
-      }
-
-      int total_sample_size() const override { return poisson_data_.size(); }
-
      private:
-      // If y() > 0 for observation j then latent_continuous_values_[j] is
-      // (-log(tau_t) - m1)/v1 + (-log(delta_t - tau_t) - m2)/v2/(1/v1 + 1/v2),
-      // where m1,v1 and m2,v2 are the normal mixture means and variances.  If
-      // y() == 0 then this is just -log(delta_t) - m1.
-      Vector latent_continuous_values_;
+      // If y() > 0 then latent_continuous_value_ is (-log(tau_t) - m1)/v1 +
+      // (-log(delta_t - tau_t) - m2)/v2/(1/v1 + 1/v2), where m1,v1 and m2,v2
+      // are the normal mixture means and variances.  If y() == 0 then this is
+      // just -log(delta_t) - m1.
+      double latent_continuous_value_;
 
-      // If y() > 0 for observation j then precisions_[j] is 1/(1/v1 + 1/v2).
-      // Otherwise it is simply v1.
-      Vector precisions_;
+      // If y() > 0 then precision_ is 1/(1/v1 + 1/v2).  Otherwise it is simply
+      // v1.
+      double precision_;
 
       // The offset stores the state contribution to latent_continuous_value_.
       // It gets subtracted off when determining the contribution of the
       // regression component.
       double state_model_offset_;
-
-      Ptr<PoissonRegressionData> poisson_data_;
     };
   }  // namespace StateSpace
 
@@ -158,13 +140,9 @@ namespace BOOM {
       return ans;
     }
 
-    int total_sample_size(int time) const override {
-      return dat()[time]->total_sample_size();
-    }
     int xdim() const {return observation_model()->xdim();}
-    const PoissonRegressionData &data(int time,
-                                      int observation) const override {
-      return dat()[time]->poisson_data(observation);
+    const PoissonRegressionData &data(int time) const override {
+      return *(dat()[time]);
     }
     int time_dimension() const override;
 

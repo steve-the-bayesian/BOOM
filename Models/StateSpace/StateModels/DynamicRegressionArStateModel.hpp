@@ -118,12 +118,12 @@ namespace BOOM {
 
     // The observation matrix is row t of the design matrix.
     SparseVector observation_matrix(int t) const override {
-      if (t >= expanded_predictors_.size()) {
+      if (t >= expanded_predictors_->nrow()) {
         report_error(
             "A DynamicRegressionArStateModel cannot be used outside "
             "the range of its predictor data.");
       }
-      return expanded_predictors_[t]->row(0);
+      return expanded_predictors_->row(t);
     }
 
     // The initial state is the value of the regression coefficients
@@ -147,7 +147,6 @@ namespace BOOM {
     const std::vector<std::string> &xnames() const { return xnames_; }
 
    protected:
-    // For use with multiplexed data.
     // Args:
     //   predictors: Element t is the predictor matrix for time t.  Each row of
     //     predictors[t] is an observation at time t.
@@ -156,30 +155,14 @@ namespace BOOM {
     DynamicRegressionArStateModel(const std::vector<Matrix> &predictors,
                                   int lags);
 
-    Ptr<GenericSparseMatrixBlock> expanded_predictors(int t) const {
-      return expanded_predictors_[t];
-    }
-
    private:
     // Compute the state dimension from arguments passed to the constructor.
-    int compute_state_dimension(const std::vector<Matrix> &predictors,
-                                int lags) const {
-      if (predictors.empty()) {
+    int compute_state_dimension(const Matrix &predictors, int lags) const {
+      if (predictors.nrow() == 0) {
         report_error("Empty predictor vector.");
       }
-      return ncol(predictors[0]) * lags;
+      return ncol(predictors) * lags;
     }
-
-    // Expand the supplied predictors (by passing each through
-    // expand_predictor()), and add them to the expanded_predictors_ data
-    // element.
-    //
-    // Args:
-    //   predictors: A sequence of predictor matrices, each representing a time
-    //     point.  The number of rows in each matrix is the number of
-    //     observations at that time point.  The matrix columns represent
-    //     variables, and all matrices must have the same number of columns.
-    void add_to_predictors(const std::vector<Matrix> &predictors);
 
     // Args:
     //   predictors: A predictor matrix (rows are observations, columns are
@@ -227,11 +210,11 @@ namespace BOOM {
     std::vector<Ptr<AutoRegressionTransitionMatrix>> transition_components_;
 
     // The observation matrix is Z[t] = Expand(x[t]), where 'expand' puts p-1
-    // zeros between successive elements of x.  Element t of
-    // expanded_predictors_ is the t'th matrix of predictors, expanded with p-1
-    // columns of zeros between each 'real' predictor column.
-    // x[t, 0] 0 0 0 ... x[t, 1] 0 0 0 ... x[t, 2] ...
-    std::vector<Ptr<GenericSparseMatrixBlock>> expanded_predictors_;
+    // zeros between successive elements of x.  Row t of expanded_predictors_ is
+    // the t'th (sparse) vector of predictors, expanded with p-1 columns of
+    // zeros between each 'real' predictor column.  x[t, 0] 0 0 0 ... x[t, 1] 0
+    // 0 0 ... x[t, 2] ...
+    Ptr<GenericSparseMatrixBlock> expanded_predictors_;
 
     // The error expander matrix R_t =
     // [1 0 0 .... 0]

@@ -87,40 +87,29 @@ namespace BOOM {
 
   void SSRM::add_regression_data(const Ptr<RegressionData> &dp) {
     DataPolicy::add_data(dp);
-    regression_model()->add_data(dp->regression_data_ptr(i));
+    regression_model()->add_data(dp);
   }
 
   double SSRM::observation_variance(int t) const {
-    const std::vector<Ptr<MRD>> &data(dat());
-    double sigsq = regression_->sigsq();
-    if (t >= data.size()) {
-      return sigsq;
-    } else {
-      int n = data[t]->observed_sample_size();
-      if (n == 0) ++n;
-      return sigsq / n;
-    }
+    return regression_->sigsq();
   }
 
   double SSRM::adjusted_observation(int t) const {
-    return dat()[t]->adjusted_observation(regression_->coef());
+    Ptr<RegressionData> dp = dat()[t];
+    return dp->y() - regression_->predict(dp->x());
   }
 
   bool SSRM::is_missing_observation(int t) const {
-    return dat()[t]->missing() == Data::completely_missing ||
-           dat()[t]->observed_sample_size() == 0;
+    return dat()[t]->missing() != Data::observed;
   }
 
   void SSRM::observe_data_given_state(int t) {
     if (!is_missing_observation(t)) {
-      Ptr<MRD> dp(dat()[t]);
+      Ptr<RegressionData> dp(dat()[t]);
       double state_mean = observation_matrix(t).dot(state(t));
-      for (int i = 0; i < dp->total_sample_size(); ++i) {
-        const RegressionData &observation(dp->regression_data(i));
-        if (observation.missing() == Data::observed) {
-          regression_->suf()->add_mixture_data(observation.y() - state_mean,
-                                               observation.x(), 1.0);
-        }
+      if (dp->missing() == Data::observed) {
+        regression_->suf()->add_mixture_data(
+            dp->y() - state_mean, dp->x(), 1.0);
       }
     }
   }
@@ -255,18 +244,11 @@ namespace BOOM {
   }
 
   Vector SSRM::regression_contribution() const {
-    const std::vector<Ptr<MRD>> &data(dat());
+    const std::vector<Ptr<RegressionData>> &data(dat());
     Vector ans(data.size());
     for (int time = 0; time < data.size(); ++time) {
-      Ptr<MRD> dp = data[time];
-      double average_contribution = 0;
-      for (int j = 0; j < data[time]->total_sample_size(); ++j) {
-        average_contribution +=
-            regression_model()->predict(dp->regression_data(j).x());
-      }
-      ans[time] = dp->total_sample_size() > 0
-                      ? average_contribution /= dp->total_sample_size()
-                      : 0;
+      Ptr<RegressionData> dp = data[time];
+      ans[time] = regression_model()->predict(dp->x());
     }
     return ans;
   }

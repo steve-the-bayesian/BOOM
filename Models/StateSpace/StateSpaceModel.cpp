@@ -67,15 +67,15 @@ namespace BOOM {
   }
 
   double SSM::observation_variance(int t) const {
-    return sigsq = observation_model_->sigsq();
+    return observation_model_->sigsq();
   }
 
   double SSM::adjusted_observation(int t) const {
-    return dat()[t]->adjusted_observation();
+    return dat()[t]->value();
   }
 
   bool SSM::is_missing_observation(int t) const {
-    return dat()[t]->missing() == Data::completely_missing;
+    return dat()[t]->missing() != Data::observed;
   }
 
   ZeroMeanGaussianModel *SSM::observation_model() {

@@ -27,7 +27,7 @@
 namespace BOOM {
 
   // A "direct Gibbs" sampler for sparse dynamic regression models in the
-  // spirirt of Nakajima and West.  This sampler could be improved (as shown in
+  // spirit of Nakajima and West.  This sampler could be improved (as shown in
   // Scott(2002)) using FB sampling for the inclusion indicators after
   // integrating out the coefficients.
   //
@@ -36,7 +36,7 @@ namespace BOOM {
   // where the dimension of I is n[t] X n[t], and with state dynamics on beta as
   // follows.
   //
-  // Deonte the scalar elements of beta[t] as beta[j, t], and let gamma[j, t] =
+  // Denote the scalar elements of beta[t] as beta[j, t], and let gamma[j, t] =
   // 1 if beta[j, t] is nonzero and gamma[j, t] = 0 if beta[j, t] == 0.  The
   // model assumes gamma[j, t] evolves independently across j with gamma[j, t] ~
   // Bernoulli(pi_j[gamma[j, t-1]]).  That is, gamma[j, t] evolves according to
@@ -118,6 +118,13 @@ namespace BOOM {
     // because betas, conditional in inclusion, are independent across
     // predictors.  The only aspect of the prior that needs to be evaluated is
     // element j.
+    //
+    // Args:
+    //   inclusion_indicators: Indicate which variables are included in the
+    //     model to be evaluated.
+    //   time_index:  The time point at which the evaluation is to be done.
+    //   predictor_index: The index of the location of the variable that may be
+    //     flipped.
     double log_model_prob(const Selector &inclusion_indicators,
                           int time_index,
                           int predictor_index) const;
@@ -131,6 +138,13 @@ namespace BOOM {
     // A single MCMC draw of the inclusion indicator at a given time index and
     // predictor index.  This draw integrates out the regression coefficients,
     // but conditions on everything else.
+    //
+    // Args:
+    //   inclusion_indicators: Indicate which variables are included in the
+    //     model to be evaluated.
+    //   time_index:  The time point at which the evaluation is to be done.
+    //   predictor_index: The position in inclusion_indicators that may be
+    //     flipped.
     void mcmc_one_flip(Selector &inclusion_indicators,
                        int time_index,
                        int predictor_index);

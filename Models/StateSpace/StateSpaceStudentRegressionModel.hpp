@@ -37,44 +37,24 @@ namespace BOOM {
     // This class denotes 'w' as the 'weight' of y, which is a latent variable
     // that can be imputed from its full conditional distribution.  w / sigma^2
     // is the precision of y.
-    //
-    // In the case of multiplexed data, the "value" of this data point is the
-    // precision weighted average of (y - x * beta) across observations.  The
-    // precision weighted average has precision = (sum of weights) / sigma^2.
-    class AugmentedStudentRegressionData : public MultiplexedData {
+    class AugmentedStudentRegressionData : public RegressionData {
      public:
-      AugmentedStudentRegressionData();
       AugmentedStudentRegressionData(double y, const Vector &x);
-      explicit AugmentedStudentRegressionData(
-          const std::vector<Ptr<RegressionData>> &data);
-
       AugmentedStudentRegressionData *clone() const override;
       std::ostream &display(std::ostream &out) const override;
 
-      void add_data(const Ptr<RegressionData> &observation);
-
-      double weight(int observation) const { return weights_[observation]; }
-      void set_weight(double weight, int observation);
+      double weight() const {return weight_;}
+      void set_weight(double weight);
 
       double adjusted_observation(const GlmCoefs &coefficients) const;
-      double sum_of_weights() const;
 
       // The contribution to this data point from the state models.  The
       // remaining contribution is from the regression model (plus noise).
       double state_model_offset() const { return state_model_offset_; }
       void set_state_model_offset(double offset);
 
-      const RegressionData &regression_data(int observation) const {
-        return *(regression_data_[observation]);
-      }
-      Ptr<RegressionData> regression_data_ptr(int observation) {
-        return regression_data_[observation];
-      }
-      int total_sample_size() const override { return regression_data_.size(); }
-
      private:
-      std::vector<Ptr<RegressionData>> regression_data_;
-      Vector weights_;
+      double weight_;
       double state_model_offset_;
     };
   }  // namespace StateSpace
@@ -104,12 +84,8 @@ namespace BOOM {
     // The total number of observations across all time points.
     int total_sample_size() const;
 
-    int total_sample_size(int time) const override {
-      return dat()[time]->total_sample_size();
-    }
-
-    const RegressionData &data(int t, int observation) const override {
-      return dat()[t]->regression_data(observation);
+    const RegressionData &data(int t) const override {
+      return *(dat()[t]);
     }
 
     // Returns the imputed observation variance from the latent data
@@ -134,32 +110,23 @@ namespace BOOM {
     // Set the offset in the data to the state contribution.
     void observe_data_given_state(int t) override;
 
-    Vector simulate_forecast(RNG &rng, const Matrix &predictors,
-                             const Vector &final_state);
     Matrix simulate_forecast_components(
         RNG &rng, const Matrix &predictors, const Vector &final_state);
 
-    // Simulate a forecast based on multiplexed data, where multiple
-    // observations can have the same timestamp.
+    // Simulate a forecast from the posterior predictive distribution.
     //
     // Args:
     //   rng:  The random number generator.
     //   predictors:  The matrix of predictors where forecasts are needed.
     //   final_state: Contains the simulated state values for the model as of
     //     the time of the final observation in the training data.
-    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
-    //     gives the number of time periods after time_dimension() at which to
-    //     make the prediction.  A zero-value in timestamps corresponds to one
-    //     period after the end of the training data.
     //
     // Returns:
     //   A vector of forecasts simulated from the posterior predictive
     //   distribution.  Each entry corresponds to a row of newX.
-    Vector simulate_multiplex_forecast(RNG &rng,
-                                       const Matrix &predictors,
-                                       const Vector &final_state,
-                                       const std::vector<int> &timestamps);
-
+    Vector simulate_forecast(RNG &rng,
+                             const Matrix &predictors,
+                             const Vector &final_state);
 
     // Return the vector of one-step-ahead predictions errors from a
     // holdout sample, following immediately after the training data.

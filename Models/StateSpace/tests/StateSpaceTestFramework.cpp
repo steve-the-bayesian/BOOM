@@ -57,8 +57,7 @@ namespace BOOM {
       }
       state_modules().ImbueState(*model_);
       for (int i = 0; i < data_.size(); ++i) {
-        NEW(StateSpace::MultiplexedDoubleData, data_point)();
-        data_point->add_data(new DoubleData(data_[i]));
+        NEW(DoubleData, data_point)(data_[i]);
         model_->add_data(data_point);
       }
     }
@@ -82,6 +81,6 @@ namespace BOOM {
                                   .95, "StateSpaceModel-sigma-obs.txt"))
           << AsciiDistributionCompare(sigma_obs_draws_, observation_sd_);
     }
-    
+
   }  // namespace StateSpaceTesting
 }  // namespace BOOM

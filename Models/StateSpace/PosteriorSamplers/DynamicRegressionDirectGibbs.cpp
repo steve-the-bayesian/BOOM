@@ -16,6 +16,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <iostream>
+
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionDirectGibbs.hpp"
 #include "distributions.hpp"
 #include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
@@ -95,9 +97,14 @@ namespace BOOM {
   }
 
   void DRDGS::mcmc_one_flip(Selector &inc, int time_index, int predictor_index) {
+    // The log model probability given current inclusion values.
     double logp_old = log_model_prob(inc, time_index, predictor_index);
+
     inc.flip(predictor_index);
+
+    // Log model probability given updated inclusion values.
     double logp_new = log_model_prob(inc, time_index, predictor_index);
+
     double u = runif_mt(rng(), 0, 1);
     if (log(u) > logp_new - logp_old) {
       inc.flip(predictor_index); // reject the draw
@@ -109,12 +116,13 @@ namespace BOOM {
   // everything but the model coefficients, which are assumed integrated out.
   //
   // The prior distribution on beta is simpler than the general g-prior, because
-  // betas, conditional in inclusion, are independent across predictors.  The
+  // betas, conditional on inclusion, are independent across predictors.  The
   // only aspect of the prior that needs to be evaluated is element j.
   double DRDGS::log_model_prob(const Selector &inc,
                                int time_index,
                                int predictor_index) const {
     double ans = log_inclusion_prior(inc, time_index, predictor_index);
+    // std::cout << "log_prior = " << ans << std::endl;
     if (inc.nvars() == 0) {
       // double SSE = model_->data(time_index)->yty();
 
@@ -134,9 +142,15 @@ namespace BOOM {
     posterior_precision.diag() += 1.0 / unscaled_prior_variance;
     Vector posterior_mean = posterior_precision.solve(xty);
 
-    int mapped_index = inc.INDX(predictor_index);
-    ans += 0.5 * log(unscaled_prior_variance[mapped_index]);
-    ans -= 0.5 * posterior_precision.logdet();
+    int mapped_index = inc.INDX(predictor_index);  // Half the time this is unmapped memory.  Needs to be fixed.
+    if (inc[predictor_index]) {
+      // std::cout << "inc = " << inc << std::endl;
+      // std::cout << "predictor_index = " << predictor_index << std::endl;
+      // std::cout << "mapped_index = " << mapped_index << std::endl;
+      // std::cout << "unscaled_prior_variance = " << unscaled_prior_variance << std::endl;
+      ans += 0.5 * log(unscaled_prior_variance[mapped_index]);
+      ans -= 0.5 * posterior_precision.logdet();
+    }
 
     double SSE = model_->data(time_index)->yty() + xtx.Mdist(posterior_mean)
         - 2 * posterior_mean.dot(xty);
@@ -156,7 +170,7 @@ namespace BOOM {
 
     // TODO: This algorithm is TERRIBLE!  Improve it!!  But for now don't let
     // the best be the enemy of the good.
-
+    // std::cout << "inc.nvars() = " << inc.nvars() << std::endl;
     Vector ans(inc.nvars());
     for (int i = 0; i < inc.nvars(); ++i) {
       int I = inc.indx(i);

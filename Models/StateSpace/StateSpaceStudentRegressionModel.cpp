@@ -31,82 +31,37 @@ namespace BOOM {
     typedef StateSpace::AugmentedStudentRegressionData AugmentedData;
   }  // namespace
 
-  AugmentedData::AugmentedStudentRegressionData() : state_model_offset_(0) {}
-
   AugmentedData::AugmentedStudentRegressionData(double y, const Vector &x)
-      : state_model_offset_(0.0) {
-    add_data(new RegressionData(y, x));
-  }
-
-  AugmentedData::AugmentedStudentRegressionData(
-      const std::vector<Ptr<RegressionData>> &data)
-      : state_model_offset_(0.0) {
-    for (int i = 0; i < data.size(); ++i) {
-      add_data(data[i]);
-    }
-  }
+      : RegressionData(y, x),
+        weight_(1.0),
+        state_model_offset_(0.0)
+  {}
 
   AugmentedData *AugmentedData::clone() const {
     return new AugmentedData(*this);
   }
 
   std::ostream &AugmentedData::display(std::ostream &out) const {
-    out << "state model offset: " << state_model_offset_ << std::endl;
-    out << std::setw(10) << "response" << std::setw(10) << " weight"
-        << " predictors" << std::endl;
-    for (int i = 0; i < regression_data_.size(); ++i) {
-      out << std::setw(10) << regression_data_[i]->y() << std::setw(10)
-          << weights_[i] << regression_data_[i]->x() << std::endl;
-    }
+    RegressionData::display(out)
+        << "\n"
+        << "state model offset: " << state_model_offset_ << std::endl
+        << "weight: " << weight_ << std::endl;
     return out;
   }
 
-  void AugmentedData::add_data(const Ptr<RegressionData> &observation) {
-    MultiplexedData::add_data(observation);
-    weights_.push_back(observation->missing() == Data::observed ? 1.0 : 0.0);
-    regression_data_.push_back(observation);
-  }
-
-  void AugmentedData::set_weight(double weight, int observation) {
+  void AugmentedData::set_weight(double weight) {
     if (weight < 0 || !std::isfinite(weight)) {
-      report_error("Weights must be finite and non-negative.");
+      report_error("Weight must be finite and non-negative.");
     }
-    weights_[observation] = weight;
+    weight_ = weight;
   }
 
   double AugmentedData::adjusted_observation(
       const GlmCoefs &coefficients) const {
-    double ans = 0;
-    double total_precision = 0;
-    for (int i = 0; i < regression_data_.size(); ++i) {
-      const RegressionData &data(regression_data(i));
-      if (data.missing() == Data::observed) {
-        ans += weights_[i] * (data.y() - coefficients.predict(data.x()));
-        total_precision += weights_[i];
-      }
-    }
-    return total_precision > 0 ? ans / total_precision : 0;
-  }
-
-  double AugmentedData::sum_of_weights() const {
-    switch (missing()) {
-      case Data::observed:
-        return sum(weights_);
-      case Data::completely_missing:
-        return 0;
-      case Data::partly_missing: {
-        double ans = 0;
-        for (int i = 0; i < regression_data_.size(); ++i) {
-          if (regression_data(i).missing() == Data::observed) {
-            ans += weights_[i];
-          }
-        }
-        return ans;
-      }
-      default: {
-        report_error("Unrecognized missing status.");
-        return negative_infinity();
-      }
+    if (this->missing() == Data::observed) {
+      return y() - coefficients.predict(x());
+    } else {
+      return negative_infinity();
     }
   }
 
@@ -142,8 +97,6 @@ namespace BOOM {
       if (!observed.empty() && !observed[i]) {
         data_point->set_missing_status(
             Data::missing_status::completely_missing);
-        data_point->regression_data_ptr(0)->set_missing_status(
-            Data::missing_status::completely_missing);
       }
       add_data(data_point);
     }
@@ -160,26 +113,13 @@ namespace BOOM {
 
   int SSSRM::time_dimension() const { return dat().size(); }
 
-  int SSSRM::total_sample_size() const {
-    int ans = 0;
-    for (int i = 0; i < dat().size(); ++i) {
-      ans += dat()[i]->total_sample_size();
-    }
-    return ans;
-  }
-
   double SSSRM::observation_variance(int t) const {
-    if (t >= time_dimension() ||
-        dat()[t]->missing() == Data::completely_missing ||
-        dat()[t]->observed_sample_size() == 0) {
+    if (t >= time_dimension() || dat()[t]->missing() != Data::observed) {
       return student_marginal_variance();
+    } else if (dat()[t]->weight() > 0) {
+      return observation_model_->sigsq() / dat()[t]->weight();
     } else {
-      double total_weight = dat()[t]->sum_of_weights();
-      if (total_weight > 0) {
-        return observation_model_->sigsq() / total_weight;
-      } else {
-        return student_marginal_variance();
-      }
+      return student_marginal_variance();
     }
   }
 
@@ -191,8 +131,7 @@ namespace BOOM {
   }
 
   bool SSSRM::is_missing_observation(int t) const {
-    return dat()[t]->missing() == Data::completely_missing ||
-           dat()[t]->observed_sample_size() == 0;
+    return dat()[t]->missing() != Data::observed;
   }
 
   void SSSRM::observe_data_given_state(int t) {
@@ -200,12 +139,6 @@ namespace BOOM {
       dat()[t]->set_state_model_offset(observation_matrix(t).dot(state(t)));
       signal_complete_data_change(t);
     }
-  }
-
-  Vector SSSRM::simulate_forecast(RNG &rng, const Matrix &predictors,
-                                  const Vector &final_state) {
-    return simulate_multiplex_forecast(rng, predictors, final_state,
-                                       seq<int>(0, nrow(predictors) - 1));
   }
 
   Matrix SSSRM::simulate_forecast_components(
@@ -230,9 +163,10 @@ namespace BOOM {
     return ans;
   }
 
-  Vector SSSRM::simulate_multiplex_forecast(
-      RNG &rng, const Matrix &predictors, const Vector &final_state,
-      const std::vector<int> &timestamps) {
+  Vector SSSRM::simulate_forecast(
+      RNG &rng,
+      const Matrix &predictors,
+      const Vector &final_state) {
     set_state_model_behavior(StateModel::MARGINAL);
     Vector state = final_state;
     Vector ans(nrow(predictors));
@@ -242,7 +176,7 @@ namespace BOOM {
     // The time stamp of "final state" is t0 - 1.
     int time = -1;
     for (int i = 0; i < nrow(predictors); ++i) {
-      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      advance_to_timestamp(rng, time, state, i, i);
       double mu = observation_model_->predict(predictors.row(i)) +
                   observation_matrix(time + t0).dot(state);
       ans[i] = rstudent_mt(rng, mu, sigma, nu);
@@ -325,12 +259,8 @@ namespace BOOM {
     Matrix holdout_predictors(holdout_data.size(), xdim());
     Vector holdout_response(holdout_data.size());
     for (int i = 0; i < holdout_data.size(); ++i) {
-      if (holdout_data[i]->total_sample_size() != 1) {
-        report_error("simulate_holdout_prediction_errors does "
-                     "not work with multiplex data.");
-      }
-      holdout_response[i] = holdout_data[i]->regression_data(0).y();
-      holdout_predictors.row(i) = holdout_data[i]->regression_data(0).x();
+      holdout_response[i] = holdout_data[i]->y();
+      holdout_predictors.row(i) = holdout_data[i]->x();
     }
 
     for (int i = 0; i < niter; ++i) {

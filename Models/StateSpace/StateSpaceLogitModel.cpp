@@ -31,45 +31,19 @@ namespace BOOM {
     typedef StateSpace::AugmentedBinomialRegressionData ABRD;
   }  // namespace
 
-  ABRD::AugmentedBinomialRegressionData() : state_model_offset_(0.0) {}
-
   ABRD::AugmentedBinomialRegressionData(double y, double n, const Vector &x)
-      : state_model_offset_(0.0) {
-    add_data(new BinomialRegressionData(y, n, x));
-  }
-
-  ABRD::AugmentedBinomialRegressionData(
-      const std::vector<Ptr<BinomialRegressionData>> &binomial_data)
-      : state_model_offset_(0.0) {
-    for (int i = 0; i < binomial_data.size(); ++i) {
-      add_data(binomial_data[i]);
-    }
-  }
+      : BinomialRegressionData(y, n, x),
+        state_model_offset_(0.0)
+  {}
 
   ABRD *ABRD::clone() const { return new ABRD(*this); }
 
   std::ostream &ABRD::display(std::ostream &out) const {
-    out << "state model offset:  " << state_model_offset_ << std::endl
-        << std::setw(10) << "y" << std::setw(10) << "n" << std::setw(12)
-        << "latent value" << std::setw(10) << "precision "
-        << "predictors" << std::endl;
-    for (int i = 0; i < binomial_data_.size(); ++i) {
-      out << std::setw(10) << binomial_data_[i]->y() << std::setw(10)
-          << binomial_data_[i]->n() << std::setw(12)
-          << latent_continuous_values_[i] << std::setw(10) << precisions_[i]
-          << binomial_data_[i]->x() << std::endl;
-    }
+    out << *this << "\n"
+        << "state model offset:  " << state_model_offset_ << "\n"
+        << "latent value      :  " << latent_continuous_value_ << "\n"
+        << "precision         :  " << precision_ << std::endl;
     return out;
-  }
-
-  // Initial values for latent data are arbitrary, but must be legal
-  // values.
-  void ABRD::add_data(const Ptr<BinomialRegressionData> &binomial_data) {
-    binomial_data_.push_back(binomial_data);
-    latent_continuous_values_.push_back(0);
-    precisions_.push_back(binomial_data->missing() == Data::observed
-                              ? 4.0 / binomial_data->n()
-                              : 0);
   }
 
   void ABRD::set_latent_data(double value, double precision) {
@@ -82,41 +56,14 @@ namespace BOOM {
   }
 
   double ABRD::latent_data_value() const {
-    return latent_continuous_values_;
+    return latent_continuous_value_;
   }
 
   double ABRD::adjusted_observation(const GlmCoefs &coefficients) const {
-    if (missing() == Data::completely_missing || binomial_data_.empty()) {
+    if (missing() != Data::observed) {
       return negative_infinity();
     }
     return latent_continuous_value_;
-    double total_precision = 0;
-    double ans = latent_continuous_value_;
-  }
-
-  double ABRD::latent_data_overall_variance() const {
-    if (missing() == Data::observed && observed_sample_size() > 0) {
-      // This is the normal case, where all observations at a time point are
-      // observed.
-      return 1.0 / sum(precisions_);
-    } else if (missing() == Data::completely_missing ||
-               observed_sample_size() == 0) {
-      // In the case of NO information about a time point, the observation
-      // variance is the variance of the standard logistic distribution, which
-      // is pi^2 / 3.
-      return Constants::pi_squared_over_3;
-    } else {
-      // If neither of the preceding cases holds, then there is partial
-      // information, we just have to be careful to only include the observed
-      // cases.
-      double total_precision = 0.0;
-      for (int i = 0; i < binomial_data_.size(); ++i) {
-        if (binomial_data_[i]->missing() == Data::observed) {
-          total_precision += precisions_[i];
-        }
-      }
-      return 1.0 / total_precision;
-    }
   }
 
   void ABRD::set_state_model_offset(double offset) {
@@ -124,11 +71,11 @@ namespace BOOM {
   }
 
   double ABRD::trials() const {
-    return binomial_data_->n();
+    return n();
   }
 
-  double ABRD::total_successes() const {
-    return binomial_data_->y();
+  double ABRD::successes() const {
+    return y();
   }
 
   //======================================================================
@@ -154,8 +101,6 @@ namespace BOOM {
       NEW(ABRD, dp)(successes[i], trials[i], design_matrix.row(i));
       if (!(all_observed || observed[i])) {
         dp->set_missing_status(Data::missing_status::completely_missing);
-        dp->binomial_data_ptr(0)->set_missing_status(
-            Data::missing_status::completely_missing);
       }
       add_data(dp);
     }
@@ -173,7 +118,7 @@ namespace BOOM {
     if (t >= time_dimension()) {
       return Constants::pi_squared_over_3;
     }
-    return dat()[t]->latent_data_overall_variance();
+    return dat()[t]->latent_data_variance();
   }
 
   double SSLM::adjusted_observation(int t) const {
@@ -184,9 +129,7 @@ namespace BOOM {
   }
 
   bool SSLM::is_missing_observation(int t) const {
-    return t >= time_dimension() ||
-           dat()[t]->missing() == Data::completely_missing ||
-           dat()[t]->observed_sample_size() == 0;
+    return t >= time_dimension() || dat()[t]->missing() != Data::observed;
   }
 
   void SSLM::observe_data_given_state(int t) {
@@ -319,9 +262,9 @@ namespace BOOM {
     Vector holdout_successes(holdout_data.size());
     Vector holdout_trials(holdout_data.size());
     for (int i = 0; i < holdout_data.size(); ++i) {
-      holdout_successes[i] = holdout_data[i]->total_successes();
-      holdout_trials[i] = holdout_data[i]->total_trials();
-      holdout_predictors.row(i) = holdout_data[i]->binomial_data(0).x();
+      holdout_successes[i] = holdout_data[i]->successes();
+      holdout_trials[i] = holdout_data[i]->trials();
+      holdout_predictors.row(i) = holdout_data[i]->x();
     }
 
     BinomialLogitCltDataImputer imputer;

@@ -33,8 +33,8 @@ namespace BOOM {
       : xdim_(ncol(X)),
         initial_state_mean_(xdim_, 0.0),
         initial_state_variance_(xdim_, 1.0),
-        transition_matrix_(new IdentityMatrix(xdim_)),
-        predictor_variance_(ncol(X))
+        predictor_variance_(ncol(X)),
+        transition_matrix_(new IdentityMatrix(xdim_))
   {
     setup_models_and_transition_variance_matrix();
     sparse_predictor_vectors_.reserve(nrow(X));
@@ -99,7 +99,6 @@ namespace BOOM {
         initial_state_variance_(rhs.initial_state_variance_),
         xnames_(rhs.xnames_),
         sparse_predictor_vectors_(rhs.sparse_predictor_vectors_),
-        sparse_predictor_matrices_(rhs.sparse_predictor_matrices_),
         predictor_variance_(rhs.predictor_variance_),
         transition_matrix_(rhs.transition_matrix_->clone()) {
     coefficient_transition_model_.reserve(xdim_);

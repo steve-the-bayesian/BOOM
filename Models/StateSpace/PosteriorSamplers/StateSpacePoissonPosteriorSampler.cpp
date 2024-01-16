@@ -85,43 +85,41 @@ namespace BOOM {
       }
       double state_contribution =
           model_->observation_matrix(t).dot(model_->state(t));
-      for (int j = 0; j < dp->total_sample_size(); ++j) {
-        const PoissonRegressionData &observation(dp->poisson_data(j));
-        if (observation.missing() == Data::observed) {
-          double regression_contribution =
-              model_->observation_model()->predict(observation.x());
+      const PoissonRegressionData &observation(*dp);
+      if (observation.missing() == Data::observed) {
+        double regression_contribution =
+            model_->observation_model()->predict(observation.x());
 
-          double internal_neglog_final_event_time = 0;
-          double internal_mixture_mean = 0;
-          double internal_mixture_precision = 0;
-          double neglog_final_interarrival_time = 0;
-          double external_mixture_mean = 0;
-          double external_mixture_precision = 0;
-          data_imputer_.impute(
-              rng(),
-              observation.y(),
-              observation.exposure(),
-              state_contribution + regression_contribution,
-              &internal_neglog_final_event_time,
-              &internal_mixture_mean,
-              &internal_mixture_precision,
-              &neglog_final_interarrival_time,
-              &external_mixture_mean,
-              &external_mixture_precision);
+        double internal_neglog_final_event_time = 0;
+        double internal_mixture_mean = 0;
+        double internal_mixture_precision = 0;
+        double neglog_final_interarrival_time = 0;
+        double external_mixture_mean = 0;
+        double external_mixture_precision = 0;
+        data_imputer_.impute(
+            rng(),
+            observation.y(),
+            observation.exposure(),
+            state_contribution + regression_contribution,
+            &internal_neglog_final_event_time,
+            &internal_mixture_mean,
+            &internal_mixture_precision,
+            &neglog_final_interarrival_time,
+            &external_mixture_mean,
+            &external_mixture_precision);
 
-          double total_precision = external_mixture_precision;
-          double precision_weighted_sum =
-              neglog_final_interarrival_time - external_mixture_mean;
-          precision_weighted_sum *= external_mixture_precision;
-          if (observation.y() > 0) {
-            precision_weighted_sum +=
-                (internal_neglog_final_event_time - internal_mixture_mean) *
-                internal_mixture_precision;
-            total_precision += internal_mixture_precision;
-          }
-          dp->set_latent_data(precision_weighted_sum / total_precision,
-                              total_precision, j);
+        double total_precision = external_mixture_precision;
+        double precision_weighted_sum =
+            neglog_final_interarrival_time - external_mixture_mean;
+        precision_weighted_sum *= external_mixture_precision;
+        if (observation.y() > 0) {
+          precision_weighted_sum +=
+              (internal_neglog_final_event_time - internal_mixture_mean) *
+              internal_mixture_precision;
+          total_precision += internal_mixture_precision;
         }
+        dp->set_latent_data(precision_weighted_sum / total_precision,
+                            total_precision);
       }
       dp->set_state_model_offset(state_contribution);
     }
@@ -133,16 +131,13 @@ namespace BOOM {
 
   void SSPPS::update_complete_data_sufficient_statistics(int t) {
     Ptr<AugmentedData> dp = model_->dat()[t];
-    for (int j = 0; j < dp->total_sample_size(); ++j) {
-      if (dp->poisson_data(j).missing() == Data::observed) {
-        double precision_weighted_mean = dp->latent_data_value(j);
-
-        precision_weighted_mean -= dp->state_model_offset();
-        double precision = 1.0 / dp->latent_data_variance(j);
-        observation_model_sampler_->update_complete_data_sufficient_statistics(
-            precision_weighted_mean * precision, precision,
-            model_->data(t, j).x());
-      }
+    if (dp->missing() == Data::observed) {
+      double precision_weighted_mean = dp->latent_data_value();
+      precision_weighted_mean -= dp->state_model_offset();
+      double precision = 1.0 / dp->latent_data_variance();
+      observation_model_sampler_->update_complete_data_sufficient_statistics(
+          precision_weighted_mean * precision, precision,
+          dp->x());
     }
   }
 

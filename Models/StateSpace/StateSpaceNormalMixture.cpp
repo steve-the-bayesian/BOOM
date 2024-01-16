@@ -30,12 +30,7 @@ namespace BOOM {
     }
     Vector ans(time_dimension());
     for (int time = 0; time < ans.size(); ++time) {
-      int nobs = total_sample_size(time);
-      double total = 0;
-      for (int obs = 0; obs < nobs; ++obs) {
-        total += observation_model()->predict(data(time, obs).x());
-      }
-      ans[time] = nobs > 0 ? total / nobs : 0;
+      ans[time] =  observation_model()->predict(data(time).x());
     }
     return ans;
   }
