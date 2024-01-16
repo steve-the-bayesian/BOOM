@@ -273,8 +273,7 @@ void TranscribeResponseData(const Ptr<AggregatedStateSpaceRegression> &model,
                             const Ptr<StateSpaceModel> &augmented_model,
                             RErrorReporter *error_reporter) {
   const BOOM::Matrix &state(model->state());
-  std::vector<Ptr<BOOM::StateSpace::MultiplexedDoubleData> > &data(
-      augmented_model->dat());
+  std::vector<Ptr<BOOM::DoubleData> > &data(augmented_model->dat());
   int next_to_last_row = nrow(state) - 2;
   const BOOM::ConstVectorView imputed_data(state.row(next_to_last_row));
   if (data.size() != imputed_data.size()) {
@@ -286,7 +285,7 @@ void TranscribeResponseData(const Ptr<AggregatedStateSpaceRegression> &model,
     return;
   }
   for (int i = 0; i < imputed_data.size(); ++i) {
-    data[i]->set_value(imputed_data[i], 0);
+    data[i]->set(imputed_data[i]);
   }
 }
 

@@ -67,23 +67,12 @@ namespace BOOM {
         } else {
           // timestamps are non-trivial.
           model_.reset(new StateSpaceRegressionModel(ncol(predictors)));
-          std::vector<Ptr<StateSpace::MultiplexedRegressionData>> data;
-          data.reserve(NumberOfTimePoints());
-          for (int i = 0; i < NumberOfTimePoints(); ++i) {
-            data.push_back(new StateSpace::MultiplexedRegressionData);
-          }
           for (int i = 0; i < response.size(); ++i) {
             NEW(RegressionData, observation)(response[i], predictors.row(i));
             if (!response_is_observed[i]) {
               observation->set_missing_status(Data::completely_missing);
             }
-            data[TimestampMapping(i)]->add_data(observation);
-          }
-          for (int i = 0; i < NumberOfTimePoints(); ++i) {
-            if (data[i]->observed_sample_size() == 0) {
-              data[i]->set_missing_status(Data::completely_missing);
-            }
-            model_->add_multiplexed_data(data[i]);
+            model_->add_data(observation);
           }
         }
       } else {
@@ -143,15 +132,8 @@ namespace BOOM {
     }
 
     Vector SSRMF::SimulateForecast(const Vector &final_state) {
-      if (ForecastTimestamps().empty()) {
         return model_->simulate_forecast(
             rng(), forecast_predictors_, final_state);
-      } else {
-        return model_->simulate_multiplex_forecast(rng(),
-                                                   forecast_predictors_,
-                                                   final_state,
-                                                   ForecastTimestamps());
-      }
     }
 
     void SSRMF::SetRegressionSampler(SEXP r_regression_prior,
@@ -286,29 +268,25 @@ namespace BOOM {
               &io_manager));
       AddDataFromBstsObject(r_bsts_object);
 
-      std::vector<Ptr<StateSpace::MultiplexedRegressionData>> data(
-          model->dat());
+      std::vector<Ptr<RegressionData>> data(model->dat());
+      int total_sample_size = data.size();
       model->clear_data();
       for (int i = 0; i <= cutpoint; ++i) {
-        model->add_multiplexed_data(data[i]);
+        model->add_data(data[i]);
       }
-      int holdout_sample_size = 0;
-      for (int i = cutpoint + 1; i < data.size(); ++i) {
-        holdout_sample_size += data[i]->total_sample_size();
-      }
+      int holdout_sample_size = total_sample_size - cutpoint - 1;
       Matrix holdout_predictors(holdout_sample_size,
                                 model->observation_model()->xdim());
       Vector holdout_response(holdout_sample_size);
       int index = 0;
       for (int i = cutpoint + 1; i < data.size(); ++i) {
-        for (int j = 0; j < data[i]->total_sample_size(); ++j) {
-          holdout_predictors.row(index) = data[i]->regression_data(j).x();
-          holdout_response[index] = data[i]->regression_data(j).y();
-          ++index;
-        }
+        holdout_predictors.row(index) = data[i]->x();
+          holdout_response[index] = data[i]->y();
       }
       return HoldoutErrorSampler(new ErrorSampler(
-          model, holdout_response, holdout_predictors,
+          model,
+          holdout_response,
+          holdout_predictors,
           Rf_asInteger(getListElement(r_bsts_object, "niter")),
           standardize,
           prediction_error_output));

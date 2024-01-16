@@ -113,6 +113,14 @@ namespace BOOM {
 
   int SSSRM::time_dimension() const { return dat().size(); }
 
+  void SSSRM::add_data(const Ptr<AugmentedData> &dp) {
+    DataPolicy::add_data(dp);
+    NEW(DoubleData, proxy_response)(dp->y());
+    Ptr<RegressionData> observation_model_data_proxy(
+        new RegressionData(proxy_response, dp->Xptr()));
+    observation_model()->add_data(observation_model_data_proxy);
+  }
+
   double SSSRM::observation_variance(int t) const {
     if (t >= time_dimension() || dat()[t]->missing() != Data::observed) {
       return student_marginal_variance();

@@ -134,24 +134,15 @@ void StateSpaceModelManager::AddData(
       && (response.size() != response_is_observed.size())) {
     report_error("Vectors do not match in StateSpaceModelManager::AddData.");
   }
-  std::vector<Ptr<StateSpace::MultiplexedDoubleData>> data;
-  data.reserve(NumberOfTimePoints());
-  for (int i = 0; i < NumberOfTimePoints(); ++i) {
-    data.push_back(new StateSpace::MultiplexedDoubleData);
-  }
+
   for (int i = 0; i < response.size(); ++i) {
-    NEW(DoubleData, observation)(response[i]);
+    NEW(DoubleData, dp)(response[i]);
     if (!response_is_observed.empty() && !response_is_observed[i]) {
-      observation->set_missing_status(Data::completely_missing);
+      dp->set_missing_status(Data::completely_missing);
     }
-    data[TimestampMapping(i)]->add_data(observation);
+    model_->add_data(dp);
   }
-  for (int i = 0; i < NumberOfTimePoints(); ++i) {
-    if (data[i]->all_missing()) {
-      data[i]->set_missing_status(Data::completely_missing);
-    }
-    model_->add_data(data[i]);
-  }
+
 }
 
 HoldoutErrorSampler StateSpaceModelManager::CreateHoldoutSampler(
@@ -168,17 +159,15 @@ HoldoutErrorSampler StateSpaceModelManager::CreateHoldoutSampler(
       &io_manager));
   AddDataFromBstsObject(r_bsts_object);
 
-  std::vector<Ptr<StateSpace::MultiplexedDoubleData>> data = model->dat();
+  std::vector<Ptr<DoubleData>> data = model->dat();
   model_->clear_data();
   for (int i = 0; i <= cutpoint; ++i) {
     model_->add_data(data[i]);
   }
   Vector holdout_data;
   for (int i = cutpoint + 1; i < data.size(); ++i) {
-    Ptr<StateSpace::MultiplexedDoubleData> data_point = data[i];
-    for (int j = 0; j < data[i]->total_sample_size(); ++j) {
-      holdout_data.push_back(data[i]->double_data(j).value());
-    }
+    Ptr<DoubleData> data_point = data[i];
+    holdout_data.push_back(data_point->value());
   }
   int niter = Rf_asInteger(getListElement(r_bsts_object, "niter"));
   return HoldoutErrorSampler(new StateSpaceModelPredictionErrorSampler(

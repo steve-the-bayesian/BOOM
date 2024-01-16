@@ -91,8 +91,8 @@ namespace BOOM {
         return timestamp_info_.trivial();
       }
 
-      // Because of missing data, or multiplexed observations, the number of
-      // time points might be different than the sample size.
+      // Because of missing data, the number of time points might be different
+      // than the sample size.
       int NumberOfTimePoints() const {
         return timestamp_info_.number_of_time_points();
       }

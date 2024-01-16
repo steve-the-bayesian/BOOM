@@ -130,3 +130,16 @@ cc_test(
         "@gtest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "state_space_student_regression_test",
+    size = "small",
+    srcs = ["state_space_student_regression_test.cc"],
+    copts = COPTS,
+    data = [":testdata"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)

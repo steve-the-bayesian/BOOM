@@ -81,8 +81,9 @@ namespace BOOM {
     int time_dimension() const override;
     int xdim() const {return observation_model()->xdim();}
 
-    // The total number of observations across all time points.
-    int total_sample_size() const;
+    using DataPolicy::add_data;
+    void add_data(
+        const Ptr<StateSpace::AugmentedStudentRegressionData> &dp) override;
 
     const RegressionData &data(int t) const override {
       return *(dat()[t]);

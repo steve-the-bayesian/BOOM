@@ -49,6 +49,11 @@ namespace BOOM {
     void update_complete_data_sufficient_statistics(int t);
 
    private:
+    // The observation model needs to keep a set of regression data in parallel
+    // to the actual data kept by the model.  This function ensures that the
+    // observation model's data exists, and populates it if it does not.
+    void ensure_observation_model_data();
+
     StateSpaceStudentRegressionModel *model_;
     Ptr<TRegressionSpikeSlabSampler> observation_model_sampler_;
     TDataImputer data_imputer_;

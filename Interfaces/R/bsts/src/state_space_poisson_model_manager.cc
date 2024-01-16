@@ -77,25 +77,15 @@ StateSpacePoissonModel * SSPMM::CreateBareModel(
               response_is_observed));
     } else {
       model_.reset(new StateSpacePoissonModel(predictors.ncol()));
-      std::vector<Ptr<StateSpace::AugmentedPoissonRegressionData>> data;
-      data.reserve(NumberOfTimePoints());
-      for (int i = 0; i < NumberOfTimePoints(); ++i) {
-        data.push_back(new StateSpace::AugmentedPoissonRegressionData);
-      }
       for (int i = 0; i < counts.size(); ++i) {
-        NEW(PoissonRegressionData, data_point)(counts[i],
-                                               predictors.row(i),
-                                               exposure[i]);
-        if (!response_is_observed[i]) {
+        NEW(StateSpace::AugmentedPoissonRegressionData, data_point)(
+            counts[i],
+            exposure[i],
+            predictors.row(i));
+        if (!response_is_observed.empty() && !response_is_observed[i]) {
           data_point->set_missing_status(Data::completely_missing);
         }
-        data[TimestampMapping(i)]->add_data(data_point);
-      }
-      for (int i = 0; i < NumberOfTimePoints(); ++i) {
-        if (data[i]->observed_sample_size() == 0) {
-          data[i]->set_missing_status(Data::completely_missing);
-        }
-        model_->add_data(data[i]);
+        model_->add_data(data_point);
       }
     }
     // With the Gaussian models we have two separate classes for the
@@ -189,14 +179,8 @@ int SSPMM::UnpackForecastData(SEXP r_prediction_data) {
 }
 
 Vector SSPMM::SimulateForecast(const Vector &final_state) {
-  if (ForecastTimestamps().empty()) {
-    return model_->simulate_forecast(
-        rng(), forecast_predictors_, forecast_exposure_, final_state);
-  } else {
-    return model_->simulate_multiplex_forecast(
-        rng(), forecast_predictors_, forecast_exposure_, final_state,
-        ForecastTimestamps());
-  }
+  return model_->simulate_forecast(
+      rng(), forecast_predictors_, forecast_exposure_, final_state);
 }
 
 void SSPMM::SetPredictorDimension(int xdim) {
