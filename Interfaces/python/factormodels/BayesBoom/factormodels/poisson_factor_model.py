@@ -153,13 +153,15 @@ class PoissonFactorModel:
             raise Exception("'prior' should contain one prior for each level.")
         self._default_site_prior = prior
 
-    def run_mcmc(self, niter):
+    def run_mcmc(self, niter, ping=-8675309):
         self._assign_sampler(self._model)
         self._allocate_space(niter)
         self._user_ids = self._model.visitor_ids
         self._site_ids = self._model.site_ids
+        if ping == -8675309:
+            ping = max(1, int(niter / 10))
         for i in range(niter):
-            if (i % 100 == 0):
+            if (ping is not None) and (ping > 0) and (i % ping == 0):
                 print(f"iteration {i} of {niter}")
             self._model.sample_posterior()
             self._record_draw(i)
@@ -194,7 +196,8 @@ class PoissonFactorModel:
     def _assign_sampler(self, model):
         sampler = boom.PoissonFactorModelPosteriorSampler(
             model,
-            self._prior_class_membership_probabilites,
+            R.to_boom_vector(
+                self._prior_class_membership_probabilites),
             boom.GlobalRng.rng)
         self._model.set_method(sampler)
         self._posterior_sampler = sampler
