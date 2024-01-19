@@ -20,6 +20,7 @@ setup(
     url='https://github.com/steve-the-bayesian/BOOM',
     description='Bayesian methods for models defined by latent factors.',
     long_description=read("README"),
+    # packages=find_namespace_packages(include=["BayesBoom.*"]),
     packages=find_namespace_packages(include=["BayesBoom.*"]),
     zip_safe=True,
 )

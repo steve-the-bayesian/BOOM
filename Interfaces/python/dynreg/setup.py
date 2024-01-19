@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 import os
 
 
@@ -22,6 +22,6 @@ setup(
     url='https://github.com/steve-the-bayesian/BOOM',
     description='Sparse dynamic regression models.',
     long_description=read("README"),
-    packages=["BayesBoom.dynreg"],
+    packages=find_namespace_packages(include=["BayesBoom.*"]),
     zip_safe=True,
 )

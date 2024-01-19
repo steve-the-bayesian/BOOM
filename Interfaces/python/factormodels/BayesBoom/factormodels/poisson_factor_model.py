@@ -153,7 +153,15 @@ class PoissonFactorModel:
             raise Exception("'prior' should contain one prior for each level.")
         self._default_site_prior = prior
 
-    def run_mcmc(self, niter, ping=-8675309):
+    def run_mcmc(self, niter, ping: int = -8675309):
+        """
+        Run a Markov chain Monte Carlo posterior sampling algorithm.
+
+        Args:
+          niter:  The number of iterations to run the sampler.
+          ping: Print a status update every 'ping' iterations.  If ping <= 0 or
+            if ping is None then no status updates are printed.
+        """
         self._assign_sampler(self._model)
         self._allocate_space(niter)
         self._user_ids = self._model.visitor_ids

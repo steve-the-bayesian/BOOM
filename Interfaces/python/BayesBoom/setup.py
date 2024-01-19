@@ -439,11 +439,8 @@ def FindPackagesAndBlab():
     Find the sub-packages to be installed, and blab about them in print
     statements during the build process.
     """
-    # packages = ["R", "bsts", "spikeslab", "dynreg", "factormodels",
-    # "test_utils", "boom/pybind11"]
     packages = find_namespace_packages(include=["BayesBoom.*"],
                                        exclude=["BayesBoom.*.*"])
-    # packages = find_packages()
     if len(packages) == 0:
         packages = find_packages()
     print(f"***** HEY!! I found the following packages: {packages} *****")

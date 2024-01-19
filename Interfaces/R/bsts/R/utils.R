@@ -138,7 +138,7 @@ DateToPOSIX <- function(timestamps) {
   ## adjustment from being applied, and leaves the POSIXt return value with the
   ## intended day, month, and year.
   stopifnot(inherits(timestamps, "Date"))
-  return(as.POSIXct(as.character(timestamps)))
+  return(as.POSIXct(as.character(timestamps), ))
 }
 
 ###----------------------------------------------------------------------
@@ -294,7 +294,7 @@ LongToWideArray <- function(predictor.matrix, series.id, timestamps) {
   ntimes <- length(unique.times)
   nseries <- length(unique.names)
   xdim <- ncol(predictor.matrix)
-  
+
   ans <- array(NA, dim = c(nseries, ntimes, xdim))
   dimnames(ans) <- list(unique.names, as.character(unique.times),
     colnames(predictor.matrix))
@@ -331,7 +331,7 @@ LongToWide <- function(response, series.id, timestamps) {
   unique.names <- levels(series.id)
   ntimes <- length(unique.times)
   nseries <- length(unique.names)
-  
+
   ans <- matrix(nrow = ntimes, ncol = nseries)
   if (ntimes == 0 || nseries == 0) {
     return(ans)
@@ -371,7 +371,7 @@ WideToLong <- function(response, na.rm = TRUE) {
     return(NULL)
   }
   nseries <- ncol(response)
-  
+
   if (is.zoo(response)) {
     timestamps <- index(response)
   } else {
@@ -382,11 +382,11 @@ WideToLong <- function(response, na.rm = TRUE) {
     vnames <- base::make.names(1:nseries)
   }
   ntimes <- length(unique(timestamps))
-  
+
   values <- as.numeric(t(response))
   labels <- factor(rep(vnames, times = ntimes), levels = vnames)
   timestamps <- rep(timestamps, each = nseries)
-  
+
   ans <- data.frame("time" = timestamps, "series" = labels, "values" = values)
   if (na.rm) {
     missing <- is.na(values)
@@ -394,4 +394,3 @@ WideToLong <- function(response, na.rm = TRUE) {
   }
   return(ans)
 }
-

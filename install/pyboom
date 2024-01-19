@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+# source "$HOME/pyboom/bin/activate"
+
 # This script copies the BOOM library into a format suitable for exporting into
 # python.  It puts the 'setup.py' script and package files at the top, copies
 # the C++ library below, and puts the pybind11 bindings in a pybind11 folder.
@@ -40,6 +42,7 @@ cp -r Interfaces/python/R/BayesBoom/R $PACKAGE_DIR/R
 cp -r Interfaces/python/bayesreg/BayesBoom/bayesreg $PACKAGE_DIR/bayesreg
 cp -r Interfaces/python/bsts/BayesBoom/bsts $PACKAGE_DIR/bsts
 cp -r Interfaces/python/dynreg/BayesBoom/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/factormodels/BayesBoom/factormodels $PACKAGE_DIR/factormodels
 cp -r Interfaces/python/mixtures/BayesBoom/mixtures $PACKAGE_DIR/mixtures
 cp -r Interfaces/python/impute/BayesBoom/impute $PACKAGE_DIR/impute
 cp -r Interfaces/python/spikeslab/BayesBoom/spikeslab $PACKAGE_DIR/spikeslab
@@ -158,11 +161,14 @@ then
 	echo "python is version 3"
 	PYTHON="python"
     fi
+else
+    echo "I will use python3 as the default"
 fi
 
 ##---------------------------------------------------------------------------
 ## Find the right 'pip' command.
 
+echo "Running ensurepip with $PYTHON"
 $PYTHON -m ensurepip --upgrade
 
 if command -v pip &> /dev/null
@@ -188,6 +194,11 @@ fi
 
 echo "python is $PYTHON"
 echo "pip is $PIP"
+
+echo `which python`
+echo `which $PYTHON`
+echo `which pip`
+echo `which $PIP`
 
 cd python_package
 $PYTHON setup.py sdist bdist_wheel

@@ -20,6 +20,6 @@ setup(
     url='https://github.com/steve-the-bayesian/BOOM',
     description='Bayesian structural time series.',
     long_description=read("README"),
-    packages=["BayesBoom.bsts"],
+    packages=find_namespace_packages(include=["BayesBoom.*"]),
     zip_safe=True,
 )
