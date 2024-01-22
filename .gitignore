@@ -15,3 +15,4 @@ qux
 *.egg-info
 */python/*/build
 .bazelrc
+*#*#
