@@ -95,7 +95,7 @@ def print_timestamp(iteration_number=None, ping=None):
     sep = ' =-=-=-=-=-=-=-=-=-=-= '
     if iteration_number is None:
         print(sep, time.asctime(), sep)
-    elif (ping > 0) and (iteration_number % ping == 0):
+    elif (ping is not None) and (ping > 0) and (iteration_number % ping == 0):
         timestamp = time.asctime()
         print(sep + timestamp + f" Iteration {iteration_number} " + sep)
 

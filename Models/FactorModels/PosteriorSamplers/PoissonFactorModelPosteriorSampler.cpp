@@ -66,7 +66,13 @@ namespace BOOM {
           logprob += visit_counts * site->log_lambda();
           for (double el : logprob) {
             if (!std::isfinite(el)) {
-              report_error("inf in logprob");
+              std::ostringstream err;
+              err << "infinite value in logprob: \n"
+                  << "logprob = " << logprob << ".\n"
+                  << "visit_counts = " << visit_counts << "\n"
+                  << "site->log_lambda() = " << site->log_lambda() << "\n"
+                  ;
+              report_error(err.str());
             }
           }
         }
@@ -95,8 +101,9 @@ namespace BOOM {
         if (!std::isfinite(counts[k]) || !std::isfinite(b)) {
           std::ostringstream err;
           err << "site " << site->id()
-              << " had an infinite value in either counts "
-              << counts[k]
+              << " had an infinite value in position " << k
+              << " in either counts "
+              << counts[k] << "\n"
               << " exposure_counts_ " << exposure_counts_[k]
               << " or prior: ("
               << site->prior_a()[k]
@@ -105,6 +112,14 @@ namespace BOOM {
           report_error(err.str());
         }
         lambdas[k] = rgamma_mt(rng(), counts[k], b);
+        if (lambdas[k] <= 0.0) {
+          std::ostringstream err;
+          err << "site " << site->id()
+              << " generated a zero value for lambda.\n"
+              << "counts[" << k << "] = " << counts[k]
+              << ", b = " << b << "\n";
+          report_error(err.str());
+        }
       }
       site->set_lambda(lambdas);
       sum_of_lambdas_ += lambdas;

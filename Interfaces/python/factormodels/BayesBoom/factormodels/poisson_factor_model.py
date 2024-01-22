@@ -86,7 +86,9 @@ class PoissonFactorModel:
                 f"The 'user' ({len(user)}) and 'site' ({len(count)}) arguments "
                 "must have the same length")
 
-        self._model.add_data(user, site, count)
+        self._model.add_data(R.to_numpy(user).astype(str),
+                             R.to_numpy(site).astype(str),
+                             R.to_numpy(count).astype(int))
 
     def site(self, site_id: str):
         ans = self._model.site(site_id)
@@ -169,8 +171,7 @@ class PoissonFactorModel:
         if ping == -8675309:
             ping = max(1, int(niter / 10))
         for i in range(niter):
-            if (ping is not None) and (ping > 0) and (i % ping == 0):
-                print(f"iteration {i} of {niter}")
+            R.print_timestamp(i, ping=ping)
             self._model.sample_posterior()
             self._record_draw(i)
 
