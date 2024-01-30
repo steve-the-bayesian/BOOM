@@ -37,8 +37,8 @@ namespace BOOM {
     out << "\n";
     return out.str();
   }
-  
-  
+
+
   // Return the indices (in sorted_target) of a set of items contained in
   // sorted_input.
   //
@@ -82,6 +82,7 @@ namespace BOOM {
   }
 
   // Find the index in a target array of each element of an input array.
+  // Elements that cannot be found are assigned a position of -1.
   //
   // Args:
   //   input:  The set of elements to search for.
@@ -93,10 +94,10 @@ namespace BOOM {
   template <class T>
   std::vector<Int> find(const std::vector<T> &input,
                         const std::vector<T> &target) {
-    
+
     Permutation<Int> input_order = Permutation<Int>::order(input);
     Permutation<Int> target_order = Permutation<Int>::order(target);
-    
+
     std::vector<Int> positions = find_sorted<T, T>(
         input_order * input,
         target_order * target);
@@ -109,7 +110,11 @@ namespace BOOM {
     for (size_t i = 0; i < input.size(); ++i) {
       // Notice that the forward permutation 'target_order' is used here, but
       // the inverse permutation is used below.
-      ans.push_back(target_order[positions[i]]);
+      if (positions[i] >=0) {
+        ans.push_back(target_order[positions[i]]);
+      } else {
+        ans.push_back(-1);
+      }
     }
 
     // Now those positions need to be moved to their unsorted positions in the
@@ -117,7 +122,7 @@ namespace BOOM {
     return input_order.inverse() * ans;
   }
 
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_CPPUTIL_FIND_HPP_
