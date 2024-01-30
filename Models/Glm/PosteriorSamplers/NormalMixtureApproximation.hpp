@@ -24,6 +24,7 @@
 #include "distributions/Rmath_dist.hpp"
 #include "distributions/rng.hpp"
 #include "numopt.hpp"
+#include "math/Permutation.hpp"
 
 namespace BOOM {
 
@@ -139,7 +140,7 @@ namespace BOOM {
     //   permutation: An arrangement of the numbers 0, 1, 2,
     //   ... dim()-1 representing the new order of the mixture
     //   components.
-    void set_order(const std::vector<int> &permutation);
+    void set_order(const Permutation<Int> &permutation);
     void order_by_mu();
     void order_by_sigma();
     Vector mu_;

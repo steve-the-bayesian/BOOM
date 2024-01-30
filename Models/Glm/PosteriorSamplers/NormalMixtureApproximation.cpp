@@ -254,19 +254,19 @@ namespace BOOM {
   }
 
   void NormalMixtureApproximation::set_order(
-      const std::vector<int> &permutation) {
-    permute_inplace(permutation, mu_);
-    permute_inplace(permutation, sigma_);
-    permute_inplace(permutation, weights_);
-    permute_inplace(permutation, log_weights_);
+      const Permutation<Int> &permutation) {
+    permutation.apply_inplace(mu_);
+    permutation.apply_inplace(sigma_);
+    permutation.apply_inplace(weights_);
+    permutation.apply_inplace(log_weights_);
   }
 
   void NormalMixtureApproximation::order_by_mu() {
-    set_order(index_table(mu_));
+    set_order(Permutation(index_table(mu_)));
   }
 
   void NormalMixtureApproximation::order_by_sigma() {
-    set_order(index_table(sigma_));
+    set_order(Permutation(index_table(sigma_)));
   }
 
   double NormalMixtureApproximation::logp(double y) const {

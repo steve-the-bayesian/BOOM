@@ -25,9 +25,33 @@ cc_test(
 )
 
 cc_test(
+    name = "find_test",
+    size = "small",
+    srcs = ["find_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "param_holder_test",
     size = "small",
     srcs = ["param_holder_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "index_table_test",
+    size = "small",
+    srcs = ["index_table_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",

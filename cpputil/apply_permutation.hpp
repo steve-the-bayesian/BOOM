@@ -1,3 +1,6 @@
+#ifndef BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
+#define BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
+
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
@@ -17,14 +20,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#ifndef BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
-#define BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
 #include <vector>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
+#include "uint.hpp"
 
 namespace BOOM {
 
+  void permute_inplace(const std::vector<Int> &permutation, Vector &data);
+  void permute_inplace(const std::vector<Int> &permutation, VectorView &data);
+  Vector apply_permutation(const std::vector<Int> &permutation,
+                           const Vector &data);
+  Vector apply_permutation(const std::vector<Int> &permutation,
+                           const ConstVectorView &data);
+  
   void permute_inplace(const std::vector<int> &permutation, Vector &data);
   void permute_inplace(const std::vector<int> &permutation, VectorView &data);
   Vector apply_permutation(const std::vector<int> &permutation,
@@ -33,4 +42,5 @@ namespace BOOM {
                            const ConstVectorView &data);
 
 }  // namespace BOOM
+
 #endif  //  BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_

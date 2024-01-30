@@ -20,14 +20,14 @@
 
 namespace BOOM {
 
-  template <class VEC>
-  void apply_permutation_impl(const std::vector<int> &permutation, VEC &data) {
-    int stride = data.stride();
-    int n = data.size();
-    int pk;
+  template <class VEC, class INT=int>
+  void apply_permutation_impl(const std::vector<INT> &permutation, VEC &data) {
+    INT stride = data.stride();
+    INT n = data.size();
+    INT pk;
 
-    for (int i = 0; i < n; ++i) {
-      int k = permutation[i];
+    for (INT i = 0; i < n; ++i) {
+      INT k = permutation[i];
       while (k > i) k = permutation[k];
       if (k < i) continue;
       // Now have k == i, i.e the least in its cycle
@@ -51,12 +51,34 @@ namespace BOOM {
     }
   }
 
+  void permute_inplace(const std::vector<Int> &permutation, Vector &data) {
+    apply_permutation_impl<Vector, Int>(permutation, data);
+  }
+
+  void permute_inplace(const std::vector<Int> &permutation, VectorView &data) {
+    apply_permutation_impl<VectorView, Int>(permutation, data);
+  }
+
+  Vector apply_permutation(const std::vector<Int> &permutation,
+                           const Vector &data) {
+    Vector ans(data);
+    permute_inplace(permutation, ans);
+    return ans;
+  }
+
+  Vector apply_permutation(const std::vector<Int> &permutation,
+                           const ConstVectorView &data) {
+    Vector ans(data);
+    permute_inplace(permutation, ans);
+    return ans;
+  }
+
   void permute_inplace(const std::vector<int> &permutation, Vector &data) {
-    apply_permutation_impl(permutation, data);
+    apply_permutation_impl<Vector, int>(permutation, data);
   }
 
   void permute_inplace(const std::vector<int> &permutation, VectorView &data) {
-    apply_permutation_impl(permutation, data);
+    apply_permutation_impl<VectorView, int>(permutation, data);
   }
 
   Vector apply_permutation(const std::vector<int> &permutation,
