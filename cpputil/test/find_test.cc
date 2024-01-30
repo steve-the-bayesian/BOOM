@@ -89,6 +89,21 @@ namespace {
     EXPECT_EQ(positions[3], 7) << print_vector(positions);
     EXPECT_EQ(positions[4], 8) << print_vector(positions);
   }
+  
+  // Unsorted inputs with repeats and missing values.
+  TEST(FindTest, UnsortedWithRepeatsAndMissings) {
+    std::vector<int> targets = {8, 6, 7, 5, 3, 0, 9, 5, 5, 5};
+    std::vector<int> inputs = {6, -3, 0, 5, 5, 5};
+    
+    std::vector<Int> positions = find(inputs, targets);
+    EXPECT_EQ(positions.size(), 6);
+    EXPECT_EQ(positions[0], 1) << print_vector(positions);
+    EXPECT_EQ(positions[1], -1) << print_vector(positions);
+    EXPECT_EQ(positions[2], 5) << print_vector(positions);
+    EXPECT_EQ(positions[3], 3) << print_vector(positions);
+    EXPECT_EQ(positions[4], 7) << print_vector(positions);
+    EXPECT_EQ(positions[5], 8) << print_vector(positions);
+  }
 
   
 }  // namespace
