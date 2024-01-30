@@ -35,13 +35,15 @@ namespace {
     EXPECT_NEAR(d2, nd.second_derivative(logit_value), 1e-5);
   }
 
-  std::string PrintErrorMessages(const std::vector<std::string> &msg) {
-    std::ostringstream err;
-    for (const auto &el : msg) {
-      err << el << "\n";
-    }
-    return err.str();
-  }
+  // Debugging tools.  Left here in case errors surface again.
+  //
+  // std::string PrintErrorMessages(const std::vector<std::string> &msg) {
+  //   std::ostringstream err;
+  //   for (const auto &el : msg) {
+  //     err << el << "\n";
+  //   }
+  //   return err.str();
+  // }
 
   TEST_F(LogitTransformTest, JacobianTest) {
     Vector probs = {.3, .8};
