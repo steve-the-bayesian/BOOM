@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .pretty import pretty
+
+from .ls import ls
+
 from .base import (
     data_frame,
-    pretty,
-    ls,
     table,
     data_range,
     corr,
