@@ -22,7 +22,7 @@ y <- rnorm(time.dimension, yhat, residual.sd)
 ## Check that the model runs with a default prior.
 test_that("model runs with default prior", {
   ss <- AddDynamicRegression(list(), y ~ predictors)
-  model <- bsts(y, state.specification = ss, niter = 100)
+  model <- bsts(y, state.specification = ss, niter = 100, ping = -1)
 
   ## Check that you can specify separate priors.
   ss <- AddDynamicRegression(list(), y ~ predictors,
@@ -31,7 +31,8 @@ test_that("model runs with default prior", {
         SdPrior(beta.sd[1], 10),
         SdPrior(beta.sd[2], 10),
         SdPrior(beta.sd[3], 10))))
-  model <- bsts(y, state.specification = ss, niter = 1000, seed = 8675309)
+  model <- bsts(y, state.specification = ss, niter = 1000, ping = -1,
+                seed = 8675309)
   burn <- SuggestBurn(.1, model)
   CheckMcmcMatrix(model$dynamic.regression.coefficients[, 1, ],
     beta[1, ], burn = burn)
@@ -44,7 +45,7 @@ test_that("model runs with default prior", {
   ss <- AddDynamicRegression(list(), y ~ predictors,
     model.options = DynamicRegressionRandomWalkOptions(
       sigma.prior = SdPrior(beta.sd[1], 1)))
-  model <- bsts(y, state.specification = ss, niter = 100)
+  model <- bsts(y, state.specification = ss, niter = 100, ping = -1)
 })
 
 test_that("predict method runs without crashing for DLM's", {
@@ -62,7 +63,8 @@ test_that("predict method runs without crashing for DLM's", {
     data = train)
 
   # Train it
-  model <- bsts(train$iclaimsNSA, state.specification = ss, niter = 1000)
+  model <- bsts(train$iclaimsNSA, state.specification = ss, niter = 1000,
+                ping = -1)
   test_subset <- cbind(
     "department.of.unemployment" = test$department.of.unemployment,
     "unemployment.office" = test$unemployment.office)
@@ -88,6 +90,7 @@ test_that("predict method runs without crashing for DLM's with static regressors
   model <- bsts(iclaimsNSA ~ idaho.unemployment,
     state.specification = ss,
     niter = 100,
+    pign = -1,
     data = train)
 
   test.subset <- cbind(test,
@@ -120,7 +123,8 @@ test_that("dynamic regression fails gracefully with non-trivial time stamps", {
   ss <- AddDynamicRegression(ss, y ~ x)
 
   ## This works:
-  model <- bsts(y, state.specification = ss, niter = 100, seed = 8675309)
+  model <- bsts(y, state.specification = ss, niter = 100, ping = -1,
+                seed = 8675309)
 
   ## This fails and crashes R:
   new_timestamps <- sort(sample(1:2000, 1000))
