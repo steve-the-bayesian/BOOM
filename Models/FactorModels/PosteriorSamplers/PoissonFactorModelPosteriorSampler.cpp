@@ -37,7 +37,8 @@ namespace BOOM {
         default_prior_class_probabilities_(
             default_prior_class_probabilities),
         exposure_counts_(model->number_of_classes(), 0.0),
-        sum_of_lambdas_(model->number_of_classes(), negative_infinity())
+        sum_of_lambdas_(model->number_of_classes(), negative_infinity()),
+        iteration_(0)
   {}
 
   void Sampler::draw() {
@@ -46,6 +47,23 @@ namespace BOOM {
     }
     impute_visitors();
     draw_site_parameters();
+    ++iteration_;
+  }
+
+  void Sampler::check_logprob(const Vector &logprob,
+                              int visit_counts,
+                              const Ptr<Site> &site) const {
+    for (double el : logprob) {
+      if (!std::isfinite(el)) {
+        std::ostringstream err;
+        err << "infinite value in logprob: \n"
+            << "logprob = " << logprob << ".\n"
+            << "visit_counts = " << visit_counts << "\n"
+            << "site->log_lambda() = " << site->log_lambda() << "\n"
+            ;
+        report_error(err.str());
+      }
+    }
   }
 
   void Sampler::impute_visitors() {
@@ -64,17 +82,7 @@ namespace BOOM {
           int visit_counts = it.second;
           const Ptr<Site> &site(it.first);
           logprob += visit_counts * site->log_lambda();
-          for (double el : logprob) {
-            if (!std::isfinite(el)) {
-              std::ostringstream err;
-              err << "infinite value in logprob: \n"
-                  << "logprob = " << logprob << ".\n"
-                  << "visit_counts = " << visit_counts << "\n"
-                  << "site->log_lambda() = " << site->log_lambda() << "\n"
-                  ;
-              report_error(err.str());
-            }
-          }
+          check_logprob(logprob, visit_counts, site);
         }
         prob = logprob.normalize_logprob();
         visitor->set_class_probabilities(prob);

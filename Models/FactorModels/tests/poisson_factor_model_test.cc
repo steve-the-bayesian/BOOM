@@ -106,6 +106,8 @@ namespace {
 
     Vector class_membership_probabilities = {0.1, 0.3, 0.5, 0.1};
 
+    EXPECT_EQ(num_classes, class_membership_probabilities.size());
+
     Matrix site_lambdas(num_sites, num_classes);
     for (int i = 0; i < num_sites; ++i) {
       for (int j = 0; j < num_classes; ++j){

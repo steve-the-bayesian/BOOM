@@ -63,6 +63,17 @@ namespace BOOM {
     // will keep sum_of_lambdas_ current on an ongoing basis.
     void initialize_sum_of_lambdas();
 
+    // Raise an exception if logprob contains non-finite values.
+    //
+    // Args:
+    //   logprob: The vector to check.
+    //   visit_counts: The number of visits by this visitor to the site
+    //     currently adding to logprob.
+    //   site:  The site currently being added to logprob.
+    void check_logprob(const Vector &logprob,
+                       int visit_counts,
+                       const Ptr<PoissonFactor::Site> &site) const;
+
     PoissonFactorModel *model_;
 
     Vector default_prior_class_probabilities_;
@@ -70,6 +81,7 @@ namespace BOOM {
 
     Vector exposure_counts_;
     Vector sum_of_lambdas_;
+    Int iteration_;
   };
 
 }

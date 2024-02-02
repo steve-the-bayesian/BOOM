@@ -388,22 +388,22 @@ namespace BOOM {
   }
 
   Vector &Vector::normalize_logprob() {
-    double nc = 0;
+    double normalizing_constant = 0;
     Vector &x = *this;
-    int n = size();
+    size_t n = size();
     if (n == 0) {
       report_error("Vector::normalize_logprob called for empty vector");
     } else if (n == 1) {
       x[0] = 1.0;
     } else {
-      double m = max();
-      for (uint i = 0; i < n; ++i) {
-        x[i] = std::exp(x[i] - m);
-        nc += x[i];
+      double max_value = max();
+      for (size_t i = 0; i < n; ++i) {
+        x[i] = std::exp(x[i] - max_value);
+        normalizing_constant += x[i];
       }
-      x /= nc;
+      x /= normalizing_constant;
     }
-    return *this;  // might want to change this
+    return *this;
   }
 
   Vector &Vector::normalize_L2() {
