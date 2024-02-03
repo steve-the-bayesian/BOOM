@@ -47,6 +47,7 @@ IRT_SRCS := $(wildcard Models/IRT/*.cpp)
 LINALG_SRCS := $(wildcard LinAlg/*.cpp)
 
 MATH_SRCS := $(wildcard math/cephes/*.cpp) \
+	     $(wildcard math/kissfft/*.cpp)
 	     $(wildcard math/*.cpp)
 
 MIXTURE_SRCS := $(wildcard Models/Mixtures/*.cpp) \

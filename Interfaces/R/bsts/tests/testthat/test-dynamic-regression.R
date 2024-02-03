@@ -90,7 +90,7 @@ test_that("predict method runs without crashing for DLM's with static regressors
   model <- bsts(iclaimsNSA ~ idaho.unemployment,
     state.specification = ss,
     niter = 100,
-    pign = -1,
+    ping = -1,
     data = train)
 
   test.subset <- cbind(test,
