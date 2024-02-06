@@ -65,7 +65,7 @@ niter <- 500
 test_that("regression holiday model works", {
   ss <- AddLocalLevel(list(), y)
   ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
-  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = niter)
+  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = -1)
   expect_that(model, is_a("bsts"))
   expect_that(model$MemorialDay, is_a("matrix"))
   expect_that(nrow(model$MemorialDay), equals(niter))
@@ -83,7 +83,7 @@ test_that("hierarchical model runs", {
   ## shrinkage.
   ss2 <- AddLocalLevel(list(), y)
   ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
-  model2 <- bsts(y, state.specification = ss2, niter = niter, seed = 8675309, ping = niter)
+  model2 <- bsts(y, state.specification = ss2, niter = niter, seed = 8675309, ping = -1)
   expect_that(model2, is_a("bsts"))
   expect_that(model2$holiday.coefficients, is_a("array"))
   expect_that(dim(model2$holiday.coefficients),
@@ -96,7 +96,7 @@ test_that("random walk holiday works", {
   ss <- AddRandomWalkHoliday(ss, y, memorial.day)
   ss <- AddRandomWalkHoliday(ss, y, labor.day)
   ss <- AddRandomWalkHoliday(ss, y, presidents.day)
-  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = niter)
+  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = -1)
   expect_that(model, is_a("bsts"))
   expect_that(length(dim(model$state.contributions)), equals(3))
   expect_true(memorial.day$name %in% dimnames(model$state.contributions)[[2]])

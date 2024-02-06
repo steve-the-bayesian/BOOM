@@ -27,7 +27,7 @@ test_that("Predictions and state are sane when only factors are present", {
   ss <- AddSharedLocalLevel(list(), y, nfactors=nfactors)
   x <- matrix(rep(1, nobs), ncol=1)
 
-  model <- mbsts(y, ss, niter=500, data.format="wide", seed=seed)
+  model <- mbsts(y, ss, niter=500, ping = -1, data.format="wide", seed=seed)
   pred <- predict(model, 24, seed = seed)
   ## Each time series should be within the prediction interval of the next
   ## point.
