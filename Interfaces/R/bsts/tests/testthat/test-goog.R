@@ -22,6 +22,4 @@ data(goog)
 ## This does not.
 goog <- zoo(as.numeric(goog), index(goog))
 ss <- AddSemilocalLinearTrend(list(), goog)
-model <- bsts(goog, ss, niter = 50)
-
-
+model <- bsts(goog, ss, niter = 50, ping = -1)
