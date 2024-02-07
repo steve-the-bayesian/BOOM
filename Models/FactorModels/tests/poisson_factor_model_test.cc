@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
 #include "Models/FactorModels/PoissonFactorModel.hpp"
-#include "Models/FactorModels/PosteriorSamplers/PoissonFactorModelPosteriorSampler.hpp"
+#include "Models/FactorModels/PosteriorSamplers/PoissonFactorModelIndependentGammaPosteriorSampler.hpp"
 
+#include "Models/GammaModel.hpp"
 #include "distributions.hpp"
 
 #include "test_utils/test_utils.hpp"
@@ -77,8 +78,6 @@ namespace {
     EXPECT_EQ("867", site.id());
 
     EXPECT_EQ(site.lambda().size(), 4);
-    EXPECT_EQ(site.prior_a().size(), 4);
-    EXPECT_EQ(site.prior_b().size(), 4);
 
     NEW(Visitor, v1)("Larry", 4);
     NEW(Visitor, v2)("Moe", 4);
@@ -131,8 +130,15 @@ namespace {
     EXPECT_EQ(model.site("12")->id(), "12");
     EXPECT_EQ(model.visitor("12")->id(), "12");
 
-    NEW(PoissonFactorModelPosteriorSampler, sampler)(
-        &model, class_membership_probabilities);
+    std::vector<Ptr<GammaModelBase>> default_intensity_prior;
+    for (int i = 0; i < 4; ++i) {
+      default_intensity_prior.push_back(new GammaModel(.8, 2.0));
+    }
+
+    NEW(PoissonFactorModelIndependentGammaPosteriorSampler, sampler)(
+        &model,
+        class_membership_probabilities,
+        default_intensity_prior);
     model.set_method(sampler);
 
     Matrix visitor_draws(niter, num_visitors);

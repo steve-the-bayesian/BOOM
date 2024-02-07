@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/FactorModels/PosteriorSamplers/PoissonFactorModelPosteriorSampler.hpp"
+#include "Models/FactorModels/PosteriorSamplers/PoissonFactorModelIndependentGammaPosteriorSampler.hpp"
 #include "distributions.hpp"
 #include "cpputil/report_error.hpp"
 
@@ -25,17 +25,19 @@ namespace BOOM {
   namespace {
     using Visitor = PoissonFactor::Visitor;
     using Site = PoissonFactor::Site;
-    using Sampler = PoissonFactorModelPosteriorSampler;
+    using Sampler = PoissonFactorModelIndependentGammaPosteriorSampler;
   }
 
-  Sampler::PoissonFactorModelPosteriorSampler(
+  Sampler::PoissonFactorModelIndependentGammaPosteriorSampler(
       PoissonFactorModel *model,
       const Vector &default_prior_class_probabilities,
+      const std::vector<Ptr<GammaModelBase>> &default_intensity_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         default_prior_class_probabilities_(
             default_prior_class_probabilities),
+        default_intensity_prior_(default_intensity_prior),
         exposure_counts_(model->number_of_classes(), 0.0),
         sum_of_lambdas_(model->number_of_classes(), negative_infinity()),
         iteration_(0)
@@ -96,7 +98,12 @@ namespace BOOM {
     sum_of_lambdas_ = 0.0;
     for (auto &site_it : model_->sites()) {
       Ptr<Site> &site(site_it.second);
-      Vector counts = site->prior_a();
+      const std::vector<Ptr<GammaModelBase>> &site_prior(
+          intensity_prior(site->id()));
+      Vector counts(site_prior.size());
+      for (int i = 0; i < site_prior.size(); ++i) {
+        counts[i] = site_prior[i]->a();
+      }
       for (const auto &it : site->observed_visitors()) {
         const Ptr<Visitor> &visitor(it.first);
         int visit_count = it.second;
@@ -105,7 +112,7 @@ namespace BOOM {
       }
       Vector lambdas(counts.size());
       for (int k = 0; k < counts.size(); ++k) {
-        double b = exposure_counts_[k] + site->prior_b()[k];
+        double b = exposure_counts_[k] + site_prior[k]->b();
         if (!std::isfinite(counts[k]) || !std::isfinite(b)) {
           std::ostringstream err;
           err << "site " << site->id()
@@ -114,8 +121,8 @@ namespace BOOM {
               << counts[k] << "\n"
               << " exposure_counts_ " << exposure_counts_[k]
               << " or prior: ("
-              << site->prior_a()[k]
-              << ", " << site->prior_b()[k]
+              << site_prior[k]->a()
+              << ", " << site_prior[k]->b()
               << ".\n";
           report_error(err.str());
         }
@@ -160,6 +167,29 @@ namespace BOOM {
       report_error("Probabilities must sum to 1.");
     }
     prior_class_probabilities_[visitor_id] = probs;
+  }
+
+  void Sampler::set_intensity_prior(
+      const std::string &site_id,
+      const std::vector<Ptr<GammaModelBase>> &prior) {
+    if (prior.size() !=- model_->number_of_classes()) {
+      std::ostringstream err;
+      err << "The model has " << model_->number_of_classes()
+          << " latent classes, but the supplied intensity prior had "
+          << prior.size() << " elements.";
+      report_error(err.str());
+    }
+    intensity_parameter_priors_[site_id] = prior;
+  }
+
+  const std::vector<Ptr<GammaModelBase>> & Sampler::intensity_prior(
+      const std::string &site_id) const {
+    auto it = intensity_parameter_priors_.find(site_id);
+    if (it == intensity_parameter_priors_.end()) {
+      return default_intensity_prior_;
+    } else {
+      return it->second;
+    }
   }
 
   void Sampler::initialize_sum_of_lambdas() {

@@ -179,21 +179,6 @@ namespace BOOM {
       Vector log_lambda() const {return log_lambda_;}
       void set_lambda(const Vector &lambda);
 
-      // The prior distribution for the site's rate parameters, broken out by
-      // the discrete latent factor.
-      //
-      // The ratio a/b is the prior guess at the Poisson rate.  a/b^2 is the
-      // variance describing prior uncertainty about the Poisson rate.
-      const Vector &prior_a() const {return prior_a_->value();}
-      const Vector &prior_b() const {return prior_b_->value();}
-
-      // Args:
-      //   prior_a: A Vector of positive values, one for each potential value of
-      //     the latent factor.
-      //   prior_a: A Vector of positive values, one for each potential value of
-      //     the latent factor.
-      void set_prior(const Vector &prior_a, const Vector &prior_b);
-
       // The record of the number of visits by each visitor.
       const std::map<Ptr<Visitor>, int> &observed_visitors() const {
         return observed_visitors_;
@@ -217,9 +202,6 @@ namespace BOOM {
 
       // The number of times each visitor was observed.
       std::map<Ptr<Visitor>, int> observed_visitors_;
-
-      Ptr<VectorParams> prior_a_;
-      Ptr<VectorParams> prior_b_;
     };
 
   } // namespace PoissonFactor

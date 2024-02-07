@@ -84,9 +84,7 @@ namespace BOOM {
     Site::Site(const std::string &id, int num_classes)
         : id_(id),
           visitation_rates_(new VectorParams(num_classes, 1.0)),
-          log_lambda_(log(visitation_rates_->value())),
-          prior_a_(new VectorParams(num_classes, 1.0)),
-          prior_b_(new VectorParams(num_classes, 1.0))
+          log_lambda_(log(visitation_rates_->value()))
     {}
 
     void Site::observe_visitor(const Ptr<Visitor> &visitor, int ntimes) {
@@ -96,11 +94,6 @@ namespace BOOM {
     void Site::set_lambda(const Vector &lambda) {
       visitation_rates_->set(lambda);
       log_lambda_ = log(lambda);
-    }
-
-    void Site::set_prior(const Vector &prior_a, const Vector &prior_b) {
-      prior_a_->set(prior_a);
-      prior_b_->set(prior_b);
     }
 
     Matrix Site::visitor_counts() const {
@@ -146,7 +139,6 @@ namespace BOOM {
 
       for (auto &site_it : sites_) {
         Ptr<Site> parent = rhs.site(site_it.first);
-        site_it.second->set_prior(parent->prior_a(), parent->prior_b());
       }
     }
     return *this;

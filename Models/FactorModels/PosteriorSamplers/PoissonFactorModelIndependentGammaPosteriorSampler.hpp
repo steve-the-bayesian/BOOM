@@ -1,5 +1,5 @@
-#ifndef BOOM_MODELS_FACTOR_MODELS_POISSON_FACTOR_MODEL_POSTERIOR_SAMPLER_HPP
-#define BOOM_MODELS_FACTOR_MODELS_POISSON_FACTOR_MODEL_POSTERIOR_SAMPLER_HPP
+#ifndef POISSON_FACTOR_MODEL_INDEPENDENT_GAMMA_POSTERIOR_SAMPLER_HPP
+#define POISSON_FACTOR_MODEL_INDEPENDENT_GAMMA_POSTERIOR_SAMPLER_HPP
 /*
   Copyright (C) 2005-2022 Steven L. Scott
 
@@ -19,25 +19,33 @@
 */
 
 #include "Models/FactorModels/PoissonFactorModel.hpp"
+#include "Models/GammaModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {
 
-  class PoissonFactorModelPosteriorSampler
+  // A PosteriorSampler for the PoissonFactorModel under a conditionally
+  // conjugate prior, where the prior for each visitor's demographic category is
+  // an independent discrete distribution, and the prior for each site's
+  // intensity parametes is the product of independent gamma distributions.
+  class PoissonFactorModelIndependentGammaPosteriorSampler
       : public PosteriorSampler
   {
    public:
-
     // Args:
     //   model:  The model to be posterior sampled.
-
     //   default_prior_class_probabilities: The default prior to use
     //     for visitors whose membership probabilities are not otherwise
-    //     decalred.
-    PoissonFactorModelPosteriorSampler(
+    //     declared.
+    //   default_intensity_prior: Prior distribution to use for a site's
+    //     intensity parameters when not otherwise declared.
+    //   seeding_rng: The random number generator used to seed this object's
+    //     RNG.
+    PoissonFactorModelIndependentGammaPosteriorSampler(
         PoissonFactorModel *model,
         const Vector &default_prior_class_probabilities,
+        const std::vector<Ptr<GammaModelBase>> &default_intensity_prior,
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
@@ -56,6 +64,13 @@ namespace BOOM {
     void set_prior_class_probabilities(
         const std::string &visitor_id,
         const Vector &probs);
+
+    void set_intensity_prior(
+        const std::string &site_id,
+        const std::vector<Ptr<GammaModelBase>> &prior);
+
+    const std::vector<Ptr<GammaModelBase>> &intensity_prior(
+        const std::string &site_id) const;
 
    private:
     // Initialize the sum_of_lambdas_ data element by looping over the model
@@ -79,12 +94,16 @@ namespace BOOM {
     Vector default_prior_class_probabilities_;
     std::map<std::string, Vector> prior_class_probabilities_;
 
+    std::vector<Ptr<GammaModelBase>> default_intensity_prior_;
+    std::map<std::string, std::vector<Ptr<GammaModelBase>>>
+    intensity_parameter_priors_;
+
     Vector exposure_counts_;
     Vector sum_of_lambdas_;
     Int iteration_;
   };
 
-}
+}  // namespace BOOM
 
 
-#endif // BOOM_MODELS_FACTOR_MODELS_POISSON_FACTOR_MODEL_POSTERIOR_SAMPLER_HPP
+#endif // POISSON_FACTOR_MODEL_INDEPENDENT_GAMMA_POSTERIOR_SAMPLER_HPP
