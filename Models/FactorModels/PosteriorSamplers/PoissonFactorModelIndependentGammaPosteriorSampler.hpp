@@ -19,8 +19,8 @@
 */
 
 #include "Models/FactorModels/PoissonFactorModel.hpp"
+#include "Models/FactorModels/PosteriorSamplers/PoissonFactorPosteriorSamplerBase.hpp"
 #include "Models/GammaModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {
@@ -30,7 +30,7 @@ namespace BOOM {
   // an independent discrete distribution, and the prior for each site's
   // intensity parametes is the product of independent gamma distributions.
   class PoissonFactorModelIndependentGammaPosteriorSampler
-      : public PosteriorSampler
+      : public PoissonFactorPosteriorSamplerBase
   {
    public:
     // Args:
@@ -55,15 +55,7 @@ namespace BOOM {
       return negative_infinity();
     }
 
-    void impute_visitors();
     void draw_site_parameters();
-
-    Vector prior_class_probabilities(
-        const std::string &visitor_id) const;
-
-    void set_prior_class_probabilities(
-        const std::string &visitor_id,
-        const Vector &probs);
 
     void set_intensity_prior(
         const std::string &site_id,
@@ -73,33 +65,10 @@ namespace BOOM {
         const std::string &site_id) const;
 
    private:
-    // Initialize the sum_of_lambdas_ data element by looping over the model
-    // values.  This only needs to be called once, because the "draw" method
-    // will keep sum_of_lambdas_ current on an ongoing basis.
-    void initialize_sum_of_lambdas();
-
-    // Raise an exception if logprob contains non-finite values.
-    //
-    // Args:
-    //   logprob: The vector to check.
-    //   visit_counts: The number of visits by this visitor to the site
-    //     currently adding to logprob.
-    //   site:  The site currently being added to logprob.
-    void check_logprob(const Vector &logprob,
-                       int visit_counts,
-                       const Ptr<PoissonFactor::Site> &site) const;
-
-    PoissonFactorModel *model_;
-
-    Vector default_prior_class_probabilities_;
-    std::map<std::string, Vector> prior_class_probabilities_;
-
     std::vector<Ptr<GammaModelBase>> default_intensity_prior_;
     std::map<std::string, std::vector<Ptr<GammaModelBase>>>
     intensity_parameter_priors_;
 
-    Vector exposure_counts_;
-    Vector sum_of_lambdas_;
     Int iteration_;
   };
 

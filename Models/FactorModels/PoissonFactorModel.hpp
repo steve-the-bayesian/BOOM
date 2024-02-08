@@ -65,6 +65,7 @@ namespace BOOM {
     int nvisits_;
   };
 
+  class PoissonFactorModel;
   namespace PoissonFactor {
     class Site;
     class Visitor;
@@ -193,6 +194,16 @@ namespace BOOM {
         observed_visitors_.clear();
       }
 
+      // This is an "observer pattern" observer that allows the model
+      // responsible for this site to see when its parameters change.
+      //
+      // Args:
+      //   owner:  The object observing these parameters.
+      //   observer:  The functor to call when these parameters change.
+      void set_observer(void *owner, std::function<void(void)> observer) {
+        visitation_rates_->add_observer(owner, observer);
+      }
+
      private:
       std::string id_;
 
@@ -270,7 +281,7 @@ namespace BOOM {
     Ptr<Visitor> visitor(const std::string &id) const;
 
     // The sum of the lambda values, for each level of the latent variable,
-    // across all sites managed by the model.
+    // across all sites managed by the model.  This is
     const Vector &sum_of_lambdas() const;
 
    private:
@@ -278,6 +289,9 @@ namespace BOOM {
     int num_classes_;
     std::map<std::string, Ptr<Visitor>> visitors_;
     std::map<std::string, Ptr<Site>> sites_;
+
+    mutable Vector sum_of_lambdas_;
+    mutable bool sum_of_lambdas_current_;
   };
 
 

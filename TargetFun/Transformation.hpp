@@ -153,8 +153,16 @@ namespace BOOM {
         Target;
     typedef std::function<Vector(const Vector &)> Mapping;
 
+    // Args:
+    //   log_density_old_parameterization: A log density function in the
+    //     original parameterization.
+    //   inverse_mapping: A mapping back from the transformed space to the
+    //     original parameterization.
+    //   jacobian:  A Jacobian object
     Transformation(const Target &log_density_old_parameterization,
-                   const Mapping &inverse_mapping, Jacobian *jacobian);
+                   const Mapping &inverse_mapping,
+                   Jacobian *jacobian);
+
     double operator()(const Vector &new_parameterization, Vector &gradient,
                       Matrix &hessian, uint nderiv) const;
     double operator()(const Vector &new_parameterization) const;

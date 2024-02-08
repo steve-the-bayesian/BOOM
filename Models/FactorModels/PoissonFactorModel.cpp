@@ -150,7 +150,8 @@ namespace BOOM {
 
   PoissonFactorModel::PoissonFactorModel(PoissonFactorModel &&rhs)
       : visitors_(std::move(rhs.visitors_)),
-        sites_(std::move(rhs.sites_))
+        sites_(std::move(rhs.sites_)),
+        sum_of_lambdas_current_(false)
   {}
 
   void PoissonFactorModel::add_data(const Ptr<Data> &data_point) {
@@ -199,6 +200,7 @@ namespace BOOM {
     if (site_it == sites_.end() || site_it->second->id() != site_id) {
       site.reset(new Site(site_id, number_of_classes()));
       sites_[site_id] = site;
+      site->set_observer(this, [this]() {this->sum_of_lambdas_current_ = false;});
     } else {
       site = site_it->second;
     }
@@ -222,6 +224,20 @@ namespace BOOM {
     } else {
       return it->second;
     }
+  }
+
+  const Vector &PoissonFactorModel::sum_of_lambdas() const {
+    if (!sum_of_lambdas_current_) {
+      if (sum_of_lambdas_.size() != number_of_classes()) {
+        sum_of_lambdas_.resize(number_of_classes());
+      }
+      sum_of_lambdas_ *= 0;
+      for (const auto &it : sites_) {
+        sum_of_lambdas_ += it.second->lambda();
+      }
+      sum_of_lambdas_current_ = true;
+    }
+    return sum_of_lambdas_;
   }
 
 }  // namespace BOOM
