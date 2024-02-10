@@ -69,18 +69,24 @@ namespace BOOM {
     };
   }  // namespace
 
-  bool JacobianChecker::check_second_order_elements(
-      const Vector &new_parameterization,
-      std::vector<std::string> *error_messages) {
+  std::string JacobianChecker::check_second_order_elements(
+      const Vector &new_parameterization) {
     int dim = new_parameterization.size();
     std::vector<Matrix> numeric_hessians;
     Vector original_params = inverse_transformation_(new_parameterization);
     for (int t = 0; t < dim; ++t) {
       SubFunction ft(inverse_transformation_, t);
       NumericalDerivatives derivatives(ft);
-      numeric_hessians.push_back(derivatives.Hessian(original_params));
+      // The entry in numeric hessians[t](r, s) is the second derivative of the
+      // old parameterization with respect to elements r and s of the new
+      // parameterization.
+      //
+      // If math was done correctly, this element should match
+      // analytic_jacobian_->second_order_element(r, s, t, original_params).
+      numeric_hessians.push_back(derivatives.Hessian(new_parameterization));
     }
 
+    std::string error_message = "";
     for (int r = 0; r < dim; ++r) {
       for (int s = 0; s < dim; ++s) {
         for (int t = 0; t < dim; ++t) {
@@ -88,21 +94,18 @@ namespace BOOM {
               analytic_jacobian_->second_order_element(r, s, t, original_params);
           if (fabs(analytic_second_derivative - numeric_hessians[t](r, s)) >
               epsilon_) {
-            if (error_messages) {
-              std::ostringstream err;
-              err << "Element (" << r << "," << s << "," << t << ")"
-                  << " had a numeric second derivative of "
-                  << numeric_hessians[t](r, s)
-                  << " but an analytic second derivative of "
-                  << analytic_second_derivative << "." << std::endl;
-              error_messages->push_back(err.str());
-            }
-            return false;
+            std::ostringstream err;
+            err << "Element (" << r << "," << s << "," << t << ")"
+                << " had a numeric second derivative of "
+                << numeric_hessians[t](r, s)
+                << " but an analytic second derivative of "
+                << analytic_second_derivative << "." << std::endl;
+            error_message += err.str();
           }
         }
       }
     }
-    return true;
+    return error_message;
   }
 
   // The default implementation of transform_second_order_gradient is
