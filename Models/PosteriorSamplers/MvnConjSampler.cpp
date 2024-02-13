@@ -84,7 +84,9 @@ namespace BOOM {
         mu_(new MvnGivenSigma(mean, kappa, model_->Sigma_prm())),
         siginv_(new WishartModel(prior_df, SigmaHat)),
         prior_(mu_.get(), siginv_.get()),
-        posterior_(mu_.get(), siginv_.get()) {}
+        posterior_(mu_.get(), siginv_.get()) {
+    check_dimension(mean, SigmaHat);
+  }
 
   MCS::MvnConjSampler(MvnModel *model,
                       const Ptr<MvnGivenSigma> &mu,
@@ -96,6 +98,7 @@ namespace BOOM {
         siginv_(Siginv),
         prior_(mu_.get(), siginv_.get()),
         posterior_(mu_.get(), siginv_.get()) {
+    check_dimension(mu->mean(), Siginv->sumsq());
     if (model_) {
       mu_->set_Sigma(model_->Sigma_prm());
     }
@@ -193,6 +196,25 @@ namespace BOOM {
             posterior_.sum_of_squares().logdet() +
         lmultigamma_ratio(prior_.variance_sample_size() / 2.0, 1, dim);
     return ans;
+  }
+
+  void MCS::check_dimension(const Vector &mean, const SpdMatrix &Sigma) const {
+    if (mean.size() != model_->dim()) {
+      std::ostringstream err;
+      err << "Error in MvnConjSampler.  The model is of dimension "
+          << model_->dim()
+          << " but the passed mean parameter has dimension "
+          << mean.size() << ".\n";
+      report_error(err.str());
+    }
+    if (Sigma.nrow() != model_->dim()) {
+      std::ostringstream err;
+      err << "Error in MvnConjSampler.  The model is of dimension "
+          << model_->dim()
+          << " but the passed estimate of the variance matrix has dimension "
+          << Sigma.nrow() << ".\n";
+      report_error(err.str());
+    }
   }
 
 }  // namespace BOOM

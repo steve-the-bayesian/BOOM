@@ -143,6 +143,10 @@ namespace BOOM {
 
     mutable NormalInverseWishart::NormalInverseWishartParameters prior_;
     mutable NormalInverseWishart::NormalInverseWishartParameters posterior_;
+
+    // Report an error if either the mean vector or Sigma matrix is the wrong
+    // size.
+    void check_dimension(const Vector &mean, const SpdMatrix &Sigma) const;
   };
 
 }  // namespace BOOM
