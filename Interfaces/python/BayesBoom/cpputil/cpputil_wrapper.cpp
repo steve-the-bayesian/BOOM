@@ -6,6 +6,7 @@
 #include <memory>
 #include <cpputil/report_error.hpp>
 #include <cpputil/Date.hpp>
+#include <cpputil/find.hpp>
 
 namespace py = pybind11;
 
@@ -48,6 +49,22 @@ namespace BayesBoom {
               return static_cast<int>(d.day());
             })
         ;
+
+    boom.def("fast_find",
+             [](const std::vector<std::string> &input,
+                const std::vector<std::string> &target) {
+               return find<std::string>(input, target);
+             },
+             "Find all the objects in 'input' by looking in 'target'."
+             "\n\n"
+             "Args:\n"
+             "  input:  The set of strings to search for.\n"
+             "  target:  The set of strings in which to search.\n"
+             "\n"
+             "Returns:  A vector of indices ans of the same length as 'input'"
+             "  where ans[i] is the position in 'target' where input[i] is "
+             "found.\n");
+             
 
   }  // ends the cpputil_def function.
 
