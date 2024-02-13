@@ -105,23 +105,29 @@ new_hdr="GSLLTPS.hpp"
 grep -rl "$dbase/$hdr" "$PACKAGE/src" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
 # ===========================================================================
 
+RPROG=R
+# If multiple versions of R are installed then the shell variable above can be
+# used to distinguish among them.
+
+# RPROG=RDcsan
+
 echo "Building $PACKAGE"
-R CMD build $PACKAGE
+$RPROG CMD build $PACKAGE
 
 PACKAGE_VERSION=`ls ${PACKAGE}_*.tar.gz`
 
 if [[ $DO_CHECK = 1 ]]; then
     echo "Checking $PACKAGE"
-    MAKEFLAGS=" -j 16 " R CMD check $PACKAGE_VERSION
+    MAKEFLAGS=" -j 16 " $RPROg CMD check $PACKAGE_VERSION
 fi
 
 if [[ $DO_CHECK_AS_CRAN = 1 ]]; then
     echo "Checking $PACKAGE"
-    MAKEFLAGS=" -j 16 " R CMD check --as-cran $PACKAGE_VERSION
+    MAKEFLAGS=" -j 16 " $RPROG CMD check --as-cran $PACKAGE_VERSION
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then
     echo "Installing $PACKAGE"
-    MAKEFLAGS=" -j 16 " R CMD INSTALL $PACKAGE_VERSION
+    MAKEFLAGS=" -j 16 " $RPROG CMD INSTALL $PACKAGE_VERSION
 fi
 echo "PACKAGE = $PACKAGE"

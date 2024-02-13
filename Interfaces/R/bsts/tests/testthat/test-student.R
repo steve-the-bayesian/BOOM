@@ -11,8 +11,8 @@ test_that("Student work without regression.", {
   full.pred <- predict(model, horizon = 12, burn = 100)
 
   training <- window(y, end = c(1959, 12))
-  small.model <- bsts(training, state.specification = ss, niter = 200,
-    ping = -1, family="student")
+  small.model <- bsts(training, state.specification = ss,
+                      niter = 200, ping = -1, family="student")
   pred.holdout <- predict(small.model, horizon = 12)
   expect_equal(length(pred.holdout$original.series), length(y) - 12)
 
@@ -31,7 +31,7 @@ test_that("Student predictions work with regression.", {
   ss <- AddLocalLinearTrend(list(), training$iclaimsNSA)
   ss <- AddSeasonal(ss, training$iclaimsNSA, nseasons = 52)
   model <- bsts(iclaimsNSA ~ ., state.specification = ss, data =
-                training, niter = 100, family = "student")
+                training, niter = 100, ping = -1, family = "student")
 
   ## Predict the holdout set given the training set.
   ## This is really fast, because we can use saved state from the MCMC
@@ -107,7 +107,7 @@ test_that("Off by one error is solved", {
   niter <- 250
   seed <- 8675309
   mod1 <- bsts(y~independence, data = dat[train, 1:2], family = "student",
-    state.specification = spec, niter = niter, seed = seed)
+    state.specification = spec, niter = niter, seed = seed, ping = -1)
 
   # estimate with regressor and no intercept
   ## mod2 <- bsts(y~independence-1, data = dat[train, 1:2],
@@ -115,7 +115,7 @@ test_that("Off by one error is solved", {
 
   # estimate with no regressor and no intercept
   mod3 <- bsts(as.numeric(dat[train, 1]), family = "student",
-    state.specification = spec, niter = niter, seed = seed)
+    state.specification = spec, niter = niter, seed = seed, ping = -1)
 
   ## forecast part
   test <- (independence + 25):N

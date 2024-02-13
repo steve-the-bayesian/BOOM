@@ -27,9 +27,9 @@ data <- SimulateDirmData()
 ss <- AddLocalLevel(list(), data$response,
   sigma.prior = SdPrior(sigma.guess = 0.1, sample.size = 1))
 
-model <- dirm(data$response ~ data$predictors, ss, niter = 50,
+model <- dirm(data$response ~ data$predictors, ss, niter = 50, ping = -1,
   timestamps = data$timestamps, seed = 8675309, expected.model.size = 20)
-model2 <- dirm(response ~ predictors, ss, niter = 50, data = data,
+model2 <- dirm(response ~ predictors, ss, niter = 50, ping = -1, data = data,
   timestamps = data$timestamps, seed = 8675309, expected.model.size = 20)
 
 test_that("Models are identical", {

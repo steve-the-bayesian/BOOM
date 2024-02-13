@@ -84,9 +84,7 @@ namespace BOOM {
     Site::Site(const std::string &id, int num_classes)
         : id_(id),
           visitation_rates_(new VectorParams(num_classes, 1.0)),
-          log_lambda_(log(visitation_rates_->value())),
-          prior_a_(new VectorParams(num_classes, 1.0)),
-          prior_b_(new VectorParams(num_classes, 1.0))
+          log_lambda_(log(visitation_rates_->value()))
     {}
 
     void Site::observe_visitor(const Ptr<Visitor> &visitor, int ntimes) {
@@ -96,11 +94,6 @@ namespace BOOM {
     void Site::set_lambda(const Vector &lambda) {
       visitation_rates_->set(lambda);
       log_lambda_ = log(lambda);
-    }
-
-    void Site::set_prior(const Vector &prior_a, const Vector &prior_b) {
-      prior_a_->set(prior_a);
-      prior_b_->set(prior_b);
     }
 
     Matrix Site::visitor_counts() const {
@@ -146,7 +139,6 @@ namespace BOOM {
 
       for (auto &site_it : sites_) {
         Ptr<Site> parent = rhs.site(site_it.first);
-        site_it.second->set_prior(parent->prior_a(), parent->prior_b());
       }
     }
     return *this;
@@ -158,7 +150,8 @@ namespace BOOM {
 
   PoissonFactorModel::PoissonFactorModel(PoissonFactorModel &&rhs)
       : visitors_(std::move(rhs.visitors_)),
-        sites_(std::move(rhs.sites_))
+        sites_(std::move(rhs.sites_)),
+        sum_of_lambdas_current_(false)
   {}
 
   void PoissonFactorModel::add_data(const Ptr<Data> &data_point) {
@@ -207,6 +200,7 @@ namespace BOOM {
     if (site_it == sites_.end() || site_it->second->id() != site_id) {
       site.reset(new Site(site_id, number_of_classes()));
       sites_[site_id] = site;
+      site->set_observer(this, [this]() {this->sum_of_lambdas_current_ = false;});
     } else {
       site = site_it->second;
     }
@@ -230,6 +224,20 @@ namespace BOOM {
     } else {
       return it->second;
     }
+  }
+
+  const Vector &PoissonFactorModel::sum_of_lambdas() const {
+    if (!sum_of_lambdas_current_) {
+      if (sum_of_lambdas_.size() != number_of_classes()) {
+        sum_of_lambdas_.resize(number_of_classes());
+      }
+      sum_of_lambdas_ *= 0;
+      for (const auto &it : sites_) {
+        sum_of_lambdas_ += it.second->lambda();
+      }
+      sum_of_lambdas_current_ = true;
+    }
+    return sum_of_lambdas_;
   }
 
 }  // namespace BOOM

@@ -203,16 +203,22 @@ mv "$src_base/$dbase/$source" "$src_base/$dbase/$new_source"
 
 cd rpackage
 
-R CMD build Boom
+RPROG=R
+# If multiple versions of R are installed then the shell variable above can be
+# used to distinguish among them.
+
+# RPROG=RDcsan
+
+$RPROG CMD build Boom
 
 if [[ $DO_CHECK = 1 ]]; then
-    MAKEFLAGS=" j 32 " R CMD check Boom_*.tar.gz
+    MAKEFLAGS=" j 32 " $RPROG CMD check Boom_*.tar.gz
 fi
 
 if [[ $DO_CHECK_AS_CRAN = 1 ]]; then
-    MAKEFLAGS=" j 32 " R CMD check --as-cran Boom_*.tar.gz
+    MAKEFLAGS=" j 32 " $RPROG CMD check --as-cran Boom_*.tar.gz
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then
-    MAKEFLAGS=" j 32 " R CMD INSTALL Boom_*.tar.gz
+    MAKEFLAGS=" j 32 " $RPROG CMD INSTALL Boom_*.tar.gz
 fi
