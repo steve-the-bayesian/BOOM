@@ -54,7 +54,7 @@ class PoissonFactorModel:
         object.  This is the order they're stored in self._user_classes.
         """
         if self._user_ids is None:
-            self._user_ids = self._model.visitor_ids
+            self._user_ids = np.array(self._model.visitor_ids)
         return self._user_ids
 
     @property
@@ -95,6 +95,10 @@ class PoissonFactorModel:
         return ans
 
     def user(self, user_id: str):
+        """
+        Returns the BOOM model object for the requested user, or None if the
+        requested user is not found.
+        """
         ans = self._model.user(user_id)
         return ans
 
@@ -166,7 +170,6 @@ class PoissonFactorModel:
         """
         self._assign_sampler(self._model)
         self._allocate_space(niter)
-        self._user_ids = self._model.visitor_ids
         self._site_ids = self._model.site_ids
         if ping == -8675309:
             ping = max(1, int(niter / 10))
@@ -176,10 +179,38 @@ class PoissonFactorModel:
             self._record_draw(i)
 
     def user_draws(self, user_id):
-        idx = self._user_ids.index(user_id)
-        if self._user_ids[idx] != user_id:
-            raise ValueError(f"User {user_id} could not be found.")
-        return self._user_draws[:, idx]
+        """
+        Args:
+          user_id: either a single user id (an int or a string), or a collection
+            of id's (a list, numpy array, pandas series, or similar)
+
+        Return:
+          If user_id is an int or a string then the return value is a 1-d numpy
+          array of Monte Carlo draws for that user.  If a collection then
+          user_ids is a 2-d numpy array with rows representing Monte Carlo draws
+          and columns aligning with the values in user_id.  That is, the first
+          user is the first column, the second user is the second column, etc.
+        """
+        singleton = False
+        if isinstance(user_id, str):
+            user_id = [user_id]
+            singleton = True
+
+        idx = np.array(boom.fast_find(user_id, self.user_ids))
+        if np.any(idx < 0):
+            notfound = idx < 0
+            num_notfound = np.sum(notfound)
+            if num_notfound < 20:
+                msg = "The following ID's were not found:\n"
+                msg += f"{user_id[notfound]}"
+            else:
+                msg = f"{num_notfound} user ID's were not found."
+            raise ValueError(msg)
+
+        ans = self._user_draws[:, idx]
+        if singleton:
+            ans = ans.ravel()
+        return ans
 
     def user_distribution(self, burn=None):
         levels = np.arange(self.num_categories, dtype="float")
