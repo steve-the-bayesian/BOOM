@@ -204,8 +204,14 @@ class PoissonFactorModelTest(unittest.TestCase):
         # Check that the model is not updating the classes of the users marked
         # as known.
         known_user_draws = model.user_draws(known_users.index[0])
+        self.assertEqual(known_user_draws.shape[0], niter)
+        self.assertEqual(len(known_user_draws.shape), 1)
         known_user_true_value = known_users.iloc[0]
         self.assertTrue(np.alltrue(known_user_draws == known_user_true_value))
+
+        user_idx = [3, 8, 12]
+        some_users = known_users.index[user_idx]
+        self.assertEqual(model.user_draws(some_users).shape, (niter, 3))
 
         # =====================================================================
         # For users that are unknown, check that the model is choosing the true
