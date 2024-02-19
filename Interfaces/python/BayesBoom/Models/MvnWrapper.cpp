@@ -35,11 +35,23 @@ namespace BayesBoom {
             &MvnBase::mu,
             "Mean of the distribution")
         .def_property_readonly(
+            "mean",
+            &MvnBase::mu,
+            "Mean of the distribution")
+        .def_property_readonly(
             "Sigma",
             &MvnBase::Sigma,
             "Variance of the distribution")
         .def_property_readonly(
+            "variance",
+            &MvnBase::Sigma,
+            "Variance of the distribution")
+        .def_property_readonly(
             "siginv",
+            &MvnBase::siginv,
+            "Precision (inverse variance) of the distribution")
+        .def_property_readonly(
+            "precision",
             &MvnBase::siginv,
             "Precision (inverse variance) of the distribution")
         ;

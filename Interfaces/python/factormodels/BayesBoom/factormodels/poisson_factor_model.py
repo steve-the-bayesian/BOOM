@@ -7,10 +7,14 @@ import BayesBoom.R as R
 
 class PoissonFactorModel:
 
-    def __init__(self, nlevels):
+    def __init__(self, nlevels, hierarchical_prior: bool = True):
         """
         Args:
           nlevels:  The number of potential values in the latent factor.
+
+          hierarchical_prior: If True then use a hierarchical model for the
+            prior distribution over the site parameters.  Otherwise assign each
+            site parameter an independent Gamma prior.
         """
 
         self._nlevels = int(nlevels)
@@ -18,15 +22,25 @@ class PoissonFactorModel:
         self._site_ids = None
         self._user_ids = None
 
-        # _default_site_prior is a list of GammaModel objects giving the prior
-        # distribution for each Poisson rate parameter in an arbitrary site.
-        # There is one GammaModel object for each level of the latent factor.
-        self._default_site_prior = [R.GammaModel(1.0, 1.0)] * nlevels
+        if hierarchical_prior:
+            self._hyperprior_parameters = {
+                "Sigma_guess": np.eye(nlevels - 1),
+                "prior_Sigma_sample_size": nlevels,
+                "prior_mean": np.zeros(nlevels - 1),
+                "prior_mean_sample_size": 1,
+            }
+        else:
+            # _default_site_prior is a list of GammaModel objects giving the
+            # prior distribution for each Poisson rate parameter in an arbitrary
+            # site.  There is one GammaModel object for each level of the latent
+            # factor.
+            self._default_site_prior = [R.GammaModel(1.0, 1.0)] * nlevels
 
-        # _site_specific_priors is a list of GammaModel objects giving the prior
-        # distribution of a specific site.  Keyed by site_id, the values are
-        # lists of priors -- one prior for each level of the latent factor.
-        self._site_specific_priors = {}
+            # _site_specific_priors is a list of GammaModel objects giving the
+            # prior distribution of a specific site.  Keyed by site_id, the
+            # values are lists of priors -- one prior for each level of the
+            # latent factor.
+            self._site_specific_priors = {}
 
         self._prior_class_membership_probabilites = (
             np.full(nlevels, 1.0 / nlevels))
@@ -46,6 +60,10 @@ class PoissonFactorModel:
     @property
     def num_sites(self):
         return self._model.num_sites
+
+    @property
+    def has_hierarchical_prior(self):
+        return hasattr(self, "_hyperprior_parameters")
 
     @property
     def user_ids(self):
@@ -114,6 +132,21 @@ class PoissonFactorModel:
         """
         self._known_users = users
 
+    def set_site_parameters(self, intensities):
+        """
+        Set the intensity parameters for one or more sites.
+
+        Args:
+          intensities: A dict, keyed by site id, containing vectors of intensity
+            parameters.
+        """
+        values = np.concatenate([np.array(x).reshape(1, -1)
+                                 for x in intensities.values()],
+                                axis=0)
+        self._model.set_site_parameters(
+            list(intensities.keys()),
+            R.to_boom_matrix(values))
+
     def set_site_priors(self, site_ids, prior_a, prior_b):
         """
         Set the prior distribution over Poisson model parameters for specific
@@ -129,13 +162,33 @@ class PoissonFactorModel:
             columns to levels of the latent factor.  Entries are the "scale"
             parameter in a Gamma(shape, scale) prior distribution.
         """
+        if self.has_hierarchical_prior:
+            raise Exception("You cannot set site specific priors with a "
+                            "hierarchical prior.")
+
         self._site_specific_priors = {
             "prior_a": pd.DataFrame(prior_a, index=site_ids),
             "prior_b": pd.DataFrame(prior_b, index=site_ids),
         }
 
-    def _initialize_model(self, nlevels: int):
-        self._model = boom.PoissonFactorModel(self._nlevels)
+    def set_hyperprior_parameters(
+            self,
+            Sigma_guess,
+            prior_Sigma_sample_size,
+            prior_mean,
+            prior_mean_sample_size):
+        self._hyperprior_parameters = {
+            "Sigma_guess": Sigma_guess,
+            "prior_Sigma_sample_size": prior_Sigma_sample_size,
+            "prior_mean": prior_mean,
+            "prior_mean_sample_size": prior_mean_sample_size
+        }
+
+        if hasattr(self, "_site_specific_priors"):
+            del self._site_specific_priors
+
+        if hasattr(self, "_default_site_prior"):
+            del self._default_site_prior
 
     def set_default_user_prior(self,
                                prior_weights: np.ndarray):
@@ -150,6 +203,9 @@ class PoissonFactorModel:
         prior shape and scale parameters for the Poisson rate in each latent
         category.
         """
+        if self.has_hierarchical_prior:
+            raise Exception("You cannot set a default site prior when using "
+                            "a hierarchical site prior.")
 
         if isinstance(prior, R.GammaModel):
             prior = [prior] * self._nlevels
@@ -168,7 +224,7 @@ class PoissonFactorModel:
           ping: Print a status update every 'ping' iterations.  If ping <= 0 or
             if ping is None then no status updates are printed.
         """
-        self._assign_sampler(self._model)
+        self._posterior_sampler = self._assign_sampler(self._model)
         self._allocate_space(niter)
         self._site_ids = self._model.site_ids
         if ping == -8675309:
@@ -234,13 +290,43 @@ class PoissonFactorModel:
         self._posterior_sampler.draw_site_parameters()
 
     def _assign_sampler(self, model):
+        if self.has_hierarchical_prior:
+            return self._assign_hierarchical_sampler(model)
+        else:
+            return self._assign_independence_sampler(model)
+
+    def _assign_hierarchical_sampler(self, model):
+        sampler = boom.PoissonFactorHierarchicalSampler(
+            model,
+            R.to_boom_vector(self._prior_class_membership_probabilites),
+            prior_mean=R.to_boom_vector(
+                self._hyperprior_parameters["prior_mean"]),
+            kappa=self._hyperprior_parameters["prior_mean_sample_size"],
+            Sigma_guess=R.to_boom_spd(
+                self._hyperprior_parameters["Sigma_guess"]),
+            prior_df=self._hyperprior_parameters["prior_Sigma_sample_size"])
+
+        model.set_method(sampler)
+
+        known_users = getattr(self, "_known_users", None)
+        if known_users is not None:
+            num_known = len(known_users)
+            probs = np.zeros((num_known, self.nlevels))
+            x = np.arange(num_known)
+            probs[x, known_users.values] = 1.0
+            sampler.set_prior_class_probabilities(
+                known_users.index,
+                probs)
+
+        return sampler
+
+    def _assign_independence_sampler(self, model):
         sampler = boom.PoissonFactorModelPosteriorSampler(
             model,
             R.to_boom_vector(
                 self._prior_class_membership_probabilites),
             boom.GlobalRng.rng)
-        self._model.set_method(sampler)
-        self._posterior_sampler = sampler
+        model.set_method(sampler)
 
         known_users = getattr(self, "_known_users", None)
         if known_users is not None:
@@ -276,6 +362,8 @@ class PoissonFactorModel:
             R.to_boom_matrix(prior_a),
             R.to_boom_matrix(prior_b))
 
+        return sampler
+
     def _allocate_space(self, niter):
         # users[i, j] is the imputed category for user j in iteration i.
         self._user_draws = np.empty((niter, self.num_users))
@@ -284,6 +372,19 @@ class PoissonFactorModel:
         # on site j.
         self._site_draws = np.empty((niter, self.num_sites, self.nlevels))
 
+        if self.has_hierarchical_prior:
+            dim = self.nlevels - 1
+            self._prior_mean_draws = np.empty((niter, dim))
+            self._prior_variance_draws = np.empty((niter, dim, dim))
+
     def _record_draw(self, iteration):
         self._user_draws[iteration, :] = np.array(self._model.imputed_classes)
         self._site_draws[iteration, :, :] = self._model.site_params.to_numpy()
+
+        if self.has_hierarchical_prior:
+            self._prior_mean_draws[iteration, :] = (
+                self._posterior_sampler.hyperprior.mean.to_numpy()
+            )
+            self._prior_variance_draws[iteration, :, :] = (
+                self._posterior_sampler.hyperprior.Sigma.to_numpy()
+            )

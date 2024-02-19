@@ -33,6 +33,8 @@ namespace BOOM {
         const Vector &default_prior_class_probabilities,
         RNG &seeding_rng = GlobalRng::rng);
 
+    int number_of_classes() const {return model_->number_of_classes();}
+    
     void impute_visitors();
 
     void set_prior_class_probabilities(const std::string &visitor_id,
