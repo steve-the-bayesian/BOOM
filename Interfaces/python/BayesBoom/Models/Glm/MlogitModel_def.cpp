@@ -76,7 +76,7 @@ namespace BayesBoom {
                const Matrix &subject_predictors,
                const std::vector<Matrix> &choice_predictors) {
               std::vector<Ptr<CategoricalData>> boom_responses =
-                  make_catdat_ptrs(responses);
+                  create_categorical_data(responses);
 
               int nchoices = boom_responses[0]->nlevels();
               int subject_xdim = subject_predictors.ncol();

@@ -42,7 +42,7 @@ namespace BOOM {
     return b;
   }
   //------------------------------------------------------------
-  MLM::MultinomialLogitModel(uint Nch, uint Psub, uint Pch)
+  MLM::MultinomialLogitModel(int Nch, int Psub, int Pch)
       : nch_(Nch), psub_(Psub), pch_(Pch) {
     setup();
   }
@@ -60,7 +60,7 @@ namespace BOOM {
       const std::vector<Ptr<CategoricalData> > &responses,
       const Matrix &Xsubject, const std::vector<Matrix> &Xchoice)
       : nch_(responses[0]->nlevels()), psub_(Xsubject.ncol()), pch_(0) {
-    uint n = responses.size();
+    int n = responses.size();
     if ((nrow(Xsubject) > 0 && nrow(Xsubject) != n) ||
         (!Xchoice.empty() && Xchoice.size() != n)) {
       ostringstream err;
@@ -74,7 +74,7 @@ namespace BOOM {
       report_error(err.str());
     }
 
-    for (uint i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
       Ptr<VectorData> subject_predictors;
       if (nrow(Xsubject) > 0) {
         subject_predictors.reset(new VectorData(Xsubject.row(i)));
@@ -103,7 +103,7 @@ namespace BOOM {
               << "Xchoice[" << i << "]: " << nrow(choice_matrix) << endl;
           report_error(err.str());
         }
-        for (uint j = 0; j < nch_; ++j) {
+        for (int j = 0; j < nch_; ++j) {
           NEW(VectorData, ch)(choice_matrix.row(j));
           choice_predictors.push_back(ch);
         }
@@ -139,8 +139,8 @@ namespace BOOM {
   }
 
   //------------------------------------------------------------
-  Vector MLM::beta_subject(uint choice) const {
-    uint p = subject_nvars();
+  Vector MLM::beta_subject(int choice) const {
+    int p = subject_nvars();
     if (choice == 0) return Vector(p, 0.0);
     const Vector &b(beta());
     Vector::const_iterator it = b.begin() + ((choice - 1) * p);
@@ -156,9 +156,9 @@ namespace BOOM {
   //------------------------------------------------------------
   void MLM::set_beta(const Vector &b) { coef().set_Beta(b); }
   //------------------------------------------------------------
-  void MLM::set_beta_subject(const Vector &b, uint m) {
+  void MLM::set_beta_subject(const Vector &b, int m) {
     if (m == 0 || m >= Nchoices()) index_out_of_bounds(m);
-    uint p = subject_nvars();
+    int p = subject_nvars();
     Vector beta(this->beta());
     Vector::iterator it = beta.begin() + (m - 1) * p;
     std::copy(b.begin(), b.end(), it);
@@ -166,7 +166,7 @@ namespace BOOM {
   }
   //------------------------------------------------------------
   void MLM::set_beta_choice(const Vector &b) {
-    uint pos = (Nchoices() - 1) * subject_nvars();
+    int pos = (Nchoices() - 1) * subject_nvars();
     Vector beta(this->beta());
     std::copy(b.begin(), b.end(), beta.begin() + pos);
     set_beta(beta);
@@ -185,7 +185,7 @@ namespace BOOM {
                              int nd) const {
     const std::vector<Ptr<ChoiceData> > &d(dat());
     double ans = 0;
-    uint nobs = d.size();
+    int nobs = d.size();
     Vector xbar;
     Vector probs;
     Vector tmpx;
@@ -202,9 +202,9 @@ namespace BOOM {
       }
     }
 
-    for (uint i = 0; i < nobs; ++i) {
+    for (int i = 0; i < nobs; ++i) {
       Ptr<ChoiceData> dp = d[i];
-      uint y = dp->value();
+      int y = dp->value();
       fill_eta(*dp, wsp_, beta);
       if (downsampling) {
         wsp_ += log_sampling_probs();
@@ -212,14 +212,14 @@ namespace BOOM {
       double lognc = lse(wsp_);
       ans += wsp_[y] - lognc;
       if (nd > 0) {
-        uint M = dp->nchoices();
+        int M = dp->nchoices();
         X = inc.select_cols(dp->X(false));
         probs = exp(wsp_ - lognc);
         xbar = probs * X;
         g += X.row(y) - xbar;
 
         if (nd > 1) {
-          for (uint m = 0; m < M; ++m) {
+          for (int m = 0; m < M; ++m) {
             tmpx = X.row(m);
             h.add_outer(tmpx, tmpx, -probs[m]);
           }
@@ -242,40 +242,40 @@ namespace BOOM {
   void MLM::drop_all_slopes(bool keep_intercepts) {
     coef().drop_all();
     if (keep_intercepts) {
-      uint psub = subject_nvars();
-      uint nch = Nchoices();
-      for (uint m = 1; m < nch; ++m) {
-        uint pos = (m - 1) * psub;
+      int psub = subject_nvars();
+      int nch = Nchoices();
+      for (int m = 1; m < nch; ++m) {
+        int pos = (m - 1) * psub;
         coef().add(pos);
       }
     }
   }
 
   //------------------------------------------------------------
-  double MLM::predict_choice(const ChoiceData &dp, uint m) const {
-    uint pch = choice_nvars();
+  double MLM::predict_choice(const ChoiceData &dp, int m) const {
+    int pch = choice_nvars();
     if (pch == 0) return 0;
-    uint psub = subject_nvars();
-    uint M = Nchoices();
+    int psub = subject_nvars();
+    int M = Nchoices();
     ConstVectorView b(beta(), (M - 1) * psub);
     assert(b.size() == dp.choice_nvars());
     return b.dot(dp.Xchoice(m));
   }
 
   //------------------------------------------------------------
-  double MLM::predict_subject(const ChoiceData &dp, uint m) const {
+  double MLM::predict_subject(const ChoiceData &dp, int m) const {
     if (m == 0) return 0;
-    uint psub = subject_nvars();
+    int psub = subject_nvars();
     assert(m < Nchoices());
     ConstVectorView b(beta(), (m - 1) * psub, psub);
     return b.dot(dp.Xsubject());
   }
 
   //------------------------------------------------------------
-  Vector &MLM::fill_eta(const ChoiceData &dp, Vector &ans,
+  Vector &MLM::fill_eta(const ChoiceData &dp,
+                        Vector &ans,
                         const Vector &beta) const {
-    uint M = Nchoices();
-    ans.resize(M);
+    ans.resize(Nchoices());;
     const Selector &included(inc());
     const Matrix &X(dp.X(false));
     if (included.nvars_excluded() == 0) {
@@ -305,47 +305,49 @@ namespace BOOM {
 
   double MLM::logp(const ChoiceData &dp) const {
     // For right now...  this assumes all choices are available to
-    //    everyone uint n = dp->n_avail();
+    //    everyone int n = dp->n_avail();
     wsp_.resize(nch_);
     fill_eta(dp, wsp_);
-    uint y = dp.value();
+    int y = dp.value();
     double ans = wsp_[y] - lse(wsp_);
     return ans;
   }
 
   //------------------------------------------------------------
 
-  uint MLM::beta_size(bool include_zeros) const {
-    uint nch(nch_);
+  int MLM::beta_size(bool include_zeros) const {
+    int nch(nch_);
     if (!include_zeros) --nch;
     return nch * psub_ + pch_;
   }
 
-  uint MLM::sim(const Ptr<ChoiceData> &dp, Vector &prob, RNG &rng) const {
-    predict(dp, prob);
-    return rmulti_mt(rng, prob);
+  int MLM::sim(const Ptr<ChoiceData> &dp, Vector &probs, RNG &rng) const {
+    predict(dp, probs);
+    return rmulti_mt(rng, probs);
   }
 
-  uint MLM::sim(const Ptr<ChoiceData> &dp, RNG &rng) const {
+  int MLM::sim(const Ptr<ChoiceData> &dp, RNG &rng) const {
     Vector prob = predict(dp);
     return rmulti_mt(rng, prob);
   }
 
-  Vector &MLM::predict(const Ptr<ChoiceData> &dp, Vector &ans) const {
+  Vector &MLM::predict(const Ptr<ChoiceData> &dp, Vector &ans, bool probscale) const {
     fill_eta(*dp, ans);
-    ans = exp(ans - lse(ans));
+    if (probscale) {
+      ans = exp(ans - lse(ans));
+    }
     return ans;
   }
 
-  Vector MLM::predict(const Ptr<ChoiceData> &dp) const {
+  Vector MLM::predict(const Ptr<ChoiceData> &dp, bool probscale) const {
     Vector ans(nch_);
-    return predict(dp, ans);
+    return predict(dp, ans, probscale);
   }
 
   //------------------------------------------------------------
-  uint MLM::subject_nvars() const { return psub_; }
-  uint MLM::choice_nvars() const { return pch_; }
-  uint MLM::Nchoices() const { return nch_; }
+  int MLM::subject_nvars() const { return psub_; }
+  int MLM::choice_nvars() const { return pch_; }
+  int MLM::Nchoices() const { return nch_; }
   //------------------------------------------------------------
 
   void MLM::set_sampling_probs(const Vector &probs) {
@@ -381,7 +383,7 @@ namespace BOOM {
 
   //------------------------------------------------------------
   void MLM::fill_extended_beta() const {
-    uint p = subject_nvars();
+    int p = subject_nvars();
     Vector &b(beta_with_zeros_);
     b.resize(beta_size(true));
     const Vector &Beta(beta());
@@ -391,7 +393,7 @@ namespace BOOM {
   }
 
   //------------------------------------------------------------
-  void MLM::index_out_of_bounds(uint m) const {
+  void MLM::index_out_of_bounds(int m) const {
     ostringstream err;
     err << "index " << m << " outside the allowable range (" << 1 << ", "
         << Nchoices() - 1 << ") in MultinomialLogitModel::set_beta_subject."

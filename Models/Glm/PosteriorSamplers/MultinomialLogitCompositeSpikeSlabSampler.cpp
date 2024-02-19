@@ -127,7 +127,7 @@ namespace BOOM {
   MLCS3::MultinomialLogitCompositeSpikeSlabSampler(
       MultinomialLogitModel *model, const Ptr<MvnBase> &prior,
       const Ptr<VariableSelectionPrior> &inclusion_prior, double tdf,
-      double rwm_variance_scale_factor, uint nthreads, int max_chunk_size,
+      double rwm_variance_scale_factor, int nthreads, int max_chunk_size,
       bool check_initial_condition, RNG &seeding_rng)
       : MLVS(model, prior, inclusion_prior, nthreads, check_initial_condition,
              seeding_rng),
@@ -244,6 +244,21 @@ namespace BOOM {
     } else {
       accounting_.record_rejection("RWMchunk");
     }
+  }
+
+  //----------------------------------------------------------------------
+  void MLCS3::rwm_spike_slab_move() {
+    int dim = model_->coef()->dim();
+    int index = int(floor(runif_mt(rng()) * dim));
+
+    NEW(GlmCoefs, candidate)(model_->coef());
+
+    if (model_->coef()->inc(index)) {
+      // The coefficient is included.  Propose setting it to zero.
+    } else {
+      // The coefficient is excluded.  Propose including it.
+    }
+
   }
 
   //----------------------------------------------------------------------

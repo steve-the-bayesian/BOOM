@@ -29,20 +29,29 @@
 
 namespace BOOM {
 
-  class MultinomialLogitModel : public ParamPolicy_1<GlmCoefs>,
-                                public IID_DataPolicy<ChoiceData>,
-                                public PriorPolicy,
-                                public NumOptModel,
-                                virtual public MixtureComponent {
+  // A model for ChoiceData.  Let pi[s] be the probability that a subject
+  // chooses category s.  The multinomial logit model assumes
+  //
+  // log(pi[s] / pi[0]) = subject_predictors * subject_coefficients[s]
+  //                      + choice_predictors[s] * choice_coefficients.
+  //
+  // Note the location of the [s] subscripts above.  There is a separate set of
+  // subject_coefficients for each category.  There is a single set of choice
+  // coefficients, but different choice_predictors[s] for each category.
+  class MultinomialLogitModel
+      : public ParamPolicy_1<GlmCoefs>,
+        public IID_DataPolicy<ChoiceData>,
+        public PriorPolicy,
+        public NumOptModel,
+        virtual public MixtureComponent {
    public:
     // Initialize the model with a set of regression coefficients.
     // Args:
-    //   beta_subject: The subject-level parameters.  Each column of
-    //     beta_subject corresponds to a different choice level.
-    //     There should be (Nchoices - 1) total columns, because the
-    //     choice value 0 is assumed to have all 0's for its
-    //     subject-level coefficients.  The implicit column of 0's
-    //     should not be included.
+    //   beta_subject: The subject-level coefficients.  Each COLUMN of
+    //     beta_subject corresponds to a different choice level.  There are
+    //     (Nchoices - 1) columns, because the choice value 0 is assumed to have
+    //     all 0's for its subject-level coefficients.  The implicit column of
+    //     0's should not be included.
     //   beta_choice: A vector of coefficients describing the impact
     //     of the choice-level predictors.
     MultinomialLogitModel(const Matrix &beta_subject,
@@ -59,7 +68,7 @@ namespace BOOM {
     //     is for a single object.  The complete set of choice level
     //     predictors will be an array of (Nchoices X choice_xdim)
     //     values.
-    MultinomialLogitModel(uint Nchoices, uint subject_xdim, uint choice_xdim);
+    MultinomialLogitModel(int Nchoices, int subject_xdim, int choice_xdim);
 
     // Args:
     //   responses:  The vector of responses
@@ -71,7 +80,7 @@ namespace BOOM {
     //     correspond to predictors.  The vector can be empty to
     //     signify that there is no choice-level data available.
     MultinomialLogitModel(
-        const std::vector<Ptr<CategoricalData> > &responses,
+        const std::vector<Ptr<CategoricalData>> &responses,
         const Matrix &Xsubject_info,
         const std::vector<Matrix> &Xchoice_info = std::vector<Matrix>());
 
@@ -100,7 +109,7 @@ namespace BOOM {
     // Returns the vector of subject specific coefficients for the
     // given choice level.  If 'choice' is 0 then a vector of all 0's
     // is returned.
-    Vector beta_subject(uint choice) const;
+    Vector beta_subject(int choice) const;
 
     // Returns the vector of choice specific coefficients.
     Vector beta_choice() const;
@@ -112,7 +121,7 @@ namespace BOOM {
     //     level.  The dimension of b must match subject_nvars().
     //   choice_level: The choice level that b refers to.  Must be >=1
     //     and < Nchoices().
-    void set_beta_subject(const Vector &b, uint choice_level);
+    void set_beta_subject(const Vector &b, int choice_level);
 
     // Args:
     //   b: The vector of choice-specific coefficients.  The size of b
@@ -161,8 +170,8 @@ namespace BOOM {
     }
 
     // Compute beta^Tx for the choice and subject portions of X.
-    double predict_choice(const ChoiceData &, uint m) const;
-    double predict_subject(const ChoiceData &, uint m) const;
+    double predict_choice(const ChoiceData &, int m) const;
+    double predict_subject(const ChoiceData &, int m) const;
 
     // Fill in the linear predictor.  The dimension of eta is
     // Nchoices(), so the baseline choice is filled in as well.
@@ -181,28 +190,69 @@ namespace BOOM {
     //   include_zeros: If true then the identically zero coefficients
     //     corresponding to the reference category are included in the
     //     count.
-    uint beta_size(bool include_zeros = false) const;
+    int beta_size(bool include_zeros = false) const;
 
-    // simulate an outcome
-    uint sim(const Ptr<ChoiceData> &dp, RNG &rng = GlobalRng::rng) const;
-    uint sim(const Ptr<ChoiceData> &dp, Vector &eta,
-             RNG &rng = GlobalRng::rng) const;
+    // Simulate a choice conditional on the predictors in 'data'.
+    //
+    // Args:
+    //   data: A data point containing the predictor values on which to base the
+    //     choice.  The response value of 'data' is not considered.
+    //   rng: The U(0, 1) random number generator to use for the simulation.
+    //
+    // Returns:
+    //   An integer in {0, ..., Nchoices - 1} simulated from the discrete
+    //   probability distribution determined by 'data' and the model parameters.
+    int sim(const Ptr<ChoiceData> &dp,
+            RNG &rng = GlobalRng::rng) const;
 
-    // compute all choice probabilities
-    Vector predict(const Ptr<ChoiceData> &) const;
+    // Simulate a choice conditional on the predictors in 'data'.
+    //
+    // Args:
+    //   data: A data point containing the predictor values on which to base the
+    //     choice.  The response value of 'data' is not considered.
+    //   probs: An ouput variable containing the discrete probability
+    //     distribution used to simulate the outcome.
+    //   rng: The U(0, 1) random number generator to use for the simulation.
+    //
+    // Returns:
+    //   An integer in {0, ..., Nchoices - 1} simulated from the discrete
+    //   probability distribution determined by 'data' and the model parameters.
+    int sim(const Ptr<ChoiceData> &data,
+            Vector &probs,
+            RNG &rng = GlobalRng::rng) const;
 
-    // returns choice probabilities
-    Vector &predict(const Ptr<ChoiceData> &, Vector &ans) const;
+    // Args:
+    //   data: The data point to predict.  The response value is not considered.
+    //   probscale: See below.
+    //
+    // Returns:
+    //   If probscale is true, the return value is the discrete probability
+    //   distribution corresponding to the predictor variables in 'data'.
+    //   Otherwise, the prediction is returned as the corresponding set of
+    //   multinomial logits.
+    Vector predict(const Ptr<ChoiceData> &data, bool probscale = true) const;
+
+    // Args:
+    //   data: The data point to predict.  The response value is not considered.
+    //   ans:  An output variable to receive the predictions.
+    //   probscale: If true, return the prediction as a set of probabilities.
+    //     Otherwise, return the prediction as a set of multinomial logits.
+    //
+    // Returns:
+    //   A reference to ans.
+    Vector &predict(const Ptr<ChoiceData> &data,
+                    Vector &ans,
+                    bool probscale = true) const;
 
     // The number of potential predictor variables relating to the subject.
-    uint subject_nvars() const;
+    int subject_nvars() const;
 
     // The number of potential predictor variables relating to a single choice
     // level.
-    uint choice_nvars() const;
+    int choice_nvars() const;
 
     // The number of potential choices.
-    uint Nchoices() const;
+    int Nchoices() const;
 
     // Args:
     //   probs: Gives the probability of keeping in the sample an
@@ -219,12 +269,12 @@ namespace BOOM {
     void setup();
     void setup_observers();
     void fill_extended_beta() const;
-    void index_out_of_bounds(uint m) const;
+    void index_out_of_bounds(int m) const;
 
     mutable Vector wsp_;
-    uint nch_;   // number of choices
-    uint psub_;  // number of subject X variables
-    uint pch_;   // number of choice X variables
+    int nch_;   // number of choices
+    int psub_;  // number of subject X variables
+    int pch_;   // number of choice X variables
     Vector log_sampling_probs_;
   };
 }  // namespace BOOM

@@ -27,6 +27,10 @@
 
 namespace BOOM {
 
+  // A posterior sampler for multinomial logit models, where the method for
+  // drawing fixed-dimensional coefficients is randomly chosen from a collection
+  // of appropriate MCMC algorithms, including random-walk Metropolis, tailored
+  // independence Metropolis, and slice sampling.
   class MultinomialLogitCompositeSpikeSlabSampler : public MLVS {
    public:
     // Args:
@@ -63,7 +67,7 @@ namespace BOOM {
         const Ptr<VariableSelectionPrior> &inclusion_prior,
         double t_degrees_of_freedom = -1,
         double rwm_variance_scale_factor = 1,
-        uint nthreads = 1,
+        int nthreads = 1,
         int max_chunk_size = 10,
         bool check_initial_condition = true,
         RNG &seeding_rng = GlobalRng::rng);
@@ -72,6 +76,7 @@ namespace BOOM {
     void rwm_draw();
     void tim_draw();
     void rwm_draw_chunk(int chunk);
+    void rwm_spike_slab_move();
 
     LabeledMatrix timing_report() const;
 

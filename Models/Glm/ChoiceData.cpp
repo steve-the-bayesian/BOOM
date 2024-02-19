@@ -45,8 +45,8 @@ namespace BOOM {
         avail_(rhs.avail_),
         bigX_(rhs.bigX_),
         big_x_current_(rhs.big_x_current_) {
-    uint n = rhs.xchoice_.size();
-    for (uint i = 0; i < n; ++i) {
+    int n = rhs.xchoice_.size();
+    for (int i = 0; i < n; ++i) {
       xchoice_[i] = rhs.xchoice_[i]->clone();
     }
   }
@@ -57,26 +57,26 @@ namespace BOOM {
 
   std::ostream &CHD::display(std::ostream &out) const {
     CategoricalData::display(out) << " " << *xsubject_ << " ";
-    for (uint i = 0; i < xchoice_.size(); ++i) out << Xchoice(i) << " ";
+    for (int i = 0; i < xchoice_.size(); ++i) out << Xchoice(i) << " ";
     return out;
   }
 
-  uint CHD::nchoices() const { return CategoricalData::nlevels(); }
-  uint CHD::n_avail() const { return avail_.nvars(); }
-  bool CHD::avail(uint i) const { return avail_[i]; }
+  int CHD::nchoices() const { return CategoricalData::nlevels(); }
+  int CHD::n_avail() const { return avail_.nvars(); }
+  bool CHD::avail(int i) const { return avail_[i]; }
 
-  uint CHD::subject_nvars() const { return xsubject_->dim(); }
-  uint CHD::choice_nvars() const {
+  int CHD::subject_nvars() const { return xsubject_->dim(); }
+  int CHD::choice_nvars() const {
     if (xchoice_.empty()) return 0;
     return xchoice_[0]->dim();
   }
 
   const uint &CHD::value() const { return CategoricalData::value(); }
-  void CHD::set_y(uint y) { CategoricalData::set(y); }
+  void CHD::set_y(int y) { CategoricalData::set(y); }
 
   const Vector &CHD::Xsubject() const { return xsubject_->value(); }
 
-  const Vector &CHD::Xchoice(uint i) const {
+  const Vector &CHD::Xchoice(int i) const {
     if (!xchoice_.empty()) {
       return xchoice_[i]->value();
     } else
@@ -85,19 +85,19 @@ namespace BOOM {
 
   void CHD::set_Xsubject(const Vector &x) { xsubject_->set(x); }
 
-  void CHD::set_Xchoice(const Vector &x, uint i) { xchoice_[i]->set(x); }
+  void CHD::set_Xchoice(const Vector &x, int i) { xchoice_[i]->set(x); }
 
   const Matrix &CHD::write_x(Matrix &X, bool inc_zero) const {
     bool inc = inc_zero;
-    uint pch = choice_nvars();
-    uint psub = subject_nvars();
-    uint M = nchoices();
-    uint nc = pch + (inc ? M : M - 1) * psub;
+    int pch = choice_nvars();
+    int psub = subject_nvars();
+    int M = nchoices();
+    int nc = pch + (inc ? M : M - 1) * psub;
     X.resize(M, nc);
     X = 0;
 
     const Vector &xcu(Xsubject());
-    for (uint m = 0; m < M; ++m) {
+    for (int m = 0; m < M; ++m) {
       const Vector &xch(Xchoice(m));
       VectorViewIterator it = X.row_begin(m);
       if (inc || m > 0) {

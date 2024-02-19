@@ -284,10 +284,12 @@ namespace BOOM {
   };
   //======================================================================
 
-  std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
-      const std::vector<std::string> &);
-  std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
-      const std::vector<uint> &);
+  std::vector<Ptr<CategoricalData> > create_categorical_data(
+      const std::vector<std::string> &values);
+  std::vector<Ptr<CategoricalData> > create_categorical_data(
+      const std::vector<uint> &levels);
+  std::vector<Ptr<CategoricalData>> create_categorical_data(
+      const std::vector<int> &levels);
 
   std::vector<Ptr<OrdinalData> > make_ord_ptrs(const std::vector<uint> &);
 

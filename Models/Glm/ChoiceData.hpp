@@ -26,6 +26,24 @@
 
 namespace BOOM {
 
+  // ChoiceData is a type of categorical data where a subject makes a choice
+  // from a set of available options.  The elements of ChoiceData are
+  //
+  //   - The item (categorical level) that was chosen, which can be represented
+  //     as an integer 0, ..., Nchoices - 1.
+  //
+  //   - The characteristics of the subject making the choice, which can be
+  //     represented as a numeric vector (like the predictor vector in a
+  //     logistic regression).
+  //
+  //   - The characteristics of the items in the choice set.  This can be
+  //     thought of as a matrix of predictors, with rows corresponding to choice
+  //     levels, and columns to characteristics.  More generally, this may be a
+  //     vectors, if some characteristics don't make sense for some choice
+  //     levels.
+  //
+  // One complicating factor in choice data is that some choice occasions may
+  // offer a different choice set than others.
   class ChoiceData : public CategoricalData {
    public:
     // Args:
@@ -40,7 +58,8 @@ namespace BOOM {
     //     subject-level data.
     ChoiceData(const CategoricalData &y,
                const Ptr<VectorData> &subject_x,
-               const std::vector<Ptr<VectorData> > &choice_x);
+               const std::vector<Ptr<VectorData>> &choice_x
+               = std::vector<Ptr<VectorData>>());
 
     ChoiceData(const ChoiceData &rhs);
 
@@ -50,21 +69,21 @@ namespace BOOM {
     std::ostream &display(std::ostream &) const override;
 
     //--------- choice information ----
-    uint nchoices() const;     // number of possible choices
-    uint n_avail() const;      // number of choices actually available
-    bool avail(uint i) const;  // is choice i available to the subject?
+    int nchoices() const;     // number of possible choices
+    int n_avail() const;      // number of choices actually available
+    bool avail(int i) const;  // is choice i available to the subject?
 
-    uint subject_nvars() const;
-    uint choice_nvars() const;
+    int subject_nvars() const;
+    int choice_nvars() const;
 
     const uint &value() const override;
-    void set_y(uint y);
+    void set_y(int y);
 
     // The Vector of subject-level predictor variables.
     const Vector &Xsubject() const;
 
     // The Vector of choice-level predictor variables for choice i.
-    const Vector &Xchoice(uint i) const;
+    const Vector &Xchoice(int i) const;
 
     // Fills the matrix given in the first argument with the "design
     // matrix" corresponding to this observation.  Let Sx denote the
@@ -95,7 +114,7 @@ namespace BOOM {
     const Matrix &X(bool include_zero = true) const;
 
     void set_Xsubject(const Vector &x);
-    void set_Xchoice(const Vector &x, uint i);
+    void set_Xchoice(const Vector &x, int i);
 
    private:
     Ptr<VectorData> xsubject_;               // age of car buyer

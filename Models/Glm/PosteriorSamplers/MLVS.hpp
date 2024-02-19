@@ -32,37 +32,35 @@ namespace BOOM {
   class ChoiceData;
 
   //------------------------------------------------------------
+  // Draws the parameters of a multinomial logit model using the
+  // approximate method from Fruewirth-Schnatter and Fruewirth,
+  // Computational Statistics and Data Analysis 2007, 3508-3528.
+
+  // This implementation only stores the complete data sufficient
+  // statistics and some workspace.  It does not store the imputed
+  // latent data.
   class MLVS : public PosteriorSampler,
                public LatentDataSampler<MlvsDataImputer> {
-    // Draws the parameters of a multinomial logit model using the
-    // approximate method from Fruewirth-Schnatter and Fruewirth,
-    // Computational Statistics and Data Analysis 2007, 3508-3528.
-
-    // This implementation only stores the complete data sufficient
-    // statistics and some workspace.  It does not store the imputed
-    // latent data.
    public:
     // Args:
-    //   Mod:  The multinomial logit model to be sampled.
-    //   Pri: The conditional prior distribution for the coefficients
-    //     of *Mod, given inclusion.  The dimension of this prior must
-    //     match the dimension of Mod->beta(), which is: (number of
-    //     choices - 1) * (number of subject level predictors) +
-    //     (number of choice level predictors).
-    //   vPri: The prior distribution on the include/exclude pattern
-    //     for Mod->beta().  See above for the required dimension.
-    //   nthreads: The number of threads to use when imputing the
-    //     latent data.
-    //   check_initial_condition: If true (which is the default) an
-    //     error will be reported if the initial value of Mod->beta()
-    //     is inconsistent with the prior distribution.  The usual
-    //     cause of something like this is if certain coefficients
-    //     have been forced in by setting vPri = 1 for that
-    //     coefficient, but the coefficient is excluded by Mod.  If
-    //     false then no error checking will take place on the initial
-    //     condition.
-    MLVS(MultinomialLogitModel *Mod, const Ptr<MvnBase> &Pri,
-         const Ptr<VariableSelectionPrior> &vPri, uint nthreads = 1,
+    //   model: The multinomial logit model to be sampled.
+    //   slab: The conditional prior distribution for the coefficients of *model,
+    //     given inclusion.  The dimension of this prior must match the
+    //     dimension of model->beta(), which is: (number of choices - 1) * (number
+    //     of subject level predictors) + (number of choice level predictors).
+    //   spike: The prior distribution on the include/exclude pattern for
+    //     model->beta().  See above for the required dimension.
+    //   nthreads: The number of threads to use when imputing the latent data.
+    //   check_initial_condition: If true an error will be reported if the
+    //     initial value of model->beta() is inconsistent with the prior
+    //     distribution.  The usual cause of something like this is if certain
+    //     coefficients have been forced in by setting spike = 1 for that
+    //     coefficient, but the coefficient is excluded by Mod.  If false then
+    //     no error checking will take place on the initial condition.
+    MLVS(MultinomialLogitModel *model,
+         const Ptr<MvnBase> &slab,
+         const Ptr<VariableSelectionPrior> &spike,
+         uint nthreads = 1,
          bool check_initial_condition = true,
          RNG &seeding_rng = GlobalRng::rng);
 
@@ -97,9 +95,9 @@ namespace BOOM {
     uint max_nflips() const;
 
    private:
-    MultinomialLogitModel *mod_;
-    Ptr<MvnBase> pri;
-    Ptr<VariableSelectionPrior> vpri;
+    MultinomialLogitModel *model_;
+    Ptr<MvnBase> slab_;
+    Ptr<VariableSelectionPrior> spike_;
 
     typedef MultinomialLogit::CompleteDataSufficientStatistics LocalSuf;
     LocalSuf suf_;

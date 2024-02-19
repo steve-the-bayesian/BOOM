@@ -30,14 +30,20 @@ namespace BOOM {
     }
   }
 
-  Vector MultinomialLogitTransform::to_probs(const Vector &logits, bool truncated) const {
-    Vector ans = concat(0, logits);
-    ans.normalize_logprob();
-    if (truncated) {
+  Vector MultinomialLogitTransform::to_probs(const Vector &logits, bool truncated_probs) const {
+    Vector ans = to_probs_full(concat(0, logits));
+    if (truncated_probs) {
       return ConstVectorView(ans, 1);
     } else {
       return ans;
     }
+  }
+
+  Vector MultinomialLogitTransform::to_probs_full(
+      const Vector &logits_including_implict_zero) const {
+    Vector ans = logits_including_implict_zero;
+    ans.normalize_logprob();
+    return ans;
   }
 
   // Here is the math for the Jacobian of the multinomial logit

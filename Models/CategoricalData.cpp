@@ -380,7 +380,7 @@ namespace BOOM {
     return new CatKey(labs);
   }
 
-  std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
+  std::vector<Ptr<CategoricalData> > create_categorical_data(
       const std::vector<std::string> &sv) {
     uint n = sv.size();
     Ptr<CatKey> labs = make_catkey(sv);
@@ -391,16 +391,27 @@ namespace BOOM {
     return ans;
   }
 
-  std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
-      const std::vector<uint> &iv) {
-    uint n = iv.size();
-    int max = *std::max_element(iv.begin(), iv.end());
-    Ptr<CatKeyBase> labs = new FixedSizeIntCatKey(max + 1);
-    std::vector<Ptr<CategoricalData> > ans(iv.size());
-    for (uint i = 0; i < n; ++i) {
-      ans[i] = new CategoricalData(iv[i], labs);
+  namespace {
+    template <class INT>
+    std::vector<Ptr<CategoricalData>> create_integer_categorical_data(
+        const std::vector<INT> &input) {
+      INT max = *std::max_element(input.begin(), input.end());
+      Ptr<CatKeyBase> labs = new FixedSizeIntCatKey(max + 1);
+      std::vector<Ptr<CategoricalData>> ans;
+      for (auto el : input) {
+        ans.push_back(new CategoricalData(el, labs));
+      }
+      return ans;
     }
-    return ans;
+  }  // namespace
+
+  std::vector<Ptr<CategoricalData> > create_categorical_data(
+      const std::vector<uint> &iv) {
+    return create_integer_categorical_data<uint>(iv);
+  }
+  std::vector<Ptr<CategoricalData> > create_categorical_data(
+      const std::vector<int> &iv) {
+    return create_integer_categorical_data<int>(iv);
   }
 
   std::vector<Ptr<OrdinalData> > make_ord_ptrs(const std::vector<uint> &iv) {
