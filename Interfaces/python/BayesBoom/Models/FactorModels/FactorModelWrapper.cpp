@@ -95,6 +95,19 @@ namespace BayesBoom {
               return visitor.sites_visited().size();
             },
             "The number of distinct sites visited by the user.")
+        .def_property_readonly(
+            "visits",
+            [](Visitor &visitor) {
+              std::vector<std::string> site_names;
+              std::vector<int> counts;
+              py::dict result;
+              for (const auto &it : visitor.sites_visited()) {
+                result[it.first->id().c_str()] = it.second;
+              }
+              return result;
+            },
+            "Returns a dict, keyed by site id, containing the counts of "
+            "visits to each site.\n")
         ;
 
 
@@ -290,6 +303,13 @@ namespace BayesBoom {
                    boom,
                    "PoissonFactorPosteriorSamplerBase",
                    py::multiple_inheritance())
+        .def("prior_class_probabilities",
+             [](PoissonFactorPosteriorSamplerBase &sampler,
+                const std::string &user_id) {
+               return sampler.prior_class_probabilities(user_id);
+             },
+             "Return the prior class probabilities for the requested user.  "
+             "If the user is not found then the default prior is returned.\n")
         .def("set_prior_class_probabilities",
              [](PoissonFactorPosteriorSamplerBase &sampler,
                 std::vector<std::string> &user_ids,

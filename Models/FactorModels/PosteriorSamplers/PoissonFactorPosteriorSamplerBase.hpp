@@ -72,6 +72,7 @@ namespace BOOM {
 
     PoissonFactorModel *model_;
     Vector default_prior_class_probabilities_;
+    
     std::map<std::string, Vector> prior_class_probabilities_;
 
     Vector exposure_counts_;

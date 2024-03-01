@@ -104,7 +104,9 @@ namespace BOOM {
       // single call this->visit(B, 5).
       void visit(const Ptr<Site> &site, int ntimes);
 
-      // Set the class membership probabilities for this class.
+      // Set the class membership probabilities for this class.  These are the
+      // conditional probabilities of visitor class membership given all other
+      // information.
       void set_class_probabilities(const Vector &probs) {
         if (!class_probabilities_) {
           class_probabilities_.reset(new VectorParams(probs));
@@ -273,11 +275,11 @@ namespace BOOM {
     const std::map<std::string, Ptr<Visitor>> & visitors() const {return visitors_;}
 
     // If the supplied id is recognized, return the Site with that ID.
-    // Otherwise return nullptr if the requested id is not available.
+    // Otherwise return nullptr.
     Ptr<Site> site(const std::string &id) const;
 
     // If the supplied id is recognized, return the Visito_ with that ID.
-    // Otherwise return nullptr if the requested id is not available.
+    // Otherwise return nullptr.
     Ptr<Visitor> visitor(const std::string &id) const;
 
     // The sum of the lambda values, for each level of the latent variable,

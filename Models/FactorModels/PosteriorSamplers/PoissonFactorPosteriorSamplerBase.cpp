@@ -88,8 +88,7 @@ namespace BOOM {
     exposure_counts_ *= 0.0;
     for (auto &visitor_it : model_->visitors()) {
       Ptr<Visitor> &visitor(visitor_it.second);
-      Vector prob = prior_class_probabilities(
-          visitor->id());
+      Vector prob = prior_class_probabilities(visitor->id());
       if (prob.max() > .9999) {
         visitor->set_class_probabilities(prob);
         visitor->set_class_member_indicator(prob.imax());

@@ -5,6 +5,32 @@ import BayesBoom.R as R
 # import matplotlib.pyplot as plt
 
 
+class Visitor:
+    def __init__(self, boom_vistor_object):
+        self._boom_visitor = boom_vistor_object
+
+    @property
+    def visits(self):
+        return pd.Series(self._boom_visitor.visits)
+
+    @property
+    def number_of_distinct_sites_visited(self):
+        return self._boom_visitor.number_of_distinct_sites_visited
+
+    @property
+    def imputed_class(self):
+        return self._boom_visitor.imputed_class
+
+    def __str__(self):
+        ans = (
+            f"User {self._boom_visitor.id} has visited "
+            f"{self._boom_visitor.number_of_distinct_sites_visited} "
+            f"distinct sites for a total of {self._boom_visitor.num_visits} "
+            "visits."
+        )
+        return ans
+
+
 class PoissonFactorModel:
 
     def __init__(self, nlevels, hierarchical_prior: bool = True):
@@ -46,7 +72,20 @@ class PoissonFactorModel:
             np.full(nlevels, 1.0 / nlevels))
 
     @property
+    def niter(self):
+        """
+        The number of MCMC iterations in the model.
+        """
+        if hasattr(self, "_site_draws"):
+            return self._site_draws.shape[0]
+        else:
+            return 0
+
+    @property
     def nlevels(self):
+        """
+        The number of potential values in the latent category.
+        """
         return self._nlevels
 
     @property
@@ -109,23 +148,21 @@ class PoissonFactorModel:
                              R.to_numpy(count).astype(int))
 
     def site(self, site_id: str):
-        ans = self._model.site(site_id)
-        return ans
+        return self._model.site(site_id)
 
     def user(self, user_id: str):
         """
         Returns the BOOM model object for the requested user, or None if the
         requested user is not found.
         """
-        ans = self._model.user(user_id)
-        return ans
+        return Visitor(self._model.user(user_id))
 
     def set_known_user_demographics(self, users: pd.Series):
         """
         Args:
-          users: A list of users and their associated demographic categories
-            (integers in the range 0 .. K-1, where K is the number of
-            categories).
+          users: A pd.Series indexed by user ids containing their associated
+            demographic categories as values.  The values are integers in the
+            range 0 .. K-1, where K is the number of categories.
 
         Effects:
           The 'users' varaible is saved as self._known_users.
@@ -233,6 +270,10 @@ class PoissonFactorModel:
             R.print_timestamp(i, ping=ping)
             self._model.sample_posterior()
             self._record_draw(i)
+
+    def prior_class_probabilities(self, user_id):
+        return R.to_numpy(
+            self._posterior_sampler.prior_class_probabilities(user_id))
 
     def user_draws(self, user_id):
         """
