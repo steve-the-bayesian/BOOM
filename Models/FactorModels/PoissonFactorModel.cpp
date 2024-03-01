@@ -114,7 +114,7 @@ namespace BOOM {
   PoissonFactorModel::PoissonFactorModel(int num_classes)
       : num_classes_(num_classes),
         sum_of_lambdas_(num_classes, 0.0),
-        sum_of_lambdas_current_(false),
+        sum_of_lambdas_current_(false)
   {}
 
   PoissonFactorModel::PoissonFactorModel(const PoissonFactorModel &rhs) {
