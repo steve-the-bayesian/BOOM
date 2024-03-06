@@ -188,8 +188,8 @@ namespace BOOM {
       }
 
       // Returns a 2-column matrix.  Rows correspond to different levels of the
-      // latent category.  The columns are the number of visits and the number
-      // of visitor exposures to that category.
+      // latent category.  The left column is the number of visits from users of
+      // each category.  The right column is the number of distinct visitors.
       Matrix visitor_counts() const;
 
       void clear() {

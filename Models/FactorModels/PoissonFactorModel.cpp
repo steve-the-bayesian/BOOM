@@ -29,7 +29,8 @@ namespace BOOM {
     using PoissonFactor::Site;
     using PoissonFactor::Visitor;
 
-    // A "less than" operator for Ptr<thing> where thing has an id() method.
+    // A "less than" operator for Ptr<Thing> where Thing has an id() method.
+    // This allows us to use Ptr<Thing> as the index of a std::map.
     template <class OBJ>
     class IdLess {
      public:

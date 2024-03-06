@@ -358,10 +358,13 @@ namespace BayesBoom {
                const Vector &prior_mean,
                double kappa,
                const SpdMatrix &Sigma_guess,
-               double prior_df) {
+               double prior_df,
+               int MH_threshold,
+               RNG &seeding_rng) {
               return new PoissonFactorHierarchicalSampler(
                   model, default_prior_class_membership_probabilities,
-                  prior_mean, kappa, Sigma_guess, prior_df);
+                  prior_mean, kappa, Sigma_guess, prior_df, MH_threshold,
+                  seeding_rng);
             }),
              py::arg("model"),
              py::arg("default_prior_class_membership_probabilities"),
@@ -369,6 +372,8 @@ namespace BayesBoom {
              py::arg("kappa"),
              py::arg("Sigma_guess"),
              py::arg("prior_df"),
+             py::arg("MH_threshold") = 10,
+             py::arg("seeding_rng") = GlobalRng::rng,
   " Posterior sampler for a PoissonFactorModel based on a hierarchical prior\n"
   " that borrows strength across sites for estimating a site's visitation\n"
   " profile.\n"
@@ -413,6 +418,16 @@ namespace BayesBoom {
             },
             "The boom.MvnModel hyperprior distribution on the multinomial "
             "logit parameters.")
+        .def(
+            "set_MH_threshold",
+            [](PoissonFactorHierarchicalSampler &sampler, int threshold) {
+              sampler.set_MH_threshold(threshold);
+            })
+        .def_property_readonly(
+            "sampling_report",
+            [](PoissonFactorHierarchicalSampler &sampler) {
+              return sampler.sampling_report();
+            })
         ;
 
     

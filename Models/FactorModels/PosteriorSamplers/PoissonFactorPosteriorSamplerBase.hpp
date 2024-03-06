@@ -75,6 +75,7 @@ namespace BOOM {
     
     std::map<std::string, Vector> prior_class_probabilities_;
 
+    // The total number of users of each class.
     Vector exposure_counts_;
   };
 

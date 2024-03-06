@@ -304,7 +304,24 @@ def boxplot(x, labels=None, ax=None, **kwargs):
     return ax
 
 
-def AddSegments(x, y, ax, half_width_factor=.45, **kwargs):
+def AddSegments(x, y, ax, half_width_factor=.45, adjust=True, **kwargs):
+    """
+    Add a collection of equally spaced horizontal line segments to the plot.
+
+    Args:
+      x: The center of each line segment.  The spacing between the first two
+         elements of x will determine the width of the drawn segments.
+      y: The y values of the line segments.  This is the same length as x.
+      ax:  The matplotlib.Axes object on which to draw.
+      half_width_factor: A scale factor by which to horizontally stretch or
+        shrink the segments.
+      adjust: If True (or truthy) then if the ylim of the plot omits any of the
+        supplied y values, the ylim will be adjusted to include them.
+      **kwargs:  Any urecognized keyword arguments will be ignored.
+
+    Returns:
+      The Axes object on which the segments were drawn.
+    """
     dx = np.diff(x)
     if not np.all(dx == dx[0]):
         raise Exception("Equally spaced X's are needed in 'AddSegments'.")
@@ -318,6 +335,14 @@ def AddSegments(x, y, ax, half_width_factor=.45, **kwargs):
     lines = [[(x0[i], y[i]), (x1[i], y[i])] for i in range(len(y))]
     line_collection = mc.LineCollection(lines, linewidths=2)
     ax.add_collection(line_collection)
+
+    if adjust:
+        ylim = ax.get_ylim()
+        if (np.min(y) < ylim[0]) or (np.max(y) > ylim[1]):
+            ylim = [min(ylim[0], np.min(y)),
+                    max(ylim[1], np.max(y))]
+            ax.set_ylim(ylim)
+
     return ax
 
 
