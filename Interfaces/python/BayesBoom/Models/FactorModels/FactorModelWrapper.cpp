@@ -18,29 +18,27 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 namespace BayesBoom {
   using namespace BOOM;
   using BOOM::uint;
-  using Site = BOOM::PoissonFactor::Site;
-  using Visitor = BOOM::PoissonFactor::Visitor;
 
   void PoissonFactorModel_def(py::module &boom) {
 
-    py::class_<Site,
-               BOOM::Ptr<Site>>(
+    py::class_<FactorModels::PoissonSite,
+               BOOM::Ptr<FactorModels::PoissonSite>>(
                    boom, "PoissonFactorModelSite")
         .def_property_readonly(
             "id",
-            [](Site &site) {
+            [](FactorModels::PoissonSite &site) {
               return site.id();
             },
             "The ID of the site.")
         .def_property_readonly(
             "rate_params",
-            [](Site &site) {
+            [](FactorModels::PoissonSite &site) {
               return site.lambda();
             },
             "The poisson rate parameters for the Site.")
         .def_property_readonly(
             "num_visits",
-            [](Site &site) {
+            [](FactorModels::PoissonSite &site) {
               size_t num_visits = 0;
               for (const auto &it : site.observed_visitors()) {
                 num_visits += it.second;
@@ -50,37 +48,38 @@ namespace BayesBoom {
             "The number of times the site was visited.")
         .def_property_readonly(
             "num_visitors",
-            [](Site &site) {
+            [](FactorModels::PoissonSite &site) {
               return site.observed_visitors().size();
             },
             "The number of distinct visitors to the site.")
         .def_property_readonly(
             "visitor_counts",
-            [](Site &site) {
+            [](FactorModels::PoissonSite &site) {
               return site.visitor_counts();
             },
             "Returns a 2-column matrix containing the visit counts (column 0) "
             "and exposures (column 1) for each level of the latent category.\n")
         ;
 
-    py::class_<Visitor, Ptr<Visitor>>(
-        boom, "PoissonFactorModelVisitor")
+    py::class_<FactorModels::PoissonVisitor,
+               Ptr<FactorModels::PoissonVisitor>>(
+                   boom, "PoissonFactorModelVisitor")
         .def_property_readonly(
             "id",
-            [](Visitor &visitor) {
+            [](FactorModels::PoissonVisitor &visitor) {
               return visitor.id();
             },
             "The ID of the visitor.")
         .def_property_readonly(
             "imputed_class",
-            [](Visitor &visitor) {
+            [](FactorModels::PoissonVisitor &visitor) {
               return visitor.imputed_class_membership();
             },
             "The class membership indicator assigned to the Visitor "
             "in the most recent MCMC draw.")
         .def_property_readonly(
             "num_visits",
-            [](Visitor &visitor) {
+            [](FactorModels::PoissonVisitor &visitor) {
               size_t visits = 0;
               for (const auto &it : visitor.sites_visited()) {
                 visits += it.second;
@@ -91,13 +90,13 @@ namespace BayesBoom {
             "made to any site.\n")
         .def_property_readonly(
             "number_of_distinct_sites_visited",
-            [](Visitor &visitor) {
+            [](FactorModels::PoissonVisitor &visitor) {
               return visitor.sites_visited().size();
             },
             "The number of distinct sites visited by the user.")
         .def_property_readonly(
             "visits",
-            [](Visitor &visitor) {
+            [](FactorModels::PoissonVisitor &visitor) {
               std::vector<std::string> site_names;
               std::vector<int> counts;
               py::dict result;
@@ -222,7 +221,7 @@ namespace BayesBoom {
                  report_error(err.str());
                }
                for (size_t i = 0; i < site_ids.size(); ++i) {
-                 Ptr<Site> site = model.site(site_ids[i]);
+                 Ptr<FactorModels::PoissonSite> site = model.site(site_ids[i]);
                  if (site) {
                    site->set_lambda(parameters.row(i));
                  } else {

@@ -19,6 +19,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/FactorModels/SiteBase.hpp"
+#include "Models/FactorModels/VisitorBase.hpp"
 #include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
@@ -66,33 +68,21 @@ namespace BOOM {
   };
 
   class PoissonFactorModel;
-  namespace PoissonFactor {
-    class Site;
-    class Visitor;
-    void intrusive_ptr_add_ref(Site *site);
-    void intrusive_ptr_add_ref(Visitor *visitor);
-    void intrusive_ptr_release(Site *site);
-    void intrusive_ptr_release(Visitor *visitor);
+  namespace FactorModels {
+    class PoissonSite;
+    class PoissonVisitor;
 
     //-------------------------------------------------------------------------
     // A visitor belongs to one of K classes.
-    class Visitor
-        : public RefCounted
-    {
+    class PoissonVisitor : public VisitorBase {
      public:
-
       // Args:
       //   id:  The unique ID for this visitor.
       //   num_classes: The number of latent classes to which this visitor might
       //     belong.
-      Visitor(const std::string &id, int num_classes)
-          : id_(id),
-            class_probabilities_(new VectorParams(
-                Vector(num_classes, 1.0 / num_classes))),
-            imputed_class_membership_(-1)
+      PoissonVisitor(const std::string &id, int num_classes)
+          : VisitorBase(id, num_classes)
       {}
-
-      const std::string & id() const {return id_;}
 
       // Record one or more visits by this visitor to a given site.
       // Args:
@@ -102,37 +92,11 @@ namespace BOOM {
       // The total number of visits to a site is the important statistic.  So
       // calling this->visit(B, 2) and then this->visit(B, 3) is equivalent to a
       // single call this->visit(B, 5).
-      void visit(const Ptr<Site> &site, int ntimes);
-
-      // Set the class membership probabilities for this class.  These are the
-      // conditional probabilities of visitor class membership given all other
-      // information.
-      void set_class_probabilities(const Vector &probs) {
-        if (!class_probabilities_) {
-          class_probabilities_.reset(new VectorParams(probs));
-        } else {
-          class_probabilities_->set(probs);
-        }
-      }
-
-      // Accessor for the class membership probabilities.
-      const Vector &class_probabilities() const {
-        return class_probabilities_->value();}
-
-      // Return the imputed class membership indicator (presumably drawn from
-      // class_membership_probabilities).
-      int imputed_class_membership() const {
-        return imputed_class_membership_;
-      }
-
-      // Set the imputed class membership value.
-      void set_class_member_indicator(int which_class) {
-        imputed_class_membership_ = which_class;
-      }
+      void visit(const Ptr<PoissonSite> &site, int ntimes);
 
       // This visitor's record of the sites that were visited (and the number of
       // times visited).
-      const std::map<Ptr<Site>, int> &sites_visited() const {
+      const std::map<Ptr<PoissonSite>, int> &sites_visited() const {
         return sites_visited_;
       }
 
@@ -141,41 +105,27 @@ namespace BOOM {
         sites_visited_.clear();
       }
 
-      // The number of possible classes the visitor could be in.
-      int number_of_classes() const {
-        return class_probabilities_->size();
-      }
-
      private:
-      std::string id_;
-
-      // The Visitor belongs to one of K unknown classes. The class
-      // probabilities and imputed class membership are set by posterior
-      // sampling algorithms as part of an MCMC run.
-      Ptr<VectorParams> class_probabilities_;
-      int imputed_class_membership_;
-
       // The map is keyed by a raw pointer to the visited site.  The value is a
       // count of the number of times the site was visited by this Visitor.
-      std::map<Ptr<Site>, int> sites_visited_;
+      std::map<Ptr<PoissonSite>, int> sites_visited_;
     };
 
     //----------------------------------------------------------------------
     // Profile for a visited site (e.g. a URL or a domain).
-    class Site : public RefCounted {
+    class PoissonSite : public SiteBase {
      public:
 
       // Args:
       //   id:  The unique identifier for this site.  The "name".
       //   num_classes:  The number of distinct values in the latent factor.
-      Site(const std::string &id, int num_classes);
+      PoissonSite(const std::string &id, int num_classes);
 
+      // The number of latent categories.
       int number_of_classes() const {return visitation_rates_->size();}
 
       // Record one or more visits by the given visitor.
-      void observe_visitor(const Ptr<Visitor> &visitor, int ntimes);
-
-      const std::string & id() const {return id_;}
+      void observe_visitor(const Ptr<PoissonVisitor> &visitor, int ntimes);
 
       // The vector of rates
       const Vector &lambda() const {return visitation_rates_->value();}
@@ -183,7 +133,7 @@ namespace BOOM {
       void set_lambda(const Vector &lambda);
 
       // The record of the number of visits by each visitor.
-      const std::map<Ptr<Visitor>, int> &observed_visitors() const {
+      const std::map<Ptr<PoissonVisitor>, int> &observed_visitors() const {
         return observed_visitors_;
       }
 
@@ -207,14 +157,12 @@ namespace BOOM {
       }
 
      private:
-      std::string id_;
-
       // Element k is the Poisson rate at which a visitor of class k visits the site.
       Ptr<VectorParams> visitation_rates_;
       Vector log_lambda_;
 
       // The number of times each visitor was observed.
-      std::map<Ptr<Visitor>, int> observed_visitors_;
+      std::map<Ptr<PoissonVisitor>, int> observed_visitors_;
     };
 
   } // namespace PoissonFactor
@@ -225,8 +173,8 @@ namespace BOOM {
         public PriorPolicy
   {
    public:
-    using Site = PoissonFactor::Site;
-    using Visitor = PoissonFactor::Visitor;
+    using Site = FactorModels::PoissonSite;
+    using Visitor = FactorModels::PoissonVisitor;
 
     explicit PoissonFactorModel(int num_classes);
 

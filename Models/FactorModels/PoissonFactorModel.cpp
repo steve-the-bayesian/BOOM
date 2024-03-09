@@ -26,26 +26,8 @@
 namespace BOOM {
 
   namespace {
-    using PoissonFactor::Site;
-    using PoissonFactor::Visitor;
-
-    // A "less than" operator for Ptr<Thing> where Thing has an id() method.
-    // This allows us to use Ptr<Thing> as the index of a std::map.
-    template <class OBJ>
-    class IdLess {
-     public:
-      bool operator()(const Ptr<OBJ> &lhs, const Ptr<OBJ> &rhs) const {
-        return lhs->id() < rhs->id();
-      }
-
-      bool operator()(const Ptr<OBJ> &lhs, const std::string &rhs) const {
-        return lhs->id() < rhs;
-      }
-
-      bool operator()(const std::string &lhs, const Ptr<OBJ> &rhs) const {
-        return lhs < rhs->id();
-      }
-    };
+    using Site = FactorModels::PoissonSite;
+    using Visitor = FactorModels::PoissonVisitor;
   }
 
   PoissonFactorData * PoissonFactorData::clone() const {
@@ -59,31 +41,13 @@ namespace BOOM {
     return out;
   }
 
-  namespace PoissonFactor {
-    void intrusive_ptr_add_ref(Site *site) {site->up_count();}
-
-    void intrusive_ptr_release(Site *site) {
-      site->down_count();
-      if (site->ref_count() == 0) {
-        delete site;
-      }
-    }
-
-    void intrusive_ptr_add_ref(Visitor *visitor) {visitor->up_count();}
-
-    void intrusive_ptr_release(Visitor *visitor) {
-      visitor->down_count();
-      if (visitor->ref_count() == 0) {
-        delete visitor;
-      }
-    }
-
+  namespace FactorModels {
     void Visitor::visit(const Ptr<Site> &site, int ntimes) {
       sites_visited_[site] += ntimes;
     }
 
-    Site::Site(const std::string &id, int num_classes)
-        : id_(id),
+    Site::PoissonSite(const std::string &id, int num_classes)
+        : SiteBase(id),
           visitation_rates_(new VectorParams(num_classes, 1.0)),
           log_lambda_(log(visitation_rates_->value()))
     {}
@@ -109,7 +73,7 @@ namespace BOOM {
       return ans;
     }
 
-  }  // namespace PoissonFactor
+  }  // namespace FactorModels
 
 
   PoissonFactorModel::PoissonFactorModel(int num_classes)

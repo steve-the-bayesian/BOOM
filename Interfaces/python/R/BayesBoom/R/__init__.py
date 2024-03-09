@@ -81,6 +81,7 @@ from .mcmc import suggest_burn, report_progress
 
 from .plots import (
     abline,
+    AddSegments,
     barplot,
     boxplot,
     BoxplotTrue,

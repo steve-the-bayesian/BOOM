@@ -47,7 +47,7 @@ namespace BOOM {
 
     // Return the number of visits to the site from visitors in each imputed
     // latent category.
-    Vector compute_visit_counts(const PoissonFactor::Site &site) const;
+    Vector compute_visit_counts(const FactorModels::PoissonSite &site) const;
 
    protected:
     PoissonFactorModel *model() {return model_;}
@@ -67,7 +67,7 @@ namespace BOOM {
     //   site:  The site currently being added to logprob.
     void check_logprob(const Vector &logprob,
                        int visit_counts,
-                       const Ptr<PoissonFactor::Site> &site) const;
+                       const Ptr<FactorModels::PoissonSite> &site) const;
 
 
     PoissonFactorModel *model_;

@@ -25,8 +25,8 @@ namespace BOOM {
 
   namespace {
     using Sampler = PoissonFactorPosteriorSamplerBase;
-    using Visitor = PoissonFactor::Visitor;
-    using Site = PoissonFactor::Site;
+    using Visitor = FactorModels::PoissonVisitor;
+    using Site = FactorModels::PoissonSite;
   }
 
   Sampler::PoissonFactorPosteriorSamplerBase(

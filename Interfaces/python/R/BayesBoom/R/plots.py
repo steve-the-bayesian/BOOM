@@ -343,10 +343,15 @@ def AddSegments(x, y, ax, half_width_factor=.45, adjust=True, **kwargs):
                     max(ylim[1], np.max(y))]
             ax.set_ylim(ylim)
 
+        xlim = ax.get_xim()
+        if x0[0] < xlim[0] or x1[-1] > xlim[1]:
+            xlim = [min(xlim[0], x[0]), max(xlim[1], x1[-1])]
+            ax.set_xlim(xlim)
+
     return ax
 
 
-def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
+Def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
     """
     Create a (vertical) boxplot from a numpy matrix or pandas data frame, with
     optional horizontal line segments indicating the values of the "true"

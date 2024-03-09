@@ -96,8 +96,8 @@ namespace BOOM {
 
     // Different implementations for draw_site_parameters depending on how much
     // data was observed.
-    void draw_site_parameters_MH(Ptr<PoissonFactor::Site> &site);
-    void draw_site_parameters_slice(Ptr<PoissonFactor::Site> &site);
+    void draw_site_parameters_MH(Ptr<FactorModels::PoissonSite> &site);
+    void draw_site_parameters_slice(Ptr<FactorModels::PoissonSite> &site);
 
     const MvnModel *hyperprior() const {
       return profile_hyperprior_.get();

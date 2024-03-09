@@ -25,8 +25,8 @@
 namespace BOOM {
 
   namespace {
-    using Site = PoissonFactor::Site;
-    using Visitor = PoissonFactor::Visitor;
+    using Site = FactorModels::PoissonSite;
+    using Visitor = FactorModels::PoissonVisitor;
   }  // namespace
 
   PoissonFactorHierarchicalSampler::PoissonFactorHierarchicalSampler(
