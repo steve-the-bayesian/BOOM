@@ -27,10 +27,10 @@
 namespace BOOM {
 
   using MultinomialFactorData = PoissonFactorData;
-  
+
   namespace FactorModels {
     class MultinomialSite;
-    
+
     class MultinomialVisitor : public VisitorBase {
      public:
       // Args:
@@ -68,7 +68,7 @@ namespace BOOM {
       void clear() {
         sites_visited_.clear();
       }
-            
+
      private:
       // The map is keyed by a raw pointer to the visited site.  The value is a
       // count of the number of times the site was visited by this Visitor.
@@ -78,7 +78,7 @@ namespace BOOM {
 
     class MultinomialSite : public SiteBase {
      public:
-      
+
       MultinomialSite(const std::string &id, int num_classes);
 
       // The number of latent categories.
@@ -99,11 +99,14 @@ namespace BOOM {
       }
 
       Int number_of_visits() const override;
-      
+
+      const std::map<Ptr<MultinomialVisitor>, int, IdLess<MultinomialVisitor>> &
+      observed_visitors() const {return observed_visitors_;}
+
       void clear() {
         observed_visitors_.clear();
       }
-      
+
      private:
       // visit_probs_[k] is the probability that a user in class k, when
       // choosing a site to visit, would visit this site.  For a fixed value of
@@ -112,7 +115,7 @@ namespace BOOM {
 
       // the log of probs.
       Vector logprob_;
-      
+
       // The log of 1 - probs.
       Vector logprob_complement_;
 
@@ -154,7 +157,7 @@ namespace BOOM {
     // satisfy an expected BOOM idiom.  While it may prove useful,
     // 'record_visit' is the clearer path to adding data.
     void add_data(const Ptr<Data> &data_point) override;
-    
+
     // Remove all visitors and sites (and visits to those sites) managed by the model.
     void clear_data() override;
 
@@ -164,7 +167,7 @@ namespace BOOM {
     // The number of latent classes being modeled.
     int number_of_classes() const {return num_classes_;}
 
-    // The number of visitors this model has seen.    
+    // The number of visitors this model has seen.
     int number_of_visitors() const {return visitors_.size();}
 
     // The number of sites this model has seen.

@@ -157,7 +157,9 @@ namespace BayesBoom {
              &Matrix::max_abs,
              "The absolute value of the matrix element with the largest absolute value.")
         .def("to_numpy",
-             [](const Matrix &m) {return Eigen::MatrixXd(EigenMap(m));},
+             [](const Matrix &m) {
+               return Eigen::MatrixXd(EigenMap(m));
+             },
              "Convert the matrix to a numpy array." )
         .def(py::pickle(
             [](const Matrix &mat) {

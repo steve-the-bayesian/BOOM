@@ -56,7 +56,7 @@ namespace BayesBoom {
             },
             "The number of distinct sites visited at least one time.\n")
         ;
-    
+
     //===========================================================================
     py::class_<FactorModels::PoissonVisitor,
                FactorModels::VisitorBase,
@@ -136,7 +136,7 @@ namespace BayesBoom {
             "The number of distinct visitors that have visited the site "
             "one or more times.")
         ;
-    
+
     //===========================================================================
     py::class_<FactorModels::PoissonSite,
                FactorModels::SiteBase,
@@ -391,7 +391,7 @@ namespace BayesBoom {
                return out.str();
              })
         ;
-    
+
     //===========================================================================
     py::class_<PoissonFactorModel,
                PriorPolicy,
@@ -682,8 +682,8 @@ namespace BayesBoom {
                sampler.impute_visitors();
              })
         ;
-        
-    
+
+
     //===========================================================================
     py::class_<PoissonFactorHierarchicalSampler,
                PoissonFactorPosteriorSamplerBase,
@@ -769,7 +769,7 @@ namespace BayesBoom {
             })
         ;
 
-    
+
     //===========================================================================
     py::class_<PoissonFactorModelIndependentGammaPosteriorSampler,
                PoissonFactorPosteriorSamplerBase,

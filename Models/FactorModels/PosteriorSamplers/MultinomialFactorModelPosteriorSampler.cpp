@@ -29,7 +29,7 @@ namespace BOOM {
     using Visitor = FactorModels::MultinomialVisitor;
     using Site = FactorModels::MultinomialSite;
   }  // namespace
-  
+
   Sampler::MultinomialFactorModelPosteriorSampler(
       MultinomialFactorModel *model,
       const Vector &default_prior_class_probabilities,
@@ -45,14 +45,14 @@ namespace BOOM {
     // draw_hyperprior();
   }
 
-  
+
   void Sampler::impute_visitors() {
     for (auto &visitor_it : model_->visitors()) {
       Ptr<Visitor> &visitor(visitor_it.second);
       impute_visitor(*visitor);
     }
   }
-  
+
   void Sampler::impute_visitor(Visitor &visitor) {
     const Vector &prob(prior_class_probabilities(visitor.id()));
     if (prob.max() > .999) {
@@ -113,8 +113,8 @@ namespace BOOM {
 
     for (Int i = 0; i < number_of_sites; ++i) {
       Ptr<Site> site = model_->site(reverse_site_map[i]);
-      Vector site_probs(number_of_sites);
-      for (int k = 0; k < number_of_sites; ++k) {
+      Vector site_probs(number_of_classes);
+      for (int k = 0; k < number_of_classes; ++k) {
         site_probs[k] = probs[k][i];
       }
       site->set_probs(site_probs);
@@ -124,7 +124,7 @@ namespace BOOM {
   double Sampler::logpri() const {
     return negative_infinity();
   }
-  
+
   void Sampler::check_logprob(const Vector &logprob) const {
     for (size_t i = 0; i < logprob.size(); ++i) {
       if (!std::isfinite(logprob[i])) {
@@ -135,5 +135,5 @@ namespace BOOM {
       }
     }
   }
-  
+
 }  // namespace BOOM

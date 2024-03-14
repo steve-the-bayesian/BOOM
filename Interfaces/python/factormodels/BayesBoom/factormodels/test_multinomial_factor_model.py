@@ -114,7 +114,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
     def smoke_test(self):
         model = MultinomialFactorModel(self.num_classes)
         self.assertIsInstance(model, MultinomialFactorModel)
-        
+
     def build_model(self):
         model = MultinomialFactorModel(self.num_classes)
         model.add_data(user=self._data["user"],
@@ -151,52 +151,51 @@ class MultinomialFactorModelTest(unittest.TestCase):
         model.run_mcmc(niter=niter)
         print("Done with model run!")
 
-    #     # =====================================================================
-    #     # Check that the model is not updating the classes of the users marked
-    #     # as known.
-    #     known_user_draws = model.user_draws(known_users.index[0])
-    #     self.assertEqual(known_user_draws.shape[0], niter)
-    #     self.assertEqual(len(known_user_draws.shape), 1)
-    #     known_user_true_value = known_users.iloc[0]
-    #     self.assertTrue(np.alltrue(known_user_draws == known_user_true_value))
+        # =====================================================================
+        # Check that the model is not updating the classes of the users marked
+        # as known.
+        known_user_draws = model.user_draws(known_users.index[0])
+        self.assertEqual(known_user_draws.shape[0], niter)
+        self.assertEqual(len(known_user_draws.shape), 1)
+        known_user_true_value = known_users.iloc[0]
+        self.assertTrue(np.alltrue(known_user_draws == known_user_true_value))
 
-    #     user_idx = [3, 8, 12]
-    #     some_users = known_users.index[user_idx]
-    #     self.assertEqual(model.user_draws(some_users).shape, (niter, 3))
+        user_idx = [3, 8, 12]
+        some_users = known_users.index[user_idx]
+        self.assertEqual(model.user_draws(some_users).shape, (niter, 3))
 
-    #     # =====================================================================
-    #     # For users that are unknown, check that the model is choosing the true
-    #     # class as 'most likely' most of the time.
-    #     ud = model.user_distribution()
-    #     ud["truth"] = self._user_classes[model.user_ids]
-    #     ud["chosen"] = np.argmax(ud.values[:, :4], axis=1)
-    #     xtab = pd.crosstab(ud["truth"], ud["chosen"])
+        # =====================================================================
+        # For users that are unknown, check that the model is choosing the true
+        # class as 'most likely' most of the time.
+        ud = model.user_distribution()
+        ud["truth"] = self._user_classes[model.user_ids]
+        ud["chosen"] = np.argmax(ud.values[:, :4], axis=1)
+        xtab = pd.crosstab(ud["truth"], ud["chosen"])
 
-    #     self.assertGreater(np.sum(np.diag(xtab)), .9 * self.num_users)
+        self.assertGreater(np.sum(np.diag(xtab)), .9 * self.num_users)
 
-    #     # =====================================================================
-    #     # Check that the marginal distributions of the site parameters cover the
-    #     # true values reasonably frequently.
+        # =====================================================================
+        # Check that the marginal distributions of the site parameters cover the
+        # true values reasonably frequently.
 
-    #     # Check for a single site.
-    #     # sid = model._site_ids[-1]
-    #     # lam = model.site_draws(sid)
-    #     # truth = self._site_params.loc[sid, :]
-    #     # R.BoxplotTrue(lam, truth=truth)
-    #     # plt.show()
+        # Check for a single site.
+        # sid = model._site_ids[-1]
+        # lam = model.site_draws(sid)
+        # truth = self._site_params.loc[sid, :]
+        # R.BoxplotTrue(lam, truth=truth)
+        # plt.show()
 
-    #     # for m in models:
-    #     #     self.plot_sites(m, 4, 5, m.description, style="box")
-    #     #     self.plot_sites(m, 4, 5, m.description, style="ts")
-    #     # plt.show()
+        # for m in models:
+        #     self.plot_sites(m, 4, 5, m.description, style="box")
+        #     self.plot_sites(m, 4, 5, m.description, style="ts")
+        # plt.show()
 
-    #     # Check for all sites.
-    #     for a_model in models:
-    #         num_lam = self.num_classes * self.num_sites
-    #         all_lam = np.reshape(a_model._site_draws, (niter, num_lam))
-    #         true_lam = np.reshape(self._site_params.loc[
-    #             a_model.site_ids, :].values, (1, num_lam)).ravel()
-    #         self.assertTrue(test_utils.check_mcmc_matrix(all_lam, true_lam))
+        # Check for all sites.
+        num_probs = self.num_classes * self.num_sites
+        all_probs = np.reshape(model._site_draws, (niter, num_probs))
+        true_probs = np.reshape(self._site_params.loc[
+            model.site_ids, :].values, (1, num_probs)).ravel()
+        self.assertTrue(test_utils.check_mcmc_matrix(all_probs, true_probs))
 
 
 _debug_mode = True

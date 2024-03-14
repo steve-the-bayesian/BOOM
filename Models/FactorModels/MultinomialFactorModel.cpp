@@ -26,7 +26,7 @@ namespace BOOM {
     using Visitor = FactorModels::MultinomialVisitor;
   }
 
-  
+
   namespace FactorModels {
 
     void Visitor::visit(const Ptr<Site> &site, int ntimes) {
@@ -40,19 +40,26 @@ namespace BOOM {
       }
       return ans;
     }
-    
+
     Site::MultinomialSite(const std::string &id, int num_classes)
         : SiteBase(id),
           visit_probs_(new VectorParams(Vector(num_classes, .5)))
     {
       refresh_probs();
     }
-    
+
     void Site::observe_visitor(const Ptr<Visitor> &visitor, int ntimes) {
       observed_visitors_[visitor] += ntimes;
     }
 
     void Site::set_probs(const Vector &probs) {
+      if (probs.size() != visit_probs_->size()) {
+        std::ostringstream err;
+        err << "Probs of dimension " << visit_probs_->size()
+            << " being replaced by probs of dimension "
+            << probs.size() << ".\n";
+        report_error(err.str());
+      }
       visit_probs_->set(probs);
       refresh_probs();
     }
@@ -64,12 +71,12 @@ namespace BOOM {
       }
       return ans;
     }
-    
+
     void Site::refresh_probs() {
       logprob_ = log(visit_probs_->value());
       logprob_complement_ = log(1.0 - visit_probs_->value());
     }
-    
+
   }  // namespace FactorModels
 
   MultinomialFactorModel::MultinomialFactorModel(int num_classes)
@@ -79,7 +86,7 @@ namespace BOOM {
   MultinomialFactorModel::MultinomialFactorModel(const MultinomialFactorModel &rhs) {
     operator=(rhs);
   }
-  
+
   MultinomialFactorModel & MultinomialFactorModel::operator=(
       const MultinomialFactorModel &rhs) {
     if (&rhs != this) {
@@ -140,7 +147,7 @@ namespace BOOM {
       report_error("Unknown exception occurred in combine_data.");
     }
   }
-  
+
   void MultinomialFactorModel::clear_data() {
     for (auto &site_it : sites_) {
       site_it.second->clear();
@@ -198,6 +205,6 @@ namespace BOOM {
     }
   }
 
-  
-  
+
+
 }  // namespace BOOM
