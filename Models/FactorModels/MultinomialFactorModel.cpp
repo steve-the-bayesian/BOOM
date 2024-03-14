@@ -17,6 +17,7 @@
 */
 
 #include "Models/FactorModels/MultinomialFactorModel.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -32,7 +33,14 @@ namespace BOOM {
       sites_visited_[site] += ntimes;
     }
 
-
+    Int Visitor::number_of_visits() const {
+      Int ans = 0;
+      for (const auto &it : sites_visited_) {
+        ans += it.second;
+      }
+      return ans;
+    }
+    
     Site::MultinomialSite(const std::string &id, int num_classes)
         : SiteBase(id),
           visit_probs_(new VectorParams(Vector(num_classes, .5)))
@@ -49,6 +57,14 @@ namespace BOOM {
       refresh_probs();
     }
 
+    Int Site::number_of_visits() const {
+      Int ans = 0;
+      for (const auto &it : observed_visitors_) {
+        ans += it.second;
+      }
+      return ans;
+    }
+    
     void Site::refresh_probs() {
       logprob_ = log(visit_probs_->value());
       logprob_complement_ = log(1.0 - visit_probs_->value());
@@ -60,16 +76,71 @@ namespace BOOM {
       : num_classes_(num_classes)
   {}
 
-  ////////////////
-  ////////////////  Add all the copy constructors.
-  ////////////////
-  ////////////////
-  ////////////////
+  MultinomialFactorModel::MultinomialFactorModel(const MultinomialFactorModel &rhs) {
+    operator=(rhs);
+  }
   
+  MultinomialFactorModel & MultinomialFactorModel::operator=(
+      const MultinomialFactorModel &rhs) {
+    if (&rhs != this) {
+      clear_data();
+      for (const auto &visitor_it : rhs.visitors_) {
+        const Ptr<Visitor> &visitor(visitor_it.second);
+        for (const auto &it : visitor->sites_visited()) {
+          const std::string &site_id = it.first->id();
+          int ntimes = it.second;
+          record_visit(visitor->id(), site_id, ntimes);
+        }
+      }
+
+      for (auto &visitor_it : visitors_) {
+        Ptr<Visitor> &visitor(visitor_it.second);
+        Ptr<Visitor> parent = rhs.visitor(visitor->id());
+        visitor->set_class_probabilities(parent->class_probabilities());
+        visitor->set_class_member_indicator(parent->imputed_class_membership());
+      }
+
+      for (auto &site_it : sites_) {
+        Ptr<Site> &site(site_it.second);
+        Ptr<Site> parent = rhs.site(site->id());
+        site->set_probs(parent->visit_probs());
+      }
+    }
+    return *this;
+  }
+
   MultinomialFactorModel * MultinomialFactorModel::clone() const {
     return new MultinomialFactorModel(*this);
   }
 
+  void MultinomialFactorModel::add_data(const Ptr<Data> &data_point) {
+    Ptr<MultinomialFactorData> native_data_point = data_point.dcast<MultinomialFactorData>();
+    if (!native_data_point) {
+      report_error("Data point could not be caset to MultinomialFactorData.");
+    }
+    record_visit(native_data_point->visitor_id(),
+                 native_data_point->site_id(),
+                 native_data_point->nvisits());
+  }
+
+  void MultinomialFactorModel::combine_data(const Model &rhs, bool) {
+    try {
+      const MultinomialFactorModel & rhs_model(dynamic_cast<const MultinomialFactorModel &>(rhs));
+      for (const auto &visitor_it : rhs_model.visitors()) {
+        const Ptr<Visitor> &visitor(visitor_it.second);
+        for (const auto &site_it : visitor->sites_visited()) {
+          const Ptr<Site> &site(site_it.first);
+          int ntimes = site_it.second;
+          record_visit(visitor->id(), site->id(), ntimes);
+        }
+      }
+    } catch (const std::bad_cast &ex) {
+      report_error("Could not convert model to MultinomialFactorModel");
+    } catch (const std::exception &ex) {
+      report_error("Unknown exception occurred in combine_data.");
+    }
+  }
+  
   void MultinomialFactorModel::clear_data() {
     for (auto &site_it : sites_) {
       site_it.second->clear();

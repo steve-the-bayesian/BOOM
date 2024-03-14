@@ -35,53 +35,10 @@ namespace BOOM {
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
-        default_prior_class_probabilities_(default_prior_class_probabilities),
+        visitor_prior_(default_prior_class_probabilities),
         exposure_counts_(model->number_of_classes(), 0.0)
   {
-    check_probabilities(default_prior_class_probabilities);
-  }
-
-  const Vector &Sampler::prior_class_probabilities(
-      const std::string &visitor_id) const {
-    auto it = prior_class_probabilities_.find(visitor_id);
-    if (it == prior_class_probabilities_.end()) {
-      return default_prior_class_probabilities_;
-    } else {
-      return it->second;
-    }
-  }
-
-  void Sampler::set_prior_class_probabilities(
-      const std::string &visitor_id,
-      const Vector &probs) {
-    check_probabilities(probs);
-    prior_class_probabilities_[visitor_id] = probs;
-  }
-
-  void Sampler::check_probabilities(const Vector &probs) const {
-    if (probs.size()
-        != model_->number_of_classes()) {
-      std::ostringstream err;
-      err << "PoissonFactorModel had " << model_->number_of_classes()
-          << " latent classes, but the prior class membership "
-          << "probabilities had " << probs.size() << " elements.";
-      report_error(err.str());
-    }
-    if (fabs(probs.sum() - 1.0) > 1e-8) {
-      std::ostringstream err;
-      err << "Prior class probabilities must sum to 1.  They sum to "
-          << probs.sum()
-          << ".";
-      report_error(err.str());
-    }
-    int min_pos = probs.imin();
-    if (probs[min_pos] < 0.0) {
-      std::ostringstream err;
-      err << "probs[" << min_pos
-          << "] = " << probs[min_pos]
-          << ".  All probabilities must be non-negative.";
-      report_error(err.str());
-    }
+    //     check_probabilities(default_prior_class_probabilities);
   }
 
   void Sampler::impute_visitors() {
@@ -110,7 +67,7 @@ namespace BOOM {
   }
 
   Vector Sampler::compute_visit_counts(const Site &site) const {
-    Vector counts(model()->number_of_classes(), 0.0);
+    Vector counts(model_->number_of_classes(), 0.0);
     for (const auto &visitor_it : site.observed_visitors()) {
       const Ptr<Visitor> &visitor(visitor_it.first);
       Int visit_count = visitor_it.second;

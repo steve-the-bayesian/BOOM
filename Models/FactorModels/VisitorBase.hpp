@@ -94,6 +94,9 @@ namespace BOOM {
         return class_probabilities_->size();
       }
 
+      virtual Int number_of_sites_visited() const = 0;
+      virtual Int number_of_visits() const = 0;
+
      private:
       friend void intrusive_ptr_add_ref(VisitorBase *);
       friend void intrusive_ptr_release(VisitorBase *);

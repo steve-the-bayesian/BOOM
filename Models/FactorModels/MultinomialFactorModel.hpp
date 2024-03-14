@@ -22,9 +22,12 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/FactorModels/VisitorBase.hpp"
 #include "Models/FactorModels/SiteBase.hpp"
+#include "Models/FactorModels/PoissonFactorModel.hpp"
 
 namespace BOOM {
 
+  using MultinomialFactorData = PoissonFactorData;
+  
   namespace FactorModels {
     class MultinomialSite;
     
@@ -54,6 +57,12 @@ namespace BOOM {
       sites_visited() const {
         return sites_visited_;
       }
+
+      Int number_of_sites_visited() const override {
+        return sites_visited_.size();
+      }
+
+      Int number_of_visits() const override;
 
       // Clear the record of the number of sites visited.
       void clear() {
@@ -85,6 +94,12 @@ namespace BOOM {
       const Vector &logprob_complement() const {return logprob_complement_;}
       void set_probs(const Vector &probs);
 
+      Int number_of_visitors() const override {
+        return observed_visitors_.size();
+      }
+
+      Int number_of_visits() const override;
+      
       void clear() {
         observed_visitors_.clear();
       }
@@ -120,9 +135,9 @@ namespace BOOM {
 
     explicit MultinomialFactorModel(int num_classes);
     MultinomialFactorModel(const MultinomialFactorModel &rhs);
-    MultinomialFactorModel(MultinomialFactorModel &&rhs);
+    MultinomialFactorModel(MultinomialFactorModel &&rhs) = default;
     MultinomialFactorModel &operator=(const MultinomialFactorModel &rhs);
-    MultinomialFactorModel &operator=(MultinomialFactorModel &&rhs);
+    MultinomialFactorModel &operator=(MultinomialFactorModel &&rhs) = default;
 
     MultinomialFactorModel *clone() const override;
 

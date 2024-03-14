@@ -105,6 +105,12 @@ namespace BOOM {
         sites_visited_.clear();
       }
 
+      Int number_of_sites_visited() const override {
+        return sites_visited_.size();
+      }
+
+      Int number_of_visits() const override;
+      
      private:
       // The map is keyed by a raw pointer to the visited site.  The value is a
       // count of the number of times the site was visited by this Visitor.
@@ -132,6 +138,12 @@ namespace BOOM {
       Vector log_lambda() const {return log_lambda_;}
       void set_lambda(const Vector &lambda);
 
+      Int number_of_visitors() const override {
+        return observed_visitors_.size();
+      }
+
+      Int number_of_visits() const override;
+      
       // The record of the number of visits by each visitor.
       const std::map<Ptr<PoissonVisitor>, int> &observed_visitors() const {
         return observed_visitors_;

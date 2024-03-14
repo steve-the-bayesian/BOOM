@@ -46,6 +46,14 @@ namespace BOOM {
       sites_visited_[site] += ntimes;
     }
 
+    Int Visitor::number_of_visits() const {
+      Int ans = 0;
+      for (const auto &it : sites_visited_) {
+        ans += it.second;
+      }
+      return ans;
+    }
+
     Site::PoissonSite(const std::string &id, int num_classes)
         : SiteBase(id),
           visitation_rates_(new VectorParams(num_classes, 1.0)),
@@ -61,6 +69,14 @@ namespace BOOM {
       log_lambda_ = log(lambda);
     }
 
+    Int Site::number_of_visits() const {
+      Int ans = 0;
+      for (const auto &it : observed_visitors_) {
+        ans += it.second;
+      }
+      return ans;
+    }
+    
     Matrix Site::visitor_counts() const {
       Matrix ans(number_of_classes(), 2, 0.0);
       for (const auto &it : observed_visitors_) {
@@ -88,6 +104,7 @@ namespace BOOM {
 
   PoissonFactorModel & PoissonFactorModel::operator=(const PoissonFactorModel &rhs) {
     if (&rhs != this) {
+      clear_data();
       for (const auto &visitor_it : rhs.visitors_) {
         const Ptr<Visitor> &visitor(visitor_it.second);
         for (const auto &it : visitor->sites_visited()) {
@@ -105,7 +122,9 @@ namespace BOOM {
       }
 
       for (auto &site_it : sites_) {
-        Ptr<Site> parent = rhs.site(site_it.first);
+        Ptr<Site> &site(site_it.second);
+        Ptr<Site> parent = rhs.site(site->id());
+        site->set_lambda(parent->lambda());
       }
     }
     return *this;

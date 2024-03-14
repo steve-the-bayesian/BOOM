@@ -19,6 +19,7 @@
 */
 
 #include <string>
+#include "uint.hpp"
 #include "cpputil/RefCounted.hpp"
 
 namespace BOOM {
@@ -33,6 +34,9 @@ namespace BOOM {
           : id_(id)
       {}
 
+      virtual Int number_of_visitors() const = 0;
+      virtual Int number_of_visits() const = 0;
+      
       virtual ~SiteBase() {}
       
       const std::string & id() const {return id_;}
