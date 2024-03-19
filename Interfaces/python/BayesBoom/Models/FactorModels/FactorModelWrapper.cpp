@@ -56,7 +56,7 @@ namespace BayesBoom {
             },
             "The number of distinct sites visited at least one time.\n")
         ;
-
+    
     //===========================================================================
     py::class_<FactorModels::PoissonVisitor,
                FactorModels::VisitorBase,
@@ -136,7 +136,7 @@ namespace BayesBoom {
             "The number of distinct visitors that have visited the site "
             "one or more times.")
         ;
-
+    
     //===========================================================================
     py::class_<FactorModels::PoissonSite,
                FactorModels::SiteBase,
@@ -391,7 +391,7 @@ namespace BayesBoom {
                return out.str();
              })
         ;
-
+    
     //===========================================================================
     py::class_<PoissonFactorModel,
                PriorPolicy,
@@ -604,6 +604,13 @@ namespace BayesBoom {
              "user-specific prior has not been specified for that user.\n"
              "  seeding_rng:  The random number generator used to seed this "
              "sampler's RNG.\n")
+        .def("prior_class_probabilities",
+             [](MultinomialFactorModelPosteriorSampler &sampler,
+                const std::string &user_id) {
+               return sampler.prior_class_probabilities(user_id);
+             },
+             "Return the prior class probabilities for the requested user.  "
+             "If the user is not found then the default prior is returned.\n")
         .def("set_prior_class_probabilities",
              [](MultinomialFactorModelPosteriorSampler &sampler,
                 std::vector<std::string> &user_ids,
@@ -633,6 +640,10 @@ namespace BayesBoom {
              "to 1, the number of rows must match the length of 'user_ids', "
              "and the number of columns must equal the number of latent "
              "classes.\n")
+        .def("impute_visitors",
+             [](MultinomialFactorModelPosteriorSampler &sampler) {
+               sampler.impute_visitors();
+             })
         ;
     //===========================================================================
     py::class_<PoissonFactorPosteriorSamplerBase,
@@ -682,8 +693,8 @@ namespace BayesBoom {
                sampler.impute_visitors();
              })
         ;
-
-
+        
+    
     //===========================================================================
     py::class_<PoissonFactorHierarchicalSampler,
                PoissonFactorPosteriorSamplerBase,
@@ -769,7 +780,7 @@ namespace BayesBoom {
             })
         ;
 
-
+    
     //===========================================================================
     py::class_<PoissonFactorModelIndependentGammaPosteriorSampler,
                PoissonFactorPosteriorSamplerBase,

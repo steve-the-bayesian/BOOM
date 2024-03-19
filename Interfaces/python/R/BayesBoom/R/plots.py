@@ -227,9 +227,6 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
             color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
 
-    if fig is not None:
-        fig.show()
-
     return fig, ax
 
 
@@ -343,7 +340,7 @@ def AddSegments(x, y, ax, half_width_factor=.45, adjust=True, **kwargs):
                     max(ylim[1], np.max(y))]
             ax.set_ylim(ylim)
 
-        xlim = ax.get_xim()
+        xlim = ax.get_xlim()
         if x0[0] < xlim[0] or x1[-1] > xlim[1]:
             xlim = [min(xlim[0], x[0]), max(xlim[1], x1[-1])]
             ax.set_xlim(xlim)
