@@ -22,27 +22,30 @@
 
 namespace BOOM {
 
-  void check_probabilities(const ConstVectorView &probs,
+  std::string check_probabilities(const ConstVectorView &probs,
                            bool require_positive,
                            int size,
-                           double tolerance) {
+                           double tolerance,
+                           bool throw_on_error) {
     if (tolerance < 0) {
       report_error("check_probabilities:  tolerance must be positive.");
     }
-    
+    std::ostringstream err;
     if (size > 0 && probs.size() != size) {
-      std::ostringstream err;
       err << "The required size is " << size
           << ", but the supplied probabilities had "
           << probs.size() << " elements.";
-      report_error(err.str());
+      if (throw_on_error) {
+        report_error(err.str());
+      } 
     }
     if (fabs(probs.sum() - 1.0) > tolerance) {
-      std::ostringstream err;
       err << "Prior class probabilities must sum to 1.  They sum to "
           << probs.sum()
           << ".";
-      report_error(err.str());
+      if (throw_on_error) {
+        report_error(err.str());
+      }
     }
     int min_pos = probs.imin();
     if (probs[min_pos] < (require_positive ? 0.0 : tolerance)) {
@@ -50,8 +53,11 @@ namespace BOOM {
       err << "probs[" << min_pos
           << "] = " << probs[min_pos]
           << ".  All probabilities must be non-negative.";
-      report_error(err.str());
+      if (throw_on_error) {
+        report_error(err.str());
+      }
     }
+    return err.str();
   }
   
 }  // namespace BOOM

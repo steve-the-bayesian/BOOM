@@ -23,9 +23,6 @@
 
 namespace BOOM {
 
-  // Raise an exception if any elements of probs are less than zero, or if the
-  // sum does not equal 1.
-  //
   // Args:
   //   probs:  The vector to check.
   //   require_positive: If true then signal an error if a zero probability is
@@ -33,12 +30,21 @@ namespace BOOM {
   //   size:  If size > 0 then requre probs.size() to match the 'size' argument.
   //   tolerance: A small positive value to use when checking for zero
   //     probabilities, or checking the sum of the elements vs 1.0
-  void check_probabilities(const ConstVectorView &probs,
-                           bool require_positive = true,
-                           int size = 0,
-                           double tolerance = 1e-6);
+  //   throw_on_error: If true then an exception will be thrown if any elements
+  //     of probs are less than zero, or if the sum does not equal 1.  If false,
+  //     then the error message that would have been the body of the exception
+  //     is returned.  
+  //
+  // Returns:
+  //   If the input is a valid probability distribution then the empty string is
+  //   returned.  Otherwise an error message is returned (or thrown, depending
+  //   on the value of 'throw_on_error').
+  std::string check_probabilities(const ConstVectorView &probs,
+                                  bool require_positive = true,
+                                  int size = 0,
+                                  double tolerance = 1e-6,
+                                  bool throw_on_error=true);
 
-  
 }
 
 #endif  //  BOOM_CPPUTIL_DATA_CHECKING_HPP_
