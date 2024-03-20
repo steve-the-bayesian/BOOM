@@ -21,3 +21,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "simulated_annealing_test",
+    size = "small",
+    srcs = ["simulated_annealing_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
