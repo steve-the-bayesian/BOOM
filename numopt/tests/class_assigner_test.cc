@@ -3,6 +3,9 @@
 #include "LinAlg/Matrix.hpp"
 #include "test_utils/test_utils.hpp"
 #include "distributions.hpp"
+#include "stats/kl_divergence.hpp"
+
+#include "cpputil/report_error.hpp"
 
 namespace {
   using namespace BOOM;
@@ -21,48 +24,87 @@ namespace {
     return out.str();
   }
 
-
   class ClassAssignerTest : public ::testing::Test {
    protected:
     ClassAssignerTest() {
       GlobalRng::rng.seed(8675309);
     }
-  };
 
-  // Suppose users are generated from one of three groups with probabilities
-  // (.3, .4, .3).  A single binomial trial is conduc
-  TEST_F(ClassAssignerTest, SmallExample) {
+    void simulate_data(
+        int sample_size,
+        const Vector &class_probs,
+        int binomial_n,
+        const Vector &binomial_probs,
+        RNG &rng) {
 
-    int sample_size = 1000;
-    Vector class_probs = {.3, .4, .3};
-    std::vector<int> true_class_values = rmulti_vector_mt(
-        GlobalRng::rng, sample_size, class_probs);
-
-    // 
-    Vector binomial_probs = {.4, .45, .5};
-    int n = 1;
-    
-    std::vector<int> y(sample_size);
-    Matrix posteriors(sample_size, class_probs.size());
-    for (int i = 0; i < sample_size; ++i) {
-      y[i] = rbinom_mt(GlobalRng::rng,
-                       n,
-                       binomial_probs[true_class_values[i]]);
-      double total = 0;
-      for (int j = 0; j < posteriors.ncol(); ++j) {
-        posteriors(i, j) =
-            class_probs[j] * dbinom(y[i], n, binomial_probs[j]);
-        total += posteriors(i, j);
+      if (class_probs.size() != binomial_probs.size()) {
+        report_error("class_probs and binomial_probs must be the same size.");
       }
-      posteriors.row(i) /= total;
+      class_probs_ = class_probs;
+      posteriors_.resize(sample_size, class_probs.size());
+      true_class_.resize(sample_size);
+      for (int i = 0; i < sample_size; ++i) {
+        true_class_[i] = rmulti_mt(rng, class_probs);
+        int y = rbinom_mt(rng, binomial_n, binomial_probs[true_class_[i]]);
+        for (size_t j = 0; j < class_probs.size(); ++j) {
+          posteriors_(i, j) = class_probs[j] * dbinom(
+              y, binomial_n, binomial_probs[j]);
+        }
+        double total = posteriors_.row(i).sum();
+        posteriors_.row(i) /= total;
+      }
     }
 
+    Matrix posteriors_;
+    Vector class_probs_;
+    std::vector<int> true_class_;
+  };
+
+  // With a very weak likelihood most marginal posteriors will look like the
+  // prior.  In this case the KL divergence between the assignment and the
+  // target should be less than the given bound on KL.
+  TEST_F(ClassAssignerTest, SmallExample) {
+    simulate_data(1000,
+                  Vector{.3, .4, .3},
+                  1,
+                  Vector{.4, .45, .5},
+                  GlobalRng::rng);
     ClassAssigner assigner;
+    assigner.set_max_kl(.01);
     std::vector<int> assignment = assigner.assign(
-        posteriors,
-        class_probs,
+        posteriors_,
+        class_probs_,
         GlobalRng::rng);
-    
+
+    EXPECT_LE(assigner.kl(), .01);
+  }
+
+  // With a highly informative likelihood and a weak bound on KL, the assignment
+  // should yield (mostly) MAP estimates.
+  TEST_F(ClassAssignerTest, StrongInformation) {
+    simulate_data(1000,
+                  Vector{.3, .4, .3},
+                  100,
+                  Vector{.2, .5, .8},
+                  GlobalRng::rng);
+    ClassAssigner assigner;
+    //    assigner.set_max_kl(1);
+    std::vector<int> assignment = assigner.assign(
+        posteriors_,
+        class_probs_,
+        GlobalRng::rng);
+
+    std::cout << "kl = " << assigner.kl() << ".\n";
+
+    EXPECT_EQ(assignment.size(), 1000);
+    int mistakes = 0;
+    for (size_t i = 0; i < assignment.size(); ++i) {
+      if (assignment[i] != true_class_[i]) {
+        ++mistakes;
+      }
+    }
+    EXPECT_LE(mistakes, 10);
+    cout << "mistakes = " << mistakes << ".\n";
   }
 
 }  // namespace

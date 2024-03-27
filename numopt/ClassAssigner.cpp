@@ -23,8 +23,7 @@
 #include "stats/kl_divergence.hpp"
 #include "distributions.hpp"
 
-
-#include <iostream>
+// #include <iostream>
 
 namespace BOOM {
 
@@ -47,7 +46,7 @@ namespace BOOM {
     int original_value = assignment_[index];
 
     double pmax = probs.max();
-    
+
     double original_cost =
         log(pmax / probs[original_value]) / assignment_.size()
         + distribution_scale_factor_ * kl_divergence(
@@ -83,7 +82,7 @@ namespace BOOM {
       }
     }
   }
-  
+
   Int ClassAssigner::simulated_annealing_step(RNG &rng) {
     Int num_changes = 0;
     for (size_t i = 0; i < assignment_.size(); ++i) {
@@ -94,14 +93,11 @@ namespace BOOM {
         empirical_distribution_.remove_count(assignment_[i]);
         empirical_distribution_.add_count(candidate);
         assignment_[i] = candidate;
-        std::cout << "Accepted move for subject " << i << ".\n";
-      } else {
-        std::cout << "Rejected move for subject " << i << ".\n";
       }
     }
     return num_changes;
   }
-  
+
   // The distance between the empirical distribution function and the global
   // distribution is given by the KL divergence (with the global distribution as
   // the baseline).  The KL is the expected (under the baseline) log likelihood
@@ -140,31 +136,49 @@ namespace BOOM {
     global_target_ = global_target;
 
     assignment_.resize(marginal_posteriors.nrow());
+    // It is tempting to initialize the assignment by setting each object to its
+    // most likely value (MAP estimation).  However, in applications where this
+    // function is necessary, it is likely MAP estimation would set some
+    // elements of the empirical distribution to zero, or even that all elements
+    // would assigned to a single class.  In this case the KL divergence between
+    // the global and empirical distributions would be infinite, which is an
+    // undesirable starting value.
+    //
+    // To avoid an infinite KL divergence after initialization, half the objects
+    // are assigned MAP estimates, while the other half are randomly assigned
+    // values according to the global target distribution.
     for (Int i = 0; i < marginal_posteriors.nrow(); ++i) {
-      assignment_[i] = marginal_posteriors.row(i).imax();
+      double u = runif_mt(rng);
+      if (u < .5) {
+        assignment_[i] = marginal_posteriors.row(i).imax();
+      } else {
+        assignment_[i] = rmulti_mt(rng, global_target);
+      }
     }
 
     empirical_distribution_ = FrequencyDistribution(
         assignment_, 0, marginal_posteriors.ncol() - 1);
 
-    while (double kl = kl_divergence(
-               global_target_,
-               empirical_distribution_.relative_frequencies())
-           > max_tolerable_kl_) {
-      std::cout << "kl divergence = " << kl << "\n";
+    // 'do' loop here forces at least one pass through simulated annealing.
+    do {
       simulated_annealing(rng);
       distribution_scale_factor_ *= 1.5;
-    }
+    } while (kl() > max_tolerable_kl_);
+
     return assignment_;
+  }
+
+  //===========================================================================
+  double ClassAssigner::kl() const {
+    return kl_divergence(
+        global_target_,
+        empirical_distribution_.relative_frequencies());
   }
 
   //===========================================================================
   void ClassAssigner::check_inputs(
       const Matrix &marginal_posteriors,
       const Vector &global_target) const {
-    //---------------------------------------------------------------------------
-    // Check for valid inputs
-    //---------------------------------------------------------------------------
     if (marginal_posteriors.ncol() != global_target.size()) {
       std::ostringstream err;
       err << "The number of columns in marginal_posteriors ("
@@ -191,7 +205,7 @@ namespace BOOM {
       }
     }
   }
-    
-  
-  
+
+
+
 }  // namespace BOOM

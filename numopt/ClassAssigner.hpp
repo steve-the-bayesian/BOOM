@@ -33,12 +33,16 @@ namespace BOOM {
    public:
     ClassAssigner();
     void set_initial_temperature(double temp) {initial_temperature_ = temp;}
-    void set_max_tolerable_kl(double kl) {max_tolerable_kl_ = kl;}
+    void set_max_kl(double kl) {max_tolerable_kl_ = kl;}
     void set_max_iterations(int niter) {niter_ = niter;}
-    
+
     std::vector<int> assign(const Matrix &marginal_posteriors,
                             const Vector &global_target,
                             RNG &rng);
+
+    // The Kullback-Liebler divergence between the target and empirical
+    // distributions.
+    double kl() const;
 
    private:
 
@@ -57,7 +61,7 @@ namespace BOOM {
 
     // The maximum number of simulated annealing iterations.
     int niter_;
-    
+
     // A weight placed on the KL divergence between empirical_distribution_ and
     // global_target_ when assigning values to individuals.  The larger this
     // weight the greater the emphasis on distributional agreement.  The smaller
@@ -112,9 +116,9 @@ namespace BOOM {
                           size_t index,
                           FrequencyDistribution &empirical_distribution,
                           RNG &rng) const;
-    
+
   };
-  
+
 } // namespace BOOM
 
 #endif  // BOOM_NUMOPT_CLASS_ASSIGNER_HPP_

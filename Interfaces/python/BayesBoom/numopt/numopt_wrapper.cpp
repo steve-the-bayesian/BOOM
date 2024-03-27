@@ -47,9 +47,9 @@ namespace BayesBoom {
              py::arg("temp"),
              "Set the temperature to use at the start of a simulated "
              "annealing run.\n")
-        .def("set_max_tolerable_kl",
+        .def("set_max_kl",
              [](ClassAssigner &assigner, double kl) {
-               assigner.set_max_tolerable_kl(kl);
+               assigner.set_max_kl(kl);
              },
              py::arg(""),
              "Set the largest tolerable Kullback-Liebler divergence between "
@@ -93,6 +93,13 @@ namespace BayesBoom {
              "Returns:\n"
              "A list of integers indicating the class assignment for each "
              "object.\n")
+        .def_property_readonly(
+            "kl",
+            [](const ClassAssigner &assigner) {
+              return assigner.kl();
+            },
+            "The Kullback-Liebler divergence between the target and "
+            "empirical assignment distributions.")
         ;
 
   }
