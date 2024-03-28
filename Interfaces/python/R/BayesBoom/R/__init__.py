@@ -5,6 +5,8 @@ from .pretty import pretty
 
 from .ls import ls
 
+from .assign_classes import assign_classes, ClassAssigner
+
 from .base import (
     data_frame,
     table,
@@ -112,7 +114,7 @@ from .probability import (
     rmarkov,
 )
 
-from .stats import density, sd, mean, acf
+from .stats import density, sd, mean, acf, kl_divergence
 
 from .summary import (
     summary,
