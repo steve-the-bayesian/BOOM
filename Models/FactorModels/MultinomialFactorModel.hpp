@@ -120,7 +120,9 @@ namespace BOOM {
       Vector logprob_complement_;
 
       // The number of visits from each observed visitor.
-      std::map<Ptr<MultinomialVisitor>, int, IdLess<MultinomialVisitor>> observed_visitors_;
+      std::map<Ptr<MultinomialVisitor>,
+               int,
+               IdLess<MultinomialVisitor>> observed_visitors_;
 
       // Fill the vectors logprob_ and logprob_complement_ from values of
       // visit_probs_.
@@ -177,6 +179,11 @@ namespace BOOM {
     std::map<std::string, Ptr<Site>> & sites() {return sites_;}
     const std::map<std::string, Ptr<Site>> & sites() const {return sites_;}
 
+    // Returns the index that would correspond to the Site with the given
+    // site_id if the sites were stored in a vector in the same order they're
+    // stored in this model object.
+    Int get_site_index(const std::string &site_id) const;
+
     // A directory of Visitors, indexed by visitor id.
     std::map<std::string, Ptr<Visitor>> & visitors() {return visitors_;}
     const std::map<std::string, Ptr<Visitor>> & visitors() const {return visitors_;}
@@ -185,7 +192,7 @@ namespace BOOM {
     // Otherwise return nullptr.
     Ptr<Site> site(const std::string &id) const;
 
-    // If the supplied id is recognized, return the Visito_ with that ID.
+    // If the supplied id is recognized, return the Visitor with that ID.
     // Otherwise return nullptr.
     Ptr<Visitor> visitor(const std::string &id) const;
 

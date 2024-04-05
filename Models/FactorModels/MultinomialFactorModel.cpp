@@ -53,13 +53,6 @@ namespace BOOM {
     }
 
     void Site::set_probs(const Vector &probs) {
-      if (probs.size() != visit_probs_->size()) {
-        std::ostringstream err;
-        err << "Probs of dimension " << visit_probs_->size()
-            << " being replaced by probs of dimension "
-            << probs.size() << ".\n";
-        report_error(err.str());
-      }
       visit_probs_->set(probs);
       refresh_probs();
     }
@@ -187,6 +180,15 @@ namespace BOOM {
     site->observe_visitor(visitor, nvisits);
   }
 
+  Int MultinomialFactorModel::get_site_index(const std::string &id) const {
+    auto it = sites_.find(id);
+    if (it == sites_.end()) {
+      return -1;
+    } else {
+      return std::distance(sites_.begin(), it);
+    }
+  }
+
   Ptr<Site> MultinomialFactorModel::site(const std::string &id) const {
     auto it = sites_.find(id);
     if (it == sites_.end()) {
@@ -204,7 +206,5 @@ namespace BOOM {
       return it->second;
     }
   }
-
-
 
 }  // namespace BOOM

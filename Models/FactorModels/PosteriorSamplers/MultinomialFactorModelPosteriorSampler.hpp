@@ -40,6 +40,7 @@ namespace BOOM {
     void draw() override;
     double logpri() const override;
 
+    int number_of_classes() const {return model_->number_of_classes();}
     void impute_visitors();
     void impute_visitor(Visitor &visitor);
 
