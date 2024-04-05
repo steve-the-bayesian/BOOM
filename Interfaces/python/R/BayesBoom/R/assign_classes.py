@@ -66,7 +66,9 @@ class ClassAssigner:
         """
         self._assigner.set_max_iterations(int(niter))
 
-    def assign(self, marginal_posteriors, global_target):
+    def assign(self, marginal_posteriors,
+               global_target,
+               rng=boom.GlobalRng.rng):
         """
         Assign class memberships to a collection of object, while maintaining an
         empirical distribution of assigned classes close to a global target
@@ -85,7 +87,8 @@ class ClassAssigner:
         """
         return self._assigner.assign(
             to_boom_matrix(marginal_posteriors),
-            to_boom_vector(global_target))
+            to_boom_vector(global_target),
+            rng=rng)
 
     @property
     def kl(self):
