@@ -196,6 +196,15 @@ class FactorModelBase:
         """
         Return the discrete probability distribution describing the prior belief
         about the requested site.
+
+        Args:
+          user_id: Either a string (or list of strings)
+
+        Returns:
+          If user_id is a single string, then a 1-D numpy array of probabilities
+          is returned.  If user_id is a list of strings then a 2D array is
+          returned, with rows corresponding to user id and columns to class
+          levels.
         """
         return R.to_numpy(
             self._posterior_sampler.prior_class_probabilities(user_id))

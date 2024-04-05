@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
 from .factor_model_base import FactorModelBase
@@ -20,6 +21,18 @@ class MultinomialFactorModel(FactorModelBase):
             raise ValueError(f"Site {site_id} could not be found.")
         return self._site_draws[:, idx, :]
 
+    def assign_classes(self, user_ids, burn=0):
+        """
+        Assign class indicators to a group of user id's.  The assignment
+        balances each user's marginal posterior class probabilities against
+        the need to match the global prior distribution.
+        """
+        posterior_probs = self.posterior_class_probabilities(
+            user_id=user_ids, distribution=False, burn=burn)
+        assignment = R.assign_classes(posterior_probs,
+                                      self._prior_class_membership_probabilites)
+        return pd.Series(assignment, index=user_ids)
+
     def posterior_class_probabilities(self,
                                       user_id,
                                       distribution=False,
@@ -30,7 +43,8 @@ class MultinomialFactorModel(FactorModelBase):
 
         Args:
           user_id: Either a string specifying the id of a user, or an integer in
-            the range [0, num_users).
+            the range [0, num_users).  Alternatively, an interable of such
+            identifiers can be provided.
           distribution: See below.
           burn: The number of MCMC iterations to discard as burn-in.
 
@@ -40,41 +54,26 @@ class MultinomialFactorModel(FactorModelBase):
           the model parameters at each MCMC iteration.  Each row of this array
           is one MCMC iteration.  If False then a 1D numpy array is returned
           averaging over the posterior distribution of the parameters.
+
+          If user_id is an iterable (other than a string) then the dimension of
+          the returned array increases by 1.  In this case the leading dimension
+          corresponds to the user id.
         """
         if isinstance(user_id, int):
             user_id = self._user_ids[user_id]
+        elif isinstance(user_id, str):
+            user_id = user_id
 
-        prior = self.prior_class_probabilities(user_id)
-        if prior.max() >= .9999:
-            return prior
-        else:
-            log_prior = np.log(prior)
+        if not R.is_iterable(user_id):
+            user_id = [user_id]
 
-        nlevels = len(prior)
-        user_object = self.user(user_id)
+        ans = self._model.posterior_class_probabilities(
+            self._posterior_sampler,
+            user_id,
+            self._site_draws,
+            int(burn)).to_numpy()
 
-        visits = user_object.visits
-        nsites = len(visits)
-
-        niter = self.niter - burn
-        log_likelihood = np.zeros((niter, nlevels))
-
-        for i in range(nsites):
-            url = visits.index[i]
-            probs = self.site_draws(url)[burn:, :]
-            log_likelihood += np.log(probs)
-
-        unnormalized_posterior = log_likelihood + log_prior.reshape((1, -1))
-        iter_max = np.max(unnormalized_posterior, axis=1).reshape((-1, 1))
-        unnormalized_posterior = np.exp(
-            unnormalized_posterior - np.exp(iter_max))
-        normalizing_constant = np.sum(unnormalized_posterior, axis=1).reshape(
-            (-1, 1))
-        posterior = unnormalized_posterior / normalizing_constant
-        if distribution:
-            return posterior
-        else:
-            return np.mean(posterior, axis=0)
+        return pd.DataFrame(ans, index=user_id)
 
     def _allocate_space(self, niter: int):
         # users[i, j] is the imputed category for user j in iteration i.
@@ -105,4 +104,3 @@ class MultinomialFactorModel(FactorModelBase):
 
         model.set_method(posterior_sampler)
         return posterior_sampler
-

@@ -122,6 +122,22 @@ class MultinomialFactorModelTest(unittest.TestCase):
                        count=self._data["count"])
         return model
 
+    def test_prior_class_probabilities(self):
+        model = self.build_model()
+        users = np.unique(self._data["user"])
+        probs = model.prior_class_probabilities(users[0])
+        self.assertIsInstance(np.ndarray, probs)
+        self.assertTrue(hasattr(probs, "shape"))
+        self.assertEqual(len(probs.shape), 1)
+        self.assertEqual(probs.shape[0], self.num_classes)
+
+        probs = model.prior_class_probabilities(users)
+        self.assertIsInstance(np.ndarray, probs)
+        self.assertTrue(hasattr(probs, "shape"))
+        self.assertEqual(len(probs.shape), 2)
+        self.assertEqual(probs.shape,
+                         (self.num_users, self.num_classes))
+
     def test_mcmc(self):
         model = self.build_model()
 
@@ -219,7 +235,7 @@ if _debug_mode:
         rig.setUp()
 
     rig.smoke_test()
-    rig.test_mcmc()
+    rig.test_prior_class_probabilities()
 
     print("Goodbye, cruel world!")
 
