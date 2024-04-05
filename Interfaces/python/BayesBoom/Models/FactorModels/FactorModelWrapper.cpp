@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 
 #include "Models/FactorModels/PoissonFactorModel.hpp"
 #include "Models/FactorModels/MultinomialFactorModel.hpp"
@@ -23,8 +24,63 @@ namespace BayesBoom {
   using namespace BOOM;
   using BOOM::uint;
 
-  void FactorModel_def(py::module &boom) {
+  namespace {
+    Vector compute_multinomial_posterior_class_probabilities(
+        MultinomialFactorModel &model,
+        const MultinomialFactorModelPosteriorSampler &sampler,
+        const std::string &visitor_id,
+        py::array_t<double> site_draws,
+        int burn) {
+      using Visitor = ::BOOM::FactorModels::MultinomialVisitor;
+      using Site = ::BOOM::FactorModels::MultinomialSite;
 
+      Vector prior = sampler.prior_class_probabilities(visitor_id);
+      Ptr<Visitor> visitor = model.visitor(visitor_id);
+      if (!visitor || prior.max() > .999) {
+        return prior;
+      }
+               
+      size_t niter = site_draws.shape(0);
+      size_t nclass = site_draws.shape(2);
+      if (burn < 0) {
+        burn = 0;
+      }
+      if (burn >= niter) {
+        return prior;
+      }
+               
+      std::vector<Ptr<Site>> sites;
+      std::map<std::string, size_t> site_index_map;
+      for (const auto &it : visitor->sites_visited()) {
+        Ptr<Site> site = it.first;
+        sites.push_back(site);
+        site_index_map[site->id()] = model.get_site_index(site->id());
+      }
+
+      // The dimensions of site_draws are
+      // - niter
+      // - site
+      // - class 
+      Vector log_prior = log(prior);
+      auto unchecked_site_draws = site_draws.unchecked<3>();
+      Vector posterior(log_prior.size(), 0.0);
+      for (size_t i = burn; i < niter; ++i) {
+        Vector tmp_log_posterior = log(prior);
+        for (size_t j = 0; j < sites.size(); ++j) {
+          long site_index = site_index_map[sites[j]->id()];
+          for (size_t k = 0; k < nclass; ++k) {
+            tmp_log_posterior[k] += unchecked_site_draws(
+                i, site_index, k);
+          }
+        }
+        posterior += tmp_log_posterior.normalize_logprob();
+      }
+      return posterior / (niter - burn);
+    }
+    
+  }  // namespace
+  
+  void FactorModel_def(py::module &boom) {
     //===========================================================================
     py::class_<FactorModels::VisitorBase,
                BOOM::Ptr<FactorModels::VisitorBase>>(
@@ -246,7 +302,8 @@ namespace BayesBoom {
             "num_sites",
             [](MultinomialFactorModel &model) {
               return model.sites().size();
-            })
+            },
+            "The number of distinct sites observed by the model.")
         .def_property_readonly(
             "site_ids",
             [](MultinomialFactorModel &model) {
@@ -257,8 +314,6 @@ namespace BayesBoom {
               return site_ids;
             },
             "The IDs of the sites, in the order they are stored by the model.\n")
-
-
         .def_property_readonly(
             "probs",
             [](MultinomialFactorModel &model) {
@@ -355,6 +410,46 @@ namespace BayesBoom {
              "Returns:\n"
              "  The Visitor object managed by the model, corresponding to "
              "the requested ID.\n")
+        .def("posterior_class_probabilities",
+             [](MultinomialFactorModel &model,
+                const MultinomialFactorModelPosteriorSampler &sampler,
+                const std::string &visitor_id,
+                py::array_t<double> site_draws,
+                int burn) {
+               return compute_multinomial_posterior_class_probabilities(
+                   model, sampler, visitor_id, site_draws, burn);
+             },
+             py::arg("sampler"),
+             py::arg("visitor_id"),
+             py::arg("site_draws"),
+             py::arg("burn") = 0,
+             "docs go here")
+        .def("posterior_class_probabilities",
+             [](MultinomialFactorModel &model,
+                MultinomialFactorModelPosteriorSampler &sampler,
+                const std::vector<std::string> &user_ids,
+                py::array_t<double> site_draws,
+                int burn) {
+               size_t num_users = user_ids.size();
+               Matrix ans(num_users, model.number_of_classes());
+               for (size_t i = 0; i < num_users; ++i) {
+                 ans.row(i) = compute_multinomial_posterior_class_probabilities(
+                     model, sampler, user_ids[i], site_draws, burn);
+               }
+               return ans;
+             },
+             py::arg("sampler"),
+             py::arg("user_ids"),
+             py::arg("site_draws"),
+             py::arg("burn") = 0,
+             "Args:\n\n"
+             "  sampler:  The boom.MultinomialFactorModelPosteriorSampler "
+             "object responsible for the model.\n"
+             "  user_ids:  The (string) ID's for which posterior distributions "
+             "are desired.\n"
+             "  site_draws:  A 3-way numpy array of MCMC draws of "
+             "site parameters.\n"
+             "  burn:  The number of mcmc draws to discard as burn-in.\n")
         .def("set_prior_class_probabilities",
              [](MultinomialFactorModel &model,
                 const std::vector<std::string> &visitor_ids,
@@ -380,8 +475,7 @@ namespace BayesBoom {
              "visitors whose prior probabilities are to be set.\n"
              "  prior_probs: A Matrix, with one row per visitor giving the "
              "probability distribution of that visitor's latent class "
-             "membership.\n"
-             )
+             "membership.\n")
         .def("__repr__",
              [](MultinomialFactorModel &model) {
                std::ostringstream out;
@@ -611,6 +705,19 @@ namespace BayesBoom {
              },
              "Return the prior class probabilities for the requested user.  "
              "If the user is not found then the default prior is returned.\n")
+        .def("prior_class_probabilities",
+             [](MultinomialFactorModelPosteriorSampler &sampler,
+                const std::vector<std::string> &user_ids) {
+               Matrix ans(user_ids.size(), sampler.number_of_classes());
+               for (int i = 0; i < user_ids.size(); ++i) {
+                 ans.row(i) = sampler.prior_class_probabilities(user_ids[i]);
+               }
+               return ans;
+             },
+             "Return the prior class probabilities for the requested "
+             "collection of users.  "
+             "The default prior is returned for any user that cannot "
+             "be found.\n")
         .def("set_prior_class_probabilities",
              [](MultinomialFactorModelPosteriorSampler &sampler,
                 std::vector<std::string> &user_ids,
