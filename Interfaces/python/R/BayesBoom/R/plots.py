@@ -342,7 +342,7 @@ def AddSegments(x, y, ax, half_width_factor=.45, adjust=True, **kwargs):
 
         xlim = ax.get_xlim()
         if x0[0] < xlim[0] or x1[-1] > xlim[1]:
-            xlim = [min(xlim[0], x[0]), max(xlim[1], x1[-1])]
+            xlim = [min(xlim[0], np.min(x0)), max(xlim[1], np.max(x1))]
             ax.set_xlim(xlim)
 
     return ax
