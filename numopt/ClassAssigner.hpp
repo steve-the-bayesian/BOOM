@@ -29,6 +29,25 @@ namespace BOOM {
 
   // Assigns a collection of objects to classes guided by their individual
   // posterior distributions as well as a global target.
+  //
+  // A collection of objects i = 0..n-1 must each be assigned to one of K
+  // classes k = 0, ..., K-1.  Object i comes with a marginal distribution over
+  // its class pi_i.  The empirical distribution of the collection of
+  // assignments must closely match a global target distribution f.
+  //
+  // The assignment of object i to class k_i is done by minimizing a cost
+  // function of the form
+  //
+  // \sum_i=1^n (log (pi_i(k_i_star) / pi_i(k_i))) / n + alpha * KL(f, pi_star)
+  //
+  // where k_i_star is the MAP estimate of user i's class, KL(p1, p2) is the
+  // Kullback Liebler divergence from p1 to p2, and pi_star is the empirical
+  // distribution of the assignments.  The minimization is done by a simulated
+  // annealing algorithm.
+  //
+  // The user inputs a maximum allowed value of KL (a default is available).
+  // The value of alpha is gradually increased until the acceptable tolerance
+  // limit is reached.
   class ClassAssigner {
    public:
     ClassAssigner();
