@@ -23,8 +23,8 @@
 namespace BOOM {
 
   namespace {
-    using Visitor = PoissonFactor::Visitor;
-    using Site = PoissonFactor::Site;
+    using Visitor = FactorModels::PoissonVisitor;
+    using Site = FactorModels::PoissonSite;
     using Sampler = PoissonFactorModelIndependentGammaPosteriorSampler;
   }
 
@@ -52,19 +52,19 @@ namespace BOOM {
       Ptr<Site> &site(site_it.second);
       const std::vector<Ptr<GammaModelBase>> &site_prior(
           intensity_prior(site->id()));
-      Vector counts = compute_visit_counts(*site);
+      Vector visit_counts = compute_visit_counts(*site);
       for (int i = 0; i < site_prior.size(); ++i) {
-        counts[i] += site_prior[i]->a();
+        visit_counts[i] += site_prior[i]->a();
       }
-      Vector lambdas(counts.size());
-      for (int k = 0; k < counts.size(); ++k) {
+      Vector lambdas(visit_counts.size());
+      for (int k = 0; k < visit_counts.size(); ++k) {
         double b = exposure_counts()[k] + site_prior[k]->b();
-        if (!std::isfinite(counts[k]) || !std::isfinite(b)) {
+        if (!std::isfinite(visit_counts[k]) || !std::isfinite(b)) {
           std::ostringstream err;
           err << "site " << site->id()
               << " had an infinite value in position " << k
-              << " in either counts "
-              << counts[k] << "\n"
+              << " in either visit_counts "
+              << visit_counts[k] << "\n"
               << " exposure_counts " << exposure_counts()[k]
               << " or prior: ("
               << site_prior[k]->a()
@@ -72,12 +72,12 @@ namespace BOOM {
               << ".\n";
           report_error(err.str());
         }
-        lambdas[k] = rgamma_mt(rng(), counts[k], b);
+        lambdas[k] = rgamma_mt(rng(), visit_counts[k], b);
         if (lambdas[k] <= 0.0) {
           std::ostringstream err;
           err << "site " << site->id()
               << " generated a zero value for lambda.\n"
-              << "counts[" << k << "] = " << counts[k]
+              << "visit_counts[" << k << "] = " << visit_counts[k]
               << ", b = " << b << "\n";
           report_error(err.str());
         }
@@ -89,7 +89,7 @@ namespace BOOM {
   void Sampler::set_intensity_prior(
       const std::string &site_id,
       const std::vector<Ptr<GammaModelBase>> &prior) {
-    if (prior.size() !=- model()->number_of_classes()) {
+    if (prior.size() != model()->number_of_classes()) {
       std::ostringstream err;
       err << "The model has " << model()->number_of_classes()
           << " latent classes, but the supplied intensity prior had "

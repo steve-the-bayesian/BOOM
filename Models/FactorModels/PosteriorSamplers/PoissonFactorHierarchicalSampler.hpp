@@ -71,6 +71,9 @@ namespace BOOM {
     //     distribution for class membership.  This prior can be replaced for
     //     specific individuals.  See PoissonFactorPosteriorSamplerBase.
     //   prior_mean, kappa, Sigma_guess, prior_df: See above.
+    //   MH_threshold: Sites with at least this many observations in each
+    //     category will be drawn by MH sampling.  Sites that do not satisfy the
+    //     threshold will update using slice sampling.
     //   seeding_rng: The random number generator used to seed this sampler's
     //     RNG.
     PoissonFactorHierarchicalSampler(
@@ -80,6 +83,7 @@ namespace BOOM {
         double kappa,
         const SpdMatrix &Sigma_guess,
         double prior_df,
+        int MH_threshold = 10,
         RNG &seeding_rng = GlobalRng::rng);
 
     double logpri() const override;
@@ -92,19 +96,45 @@ namespace BOOM {
 
     // Different implementations for draw_site_parameters depending on how much
     // data was observed.
-    void draw_site_parameters_MH(Ptr<PoissonFactor::Site> &site);
-    void draw_site_parameters_slice(Ptr<PoissonFactor::Site> &site);
+    void draw_site_parameters_MH(Ptr<FactorModels::PoissonSite> &site);
+    void draw_site_parameters_slice(Ptr<FactorModels::PoissonSite> &site);
 
     const MvnModel *hyperprior() const {
       return profile_hyperprior_.get();
     }
 
+    // Sites with at least 'threshold' observations in each category will be
+    // sampled using MH sampling.
+    void set_MH_threshold(int threshold);
+
+    // Return a report indicating how many moves of each type were tried, and
+    // how many MH attempts succeeded.
+    std::string sampling_report() const;
+    
    private:
     void check_dimension(const Ptr<MvnModel> &profile_hyperprior) const;
 
     PoissonFactorModel *model_;
+
+    // Prior distribution for mulinomial logits of intensity parameters, with
+    // category zero as the reference class.
     Ptr<MvnModel> profile_hyperprior_;
+
+    // Posterior sampler for profile_hyperprior_.
     Ptr<MvnConjSampler> hyperprior_sampler_;
+
+    // The number of accepted MH proposals.
+    Int MH_acceptance_;
+
+    // The number of rejected MH proposals.
+    Int MH_failure_;
+
+    // The number of slice sampling draws that have been attempted.
+    Int slice_sample_draws_;
+    
+    // The min number of observations in each category needed to use MH sampling
+    // instead of slice sampling.
+    int MH_threshold_;
   };
 
 }  // namespace BOOM

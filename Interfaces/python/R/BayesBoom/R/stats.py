@@ -191,3 +191,16 @@ def acf(x, lags=40, ax=None, plot=True, correlation=True):
         ax.vlines(lags, ymin=0, ymax=boom_acf)
 
     return boom_acf
+
+
+def kl_divergence(p1, p2):
+    """
+    Args:
+      p1, p2: Discrete probability distributions.  Both distributions must be
+        the same size.  The base distribution is p1.
+
+    Returns:
+      The Kullback-Liebler divergence between p1 and p2, with p1 as the base
+      distribution.
+    """
+    return np.sum(p1 * np.log(p1 / p2))

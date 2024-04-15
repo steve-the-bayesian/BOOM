@@ -159,7 +159,7 @@ HDRS = ${CXX_HDRS}
 ############################################################################
 
 libboom.a: ${OBJECTS}
-	   ${AR} rc $@ $^
+	   ${AR} rcs $@ $^
 
 .PHONY: install
 install: libboom.a

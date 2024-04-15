@@ -25,8 +25,8 @@
 namespace BOOM {
 
   namespace {
-    using Site = PoissonFactor::Site;
-    using Visitor = PoissonFactor::Visitor;
+    using Site = FactorModels::PoissonSite;
+    using Visitor = FactorModels::PoissonVisitor;
   }  // namespace
 
   PoissonFactorHierarchicalSampler::PoissonFactorHierarchicalSampler(
@@ -36,12 +36,17 @@ namespace BOOM {
       double kappa,
       const SpdMatrix &Sigma_guess,
       double prior_df,
+      int MH_threshold,
       RNG &seeding_rng)
       : PoissonFactorPosteriorSamplerBase(
             model,
             default_prior_class_probabilities,
             seeding_rng),
-        profile_hyperprior_(new MvnModel(model->number_of_classes() - 1))
+        profile_hyperprior_(new MvnModel(model->number_of_classes() - 1)),
+        MH_acceptance_(0),
+        MH_failure_(0),
+        slice_sample_draws_(0),
+        MH_threshold_(MH_threshold)
   {
     hyperprior_sampler_.reset(new MvnConjSampler(
         profile_hyperprior_.get(),
@@ -74,9 +79,10 @@ namespace BOOM {
      for (auto &site_it : model()->sites()) {
        Ptr<Site> &site(site_it.second);
        Matrix visitor_counts = site->visitor_counts();
+       
        // column 0 of visitor_counts is the number of imputed visits in each category.
        // column 1 is the number of imputed visitors in each category.
-       if (visitor_counts.col(0).min() >= 10) {
+       if (visitor_counts.col(0).min() >= MH_threshold_) {
          draw_site_parameters_MH(site);
        } else {
          draw_site_parameters_slice(site);
@@ -126,8 +132,7 @@ namespace BOOM {
           exposures_(exposures),
           scale_(scale)
     {
-      Matrix visitor_counts = site_->visitor_counts();
-      counts_ = visitor_counts.col(0);
+      visit_counts_ = site_->visitor_counts().col(0);
     }
 
     // The argument to operator() can be either lambda, or sum_and_logits,
@@ -153,10 +158,10 @@ namespace BOOM {
         return negative_infinity();
       }
 
-      for (int i = 0; i < lambda.size(); ++i) {
-        ans += dpois(counts_[i], lambda[i] * exposures_[i], true);
+      for (int k = 0; k < lambda.size(); ++k) {
+        ans += visit_counts_[k] * log(lambda[k]) - exposures_[k] * lambda[k];
       }
-
+      
       // Assume a flat prior for sum(lambda).
       const ConstVectorView logits(eta, 1);
 
@@ -171,40 +176,46 @@ namespace BOOM {
    private:
     Ptr<Site> site_;
     Ptr<MvnModel> mlogit_profile_prior_;
-    Vector counts_;
+    Vector visit_counts_;
     Vector exposures_;
     Scale scale_;
   };
 
 
-  // A Metropolis-Hastings update to be used when all categories are observed at
-  // or above a threshold that makes it likely that the MH update will be
-  // accepted.
+  // A Metropolis-Hastings update that jointly draws the (a[j,k], b[j, k])
+  // parameters from independent gamma distributions.  This update is
+  // appropriate for high traffic sites with sufficient information for the
+  // likelihood to dominate the prior.
   //
   // Args:
   //   site:  The Site to be updated.
+  //
+  // Effects:
+  //   The parameters of the supplied site are updated with MH draws from their
+  //   full conditional distribution.
   void PoissonFactorHierarchicalSampler::draw_site_parameters_MH(
       Ptr<Site> &site) {
     Vector lambda = site->lambda();
-    Matrix visitor_counts = site->visitor_counts();
-    const ConstVectorView counts(visitor_counts.col(0));
+    Matrix counts = site->visitor_counts();
+    const ConstVectorView visit_counts(counts.col(0));
 
     SiteParameterLogPosterior logpost(
-        site, profile_hyperprior_, exposure_counts(),
+        site,
+        profile_hyperprior_,
+        exposure_counts(),
         SiteParameterLogPosterior::Scale::RAW);
 
     for (size_t i = 0; i < lambda.size(); ++i) {
       // Find alpha and beta for the proposal distribution.
-      double alpha = counts[i] + 1;
+      double alpha = visit_counts[i] + 1;
       double beta = exposure_counts()[i];
       double log_denominator =
           logpost(lambda) - dgamma(lambda[i], alpha, beta, true);
 
-      double lambda_candidate = rgamma_mt(rng(), alpha, beta);
       double original_lambda = lambda[i];
-      lambda[i] = lambda_candidate;
+      lambda[i] = rgamma_mt(rng(), alpha, beta);
       double log_numerator =
-          logpost(lambda) - dgamma(lambda_candidate, alpha, beta, true);
+          logpost(lambda) - dgamma(lambda[i], alpha, beta, true);
 
       double logu = negative_infinity();
       while (!std::isfinite(logu)) {
@@ -212,9 +223,11 @@ namespace BOOM {
       }
       if (logu < log_numerator - log_denominator) {
         // Accept the draw by doing nothing.
+        ++MH_acceptance_;
       } else {
         // Reject the draw by reverting to the original lambda value.
         lambda[i] = original_lambda;
+        ++MH_failure_;
       }
     }
     site->set_lambda(lambda);
@@ -222,6 +235,7 @@ namespace BOOM {
 
   void PoissonFactorHierarchicalSampler::draw_site_parameters_slice(
       Ptr<Site> &site) {
+    ++slice_sample_draws_;
     SumMultinomialLogitTransform transformation;
     Vector eta = transformation.to_sum_logits(site->lambda());
     SiteParameterLogPosterior logpost(
@@ -249,4 +263,28 @@ namespace BOOM {
     site->set_lambda(transformation.from_sum_logits(eta));
   }
 
+  void PoissonFactorHierarchicalSampler::set_MH_threshold(int threshold) {
+    MH_threshold_ = threshold;
+  }
+  
+  std::string PoissonFactorHierarchicalSampler::sampling_report() const {
+    Int total_samples = MH_failure_ + MH_acceptance_ + slice_sample_draws_;
+    std::ostringstream report;
+    double MH_samples = MH_failure_ + MH_acceptance_;
+    double MH_fraction = MH_samples / total_samples;
+    double MH_accept_fraction = MH_acceptance_ / MH_samples;
+
+    report << "Sampler made " << total_samples << " draws.\n"
+           << std::setw(8) << MH_acceptance_ << " MH acceptances\n"
+           << std::setw(8) << MH_failure_ << " MH rejections\n"
+           << std::setw(8) << slice_sample_draws_
+           << " slice sampling draws.\n"
+           << std::setw(8) << std::fixed << 100 * MH_fraction 
+           << "% of draws were MH draws.\n"
+           << std::setw(8) << std::fixed << 100 * MH_accept_fraction
+           << "% of MH draws were accepted.\n";
+        ;
+    return report.str();
+  }
+  
 }  // namespace BOOM

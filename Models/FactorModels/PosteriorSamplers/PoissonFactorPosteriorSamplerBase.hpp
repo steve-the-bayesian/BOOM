@@ -21,6 +21,7 @@
 
 #include "Models/FactorModels/PoissonFactorModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/FactorModels/PosteriorSamplers/VisitorPriorManager.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {
@@ -33,28 +34,31 @@ namespace BOOM {
         const Vector &default_prior_class_probabilities,
         RNG &seeding_rng = GlobalRng::rng);
 
+    int number_of_classes() const {return model_->number_of_classes();}
+    
     void impute_visitors();
 
     void set_prior_class_probabilities(const std::string &visitor_id,
-                                       const Vector &probs);
+                                       const Vector &probs) {
+      visitor_prior_.set_prior_class_probabilities(visitor_id, probs);
+    }
 
     const Vector &prior_class_probabilities(
-        const std::string &visitor_id) const;
+        const std::string &visitor_id) const {
+      return visitor_prior_.prior_class_probabilities(visitor_id);
+    }
 
     const Vector &exposure_counts() const {return exposure_counts_;}
 
     // Return the number of visits to the site from visitors in each imputed
     // latent category.
-    Vector compute_visit_counts(const PoissonFactor::Site &site) const;
+    Vector compute_visit_counts(const FactorModels::PoissonSite &site) const;
 
    protected:
     PoissonFactorModel *model() {return model_;}
     const PoissonFactorModel *model() const {return model_;}
 
    private:
-    // Raise an exception if probs is the wrong size (!= number_of_classes),
-    // doesn't sum to 1, or contains negative values.
-    void check_probabilities(const Vector &probs) const;
 
     // Raise an exception if logprob contains non-finite values.
     //
@@ -65,13 +69,12 @@ namespace BOOM {
     //   site:  The site currently being added to logprob.
     void check_logprob(const Vector &logprob,
                        int visit_counts,
-                       const Ptr<PoissonFactor::Site> &site) const;
-
+                       const Ptr<FactorModels::PoissonSite> &site) const;
 
     PoissonFactorModel *model_;
-    Vector default_prior_class_probabilities_;
-    std::map<std::string, Vector> prior_class_probabilities_;
+    VisitorPriorManager visitor_prior_;
 
+    // The total number of users of each class.
     Vector exposure_counts_;
   };
 

@@ -13,8 +13,8 @@
 
 namespace {
   using namespace BOOM;
-  using BOOM::PoissonFactor::Visitor;
-  using BOOM::PoissonFactor::Site;
+  using Visitor = BOOM::FactorModels::PoissonVisitor;
+  using Site = BOOM::FactorModels::PoissonSite;
   using std::endl;
   using std::cout;
 

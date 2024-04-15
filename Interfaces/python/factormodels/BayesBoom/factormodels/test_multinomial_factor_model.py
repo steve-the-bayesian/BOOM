@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 from BayesBoom.factormodels import (
-    PoissonFactorModel
+    MultinomialFactorModel
 )
 
 # from BayesBoom.R import delete_if_present
@@ -82,7 +82,7 @@ def simulate_pfm_data(user_classes, site_params):
     return pd.concat(frames, axis=0, ignore_index=True)
 
 
-class PoissonFactorModelTest(unittest.TestCase):
+class MultinomialFactorModelTest(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
         self.simulate_data(num_users=1000, num_sites=50, num_classes=4)
@@ -111,114 +111,35 @@ class PoissonFactorModelTest(unittest.TestCase):
     def num_sites(self):
         return self._site_params.shape[0]
 
-    def test_imputation(self):
-        self.simulate_data(num_users=500, num_classes=4, num_sites=50)
-        model = PoissonFactorModel(self.num_classes)
-        model.set_default_user_prior(
-            np.full(self.num_classes, 1.0 / self.num_classes))
-        model.add_data(user=self._data["user"],
-                       site=self._data["site"],
-                       count=self._data["count"])
-
-        site_ids = model.site_ids
-        true_lam = self._site_params.loc[site_ids, :].values
-        prior_a = np.ones_like(true_lam) * 1e+6
-        prior_b = prior_a/true_lam
-        model.set_site_priors(site_ids, prior_a, prior_b)
-        niter = 200
-
-        model.run_mcmc(niter=niter)
-        self.assertTrue(np.allclose(
-            model._model.site(site_ids[0]).prior_a.to_numpy(),
-            prior_a[0, :]))
-        self.assertTrue(np.allclose(
-            model._model.site(site_ids[0]).prior_b.to_numpy(),
-            prior_b[0, :]))
-
-        ud = model.user_distribution()
-        ud["truth"] = self._user_classes[model.user_ids]
-        ud["chosen"] = np.argmax(ud.values[:, :4], axis=1)
-        xtab = pd.crosstab(ud["truth"], ud["chosen"])
-
-        # The correctly classified users are on the diagonal of the crosstab
-        # matrix.  Most of the users should be correctly classified.
-        self.assertGreater(np.sum(np.diag(xtab)), .9 * self.num_users)
-
-    def test_site_params(self):
-        model = PoissonFactorModel(self.num_classes)
-        model.set_default_site_prior(R.GammaModel(a=.5, b=1))
-        model.set_default_user_prior(
-            np.full(self.num_classes, 1.0 / self.num_classes))
-        model.add_data(user=self._data["user"],
-                       site=self._data["site"],
-                       count=self._data["count"])
-
-        num_known = self.num_users
-        known_users = self._user_classes.iloc[:num_known]
-        model.set_known_user_demographics(known_users)
-        niter = 1000
-        model.run_mcmc(niter=niter)
-
-        # Check that the distribution of site parameters covers the true values.
-        num_lam = self.num_classes * self.num_sites
-        all_lam = np.reshape(model._site_draws, (niter, num_lam))
-        true_lam = np.reshape(self._site_params.loc[model.site_ids, :].values,
-                              (1, num_lam)).ravel()
-        self.assertTrue(test_utils.check_mcmc_matrix(
-            all_lam, true_lam))
-
-    def plot_sites(self, model, rows, cols, title, style="box"):
-        fig, ax = plt.subplots(rows, cols, figsize=(3.25 * cols, 2.25 * rows))
-        burn = 100
-        counter = 1
-        for i in range(rows):
-            for j in range(cols):
-                sid = model._site_ids[-counter]
-                lam = model.site_draws(sid)[burn:, :]
-                truth = self._site_params.loc[sid, :]
-                if style == "box":
-                    R.BoxplotTrue(lam, truth=truth, ax=ax[i, j])
-                elif style == "ts":
-                    iteration = np.arange(lam.shape[0]) + burn
-                    for k in range(lam.shape[1]):
-                        ax[i, j].plot(iteration, lam[:, k])
-                        R.abline(ax[i, j], h=truth[k])
-                else:
-                    raise Exception("Supported 'style' arguments are "
-                                    "'box' and 'ts'.")
-                counter += 1
-        fig.suptitle(title)
-        return fig, ax
+    def smoke_test(self):
+        model = MultinomialFactorModel(self.num_classes)
+        self.assertIsInstance(model, MultinomialFactorModel)
 
     def build_model(self):
-        model = PoissonFactorModel(self.num_classes)
-        model.set_default_user_prior(
-            np.full(self.num_classes, 1.0 / self.num_classes))
+        model = MultinomialFactorModel(self.num_classes)
         model.add_data(user=self._data["user"],
                        site=self._data["site"],
                        count=self._data["count"])
         return model
 
-    def test_mcmc(self):
-        models = []
+    def test_prior_class_probabilities(self):
         model = self.build_model()
-        models.append(model)
-        model.description = "Hierarchical Prior"
+        users = np.unique(self._data["user"])
+        probs = model.prior_class_probabilities(users[0])
+        self.assertIsInstance(np.ndarray, probs)
+        self.assertTrue(hasattr(probs, "shape"))
+        self.assertEqual(len(probs.shape), 1)
+        self.assertEqual(probs.shape[0], self.num_classes)
 
-        models.append(self.build_model())
-        models[-1].description = "Hierarchical Prior - Second Run"
+        probs = model.prior_class_probabilities(users)
+        self.assertIsInstance(np.ndarray, probs)
+        self.assertTrue(hasattr(probs, "shape"))
+        self.assertEqual(len(probs.shape), 2)
+        self.assertEqual(probs.shape,
+                         (self.num_users, self.num_classes))
 
-        models.append(self.build_model())
-        models[-1].set_default_site_prior(R.GammaModel(a=.5, b=1))
-        models[-1].description = "Independence Prior"
-
-        models.append(self.build_model())
-        models[-1].set_MH_threshold(1000000000)
-        models[-1].description = "All Slice Sampling"
-
-        models.append(self.build_model())
-        models[-1].set_MH_threshold(-1)
-        models[-1].description = "All MH"
+    def test_mcmc(self):
+        model = self.build_model()
 
         # =====================================================================
         # Test that the data stored inside the C++ model agree with the data
@@ -242,13 +163,9 @@ class PoissonFactorModelTest(unittest.TestCase):
         num_known = 800
         known_users = self._user_classes.iloc[:num_known]
         niter = 1000
-        for mod in models:
-            mod.set_known_user_demographics(known_users)
-            mod.run_mcmc(niter=niter)
-            if mod.has_hierarchical_prior:
-                print(mod._posterior_sampler.sampling_report)
-            else:
-                print("Done with model run!")
+        model.set_known_user_demographics(known_users)
+        model.run_mcmc(niter=niter)
+        print("Done with model run!")
 
         # =====================================================================
         # Check that the model is not updating the classes of the users marked
@@ -290,12 +207,11 @@ class PoissonFactorModelTest(unittest.TestCase):
         # plt.show()
 
         # Check for all sites.
-        for a_model in models:
-            num_lam = self.num_classes * self.num_sites
-            all_lam = np.reshape(a_model._site_draws, (niter, num_lam))
-            true_lam = np.reshape(self._site_params.loc[
-                a_model.site_ids, :].values, (1, num_lam)).ravel()
-            self.assertTrue(test_utils.check_mcmc_matrix(all_lam, true_lam))
+        num_probs = self.num_classes * self.num_sites
+        all_probs = np.reshape(model._site_draws, (niter, num_probs))
+        true_probs = np.reshape(self._site_params.loc[
+            model.site_ids, :].values, (1, num_probs)).ravel()
+        self.assertTrue(test_utils.check_mcmc_matrix(all_probs, true_probs))
 
 
 _debug_mode = True
@@ -312,13 +228,14 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = PoissonFactorModelTest()
+    rig = MultinomialFactorModelTest()
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    model = rig.test_mcmc()
+    rig.smoke_test()
+    rig.test_prior_class_probabilities()
 
     print("Goodbye, cruel world!")
 
