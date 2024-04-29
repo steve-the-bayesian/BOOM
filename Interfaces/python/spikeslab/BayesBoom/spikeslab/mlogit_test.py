@@ -13,8 +13,8 @@ class MlogitTest(unittest.TestCase):
         np.random.seed(8675309)
 
     def test_mcmc(self):
-        dir = os.path.join(find_project_root(), "BayesBoom", "spikeslab")
-        fname = os.path.join(dir, "autopref.txt")
+        dirname = os.path.join(find_project_root(), "BayesBoom", "spikeslab")
+        fname = os.path.join(dirname, "autopref.txt")
         data = pd.read_csv(fname)
 
         model = mlogit_spike(

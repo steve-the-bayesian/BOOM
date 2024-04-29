@@ -27,6 +27,14 @@ namespace BayesBoom {
               return std::unique_ptr<Vector>(new Vector(view));
             }),
           "Create a Vector from a numpy array.  Be sure the dtype is float!")
+        .def(py::init(
+            [](const std::vector<int> &inputs) {
+              return new Vector(inputs.begin(), inputs.end());
+            }))
+        .def(py::init(
+            [](const std::vector<long> &inputs) {
+              return new Vector(inputs.begin(), inputs.end());
+            }))
         .def("all_finite", &Vector::all_finite,
              "Returns true iff all elements are finite.")
         .def_property_readonly("randomize", &Vector::randomize,

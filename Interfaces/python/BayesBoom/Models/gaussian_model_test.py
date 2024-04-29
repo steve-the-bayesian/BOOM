@@ -50,7 +50,9 @@ class GaussianModelTest(unittest.TestCase):
             1.0)
         sigsq_prior = boom.ChisqModel(1.0, sigma)
         sampler = boom.GaussianConjugateSampler(
-            model, mean_prior, sigsq_prior)
+            model,
+            mean_prior,
+            sigsq_prior)
         model.set_method(sampler)
         for _ in range(100):
             model.sample_posterior()

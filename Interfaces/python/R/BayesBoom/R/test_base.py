@@ -9,7 +9,7 @@ class TestBase(unittest.TestCase):
         np.random.seed(8675309)
 
     def test_print_time_interval(self):
-        self.assertEqual(R.print_time_interval(3), "3 seconds")
+        self.assertEqual(R.print_time_interval(3), "3.000 seconds")
 
 
 _debug_mode = False

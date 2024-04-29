@@ -647,7 +647,8 @@ def plot_model_size(coefficients, burn, ax=None, **kwargs):
         np.sum(coefficients[i, :] != 0)
         for i in range(burn, ndraws)
     ])
-    return R.hist(size, ax=ax, **kwargs)
+    _, ax = R.hist(size, ax=ax, **kwargs)
+    return ax
 
 
 class RegressionSlabPrior:

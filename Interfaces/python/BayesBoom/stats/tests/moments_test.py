@@ -24,7 +24,7 @@ class MomentsTest(unittest.TestCase):
         chol = boom.Cholesky(Sigma)
         R = chol.getLT()
         y = y @ R.to_numpy()
-        mu = np.array([1, 2, -3])
+        mu = np.array([1, 2, -3], dtype=float)
         y = y + mu
         mu = boom.Vector(mu)
         y = boom.Matrix(y)

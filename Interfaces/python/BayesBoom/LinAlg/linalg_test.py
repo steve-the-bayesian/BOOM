@@ -74,12 +74,12 @@ class LinAlgTest(unittest.TestCase):
         self.assertEqual(row_names, m.row_names)
         self.assertEqual(col_names, m.col_names)
         self.assertTrue(np.allclose(raw_data, m.to_numpy()))
-        
+
         m2 = boom.LabelledMatrix(boom.Matrix(raw_data), row_names, [])
         self.assertEqual(row_names, m2.row_names)
         self.assertEqual([], m2.col_names)
         self.assertTrue(np.allclose(raw_data, m2.to_numpy()))
-        
+
         m3 = boom.LabelledMatrix(boom.Matrix(raw_data), [], col_names)
         self.assertEqual([], m3.row_names)
         self.assertEqual(col_names, m3.col_names)

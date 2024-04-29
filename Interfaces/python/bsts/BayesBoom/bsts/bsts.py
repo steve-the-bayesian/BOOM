@@ -928,7 +928,8 @@ class Bsts:
             self._original_series)
         scaled_original /= np.nanstd(scaled_original, ddof=1)
         original_name = self._formula.split("~")[0]
-        ax.plot(times, scaled_original, label=original_name)
+        times = np.array(times)
+        ax.plot(times, np.array(scaled_original), label=original_name)
 
         for i in range(number_of_predictors):
             ax.plot(times,
@@ -1287,7 +1288,7 @@ class BstsPrediction:
             plotting_timestamps = np.arange(start, end)
 
         if original is not None:
-            ax.plot(plotting_timestamps[:len(original)],
+            ax.plot(np.array(plotting_timestamps[:len(original)]),
                     original)
 
         R.plot_dynamic_distribution(
@@ -1296,13 +1297,13 @@ class BstsPrediction:
             ax=ax,
             **kwargs)
 
-        ax.plot(extended_timestamps,
+        ax.plot(np.array(extended_timestamps),
                 self.posterior_mean,
                 color="green")
-        ax.plot(extended_timestamps,
+        ax.plot(np.array(extended_timestamps),
                 np.quantile(self.distribution, .025, axis=0),
                 color="green", linestyle="dashed")
-        ax.plot(extended_timestamps,
+        ax.plot(np.array(extended_timestamps),
                 np.quantile(self.distribution, .975, axis=0),
                 color="green", linestyle="dashed")
         ax.set_xlim((plotting_timestamps[0], plotting_timestamps[-1]))

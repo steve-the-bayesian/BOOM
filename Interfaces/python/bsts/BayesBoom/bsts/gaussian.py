@@ -106,7 +106,9 @@ class StateSpaceRegressionModelFactory:
         boom_predictors = boom.Matrix(predictors)
         if prior is None:
             prior = spikeslab.RegressionSpikeSlabPrior(
-                boom_predictors, boom_response, **kwargs)
+                boom_predictors.to_numpy(),
+                boom_response.to_numpy(),
+                **kwargs)
 
         self._prior = prior
 
