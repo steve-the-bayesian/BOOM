@@ -65,6 +65,26 @@ class LinAlgTest(unittest.TestCase):
         vv /= 2.0
         self.assertEqual(v[1], 1.0)
 
+    def test_labelled_matrix(self):
+        raw_data = np.random.randn(3, 4)
+        row_names = ["Larry", "Moe", "Curly"]
+        col_names = ["Doe", "Ray", "Me", "Fa"]
+        m = boom.LabelledMatrix(boom.Matrix(raw_data), row_names, col_names)
+
+        self.assertEqual(row_names, m.row_names)
+        self.assertEqual(col_names, m.col_names)
+        self.assertTrue(np.allclose(raw_data, m.to_numpy()))
+        
+        m2 = boom.LabelledMatrix(boom.Matrix(raw_data), row_names, [])
+        self.assertEqual(row_names, m2.row_names)
+        self.assertEqual([], m2.col_names)
+        self.assertTrue(np.allclose(raw_data, m2.to_numpy()))
+        
+        m3 = boom.LabelledMatrix(boom.Matrix(raw_data), [], col_names)
+        self.assertEqual([], m3.row_names)
+        self.assertEqual(col_names, m3.col_names)
+        self.assertTrue(np.allclose(raw_data, m3.to_numpy()))
+
 
 _debug_mode = False
 
