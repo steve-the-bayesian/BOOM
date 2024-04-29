@@ -179,10 +179,16 @@ namespace BOOM {
     std::map<std::string, Ptr<Site>> & sites() {return sites_;}
     const std::map<std::string, Ptr<Site>> & sites() const {return sites_;}
 
-    // Returns the index that would correspond to the Site with the given
-    // site_id if the sites were stored in a vector in the same order they're
-    // stored in this model object.
+    // Args:
+    //   site_id: The name of a site.
+    //
+    // Returns:
+    //   The index of the site, defined as the "for loop step" in which the site
+    //   is encountered when looping over sites.
     Int get_site_index(const std::string &site_id) const;
+
+    // A mapping from site-id's to the "for loop position" of each site.
+    std::map<std::string, Int> site_index_map() const;
 
     // A directory of Visitors, indexed by visitor id.
     std::map<std::string, Ptr<Visitor>> & visitors() {return visitors_;}
