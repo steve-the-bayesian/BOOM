@@ -198,7 +198,8 @@ class FactorModelBase:
         about the requested site.
 
         Args:
-          user_id: Either a string (or list of strings)
+          user_id: Either a string identifying the user, or a list of strings
+            identifying a group of users.
 
         Returns:
           If user_id is a single string, then a 1-D numpy array of probabilities
@@ -206,8 +207,16 @@ class FactorModelBase:
           returned, with rows corresponding to user id and columns to class
           levels.
         """
-        return R.to_numpy(
-            self._posterior_sampler.prior_class_probabilities(user_id))
+        if hasattr(self, "_posterior_sampler"):
+            return R.to_numpy(
+                self._posterior_sampler.prior_class_probabilities(user_id))
+        else:
+            if isinstance(user_id, str):
+                return self._prior_class_membership_probabilites
+            else:
+                return np.array(
+                    [self._prior_class_membership_probabilites]
+                    * len(user_id))
 
     def user_draws(self, user_id):
         """
