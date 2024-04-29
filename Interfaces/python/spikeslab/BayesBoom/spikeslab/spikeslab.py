@@ -505,7 +505,7 @@ def summarize_spike_slab_coefficients(coef,
     inclusion_probs = np.array(np.mean(coef != 0, axis=0)).ravel()
 
     if order:
-        indx = R.order(inclusion_probs, True)
+        indx = R.order(inclusion_probs)
         coef = coef[:, indx]
         inclusion_probs = inclusion_probs[indx]
         colnames = colnames[indx]
