@@ -49,7 +49,7 @@ RUN auditwheel repair /output/BayesBoom*.whl -w /output
 # adjust them above.
 
 # Once the job is done run
-#      docker -v /tmp:/export run -i -t pyboom /bin/bash
+#      docker run -v /tmp:/export -i -t pyboom /bin/bash
 #      cd /output
 #      mv BayesBoom-0.1.14-cp310-cp310-*.whl /export
 #      exit

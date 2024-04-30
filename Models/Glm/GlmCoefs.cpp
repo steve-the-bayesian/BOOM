@@ -112,7 +112,7 @@ namespace BOOM {
 
   void GlmCoefs::drop_all() {
     inc_.drop_all();
-    set_Beta(Vector(nvars_possible()));
+    set_Beta(Vector(nvars_possible(), 0.0));
   }
 
   void GlmCoefs::add_all() { inc_.add_all(); }

@@ -116,7 +116,7 @@ class lm_spike:
                  prior: RegressionSpikeSlabPrior = None,
                  ping: int = None,
                  seed: int = None,
-                 xnames = None,
+                 xnames=None,
                  **kwargs):
         """
         Create and a model object and run a specified number of MCMC iterations.
@@ -199,7 +199,7 @@ class lm_spike:
         self._residual_sd = np.zeros(niter)
         self._log_likelihood = np.zeros(niter)
 
-        self._model.coefficients.drop_all()
+        self._model.coef.drop_all()
         self._model.coef.add(0)
 
         for i in range(niter):
@@ -267,7 +267,8 @@ class lm_spike:
 
     @property
     def xnames(self):
-        # A numpy array of strings containing the column names of the predictors.
+        # A numpy array of strings containing the column names of the
+        # predictors.
         return np.array(self._x_design_info.column_names)
 
     def inclusion_probs(self, burn=None):

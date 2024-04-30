@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include <iostream>
+
 namespace BOOM {
 
   namespace {
@@ -206,9 +208,11 @@ namespace BOOM {
   }
 
   void Selector::drop_all() {
+    std::cout << "I'm dropping all my coefficients!\n"; 
     include_all_ = false;
     included_positions_.clear();
     std::vector<bool>::assign(size(), false);
+    std::cout << *this << "\n";
   }
 
   void Selector::add_all() {
