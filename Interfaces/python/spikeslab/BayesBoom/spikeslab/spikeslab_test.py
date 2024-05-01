@@ -74,8 +74,6 @@ class SpikeSlabTest(unittest.TestCase):
         data["y"] = y
         formula = "y ~ " + dot(data, ["y"])
 
-        import pdb
-        pdb.set_trace()
         model = lm_spike(formula, niter=niter, data=data)
         self.assertTrue(isinstance(
             model._coefficient_draws,

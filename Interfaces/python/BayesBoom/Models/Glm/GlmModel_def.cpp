@@ -149,7 +149,8 @@ namespace BayesBoom {
              "Flip the variable in the specified position.")
         .def_property(
             "coef",
-            [](GlmModel &model) {return model.coef();},
+            [](GlmModel &model) {return
+                  Ptr<GlmCoefs>(&model.coef());},
             [](GlmModel &model, GlmCoefs &beta) {
               model.coef().set_sparse_coefficients(
                   beta.included_coefficients(),

@@ -346,8 +346,8 @@ class lm_spike:
 
         if number_of_variables is None:
             number_of_variables = np.sum(inc >= inclusion_threshold)
-        inc = inc[index[:number_of_variables]]
-        pos = pos[index[:number_of_variables]]
+        inc = inc.iloc[index[:number_of_variables]]
+        pos = pos.iloc[index[:number_of_variables]]
         colors = colors[index[:number_of_variables]]
         ans = R.barplot(inc,
                         ax=ax,
