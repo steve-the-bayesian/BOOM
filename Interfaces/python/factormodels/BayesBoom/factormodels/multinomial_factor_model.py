@@ -94,7 +94,6 @@ class MultinomialFactorModel(FactorModelBase):
         probs = R.to_pd_dataframe(tmp_probs)
 
         return probs
-                
 
     def posterior_class_probabilities(self,
                                       user_id,
