@@ -189,6 +189,15 @@ namespace BOOM {
     }
   }
 
+  std::map<std::string, Int> MultinomialFactorModel::site_index_map() const {
+    Int index = 0;
+    std::map<std::string, Int> ans;
+    for (const auto &it : sites_) {
+      ans[it.first] = index++;
+    }
+    return ans;
+  }
+
   Ptr<Site> MultinomialFactorModel::site(const std::string &id) const {
     auto it = sites_.find(id);
     if (it == sites_.end()) {

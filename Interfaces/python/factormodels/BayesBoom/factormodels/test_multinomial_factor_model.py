@@ -1,80 +1,62 @@
 import unittest
-import matplotlib.pyplot as plt
-
+# import matplotlib.pyplot as plt
+from BayesBoom.test_utils import random_strings
 
 from BayesBoom.factormodels import (
     MultinomialFactorModel
 )
 
 # from BayesBoom.R import delete_if_present
-import BayesBoom.R as R
+# import BayesBoom.R as R
 import BayesBoom.test_utils as test_utils
 
 
 import numpy as np
 import pandas as pd
-# import scipy.sparse
-# import pickle
-import string
-
-# import matplotlib.pyplot as plt
 
 
 def simulate_user_classes(num_users, probs):
     num_classes = probs.shape[0]
     user_values = np.random.choice(num_classes, num_users, p=probs)
-    user_labels = random_strings(num_users, 10)
+    user_labels = random_strings(num_users, 10, ensure_unique=True)
     return pd.Series(user_values, index=user_labels)
 
 
 def simulate_site_params(num_sites, num_categories):
     values = np.random.rand(num_sites, num_categories)
-    labels = random_strings(num_sites, 20)
+    labels = random_strings(num_sites, 20, ensure_unique=True)
+    totals = np.sum(values, axis=0)
+    values = values / totals
     return pd.DataFrame(values, index=labels)
 
 
-def random_strings(num_strings, length):
-    """
-    Return a numpy array of lowercase ASCII strings.
-    Args:
-      num_strings: The length of the returned array.
-      length:  The length of each string in the array.
-    """
-    if num_strings > 26**length:
-        raise Exception("Too many strings requested")
-    letters = list(string.ascii_lowercase)
-    letter_matrix = np.random.choice(letters, (num_strings, length))
-    ans = np.array(["".join(x) for x in letter_matrix])
-    while len(np.unique(ans)) < num_strings:
-        levels, counts = np.unique(ans, return_counts=True)
-        duplicates = levels[counts > 1]
-        dup_counts = counts[counts > 1]
-        for i in range(len(duplicates)):
-            ans[ans == duplicates[i]] = random_strings(dup_counts[i], length)
-    return ans
-
-
-def simulate_pfm_data(user_classes, site_params):
+def simulate_multinomial_factor_data(user_classes, site_params):
     """
     Args:
 
-      user_classes: A num_users-vector of values in 0, ..., K-1 indicating the
-        class to which each user belongs.
-      site_params: A num_sites by num_classes matrix giving the Poisson rate
-        parameters for users in each category.
+      user_classes: A pd.Series of values in 0, ..., K-1 indicating the class
+        to which each user belongs.  The index of the series is the user-id.
+      site_params: A pd.DataFrame with num_sites rows and num_classes columns,
+        giving the Poisson rate parameters for users in each category.  The
+        index is the site-id.
     """
     frames = []
     for i, level in enumerate(user_classes):
-        lam = site_params.iloc[:, level]
-        counts = np.random.poisson(lam)
-        nvisits = np.sum(counts > 0)
+        num_sites = 1 + np.random.poisson(5)
+        sites_visited = np.random.choice(
+            site_params.index,
+            size=num_sites,
+            replace=False,
+            p=site_params.iloc[:, user_classes.iloc[i]])
+
+        counts = np.full(num_sites, 1)
 
         # Each frame is the data from a single user.
         frame = pd.DataFrame(
             {
-                "user": np.full(nvisits, user_classes.index[i]),
-                "site": site_params.index[counts > 0],
-                "count": counts[counts > 0]
+                "user": np.full(num_sites, user_classes.index[i]),
+                "site": sites_visited,
+                "count": counts
             }
         )
         frames.append(frame)
@@ -92,8 +74,10 @@ class MultinomialFactorModelTest(unittest.TestCase):
         self._class_probs = self._class_probs / np.sum(self._class_probs)
         self._user_classes = simulate_user_classes(
             num_users, self._class_probs)
+        self.assertEqual(len(self._user_classes), num_users)
         self._site_params = simulate_site_params(num_sites, num_classes)
-        self._data = simulate_pfm_data(self._user_classes, self._site_params)
+        self._data = simulate_multinomial_factor_data(
+            self._user_classes, self._site_params)
 
     @property
     def num_classes(self):
@@ -126,13 +110,13 @@ class MultinomialFactorModelTest(unittest.TestCase):
         model = self.build_model()
         users = np.unique(self._data["user"])
         probs = model.prior_class_probabilities(users[0])
-        self.assertIsInstance(np.ndarray, probs)
+        self.assertIsInstance(probs, np.ndarray)
         self.assertTrue(hasattr(probs, "shape"))
         self.assertEqual(len(probs.shape), 1)
         self.assertEqual(probs.shape[0], self.num_classes)
 
         probs = model.prior_class_probabilities(users)
-        self.assertIsInstance(np.ndarray, probs)
+        self.assertIsInstance(probs, np.ndarray)
         self.assertTrue(hasattr(probs, "shape"))
         self.assertEqual(len(probs.shape), 2)
         self.assertEqual(probs.shape,
@@ -208,13 +192,44 @@ class MultinomialFactorModelTest(unittest.TestCase):
 
         # Check for all sites.
         num_probs = self.num_classes * self.num_sites
-        all_probs = np.reshape(model._site_draws, (niter, num_probs))
-        true_probs = np.reshape(self._site_params.loc[
+        all_params = np.reshape(model._site_draws, (niter, num_probs))
+        true_params = np.reshape(self._site_params.loc[
             model.site_ids, :].values, (1, num_probs)).ravel()
-        self.assertTrue(test_utils.check_mcmc_matrix(all_probs, true_probs))
+        self.assertTrue(test_utils.check_mcmc_matrix(
+            all_params, true_params))
+
+    def test_predictions(self):
+        model = self.build_model()
+
+        # Run the MCMC.
+        num_known = 800
+        known_users = self._user_classes.iloc[:num_known]
+        niter = 1000
+        model.set_known_user_demographics(known_users)
+        model.run_mcmc(niter=niter)
+        user_ids = model.user_ids[-5:-1]
+        probs = model.posterior_class_probabilities(user_ids)
+        data_subset = self._data[self._data["user"].isin(user_ids)]
+
+        model.set_default_site_name(model.site_ids[0])
+
+        priors = pd.DataFrame(
+            model.prior_class_probabilities(user_ids),
+            index=user_ids)
+
+        probs2 = model.infer_posterior_distributions(
+            data_subset["user"],
+            data_subset["site"],
+            priors=priors)
+
+        print("probs = \n", probs)
+        print("probs2 = \n", probs2)
+
+        self.assertTrue(np.allclose(probs, probs2))
+        print("Done with model run!")
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa
@@ -236,6 +251,8 @@ if _debug_mode:
 
     rig.smoke_test()
     rig.test_prior_class_probabilities()
+    rig.test_mcmc()
+    rig.test_predictions()
 
     print("Goodbye, cruel world!")
 

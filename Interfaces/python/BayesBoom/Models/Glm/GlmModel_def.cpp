@@ -137,10 +137,6 @@ namespace BayesBoom {
     py::class_<GlmModel,
                Model,
                Ptr<GlmModel>>(boom, "GlmModel")
-        .def_property_readonly(
-            "coef",
-            [] (GlmModel &model) {return model.coef();},
-            "The model coefficient object.")
         .def_property_readonly("xdim", &GlmModel::xdim)
         .def("add_all", &GlmModel::add_all)
         .def("drop_all", &GlmModel::drop_all)
@@ -151,9 +147,15 @@ namespace BayesBoom {
              "Drop the variable in the specified position.")
         .def("flip", &GlmModel::add,
              "Flip the variable in the specified position.")
-        .def_property_readonly(
+        .def_property(
             "coef",
-            [](const GlmModel &m) {return m.coef();},
+            [](GlmModel &model) {return
+                  Ptr<GlmCoefs>(&model.coef());},
+            [](GlmModel &model, GlmCoefs &beta) {
+              model.coef().set_sparse_coefficients(
+                  beta.included_coefficients(),
+                  beta.inc().included_positions());
+            },
             "The object containing the model coefficients.")
         .def_property_readonly(
             "Beta",
@@ -267,13 +269,13 @@ namespace BayesBoom {
             },
             "The parameter object representing the residual variance.  "
             "boom.UnivParams")
-        .def_property_readonly(
-            "coefficients",
-            [](RegressionModel &m) {
-              return m.coef();
-            },
-            "The parameter object representing the model coefficients.  "
-            "boom.GlmCoefs")
+        // .def_property(
+        //     "coefficients",
+        //     [](RegressionModel &m) {
+        //       return m.coef();
+        //     },
+        //     "The parameter object representing the model coefficients.  "
+        //     "boom.GlmCoefs")
         .def("set_coefficients", [](RegressionModel &m,
                                     const Vector &coefficients) {
           m.set_Beta(coefficients);

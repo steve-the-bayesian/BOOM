@@ -112,6 +112,20 @@ class PoissonFactorModel(FactorModelBase):
             "prior_b": pd.DataFrame(prior_b, index=site_ids),
         }
 
+    @property
+    def prior_a(self):
+        if self.has_hierarchical_prior:
+            raise Exception("There is no 'prior_a' when using a "
+                            "hierarchical_prior.")
+        return self._site_specific_priors["prior_a"]
+
+    @property
+    def prior_b(self):
+        if self.has_hierarchical_prior:
+            raise Exception("There is no 'prior_b' when using a "
+                            "hierarchical_prior.")
+        return self._site_specific_priors["prior_b"]
+
     def set_hyperprior_parameters(
             self,
             Sigma_guess,
@@ -190,7 +204,7 @@ class PoissonFactorModel(FactorModelBase):
             #                 "a hierarchical site prior.")
 
         if isinstance(prior, R.GammaModel):
-            prior = [prior] * self._nlevels
+            prior = [prior] * self.nlevels
         elif isinstance(prior, np.ndarray):
             prior_list = [R.GammaModel(prior[i, 0], prior[i, 1])
                           for i in range(prior.shape[0])]
@@ -198,7 +212,7 @@ class PoissonFactorModel(FactorModelBase):
 
         if not hasattr(prior, "__len__"):
             raise Exception("'prior' should be a list of R.GammaModel objects")
-        if len(prior) != self._nlevels:
+        if len(prior) != self.nlevels:
             raise Exception("'prior' should contain one prior for each level.")
         self._default_site_prior = prior
 

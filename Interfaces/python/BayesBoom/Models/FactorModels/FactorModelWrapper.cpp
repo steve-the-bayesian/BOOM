@@ -25,6 +25,134 @@ namespace BayesBoom {
   using BOOM::uint;
 
   namespace {
+
+    // Return the prior distribution for a given user from a deconstructed "data
+    // frame."
+    //
+    // Args:
+    //   user_id:  The id of a user whose prior distribution is being sought.
+    //   priors: A matrix with rows corresponding to discrete prior
+    //     distributions, (one row per user).
+    //   id_map:  A mapping from strings (user id's) to row numbers.
+    //   default_prior: The discrete distribution to use if 'user_id' is not
+    //     found in 'id_map'.
+    //
+    // Returns:
+    //   If 'user_id' is found in 'id_map' then the corresponding row of
+    //   'priors' is returned.  Otherwise the default_prior is returned.
+    ConstVectorView get_prior(const std::string &user_id,
+                              const Matrix &priors,
+                              const std::map<std::string, size_t> &id_map,
+                              const Vector &default_prior) {
+      auto it = id_map.find(user_id);
+      if (it == id_map.end()) {
+        return ConstVectorView(default_prior);
+      } else {
+        return priors.row(it->second);
+      }
+    }
+
+    // Return the uniqe set of elements in an input vector of strings.  The
+    // input vector needn't be sorted.
+    std::vector<std::string> unique_elements(
+        const std::vector<std::string> &inputs) {
+      std::set<std::string> sorted;
+      for (const auto &el : inputs) {
+        sorted.insert(el);
+      }
+      std::vector<std::string> ans;
+      for (const auto &el : sorted) {
+        ans.push_back(el);
+      }
+      return ans;
+    }
+    
+    // Compute the posterior distribution of each user's class membership based
+    // on the user's id.  This version of the function is for users who were NOT
+    // part of the training data, so their ID's are NOT part of the model.
+    //
+    // Args:
+    //   prior: The (potentially user-specific) prior distribution of class
+    //     membership.
+    //   sites_visited: A vector of the distinct sites visited by the user.  It
+    //     is the caller's responsibility to ensure there are no repeats in this
+    //     list.
+    //   site_index_map: A mapping between user-id's and their position numbers
+    //     in the Monte Carlo draws of model parameters (the 'site_draws'
+    //     argument).
+    //   default_site_name: The site name to use when a site on the list of
+    //     visited sites does not appear in the 'site index map'.  This is the
+    //     "All Other" category into which unmodelled sites are collapsed.  This
+    //     name must appear in site_index_map.
+    //   site_draws: The numpy array of MCMC draws of site-level parameters.
+    //     Dimensions are [niter x site-index x latent category]
+    //   burn:  The number of MCMC iterations to discard as burn-in.
+    //
+    // Returns:
+    //   The posterior distribution of class membership for the requested user.
+    Vector compute_multinomial_posterior_class_probabilities(
+        const Vector &prior,
+        const std::vector<std::string> &sites_visited,
+        const std::map<std::string, Int> &site_index_map,
+        const std::string &default_site_name,
+        const py::array_t<double> &site_draws,
+        int burn) {
+      size_t niter = site_draws.shape(0);
+      size_t nclass = site_draws.shape(2);
+      if (burn < 0) {
+        burn = 0;
+      }
+      if (burn >= niter) {
+        return prior;
+      }
+      
+      Vector log_prior = log(prior);
+      auto unchecked_site_draws = site_draws.unchecked<3>();
+      auto it = site_index_map.find(default_site_name);
+      if (it == site_index_map.end()) {
+        report_error("default site name was not found in the site index map.");
+      }
+      Int default_site_index = it->second;
+      std::vector<Int> site_index;
+      for (const std::string &site_name : sites_visited) {
+        it = site_index_map.find(site_name);
+        if (it != site_index_map.end()) {
+          site_index.push_back(it->second);
+        } else {
+          site_index.push_back(default_site_index);
+        }
+      }
+
+      Vector posterior(log_prior.size(), 0.0);
+      for (size_t i = burn; i < niter; ++i) {
+        Vector tmp_log_posterior = log_prior;
+        for (size_t j = 0; j < sites_visited.size(); ++j) {
+          Int site_index = site_index_map.at(sites_visited[j]);
+          for (size_t k = 0; k < nclass; ++k) {
+            tmp_log_posterior[k] += unchecked_site_draws(
+                i, site_index, k);
+          }
+        }
+        posterior += tmp_log_posterior.normalize_logprob();
+      }
+      return posterior / (niter - burn);
+    }
+
+    // Compute the posterior distribution of each user's class membership based
+    // on the user's id.  This version of the function is for users who were
+    // part of the training data, so their ID's are part of the model.
+    //
+    // Args:
+    //   model:  The model object in which to look up users.
+    //   sampler:  The posterior sampler responsible for training the model.
+    //   visitor_id:  The ID to look up.
+    //   site_draws: The numpy array of site parameters stored in the python
+    //     model object (as opposed to the BOOM model object, which only stores
+    //     current parameters, not a full parameter history).
+    //   burn:  The number of MCMC iterations to discard as burn-in.
+    //
+    // Returns:
+    //   The posterior distribution of class membership for the requested user.
     Vector compute_multinomial_posterior_class_probabilities(
         MultinomialFactorModel &model,
         const MultinomialFactorModelPosteriorSampler &sampler,
@@ -447,6 +575,82 @@ namespace BayesBoom {
              "object responsible for the model.\n"
              "  user_ids:  The (string) ID's for which posterior distributions "
              "are desired.\n"
+             "  site_draws:  A 3-way numpy array of MCMC draws of "
+             "site parameters.\n"
+             "  burn:  The number of mcmc draws to discard as burn-in.\n")
+        .def("infer_posterior_distributions",
+             [](MultinomialFactorModel &model,
+                const std::vector<std::string> & priors_index, 
+                const Matrix &priors,
+                const Vector &default_prior,
+                const std::vector<std::string> &user_ids,
+                const std::vector<std::string> &sites_visited,
+                const std::string &default_site_name,
+                py::array_t<double> site_draws,
+                int burn) {
+               
+               std::map<std::string, Int> site_index_map = model.site_index_map();
+               std::map<std::string, std::vector<std::string>> visitation;
+               if (user_ids.size() != sites_visited.size()) {
+                 report_error("user_ids and sites_visited must be the same size.");
+               }
+               for (size_t i = 0; i < user_ids.size(); ++i) {
+                 visitation[user_ids[i]].push_back(sites_visited[i]);
+               }
+
+               std::map<std::string, size_t> id_map;
+               for (size_t i = 0; i < priors_index.size(); ++i) {
+                 id_map[priors_index[i]] = i;
+               }
+               
+               Int num_users = visitation.size();
+               Matrix ans(num_users, model.number_of_classes());
+               std::vector<std::string> ordered_unique_user_ids;
+
+               size_t output_index = 0;
+               for (const auto &el : visitation) {
+                 std::string user_id = el.first;
+                 ordered_unique_user_ids.push_back(user_id);
+                 Vector posterior_distribution =
+                     compute_multinomial_posterior_class_probabilities(
+                         get_prior(user_id, priors, id_map, default_prior),
+                         unique_elements(el.second), 
+                         site_index_map,
+                         default_site_name,
+                         site_draws,
+                         burn);
+                 ans.row(output_index++) = posterior_distribution;
+               }
+
+               return LabeledMatrix(ans,
+                                    ordered_unique_user_ids,
+                                    std::vector<std::string>());
+               
+             },
+             py::arg("priors_index"),
+             py::arg("priors"),
+             py::arg("default_prior"),
+             py::arg("user_ids"),
+             py::arg("sites_visited"),
+             py::arg("default_site_name"),
+             py::arg("site_draws"),
+             py::arg("burn") = 0,
+             "Args: \n\n"
+             "  priors_index:  A list of strings containing the user_id's "
+             "corresponding to the rows of 'priors'.\n"
+             "  priors:  A Matrix where each row contains the prior "
+             "distribution of class membership for a specific user.\n"
+             "  default_prior:  The prior distribution of class membership "
+             "for users not contained in 'priors'.\n"
+             "  user_ids:  A list of user id's corresponding to "
+             "'sites_visited'.\n"
+             "  sites_visited:  A list of distinct websites visited by a "
+             "single user.  This argument and 'user_ids' should be thought "
+             "of as a pair.\n"
+             "  default_site_name:  The name to use for a site appearing in "
+             "'sites_visited' that was not observed during model training.  "
+             "This is the 'All Other' category into which extraneous sites "
+             "are collapsed.\n"
              "  site_draws:  A 3-way numpy array of MCMC draws of "
              "site parameters.\n"
              "  burn:  The number of mcmc draws to discard as burn-in.\n")

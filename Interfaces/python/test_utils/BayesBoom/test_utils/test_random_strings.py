@@ -1,23 +1,29 @@
 import unittest
-import BayesBoom.R as R
+from BayesBoom.test_utils import random_strings
 import numpy as np
 
 
-class TestBase(unittest.TestCase):
-
+class TestRandomStrings(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
 
-    def test_print_time_interval(self):
-        self.assertEqual(R.print_time_interval(3), "3.000 seconds")
+    def test_length(self):
+        strings = random_strings(100, 4)
+        self.assertEqual(100, len(strings))
+        self.assertEqual(4, len(strings[0]))
 
+    def test_uniqueness(self):
+        non_unique = random_strings(1000, 2, ensure_unique=False)
+        self.assertEqual(1000, len(non_unique))
 
-_debug_mode = False
+        
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
 
     # Turn warnings into errors.
+    # import warnings
     # warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
@@ -25,16 +31,18 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = TestBase()
+    rig = TestRandomStrings()
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_print_time_interval()
+    rig.test_length()
+    rig.test_uniqueness()
 
     print("Goodbye, cruel world!")
 
 else:
     if __name__ == "__main__":
-        unittest.main(verbosity=2)
+        unittest.main()
+        

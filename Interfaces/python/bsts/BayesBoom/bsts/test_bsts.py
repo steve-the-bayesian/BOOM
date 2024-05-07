@@ -67,7 +67,6 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertEqual(errors[100].shape,  (10, 100))
         self.assertEqual(model.time_dimension, 100)
 
-
     def test_basic_structural_model(self):
         model = Bsts()
 
@@ -343,7 +342,7 @@ class TestPlots(unittest.TestCase):
         self.assertIsInstance(ans, plt.Figure)
 
 
-_debug_mode = True
+_debug_mode = False
 _show_figs = _debug_mode
 
 if _debug_mode:
@@ -365,7 +364,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plot_forecast_distribution()
+    rig.test_plot_size()
 
     print("Goodbye, cruel world!")
 
