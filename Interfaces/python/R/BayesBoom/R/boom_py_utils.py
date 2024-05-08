@@ -66,6 +66,15 @@ def to_boom_matrix(m):
     return boom.Matrix(np.array(m, dtype="float"))
 
 
+def to_boom_labelled_matrix(data_frame):
+    """
+    Convert a pandas data frame to a boom.LablledMatrix.
+    """
+    return boom.LablledMatrix(data_frame.values.astype("float"),
+                              data_frame.index.astype("str"),
+                              data_frame.columns.astype("str"))
+
+
 def to_boom_spd(m):
     """
     Convert the matrix-like object 'm' to a boom.Matrix.  This is a more user
@@ -125,3 +134,21 @@ def to_pd_timestamp(boom_date):
         pass
     else:
         raise Exception("Wrong input type.")
+
+
+def to_pd_dataframe(boom_labelled_matrix):
+    """
+    Convert a boom.LablledMatrix to a pandas DataFrame.
+    """
+
+    idx = boom_labelled_matrix.row_names
+    cols = boom_labelled_matrix.col_names
+    values = boom_labelled_matrix.to_numpy()
+
+    if not idx:
+        idx = np.arange(values.shape[0])
+
+    if not cols:
+        cols = np.arange(values.shape[1])
+
+    return pd.DataFrame(values, idx, cols)

@@ -19,6 +19,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/FactorModels/SiteBase.hpp"
+#include "Models/FactorModels/VisitorBase.hpp"
 #include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
@@ -32,12 +34,9 @@
 
   User i has a marginal probability theta[k] of belonging to class k.
 
-  Given
-
   Each site j has a site-specific set of parameters lambda_jk.  Given that user
   i is in latent class k, the n_ij visits on site j follow n_ij ~
   Poisson(lambda_jk E_i), where E_i is the exposure time for user i.
-
  */
 
 
@@ -68,131 +67,114 @@ namespace BOOM {
     int nvisits_;
   };
 
-  namespace PoissonFactor {
-    class Site;
-    class Visitor;
-    void intrusive_ptr_add_ref(Site *site);
-    void intrusive_ptr_add_ref(Visitor *visitor);
-    void intrusive_ptr_release(Site *site);
-    void intrusive_ptr_release(Visitor *visitor);
+  class PoissonFactorModel;
+  namespace FactorModels {
+    class PoissonSite;
+    class PoissonVisitor;
 
     //-------------------------------------------------------------------------
     // A visitor belongs to one of K classes.
-    class Visitor
-        : public RefCounted
-    {
+    class PoissonVisitor : public VisitorBase {
      public:
-      Visitor(const std::string &id, int num_classes)
-          : id_(id),
-            class_probabilities_(new VectorParams(
-                Vector(num_classes, 1.0 / num_classes))),
-            imputed_class_membership_(-1)
+      // Args:
+      //   id:  The unique ID for this visitor.
+      //   num_classes: The number of latent classes to which this visitor might
+      //     belong.
+      PoissonVisitor(const std::string &id, int num_classes)
+          : VisitorBase(id, num_classes)
       {}
 
-      const std::string & id() const {return id_;}
+      // Record one or more visits by this visitor to a given site.
+      // Args:
+      //   site:  The site that was visited.
+      //   ntimes:  The number of visits that occurred.
+      //
+      // The total number of visits to a site is the important statistic.  So
+      // calling this->visit(B, 2) and then this->visit(B, 3) is equivalent to a
+      // single call this->visit(B, 5).
+      void visit(const Ptr<PoissonSite> &site, int ntimes);
 
-      void visit(const Ptr<Site> &site, int ntimes);
-
-      void set_class_probabilities(const Vector &probs) {
-        if (!class_probabilities_) {
-          class_probabilities_.reset(new VectorParams(probs));
-        } else {
-          class_probabilities_->set(probs);
-        }
-      }
-
-      const Vector &class_probabilities() const {
-        return class_probabilities_->value();}
-
-      int imputed_class_membership() const {
-        return imputed_class_membership_;
-      }
-
-      void set_class_member_indicator(int which_class) {
-        imputed_class_membership_ = which_class;
-      }
-
-      const std::map<Ptr<Site>, int> &sites_visited() const {
+      // This visitor's record of the sites that were visited (and the number of
+      // times visited).
+      const std::map<Ptr<PoissonSite>, int> &sites_visited() const {
         return sites_visited_;
       }
 
+      // Clear the record of the number of sites visited.
       void clear() {
         sites_visited_.clear();
       }
 
-      int number_of_classes() const {
-        return class_probabilities_->size();
+      Int number_of_sites_visited() const override {
+        return sites_visited_.size();
       }
 
+      Int number_of_visits() const override;
+      
      private:
-      std::string id_;
-
-      // The Visitor belongs to one of K unknown classes. The class
-      // probabilities and imputed class membership are set by posterior
-      // sampling algorithms as part of an MCMC run.
-      Ptr<VectorParams> class_probabilities_;
-      int imputed_class_membership_;
-
       // The map is keyed by a raw pointer to the visited site.  The value is a
       // count of the number of times the site was visited by this Visitor.
-      std::map<Ptr<Site>, int> sites_visited_;
+      std::map<Ptr<PoissonSite>, int> sites_visited_;
     };
 
     //----------------------------------------------------------------------
     // Profile for a visited site (e.g. a URL or a domain).
-    class Site : public RefCounted {
+    class PoissonSite : public SiteBase {
      public:
 
       // Args:
       //   id:  The unique identifier for this site.  The "name".
       //   num_classes:  The number of distinct values in the latent factor.
-      Site(const std::string &id, int num_classes);
+      PoissonSite(const std::string &id, int num_classes);
 
+      // The number of latent categories.
       int number_of_classes() const {return visitation_rates_->size();}
 
       // Record one or more visits by the given visitor.
-      void observe_visitor(const Ptr<Visitor> &visitor, int ntimes);
-
-      const std::string & id() const {return id_;}
+      void observe_visitor(const Ptr<PoissonVisitor> &visitor, int ntimes);
 
       // The vector of rates
       const Vector &lambda() const {return visitation_rates_->value();}
       Vector log_lambda() const {return log_lambda_;}
       void set_lambda(const Vector &lambda);
 
-      // The prior distribution for the site's rate parameters, broken out by
-      // the discrete latent factor.
-      //
-      // a/b is the prior guess at the poisson rate.  a/b^2 is the variance.
-      const Vector &prior_a() const {return prior_a_->value();}
-      const Vector &prior_b() const {return prior_b_->value();}
-      void set_prior(const Vector &prior_a, const Vector &prior_b);
+      Int number_of_visitors() const override {
+        return observed_visitors_.size();
+      }
 
-      const std::map<Ptr<Visitor>, int> &observed_visitors() const {
+      Int number_of_visits() const override;
+      
+      // The record of the number of visits by each visitor.
+      const std::map<Ptr<PoissonVisitor>, int> &observed_visitors() const {
         return observed_visitors_;
       }
 
       // Returns a 2-column matrix.  Rows correspond to different levels of the
-      // latent category.  The columns are the number of visits and the number
-      // of visitor exposures to that category.
+      // latent category.  The left column is the number of visits from users of
+      // each category.  The right column is the number of distinct visitors.
       Matrix visitor_counts() const;
 
       void clear() {
         observed_visitors_.clear();
       }
 
-     private:
-      std::string id_;
+      // This is an "observer pattern" observer that allows the model
+      // responsible for this site to see when its parameters change.
+      //
+      // Args:
+      //   owner:  The object observing these parameters.
+      //   observer:  The functor to call when these parameters change.
+      void set_observer(void *owner, std::function<void(void)> observer) {
+        visitation_rates_->add_observer(owner, observer);
+      }
 
+     private:
       // Element k is the Poisson rate at which a visitor of class k visits the site.
       Ptr<VectorParams> visitation_rates_;
       Vector log_lambda_;
 
       // The number of times each visitor was observed.
-      std::map<Ptr<Visitor>, int> observed_visitors_;
-
-      Ptr<VectorParams> prior_a_;
-      Ptr<VectorParams> prior_b_;
+      std::map<Ptr<PoissonVisitor>, int> observed_visitors_;
     };
 
   } // namespace PoissonFactor
@@ -203,8 +185,8 @@ namespace BOOM {
         public PriorPolicy
   {
    public:
-    using Site = PoissonFactor::Site;
-    using Visitor = PoissonFactor::Visitor;
+    using Site = FactorModels::PoissonSite;
+    using Visitor = FactorModels::PoissonVisitor;
 
     explicit PoissonFactorModel(int num_classes);
 
@@ -215,27 +197,53 @@ namespace BOOM {
 
     PoissonFactorModel * clone() const override;
 
+    // Record one or more visits by a visitor to a single site.  If the model
+    // already manages of visitor (or site) with the given id's then those
+    // objects are adjusted by recording the visit.  If either visitor_id or
+    // site_id is previously unseen, then a new Visitor or Site object is
+    // created and added to the model's data.
     void record_visit(const std::string &visitor_id,
                       const std::string &site_id,
                       int ntimes = 1);
+
+    // Generic interface for adding data to the model.  This method is here to
+    // satisfy an expected BOOM idiom.  While it may prove useful,
+    // 'record_visit' is the clearer path to adding data.
     void add_data(const Ptr<Data> &data_point) override;
+
+    // Remove all visitors and sites (and visits to those sites) managed by the model.
     void clear_data() override;
+
+    // Absorb the data from a second PoissonFactorModel into this model.
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
     // The number of latent classes being modeled.
     int number_of_classes() const {return num_classes_;}
+
+    // The number of visitors this model has seen.
     int number_of_visitors() const {return visitors_.size();}
+
+    // The number of sites this model has seen.
     int number_of_sites() const {return sites_.size();}
 
+    // A directory of Sites, indexed by site id.
     std::map<std::string, Ptr<Site>> & sites() {return sites_;}
     const std::map<std::string, Ptr<Site>> & sites() const {return sites_;}
+
+    // A directory of Visitors, indexed by visitor id.
     std::map<std::string, Ptr<Visitor>> & visitors() {return visitors_;}
     const std::map<std::string, Ptr<Visitor>> & visitors() const {return visitors_;}
 
-    // Return nullptr if the requested id is not available.
+    // If the supplied id is recognized, return the Site with that ID.
+    // Otherwise return nullptr.
     Ptr<Site> site(const std::string &id) const;
+
+    // If the supplied id is recognized, return the Visito_ with that ID.
+    // Otherwise return nullptr.
     Ptr<Visitor> visitor(const std::string &id) const;
 
+    // The sum of the lambda values, for each level of the latent variable,
+    // across all sites managed by the model.  This is
     const Vector &sum_of_lambdas() const;
 
    private:
@@ -243,6 +251,9 @@ namespace BOOM {
     int num_classes_;
     std::map<std::string, Ptr<Visitor>> visitors_;
     std::map<std::string, Ptr<Site>> sites_;
+
+    mutable Vector sum_of_lambdas_;
+    mutable bool sum_of_lambdas_current_;
   };
 
 

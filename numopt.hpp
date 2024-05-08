@@ -287,27 +287,6 @@ namespace BOOM{
                             bool & happy_ending,
                             std::string &error_message);
 
-  // Minimize a function using derivative-free simulated annealing.
-  // Args:
-
-  //   x: The argument of the function to be optimized.  Input
-  //     specifies the initial set of function arguments for the
-  //     algorithm.  Output gives the value that optimizes f.
-  //   f:  The function to be minimized.
-  //   max_iterations:  The maximum number of function evaluations.
-  //   tmax:  The maximum number of evaluations at each temperature step.
-  //   ti: "Temperature increment".  Used to adjust the scale of the
-  //     random annealing perturbations.
-  //
-  // Returns:
-  //   On exit x is the (approximate) minimizing value of f, and the
-  //   return value is f(x).
-  double simulated_annealing(Vector &x,
-                             const Target &target,
-                             int max_iterations,
-                             int tmax,
-                             double ti);
-
   //======================================================================
   // Negations:
   //

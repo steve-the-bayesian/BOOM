@@ -15,11 +15,13 @@ class TestMoments(unittest.TestCase):
         frame = pd.DataFrame(matrix, columns=["Larry", "Moe", "Curly"])
         sparse = scipy.sparse.csr_matrix(matrix)
 
-        self.assertTrue(isinstance(R.mean(frame), pd.Series))
-        self.assertTrue(np.all(R.mean(frame).index == frame.columns))
+        self.assertTrue(isinstance(R.mean(frame), float))
+        self.assertTrue(isinstance(R.mean(frame, axis=0), pd.Series))
+
+        self.assertTrue(np.all(R.mean(frame, axis=0).index == frame.columns))
 
         self.assertTrue(np.allclose(R.mean(matrix, axis=0),
-                                    R.mean(frame)))
+                                    R.mean(frame, axis=0)))
         self.assertTrue(np.allclose(R.mean(matrix, axis=0),
                                     R.mean(sparse, axis=0)))
         self.assertTrue(np.allclose(R.mean(matrix, axis=0),

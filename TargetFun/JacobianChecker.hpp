@@ -49,6 +49,10 @@ namespace BOOM {
         const std::shared_ptr<Jacobian> &analytic_jacobian,
         double epsilon);
 
+    void set_epsilon(double eps) {
+      epsilon_ = eps;
+    }
+
     // The following functions return 'true' if the analytic and
     // numeric Jacobians match, and 'false' if they don't.
 
@@ -62,9 +66,11 @@ namespace BOOM {
 
     // Checks whether the analytic and numeric second derivatives of
     // the Jacobian matrix match within epsilon.
-    bool check_second_order_elements(
-        const Vector &new_parameterization,
-        std::vector<std::string> *error_messages = nullptr);
+    //
+    // Returns the empty string if second_order_element matches its numerical
+    // derivatives sufficiently closely.  Otherwise an error message is returned
+    // detailing the curcumstances of the failed check.
+    std::string check_second_order_elements(const Vector &new_parameterization);
 
     // Checks that the analytic Jacobian matrix correctly transforms
     // the second order gradient.

@@ -27,6 +27,14 @@ namespace BayesBoom {
               return std::unique_ptr<Vector>(new Vector(view));
             }),
           "Create a Vector from a numpy array.  Be sure the dtype is float!")
+        .def(py::init(
+            [](const std::vector<int> &inputs) {
+              return new Vector(inputs.begin(), inputs.end());
+            }))
+        .def(py::init(
+            [](const std::vector<long> &inputs) {
+              return new Vector(inputs.begin(), inputs.end());
+            }))
         .def("all_finite", &Vector::all_finite,
              "Returns true iff all elements are finite.")
         .def_property_readonly("randomize", &Vector::randomize,
@@ -157,7 +165,9 @@ namespace BayesBoom {
              &Matrix::max_abs,
              "The absolute value of the matrix element with the largest absolute value.")
         .def("to_numpy",
-             [](const Matrix &m) {return Eigen::MatrixXd(EigenMap(m));},
+             [](const Matrix &m) {
+               return Eigen::MatrixXd(EigenMap(m));
+             },
              "Convert the matrix to a numpy array." )
         .def(py::pickle(
             [](const Matrix &mat) {
@@ -193,6 +203,34 @@ namespace BayesBoom {
 
     py::implicitly_convertible<py::array, Matrix>();
 
+    py::class_<LabelledMatrix, Matrix>(boom, "LabelledMatrix")
+        .def(py::init(
+            [](const Matrix &data,
+               const std::vector<std::string> &row_labels,
+               const std::vector<std::string> &column_labels) {
+              return new LabelledMatrix(data, row_labels, column_labels);
+            }),
+             py::arg("data"),
+             py::arg("row_labels") = std::vector<std::string>(),
+             py::arg("col_labels") = std::vector<std::string>(),
+             "Args:\n\n"
+             "  data: A Matrix containing the data to be labelled.\n"
+             "  row_labels: The labels applied to the rows.  Length "
+             "must match data.nrow(), or else be 0.\n"
+             "  col_labels: The labels applied to the columns.  Length "
+             "must match data.ncol(), or else be 0.\n")
+        .def_property_readonly(
+            "row_names",
+            [](const LabelledMatrix &m) {
+              return m.row_names();
+            })
+        .def_property_readonly(
+            "col_names",
+            [](const LabelledMatrix &m) {
+              return m.col_names();
+            })
+        ;
+    
     // ===========================================================================
     py::class_<SpdMatrix, Matrix>(boom, "SpdMatrix")
         .def(py::init<int, double>(),

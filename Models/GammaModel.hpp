@@ -85,6 +85,8 @@ namespace BOOM {
 
     virtual double alpha() const = 0;
     virtual double beta() const = 0;
+    double a() const {return alpha();}
+    double b() const {return beta();}
     double mean() const override;
     double variance() const override;
 

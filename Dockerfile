@@ -18,6 +18,10 @@ RUN rm -f /usr/bin/python
 RUN ln -sf /opt/python/cp310-cp310/bin/python3 /usr/bin/python
 RUN ln -sf /opt/python/cp310-cp310/bin/pip3 /usr/bin/pip
 
+# Code that was written to use /usr/bin/env shebangs doesn't work anymore.  The
+# solution is to hard-wire the python interpreter we want to use.
+RUN sed -i 's|usr/bin/env python3|usr/bin/python|' install/install_headers.py
+
 # Run the install script.
 RUN ./install/pyboom
 
@@ -45,7 +49,7 @@ RUN auditwheel repair /output/BayesBoom*.whl -w /output
 # adjust them above.
 
 # Once the job is done run
-#      docker -v /tmp:/export run -i -t pyboom /bin/bash
+#      docker run -v /tmp:/export -i -t pyboom /bin/bash
 #      cd /output
 #      mv BayesBoom-0.1.14-cp310-cp310-*.whl /export
 #      exit

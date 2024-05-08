@@ -70,7 +70,7 @@ class TestPlots(unittest.TestCase):
         counts = pd.DataFrame(counts, index=us_states[:counts.shape[0]],
                               columns=["red", "blue", "green", "yellow"])
 
-        print(counts)
+        # print(counts)
         fig, ax = plt.subplots()
         foo = mosaic_plot(counts, ax=ax)
 
@@ -104,8 +104,9 @@ class TestPlots(unittest.TestCase):
         rnd = np.random.uniform(0, 1, 1000)
         y = rnd < x
         fig, ax = plt.subplots()
-        foo = hosmer_lemeshow_plot(y, x, main="Hosmer-Lemeshow plot", ax=ax)
-        self.assertIsInstance(foo, plt.Axes)
+        ax, group_means = hosmer_lemeshow_plot(y, x, main="Hosmer-Lemeshow plot", ax=ax)
+        self.assertIsInstance(ax, plt.Axes)
+        self.assertIsInstance(group_means, pd.Series)
         if _show_figs:
             fig.show()
 

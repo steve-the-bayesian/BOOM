@@ -116,7 +116,7 @@ class lm_spike:
                  prior: RegressionSpikeSlabPrior = None,
                  ping: int = None,
                  seed: int = None,
-                 xnames = None,
+                 xnames=None,
                  **kwargs):
         """
         Create and a model object and run a specified number of MCMC iterations.
@@ -199,7 +199,7 @@ class lm_spike:
         self._residual_sd = np.zeros(niter)
         self._log_likelihood = np.zeros(niter)
 
-        self._model.coefficients.drop_all()
+        self._model.coef.drop_all()
         self._model.coef.add(0)
 
         for i in range(niter):
@@ -267,7 +267,8 @@ class lm_spike:
 
     @property
     def xnames(self):
-        # A numpy array of strings containing the column names of the predictors.
+        # A numpy array of strings containing the column names of the
+        # predictors.
         return np.array(self._x_design_info.column_names)
 
     def inclusion_probs(self, burn=None):
@@ -345,8 +346,8 @@ class lm_spike:
 
         if number_of_variables is None:
             number_of_variables = np.sum(inc >= inclusion_threshold)
-        inc = inc[index[:number_of_variables]]
-        pos = pos[index[:number_of_variables]]
+        inc = inc.iloc[index[:number_of_variables]]
+        pos = pos.iloc[index[:number_of_variables]]
         colors = colors[index[:number_of_variables]]
         ans = R.barplot(inc,
                         ax=ax,
@@ -505,7 +506,7 @@ def summarize_spike_slab_coefficients(coef,
     inclusion_probs = np.array(np.mean(coef != 0, axis=0)).ravel()
 
     if order:
-        indx = R.order(inclusion_probs, True)
+        indx = R.order(inclusion_probs)
         coef = coef[:, indx]
         inclusion_probs = inclusion_probs[indx]
         colnames = colnames[indx]
@@ -647,7 +648,8 @@ def plot_model_size(coefficients, burn, ax=None, **kwargs):
         np.sum(coefficients[i, :] != 0)
         for i in range(burn, ndraws)
     ])
-    return R.hist(size, ax=ax, **kwargs)
+    _, ax = R.hist(size, ax=ax, **kwargs)
+    return ax
 
 
 class RegressionSlabPrior:

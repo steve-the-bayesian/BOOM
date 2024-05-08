@@ -5,6 +5,8 @@ from .pretty import pretty
 
 from .ls import ls
 
+from .assign_classes import assign_classes, ClassAssigner
+
 from .base import (
     data_frame,
     table,
@@ -81,6 +83,7 @@ from .mcmc import suggest_burn, report_progress
 
 from .plots import (
     abline,
+    AddSegments,
     barplot,
     boxplot,
     BoxplotTrue,
@@ -111,7 +114,7 @@ from .probability import (
     rmarkov,
 )
 
-from .stats import density, sd, mean, acf
+from .stats import density, sd, mean, acf, kl_divergence
 
 from .summary import (
     summary,
@@ -129,7 +132,9 @@ from .boom_py_utils import (
     to_boom_date,
     to_boom_vector,
     to_boom_matrix,
+    to_boom_labelled_matrix,
     to_boom_spd,
     to_numpy,
+    to_pd_dataframe,
     to_pd_timestamp,
 )

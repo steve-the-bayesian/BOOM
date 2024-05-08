@@ -21,3 +21,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "sum_multinomial_logit_test",
+    size = "small",
+    srcs = ["sum_multinomial_logit_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)

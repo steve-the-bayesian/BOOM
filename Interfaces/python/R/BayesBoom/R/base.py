@@ -71,10 +71,10 @@ def print_time_interval(seconds: float, print_output=True):
     remaining_seconds = remaining_seconds % seconds_in_day
 
     hours = int(remaining_seconds / seconds_in_hour)
-    remaining_seconds = remaining_seconds & seconds_in_hour
+    remaining_seconds = remaining_seconds % seconds_in_hour
 
     minutes = int(remaining_seconds / seconds_in_minute)
-    remaining_seconds = remaining_seconds & seconds_in_minute
+    remaining_seconds = remaining_seconds % seconds_in_minute
 
     integer_seconds = int(remaining_seconds)
     fractional_seconds = remaining_seconds % 1
@@ -96,7 +96,7 @@ def print_time_interval(seconds: float, print_output=True):
     if fractional_seconds == seconds:
         ans += str(fractional_seconds)
     else:
-        ans += f"{integer_seconds + fractional_seconds:.2f}"
+        ans += f"{integer_seconds + fractional_seconds:.3f}"
         ans += " seconds"
     if print_output:
         print(ans)

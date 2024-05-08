@@ -22,4 +22,10 @@ setup(
     long_description=read("README"),
     packages=find_namespace_packages(include=["BayesBoom.*"]),
     zip_safe=True,
+    package_data={"": [
+        "*.csv",
+        "*.txt",
+        "BayesBoom/spikeslab/*.csv",
+        "BayesBoom/spikeslab/*.txt",
+    ]},
 )

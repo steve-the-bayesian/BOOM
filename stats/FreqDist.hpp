@@ -29,6 +29,10 @@ namespace BOOM {
   // A frequency distribution for categorical data.
   class FrequencyDistribution {
    public:
+
+    // Construct a null frequency distribution.
+    FrequencyDistribution() {}
+    
     // Overloaded constructors for various integral types.
     // Args:
     //   y:  A vector of categorical data to be tabulated.
@@ -36,8 +40,10 @@ namespace BOOM {
     //     largest values in y will be included (with zero counts if they did
     //     not appear in y).  If false, then values that did not appear in y
     //     will be skipped.
-    explicit FrequencyDistribution(const std::vector<uint> &y, bool contiguous = false);
-    explicit FrequencyDistribution(const std::vector<int> &y, bool contiguous = false);
+    explicit FrequencyDistribution(const std::vector<uint> &y,
+                                   bool contiguous = false);
+    explicit FrequencyDistribution(const std::vector<int> &y,
+                                   bool contiguous = false);
     explicit FrequencyDistribution(const std::vector<unsigned long> &y,
                                    bool contiguous = false);
 
@@ -69,6 +75,12 @@ namespace BOOM {
       }
     }
 
+    // Add or remove a single observation with the given level.
+    // I.e. add_count(3) instructs the object to record one more observation
+    // with category 3.
+    void add_count(int level_index) {++counts_[level_index];}
+    void remove_count(int level_index) {--counts_[level_index];}
+    
     std::ostream &print(std::ostream &out) const;
 
     // Returns the label corresponding to the largest count.  If two or more
@@ -83,7 +95,6 @@ namespace BOOM {
     int count(const std::string &label) const;
 
    protected:
-    FrequencyDistribution() {}
     void reset(const std::vector<int> &counts,
                const std::vector<std::string> &labels);
 

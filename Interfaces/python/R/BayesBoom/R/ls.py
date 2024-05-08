@@ -37,20 +37,21 @@ def ls_object(obj):
     list the object's shape.
     """
 
-    contents = dir(obj)
-    functions = [x for x in contents if isfunction(getattr(obj, x))]
-    dicts = [x for x in contents if isinstance(getattr(obj, x), dict)]
-    lists = [x for x in contents if isinstance(getattr(obj, x), list)]
-    numpy_arrays = [x for x in contents
-                    if isinstance(getattr(obj, x), np.ndarray)]
-    pandas = [x for x in contents if isinstance(getattr(obj, x), pd.Series)
-              or isinstance(getattr(obj, x), pd.DataFrame)]
-    other = [x for x in contents
-             if x not in functions
-             and x not in dicts
-             and x not in lists
-             and x not in numpy_arrays
-             and x not in pandas]
+    # contents = dir(obj)
+    # functions = [x for x in contents if isfunction(getattr(obj, x))]
+    # dicts = [x for x in contents if isinstance(getattr(obj, x), dict)]
+    # lists = [x for x in contents if isinstance(getattr(obj, x), list)]
+    # numpy_arrays = [x for x in contents
+    #                 if isinstance(getattr(obj, x), np.ndarray)]
+    # pandas = [x for x in contents if isinstance(getattr(obj, x), pd.Series)
+    #           or isinstance(getattr(obj, x), pd.DataFrame)]
+    # other = [x for x in contents
+    #          if x not in functions
+    #          and x not in dicts
+    #          and x not in lists
+    #          and x not in numpy_arrays
+    #          and x not in pandas]
 
-    # list_sizes = [x + f"[{len(getattr(obj, x)}]" for x in lists]
-    
+    lists = [3]
+    list_sizes = [x + f"[{len(getattr(obj, x))}]" for x in lists]
+    return list_sizes
