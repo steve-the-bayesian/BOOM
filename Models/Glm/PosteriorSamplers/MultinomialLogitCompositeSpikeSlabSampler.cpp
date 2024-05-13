@@ -125,10 +125,15 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   MLCS3::MultinomialLogitCompositeSpikeSlabSampler(
-      MultinomialLogitModel *model, const Ptr<MvnBase> &prior,
-      const Ptr<VariableSelectionPrior> &inclusion_prior, double tdf,
-      double rwm_variance_scale_factor, int nthreads, int max_chunk_size,
-      bool check_initial_condition, RNG &seeding_rng)
+      MultinomialLogitModel *model,
+      const Ptr<MvnBase> &prior,
+      const Ptr<VariableSelectionPrior> &inclusion_prior,
+      double tdf,
+      double rwm_variance_scale_factor,
+      int nthreads,
+      int max_chunk_size,
+      bool check_initial_condition,
+      RNG &seeding_rng)
       : MLVS(model, prior, inclusion_prior, nthreads, check_initial_condition,
              seeding_rng),
         model_(model),
@@ -137,7 +142,7 @@ namespace BOOM {
         max_chunk_size_(max_chunk_size),
         tdf_(tdf),
         rwm_variance_scale_factor_(rwm_variance_scale_factor),
-        move_probs_(".45 .45 .10") {
+        move_probs_{.40, .40, .10, .10} {
     if (max_chunk_size_ <= 0) {
       max_chunk_size_ = model_->beta().size();
     }
@@ -159,6 +164,10 @@ namespace BOOM {
 
       case TIM_MOVE:
         tim_draw();
+        break;
+
+      case SPIKE_SLAB_RWM_MOVE:
+        spike_slab_rwm_move();
         break;
 
       default:
@@ -247,16 +256,45 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void MLCS3::rwm_spike_slab_move() {
-    int dim = model_->coef()->dim();
+  // Choose a random coefficient.  Flip it's include/exclude status.
+  void MLCS3::spike_slab_rwm_move() {
+    int dim = model_->coef().dim();
     int index = int(floor(runif_mt(rng()) * dim));
 
     NEW(GlmCoefs, candidate)(model_->coef());
 
-    if (model_->coef()->inc(index)) {
+    double original_log_likelihood = model_->log_likelihood();
+
+    if (model_->coef().inc(index)) {
       // The coefficient is included.  Propose setting it to zero.
+      double original_coefficient = model_->Beta()[index];
+
+
+
+      model_->coef().flip(index);
+      double candidate_log_likelihood = model_->log_likelihood();
+
+      double numerator = candidate_log_likelihood - candidate_log_proposal_prob;
+      double denominator = original_log_likelihood - reverse_log_proposal_prob;
+      double logu = log(runif_mt(rng()));
+      if (numerator - denominator < logu) {
+        // Success -- do nothing
+      } else {
+        // Reject proposal.  Flip back.
+        model_->coef.flip(index);
+      }
+
     } else {
       // The coefficient is excluded.  Propose including it.
+      model_->coef().flip(index);
+      double candidate_log_likelihood = model_->log_likelihood();
+      double candidate_coefficient = rnorm_mt(rng(), 0, 1); ///////// TODO
+
+      model_->coef().set_beta(idnex, candidate_coefficient);  ////////// TODO
+
+      double numerator = candidate_log_likelihood - candidate_log_proposal_prob;
+      double denominator = original_log_likelihood
+
     }
 
   }
@@ -264,9 +302,11 @@ namespace BOOM {
   //----------------------------------------------------------------------
   LabeledMatrix MLCS3::timing_report() const { return accounting_.to_matrix(); }
 
-  void MLCS3::set_move_probabilities(double data_augmentation, double rwm,
-                                     double tim) {
-    if (data_augmentation < 0 || rwm < 0 || tim < 0) {
+  void MLCS3::set_move_probabilities(double data_augmentation,
+                                     double rwm,
+                                     double tim,
+                                     double spike_slab_rwm) {
+    if (data_augmentation < 0 || rwm < 0 || tim < 0 || spike_slab_rwm < 0) {
       report_error(
           "All probabilities must be non-negative in "
           "MultinomialLogitCompositeSpikeSlabSampler::"
@@ -275,6 +315,7 @@ namespace BOOM {
     move_probs_[DATA_AUGMENTATION_MOVE] = data_augmentation;
     move_probs_[RWM_MOVE] = rwm;
     move_probs_[TIM_MOVE] = tim;
+    move_probs_[SPIKE_SLAB_RWM_MOVE] = spike_slab_rwm;
     double total = sum(move_probs_);
     if (total == 0.0) {
       report_error("At least one move probability must be positive.");

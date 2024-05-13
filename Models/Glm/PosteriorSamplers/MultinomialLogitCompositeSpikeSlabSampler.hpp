@@ -73,20 +73,38 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
+
+    // Sample coefficients using random walk Metropolis without changing which
+    // coefficients are included.
     void rwm_draw();
+
+    // Sample coefficients using tailored independence Metropolis without
+    // changing which coefficients are included.
     void tim_draw();
+
+    // Sample a collection of coefficients using RWM.
     void rwm_draw_chunk(int chunk);
-    void rwm_spike_slab_move();
+
+    // Randomly choose a coefficient and flip its include/exclude status.  When
+    // moving from zero to nonzero, the RWM proposal will be used.
+    void spike_slab_rwm_move();
 
     LabeledMatrix timing_report() const;
 
-    enum MoveType { DATA_AUGMENTATION_MOVE = 0, RWM_MOVE = 1, TIM_MOVE = 2 };
+    enum MoveType {
+      DATA_AUGMENTATION_MOVE = 0,
+      RWM_MOVE = 1,
+      TIM_MOVE = 2,
+      SPIKE_SLAB_RWM_MOVE = 3,
+    };
 
     // Set the probabilities of selecting each of the three move
     // types.  The three arguments must be non-negative numbers
     // summing to 1.
-    void set_move_probabilities(double data_augmentation, double rwm,
-                                double tim);
+    void set_move_probabilities(double data_augmentation,
+                                double rwm,
+                                double tim,
+                                double spike_slab_rwm);
 
     int compute_chunk_size() const;
     int compute_number_of_chunks() const;

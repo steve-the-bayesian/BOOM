@@ -42,16 +42,21 @@ namespace BOOM {
     return b;
   }
   //------------------------------------------------------------
-  MLM::MultinomialLogitModel(int Nch, int Psub, int Pch)
-      : nch_(Nch), psub_(Psub), pch_(Pch) {
+  MLM::MultinomialLogitModel(int num_choices,
+                             int subject_xdim,
+                             int choice_xdim)
+      : num_choices_(num_choices),
+        subject_xdim_(subject_xdim),
+        choice_xdim_(choice_xdim)
+  {
     setup();
   }
   //------------------------------------------------------------
   MLM::MultinomialLogitModel(const Matrix &beta_subject,
                              const Vector &beta_choice)
-      : nch_(1 + beta_subject.ncol()),
-        psub_(beta_subject.nrow()),
-        pch_(beta_choice.size()) {
+      : num_choices_(1 + beta_subject.ncol()),
+        subject_xdim_(beta_subject.nrow()),
+        choice_xdim_(beta_choice.size()) {
     setup();
     set_beta(make_vector(beta_subject, beta_choice));
   }
@@ -59,7 +64,10 @@ namespace BOOM {
   MLM::MultinomialLogitModel(
       const std::vector<Ptr<CategoricalData> > &responses,
       const Matrix &Xsubject, const std::vector<Matrix> &Xchoice)
-      : nch_(responses[0]->nlevels()), psub_(Xsubject.ncol()), pch_(0) {
+      : num_choices_(responses[0]->nlevels()),
+        subject_xdim_(Xsubject.ncol()),
+        choice_xdim_(0)
+  {
     int n = responses.size();
     if ((nrow(Xsubject) > 0 && nrow(Xsubject) != n) ||
         (!Xchoice.empty() && Xchoice.size() != n)) {
@@ -84,26 +92,26 @@ namespace BOOM {
       std::vector<Ptr<VectorData> > choice_predictors;
       if (!Xchoice.empty()) {
         const Matrix &choice_matrix(Xchoice[i]);
-        if (pch_ == 0) {
-          pch_ = ncol(choice_matrix);
-        } else if (pch_ != ncol(choice_matrix)) {
+        if (choice_xdim_ == 0) {
+          choice_xdim_ = ncol(choice_matrix);
+        } else if (choice_xdim_ != ncol(choice_matrix)) {
           ostringstream err;
           err << "The number of columns in the choice matrix for observation "
               << i << " did not match previous observations." << endl
               << "ncol(Xsubject[i]) = " << ncol(choice_matrix) << endl
-              << "previously:         " << pch_ << endl;
+              << "previously:         " << choice_xdim_ << endl;
           report_error(err.str());
         }
 
-        if (nrow(choice_matrix) != nch_) {
+        if (nrow(choice_matrix) != num_choices_) {
           ostringstream err;
           err << "The number of rows in choice matrix does not match the "
               << "number of choices available in the response." << endl
-              << "response:  " << nch_ << endl
+              << "response:  " << num_choices_ << endl
               << "Xchoice[" << i << "]: " << nrow(choice_matrix) << endl;
           report_error(err.str());
         }
-        for (int j = 0; j < nch_; ++j) {
+        for (int j = 0; j < num_choices_; ++j) {
           NEW(VectorData, ch)(choice_matrix.row(j));
           choice_predictors.push_back(ch);
         }
@@ -122,9 +130,9 @@ namespace BOOM {
         PriorPolicy(rhs),
         NumOptModel(rhs),
         wsp_(rhs.wsp_),
-        nch_(rhs.nch_),
-        psub_(rhs.psub_),
-        pch_(rhs.pch_),
+        num_choices_(rhs.num_choices_),
+        subject_xdim_(rhs.subject_xdim_),
+        choice_xdim_(rhs.choice_xdim_),
         log_sampling_probs_(rhs.log_sampling_probs_) {
     setup_observers();
   }
@@ -306,7 +314,7 @@ namespace BOOM {
   double MLM::logp(const ChoiceData &dp) const {
     // For right now...  this assumes all choices are available to
     //    everyone int n = dp->n_avail();
-    wsp_.resize(nch_);
+    wsp_.resize(num_choices_);
     fill_eta(dp, wsp_);
     int y = dp.value();
     double ans = wsp_[y] - lse(wsp_);
@@ -316,9 +324,9 @@ namespace BOOM {
   //------------------------------------------------------------
 
   int MLM::beta_size(bool include_zeros) const {
-    int nch(nch_);
+    int nch(num_choices_);
     if (!include_zeros) --nch;
-    return nch * psub_ + pch_;
+    return nch * subject_xdim_ + choice_xdim_;
   }
 
   int MLM::sim(const Ptr<ChoiceData> &dp, Vector &probs, RNG &rng) const {
@@ -331,7 +339,9 @@ namespace BOOM {
     return rmulti_mt(rng, prob);
   }
 
-  Vector &MLM::predict(const Ptr<ChoiceData> &dp, Vector &ans, bool probscale) const {
+  Vector &MLM::predict(const Ptr<ChoiceData> &dp,
+                       Vector &ans,
+                       bool probscale) const {
     fill_eta(*dp, ans);
     if (probscale) {
       ans = exp(ans - lse(ans));
@@ -340,18 +350,18 @@ namespace BOOM {
   }
 
   Vector MLM::predict(const Ptr<ChoiceData> &dp, bool probscale) const {
-    Vector ans(nch_);
+    Vector ans(num_choices_);
     return predict(dp, ans, probscale);
   }
 
   //------------------------------------------------------------
-  int MLM::subject_nvars() const { return psub_; }
-  int MLM::choice_nvars() const { return pch_; }
-  int MLM::Nchoices() const { return nch_; }
+  int MLM::subject_nvars() const { return subject_xdim_; }
+  int MLM::choice_nvars() const { return choice_xdim_; }
+  int MLM::Nchoices() const { return num_choices_; }
   //------------------------------------------------------------
 
   void MLM::set_sampling_probs(const Vector &probs) {
-    assert(probs.size() == nch_);
+    assert(probs.size() == num_choices_);
     log_sampling_probs_ = log(probs);
   }
 

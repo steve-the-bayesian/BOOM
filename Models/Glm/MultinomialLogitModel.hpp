@@ -58,7 +58,7 @@ namespace BOOM {
                           const Vector &beta_choice);
 
     // Args:
-    //   Nchoices:  The number of possible choices in the response variable.
+    //   num_choices:  The number of possible choices in the response variable.
     //   subject_xdim: The dimension of the predictor variables
     //     measuring the characteristics of the subjects doing the
     //     choosing.  Ususally this includes an intercept, but an
@@ -66,9 +66,9 @@ namespace BOOM {
     //   choice_xdim: The dimension of the predictor variables
     //     describing characteristics of the items being chosen.  This
     //     is for a single object.  The complete set of choice level
-    //     predictors will be an array of (Nchoices X choice_xdim)
+    //     predictors will be an array of (num_choices X choice_xdim)
     //     values.
-    MultinomialLogitModel(int Nchoices, int subject_xdim, int choice_xdim);
+    MultinomialLogitModel(int num_choices, int subject_xdim, int choice_xdim);
 
     // Args:
     //   responses:  The vector of responses
@@ -89,7 +89,7 @@ namespace BOOM {
 
     // coefficient vector: elements corresponding to choice level 0
     // (which are constrained to 0 for identifiability) are omitted.
-    // Thus beta() is of dimension ((num_choices-1)*psub + pch)
+    // Thus beta() is of dimension ((num_choices-1)*subject_xdim + choice_xdim)
 
     // If the choices are labelled 0, 1, 2, ..., M-1 then the elements
     // of beta are
@@ -265,6 +265,8 @@ namespace BOOM {
     mutable Vector beta_with_zeros_;
     mutable bool beta_with_zeros_current_;
 
+    // An observer function that sets the flag 'beta_with_zeros_current_' to
+    // false when called.
     void watch_beta();
     void setup();
     void setup_observers();
@@ -272,9 +274,9 @@ namespace BOOM {
     void index_out_of_bounds(int m) const;
 
     mutable Vector wsp_;
-    int nch_;   // number of choices
-    int psub_;  // number of subject X variables
-    int pch_;   // number of choice X variables
+    int num_choices_;   // number of choices
+    int subject_xdim_;  // number of subject X variables
+    int choice_xdim_;   // number of choice X variables
     Vector log_sampling_probs_;
   };
 }  // namespace BOOM
