@@ -35,7 +35,7 @@ namespace BOOM {
 
   namespace {
     // Some locally used free functions.
-    
+
     // An observed value y implies a latent value z between
     // compute_lower_cutpoint(y) and compute_lower_cutpoint(y).
     inline double compute_upper_cutpoint(
@@ -63,7 +63,7 @@ namespace BOOM {
         return infinity();
       }
     }
-    
+
     inline Vector make_default_cutpoint_vector(uint nlevels) {
       if (nlevels <= 2) return Vector();
       Vector cutpoints(nlevels - 2);
@@ -71,7 +71,7 @@ namespace BOOM {
       return cutpoints;
     }
   }  // namespace
-  
+
 
   typedef OrdinalCutpointModel OCM;
 
@@ -107,7 +107,7 @@ namespace BOOM {
     std::vector<uint> y_int(n);
     for (uint i = 0; i < n; ++i) y_int[i] = rint(Y[i]);  // round to nearest int
 
-    std::vector<Ptr<OrdinalData> > ord_vec = make_ord_ptrs(y_int);
+    std::vector<Ptr<OrdinalData> > ord_vec = create_ordinal_data(y_int);
     for (uint i = 0; i < n; ++i) {
       dat().push_back(
           new OrdinalRegressionData(ord_vec[i], new VectorData(X.row(i))));
@@ -195,7 +195,7 @@ namespace BOOM {
   void OCM::set_cutpoint(int index, double value) {
     Cutpoints_prm()->set_element(value, index);
   }
-  
+
   double OCM::upper_cutpoint(int y) const {
     return compute_upper_cutpoint(y, cutpoint_vector());
   }
@@ -203,7 +203,7 @@ namespace BOOM {
   double OCM::lower_cutpoint(int y) const {
     return compute_lower_cutpoint(y, cutpoint_vector());
   }
-  
+
   Ptr<OrdinalRegressionData> OCM::sim(RNG &rng) {
     if (!simulation_key_) {
       simulation_key_ = new FixedSizeIntCatKey(nlevels());
@@ -231,10 +231,10 @@ namespace BOOM {
     return ans;
   }
 
-  
+
   //---------------------------------------------------------------------------
   double OCM::full_loglike(const Vector &beta,
-                           const Vector &cutpoints, 
+                           const Vector &cutpoints,
                            Vector &beta_gradient,
                            Vector &cutpoint_gradient,
                            Matrix &beta_Hessian,
@@ -251,7 +251,7 @@ namespace BOOM {
     //--------------------------------------------------
     // Resize and initialize derivatives.
     if (use_beta_derivs && nderiv > 0) {
-      
+
       beta_gradient.resize(nvars);
       beta_gradient = 0.0;
       if (nderiv > 1) {
@@ -278,7 +278,7 @@ namespace BOOM {
       const OrdinalRegressionData &data_point(*data[i]);
       int y = data_point.y();
       Vector x = inclusion.select(data_point.x());
-      
+
       double btx = included_beta.dot(x);
       // d1 and d0 are the upper and lower quantiles of the standardized
       // distribution corresponding to y.
@@ -294,13 +294,13 @@ namespace BOOM {
 
       if (nderiv > 0) {
         // Handle first derivatives.
-        
+
         // There are two "fake" cutpoints at -infinity and zero before the
         // first cutpoint in the vector.  Thus 'upper' and 'lower' are
         // determined by:
         int upper_cutpoint_index = y + 1 - 2;
         int lower_cutpoint_index = y - 2;
-        
+
         // Derivatives of F1 and F0 with respect to their function arguments at
         // the shifted cutpoints.
         double f1 = dlink_inv(d1) / prob;
@@ -311,14 +311,14 @@ namespace BOOM {
           // The chain rule introduces an extra factor of (-x).
           beta_gradient -= df * x;
         }
-        
+
         if (use_cutpoint_derivs) {
           // The chain rule multiplies f1 by 1 if the upper cutpoint is in the
           // cutpoint vector, and 0 otherwise.  The increment goes in the slot
           // corresponding to the upper cutpoint.  The chain rule multiplies f0
           // by 1 if the lower cutpoint is in the cutpoint vector, and 0
-          // otherwise.  
-          // 
+          // otherwise.
+          //
           // Another way to say all this is that d logp / d cutpoints = f1 *
           // e(y+1) - f0 * e(y), where e(y) is a vector of all 0's except a 1 in
           // slot y - 2.  If y < 2 then e(y) is a vector of all 0's.
@@ -334,7 +334,7 @@ namespace BOOM {
 
         if (nderiv > 1) {
           // Handle second derivatives
-          
+
           // The beta Hessian is the derivative of the beta gradient.
           // Derivatives by the quotient rule.
           double df1 = ddlink_inv(d1) / prob;
@@ -389,10 +389,10 @@ namespace BOOM {
           }
         } // nderiv > 1
       }  // nderiv > 0
-    }  // for 
+    }  // for
     return ans;
   }
-  
+
   //---------------------------------------------------------------------------
   double OCM::Loglike(const Vector &beta_delta, Vector &g, Matrix &Hessian,
                       uint nderiv) const {
@@ -449,21 +449,21 @@ namespace BOOM {
       initialize_params(Vector(nlevels(), 0.0));
     }
   }
-  
+
   void OCM::initialize_params(const Vector &counts) {
     if (counts.size() != nlevels()) {
       report_error("Vector of counts did not align with the number of "
                    "factor levels.");
     }
-      
+
     Vector hist = counts;
     // Add a unit information prior to ensure each element is positive.
     hist += 1.0 / hist.size();
-    
+
     hist.normalize_prob();
     double sum = hist[0];
     double b0 = link(sum);
-    
+
     uint I = 0;  // chaged from I=2 when adopting zero index vectors
     Vector cutpoint_vector = this->cutpoint_vector();
     for (uint i = 1; i < cutpoint_vector.size(); ++i) {
@@ -522,5 +522,5 @@ namespace BOOM {
       return 0;
     }
   }
-  
+
 }  // namespace BOOM

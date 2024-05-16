@@ -392,6 +392,8 @@ namespace BOOM {
   }
 
   namespace {
+    // Create vectors of pointers to CategoricalData from vectors of "integers"
+    // including int, long, unsigned long, etc.
     template <class INT>
     std::vector<Ptr<CategoricalData>> create_integer_categorical_data(
         const std::vector<INT> &input) {
@@ -414,7 +416,8 @@ namespace BOOM {
     return create_integer_categorical_data<int>(iv);
   }
 
-  std::vector<Ptr<OrdinalData> > make_ord_ptrs(const std::vector<uint> &iv) {
+  std::vector<Ptr<OrdinalData>>
+  create_ordinal_data(const std::vector<uint> &iv) {
     uint n = iv.size();
     uint Max = 0;
     for (uint i = 0; i < n; ++i) {
