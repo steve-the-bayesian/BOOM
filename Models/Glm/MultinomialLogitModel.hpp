@@ -114,7 +114,18 @@ namespace BOOM {
     // Returns the vector of choice specific coefficients.
     Vector beta_choice() const;
 
-    void set_beta(const Vector &b);
+    // Set the full coefficient vector.
+    // Args:
+    //   beta:  A coefficient vector comprising: [
+    //     subject coefficients for choice level1,
+    //     level2,
+    //     ...,
+    //     level M-1,
+    //     choice coefficients]
+    //
+    // Note that choice coefficients for level 0 are omitted as they are assumed
+    // to be 0.
+    void set_beta(const Vector &beta);
 
     // Args:
     //   b: The vector of coefficients to use for the specified choice
