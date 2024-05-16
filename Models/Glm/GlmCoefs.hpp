@@ -87,6 +87,10 @@ namespace BOOM {
     // excluded, then those elements will be set to zero.
     void set_Beta(const Vector &beta);
 
+    // Set the value of a specific coefficient.  If that coefficient is
+    // currently excluded, then its inclusion indicator will also be set.
+    void set_coefficient(int index, double coefficient);
+
     // Set the a subset of beta to the requested value.  If any elements of the
     // subset are excluded, those values will be set to zero, regardless of
     // their value in beta_subset.

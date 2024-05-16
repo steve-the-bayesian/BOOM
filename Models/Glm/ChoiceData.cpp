@@ -19,6 +19,9 @@
 #include "Models/Glm/ChoiceData.hpp"
 #include "LinAlg/Vector.hpp"
 
+#include "cpputil/report_error.hpp"
+#include <sstream>
+
 namespace BOOM {
 
   typedef ChoiceData CHD;
@@ -122,6 +125,44 @@ namespace BOOM {
     if (!big_x_current_) return false;
     return bigX_.size() ==
            choice_nvars() + subject_nvars() * (nchoices() - 1 + include_zeros);
+  }
+
+  int ChoiceDataPredictorMap::long_subject_index(
+      int subject_predictor,
+      int choice_level) const {
+    if (choice_level >= num_choices_ || choice_level < 0) {
+      std::ostringstream err;
+      err << "Choice level " << choice_level << " out of bounds.\n";
+      report_error(err.str());
+    }
+    if (choice_level == 0 && !include_zeros_) {
+      report_error("Choice level 0 was requested from a "
+                   "ChoiceDataPredictorMap considering choice level 0 "
+                   "to be implicit.");
+    }
+    return (choice_level - 1 + include_zeros_) * subject_dim_ + subject_predictor;
+  }
+
+  int ChoiceDataPredictorMap::long_choice_index(int choice_index) const {
+    return (num_choices_ - 1 + include_zeros_) * subject_dim_ + choice_index;
+  }
+
+  std::pair<int, int> ChoiceDataPredictorMap::subject_index(
+      int long_index) const {
+    int choice = long_index / subject_dim_;
+    if (!include_zeros_) {
+      ++choice;
+    }
+    int index = long_index % subject_dim_;
+    return std::pair<int, int>(index, choice);
+  }
+
+  int ChoiceDataPredictorMap::choice_index(int long_index) const {
+    return long_index - (num_choices_ - 1 + include_zeros_) * subject_dim_;
+  }
+
+  bool ChoiceDataPredictorMap::is_choice(int long_index) const {
+    return long_index >= (num_choices_ - 1 + include_zeros_) * subject_dim_;
   }
 
 }  // namespace BOOM
