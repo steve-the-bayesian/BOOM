@@ -1640,4 +1640,13 @@ namespace BOOM {
     return ans;
   }
 
+  Vector stack_rows(const Matrix &A) {
+    Vector ans;
+    ans.reserve(A.size());
+    for (size_t i = 0; i < A.nrow(); ++i) {
+      ans.concat(A.row(i));
+    }
+    return ans;
+  }
+
 }  // namespace BOOM
