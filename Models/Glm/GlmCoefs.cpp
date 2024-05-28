@@ -99,6 +99,7 @@ namespace BOOM {
   }
 
   void GlmCoefs::drop(uint i) {
+    included_coefficients_current_ = false;
     inc_.drop(i);
     VectorParams::set_element(0.0, i, true);
   }
@@ -240,7 +241,10 @@ namespace BOOM {
   }
 
   void GlmCoefs::set_coefficient(int index, double coefficient) {
-    inc_.add(index);
+    if (!inc_[index]) {
+      inc_.add(index);
+      included_coefficients_current_ = false;
+    }
     VectorParams::set_element(coefficient, index, true);
   }
 

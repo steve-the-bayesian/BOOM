@@ -50,8 +50,13 @@ namespace BOOM {
     //     Otherwise return the number of available coefficients
     uint size(bool minimal = true) const override;
 
+    // The number of coefficients currently free to be nonzero.
     uint nvars() const;
+
+    // The total number of coefficients, whether 0 or nonzero.
     uint nvars_possible() const;
+
+    // The number of coefficients currently forced to be zero.
     uint nvars_excluded() const;
 
     // GlmCoefs can call predict on a vector of dimension nvars (i.e. the set of
