@@ -17,7 +17,7 @@
 */
 
 #include "cpputil/data_checking.hpp"
-#include "report_error.hpp"
+#include "cpputil/report_error.hpp"
 #include <sstream>
 
 namespace BOOM {
@@ -37,7 +37,7 @@ namespace BOOM {
           << probs.size() << " elements.";
       if (throw_on_error) {
         report_error(err.str());
-      } 
+      }
     }
     if (fabs(probs.sum() - 1.0) > tolerance) {
       err << "Prior class probabilities must sum to 1.  They sum to "
@@ -59,5 +59,5 @@ namespace BOOM {
     }
     return err.str();
   }
-  
+
 }  // namespace BOOM

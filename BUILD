@@ -24,7 +24,6 @@ TARGETFUN_SRCS = glob(["TargetFun/*.cpp"])
 
 TARGETFUN_HDRS = glob(["TargetFun/*.hpp"])
 
-### Don't forget to exclude stuff that we don't want
 CPPUTIL_SRCS = glob(["cpputil/*.cpp"])
 
 CPPUTIL_HDRS = glob(["cpputil/*.hpp"])
