@@ -369,9 +369,10 @@ namespace BOOM {
   // to zero in the constructor, and support for changing it is removed.
   void MLCS3::set_move_probabilities(double data_augmentation,
                                      double rwm,
-                                     double tim, //double spike_slab_rwm) {
+                                     double tim //double spike_slab_rwm) {
                                      ) {
-    if (data_augmentation < 0 || rwm < 0 || tim < 0 || spike_slab_rwm < 0) {
+    if (data_augmentation < 0 || rwm < 0 || tim < 0) {
+      //  || spike_slab_rwm < 0) {
       report_error(
           "All probabilities must be non-negative in "
           "MultinomialLogitCompositeSpikeSlabSampler::"
@@ -380,7 +381,8 @@ namespace BOOM {
     move_probs_[DATA_AUGMENTATION_MOVE] = data_augmentation;
     move_probs_[RWM_MOVE] = rwm;
     move_probs_[TIM_MOVE] = tim;
-    move_probs_[SPIKE_SLAB_RWM_MOVE] = spike_slab_rwm;
+    //    move_probs_[SPIKE_SLAB_RWM_MOVE] = spike_slab_rwm;
+    move_probs_[SPIKE_SLAB_RWM_MOVE] = 0.0;
     double total = sum(move_probs_);
     if (total == 0.0) {
       report_error("At least one move probability must be positive.");
