@@ -100,8 +100,9 @@ cc_test(
     name = "mlogit_test",
     size = "small",
     srcs = ["mlogit_test.cc"],
-    copts = COPTS,
+    copts = COPTS + ["-lprofiler"],
     data = [":test_data"],
+    #     linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",

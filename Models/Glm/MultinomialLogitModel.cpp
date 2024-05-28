@@ -134,17 +134,17 @@ namespace BOOM {
         subject_xdim_(rhs.subject_xdim_),
         choice_xdim_(rhs.choice_xdim_),
         log_sampling_probs_(rhs.log_sampling_probs_) {
-    setup_observers();
+    // setup_observers();
   }
   //------------------------------------------------------------
   MLM *MLM::clone() const { return new MLM(*this); }
   //------------------------------------------------------------
   const Vector &MLM::beta() const { return coef().Beta(); }
   //------------------------------------------------------------
-  const Vector &MLM::beta_with_zeros() const {
-    if (!beta_with_zeros_current_) fill_extended_beta();
-    return beta_with_zeros_;
-  }
+  // Vector MLM::beta_with_zeros() const {
+  //   // if (!beta_with_zeros_current_) fill_extended_beta();
+  //   // return beta_with_zeros_;
+  // }
 
   //------------------------------------------------------------
   Vector MLM::beta_subject(int choice) const {
@@ -189,15 +189,11 @@ namespace BOOM {
   const Selector &MLM::inc() const { return coef().inc(); }
 
   //------------------------------------------------------------
-  double MLM::log_likelihood(const Vector &beta, Vector &g, Matrix &h,
+  double MLM::log_likelihood(const Vector &beta, Vector &g, SpdMatrix &h,
                              int nd) const {
-    const std::vector<Ptr<ChoiceData> > &d(dat());
+    const std::vector<Ptr<ChoiceData>> &d(dat());
     double ans = 0;
     int nobs = d.size();
-    Vector xbar;
-    Vector probs;
-    Vector tmpx;
-    Matrix X;
     bool downsampling = log_sampling_probs().size() == Nchoices();
     Selector inc(this->inc());
     int beta_dim = inc.nvars();
@@ -205,10 +201,22 @@ namespace BOOM {
       g.resize(beta_dim);
       g = 0;
       if (nd > 1) {
-        h.resize(beta_dim, beta_dim);
+        // h.resize(beta_dim, beta_dim);
+        h.resize(beta_dim);
         h = 0;
       }
     }
+
+    // Matrix h_xbar_buffer;
+    // Matrix h_tmpx_buffer;
+
+    // if (nd > 1) {
+    //   h_xbar_buffer.resize(nobs, beta_dim);
+    //   h_tmpx_buffer.resize(nobs * Nchoices(), beta_dim);
+    // }
+
+    // int h_xbar_index = 0;
+    // int h_tmpx_index = 0;
 
     for (int i = 0; i < nobs; ++i) {
       Ptr<ChoiceData> dp = d[i];
@@ -221,26 +229,38 @@ namespace BOOM {
       ans += wsp_[y] - lognc;
       if (nd > 0) {
         int M = dp->nchoices();
-        X = inc.select_cols(dp->X(false));
-        probs = exp(wsp_ - lognc);
-        xbar = probs * X;
+        Matrix X = inc.select_cols(dp->X(false));
+        Vector probs = exp(wsp_ - lognc);
+        Vector xbar = probs * X;
         g += X.row(y) - xbar;
 
         if (nd > 1) {
           for (int m = 0; m < M; ++m) {
-            tmpx = X.row(m);
-            h.add_outer(tmpx, tmpx, -probs[m]);
+            Vector tmpx = X.row(m);
+            // h_tmpx_buffer.row(h_tmpx_index++) = tmpx * sqrt(probs[m]);
+            h.add_outer(tmpx, -probs[m]);
           }
-          h.add_outer(xbar, xbar);
+          h.add_outer(xbar);
+          // h_xbar_buffer.row(h_xbar_index++) = xbar;
         }
       }
+
+      // if (nd > 1) {
+      //   h.add_inner(h_xbar_buffer);
+      //   h.add_inner(h_tmpx_buffer, -1);
+      // }
     }
     return ans;
   }
 
   //------------------------------------------------------------
   double MLM::Loglike(const Vector &beta, Vector &g, Matrix &h, uint nd) const {
-    return log_likelihood(beta, g, h, nd);
+    SpdMatrix hessian;
+    double ans = log_likelihood(beta, g, hessian, nd);
+    if (nd > 1) {
+      h = hessian;
+    }
+    return ans;
   }
 
   //----------------------------------------------------------------------
@@ -368,39 +388,39 @@ namespace BOOM {
   const Vector &MLM::log_sampling_probs() const { return log_sampling_probs_; }
 
   //------------------------------------------------------------
-  void MLM::watch_beta() { beta_with_zeros_current_ = false; }
+  //  void MLM::watch_beta() { beta_with_zeros_current_ = false; }
 
   //------------------------------------------------------------
   void MLM::setup() {
     ParamPolicy::set_prm(new GlmCoefs(beta_size(false)));
-    setup_observers();
-    beta_with_zeros_current_ = false;
+    //    setup_observers();
+    //beta_with_zeros_current_ = false;
   }
 
   //------------------------------------------------------------
-  void MLM::setup_observers() {
-    GlmCoefs &b(coef());
-    try {
-      b.add_observer(this, [this]() { this->watch_beta(); });
-    } catch (const std::exception &e) {
-      report_error(e.what());
-    } catch (...) {
-      report_error(
-          "unknown exception caught by "
-          "MultinomialLogitModel::setup_observer");
-    }
-  }
+  // void MLM::setup_observers() {
+  //   GlmCoefs &b(coef());
+  //   try {
+  //     b.add_observer(this, [this]() { this->watch_beta(); });
+  //   } catch (const std::exception &e) {
+  //     report_error(e.what());
+  //   } catch (...) {
+  //     report_error(
+  //         "unknown exception caught by "
+  //         "MultinomialLogitModel::setup_observer");
+  //   }
+  // }
 
   //------------------------------------------------------------
-  void MLM::fill_extended_beta() const {
-    int p = subject_nvars();
-    Vector &b(beta_with_zeros_);
-    b.resize(beta_size(true));
-    const Vector &Beta(beta());
-    std::fill(b.begin(), b.begin() + p, 0);
-    std::copy(Beta.begin(), Beta.end(), b.begin() + p);
-    beta_with_zeros_current_ = true;
-  }
+  // void MLM::fill_extended_beta() const {
+  //   int p = subject_nvars();
+  //   Vector &b(beta_with_zeros_);
+  //   b.resize(beta_size(true));
+  //   const Vector &Beta(beta());
+  //   std::fill(b.begin(), b.begin() + p, 0);
+  //   std::copy(Beta.begin(), Beta.end(), b.begin() + p);
+  //   beta_with_zeros_current_ = true;
+  // }
 
   //------------------------------------------------------------
   void MLM::index_out_of_bounds(int m) const {

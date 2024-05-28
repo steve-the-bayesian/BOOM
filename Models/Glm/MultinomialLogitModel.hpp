@@ -104,7 +104,8 @@ namespace BOOM {
     // described above (see beta()), but with a vector of 0's
     // prepended, corresponding to the subject parameters for choice
     // level 0.
-    const Vector &beta_with_zeros() const;
+
+    // Vector beta_with_zeros() const;
 
     // Returns the vector of subject specific coefficients for the
     // given choice level.  If 'choice' is 0 then a vector of all 0's
@@ -171,7 +172,7 @@ namespace BOOM {
     //   nd:  The number of derivatives to take.
     // Returns:
     //   The log likelihood evaluated at beta.
-    double log_likelihood(const Vector &beta, Vector &gradient, Matrix &Hessian,
+    double log_likelihood(const Vector &beta, Vector &gradient, SpdMatrix &Hessian,
                           int nd) const;
 
     double log_likelihood() const override {
@@ -273,14 +274,14 @@ namespace BOOM {
     const Vector &log_sampling_probs() const;
 
    private:
-    mutable Vector beta_with_zeros_;
-    mutable bool beta_with_zeros_current_;
+    // mutable Vector beta_with_zeros_;
+    // mutable bool beta_with_zeros_current_;
 
     // An observer function that sets the flag 'beta_with_zeros_current_' to
     // false when called.
-    void watch_beta();
+    //  void watch_beta();
     void setup();
-    void setup_observers();
+    // void setup_observers();
     void fill_extended_beta() const;
     void index_out_of_bounds(int m) const;
 

@@ -23,10 +23,19 @@ namespace {
    protected:
     MultinomialLogitTest() {
       GlobalRng::rng.seed(8675309);
-      // std::string raw_path = "Models/Glm/tests/autopref.txt";
-      // autopref_.read_file(raw_path, false, "\t");
-      // autopref_.set_vnames(std::vector<std::string>{
-      //          "country", "age", "sex", "married", "size", "type", "is25"});
+
+      std::string raw_path = "Models/Glm/tests/autopref.txt";
+      //      raw_path = "autopref.txt";
+      try {
+        autopref_.read_file(raw_path, false, "\t");
+      } catch (...) {
+        std::cout << "Could not read autopref.txt.  If executing the test "
+            "from an unusual location please consider setting 'raw_path' "
+            "in the test source code manually.\n";
+        exit(1);
+      }
+      autopref_.set_vnames(std::vector<std::string>{
+                "country", "age", "sex", "married", "size", "type", "is25"});
       // American	34	Male	Married	Large	Family	No
       // Japanese	36	Male	Single	Small	Sporty	No
       // Japanese	23	Male	Married	Small	Family	No
@@ -37,32 +46,33 @@ namespace {
     DataTable autopref_;
   };
 
-  // TEST_F(MultinomialLogitTest, FindMle) {
-  //   Vector age = autopref_.getvar(1);
-  //   CategoricalVariable sex = autopref_.get_nominal(2);
-  //   CategoricalVariable vehicle_type = autopref_.get_nominal(5);
-  //   int subject_xdim = 3;
-  //   int choice_xdim = 0;
-  //   int sample_size = autopref_.nobs();
-  //   int nchoices = vehicle_type[0]->nlevels();
+  TEST_F(MultinomialLogitTest, FindMle) {
+    Vector age = autopref_.getvar(1);
+    CategoricalVariable sex = autopref_.get_nominal(2);
+    CategoricalVariable vehicle_type = autopref_.get_nominal(5);
+    int subject_xdim = 3;
+    int choice_xdim = 0;
+    int sample_size = autopref_.nobs();
+    int nchoices = vehicle_type[0]->nlevels();
 
-  //   NEW(MultinomialLogitModel, model)(nchoices, subject_xdim, choice_xdim);
-  //   for (int i = 0; i < sample_size; ++i) {
-  //     NEW(VectorData, subject_predictors)(
-  //         Vector{1.0, age[i], double(sex.label(i) == "Male")});
-  //     std::vector<Ptr<VectorData>> empty_choice_predictors;
-  //     NEW(ChoiceData, data_point)(*vehicle_type[i],
-  //                                 subject_predictors,
-  //                                 empty_choice_predictors);
-  //     model->add_data(data_point);
-  //   }
-  //   model->mle();
-  // }
+    NEW(MultinomialLogitModel, model)(nchoices, subject_xdim, choice_xdim);
+    for (int i = 0; i < sample_size; ++i) {
+      NEW(VectorData, subject_predictors)(
+          Vector{1.0, age[i], double(sex.label(i) == "Male")});
+      std::vector<Ptr<VectorData>> empty_choice_predictors;
+      NEW(ChoiceData, data_point)(*vehicle_type[i],
+                                  subject_predictors,
+                                  empty_choice_predictors);
+      model->add_data(data_point);
+    }
+    model->mle();
+  }
 
   TEST_F(MultinomialLogitTest, model_works_when_choice_dimension_is_zero) {
     int nobs = 5000;
     int Nchoices = 4;
     int xdim = 20;
+    int ngood = 3;
 
     // Simulate some fake data.
     Matrix Xsubject(nobs, xdim);
@@ -71,8 +81,11 @@ namespace {
     Xsubject.col(0) = 1.0;
 
     Matrix beta_subject(Nchoices, xdim, 0.0);
-    beta_subject.col(0).randomize();
-    beta_subject.col(1).randomize();
+    for (int i = 0; i <= ngood; ++i) {
+      beta_subject.col(i).randomize();
+      beta_subject.col(i) *= 2;
+      beta_subject.col(i) += .5;
+    }
     beta_subject.row(0) = 0.0;
 
     Matrix logits = Xsubject * beta_subject.transpose();
@@ -112,8 +125,10 @@ namespace {
     NEW(VariableSelectionPrior, spike)(Vector(beta_dim, 1.0 / beta_dim));
     NEW(MultinomialLogitCompositeSpikeSlabSampler, sampler)(
         model.get(), slab, spike);
+    sampler->set_move_probabilities(.80, 0, .20, 0);
     model->set_method(sampler);
 
+    std::cout << "Finding MLE.\n";
     model->mle();
 
     // Create space to hold the MCMC draws.
@@ -125,14 +140,17 @@ namespace {
 
     // Run the MCMC algorithm.
     for (int i = 0; i < niter; ++i) {
+      std::cout << "Iteration " << i << ".\n";
       model->sample_posterior();
+      // std::cout << "Iteration " << i << "\n";
       for (int m = 0; m < model->Nchoices(); ++m) {
         beta_draws[m].row(i) = model->beta_subject(m);
       }
     }
 
     // Compute the posterior probability that each coefficient is nonzero.
-    // There should be an intercept term and a single coefficient in position 1.
+    // There should be an intercept term and nonzero coefficients in positions
+    // 1..ngood.
     Matrix prob_nonzero(model->Nchoices(), Xsubject.ncol(), 0.0);
     for (int i = 0; i < niter; ++i) {
       for (int m = 0; m < model->Nchoices(); ++m) {
@@ -144,25 +162,52 @@ namespace {
       }
     }
     prob_nonzero /= niter;
+    int problems = 0;
     for (int m = 0; m < model->Nchoices(); ++m) {
-      for (int j = 0; j <= 1; ++j) {
+      for (int j = 0; j <= ngood; ++j) {
         if (m > 0) {
           EXPECT_GT(prob_nonzero(m, j), .5)
               << "\n-----------------\n"
               << "At choice level " << m << " predictor " << j
               << " and Nchoices = " << model->Nchoices() << ", "
               << "prob_nonzero(" << m << ", " << j << ") = "
-              << prob_nonzero(m, j);
+              << prob_nonzero(m, j)
+              << ++problems;
 
         } else {
-          EXPECT_EQ(prob_nonzero(m, j), 0.0);
+          EXPECT_EQ(prob_nonzero(m, j), 0.0) << " " << ++problems;
         }
       }
-      for (int j = 2; j < Xsubject.ncol(); ++j) {
-        EXPECT_LT(prob_nonzero(m, j), .30);
+      for (int j = ngood + 1; j < Xsubject.ncol(); ++j) {
+        EXPECT_LT(prob_nonzero(m, j), .30)
+            << " (choice_level = " << m
+            << " , predictor = " << j
+            << ") "
+            << ++problems;
       }
     }
+    if (problems > 0) {
+      std::cout << "Coefficients used in the simuilation:  \n"
+                << beta_subject;
+    }
 
+    std::cout << sampler->timing_report();
+    std::ofstream beta_out("mlogit_test_model_works_when_choice_dimension_is_zero.out");
+    for (int m = 1; m < Nchoices; ++m) {
+      for (int j = 0; j < xdim; ++j) {
+        beta_out << beta_subject.row(m)[j] << " ";
+      }
+    }
+    beta_out << "\n";
+
+    for (int i = 0; i < niter; ++i) {
+      for (int m = 1; m < Nchoices; ++m) {
+        for (int j = 0; j < xdim; ++j) {
+          beta_out << beta_draws[m](i, j) << ' ';
+        }
+      }
+      beta_out << "\n";
+    }
   }
 
   // TEST_F(MultinomialLogitTest, MCMC) {
@@ -200,9 +245,5 @@ namespace {
   //     model->sample_posterior();
   //   }
   // }
-
-  TEST_F(MultinomialLogitTest, SpikeSlabTest) {
-
-  }
 
 }  // namespace
