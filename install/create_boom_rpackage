@@ -166,7 +166,6 @@ echo "replacing $dbase/$hdr with $dbase/$new_hdr"
 grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
 grep -rl "$dbase/$hdr" "$BOOM_DIR/inst/include/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
 
-
 hdr="MvStateSpaceRegressionPosteriorSampler.hpp"
 new_hdr="MVSSRPS.hpp"
 mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
@@ -187,6 +186,8 @@ mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
 echo "replacing $dbase/$hdr with $dbase/$new_hdr"
 grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
 
+## ----- Rename ScalarStateModelAdapterPosteriorSampler
+
 dbase="Models/StateSpace/Multivariate/PosteriorSamplers"
 hdr="ScalarStateModelAdapterPosteriorSampler.hpp"
 new_hdr="SADSampler.hpp"
@@ -196,6 +197,17 @@ grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$db
 
 source="ScalarStateModelAdapterPosteriorSampler.cpp"
 new_source="SADSampler.cpp"
+mv "$src_base/$dbase/$source" "$src_base/$dbase/$new_source"
+
+## ----- Rename PoissonFactorModelIndependentGammaPosteriorSampler
+dbase="Models/FactorModels/PosteriorSamplers"
+hdr="PoissonFactorModelIndependentGammaPosteriorSampler.hpp"
+new_hdr="PFMIGPS.hpp"
+mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
+echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+
+source="PoissonFactorModelIndependentGammaPosteriorSampler.cpp"
+new_source="PFMIGPS.hpp"
 mv "$src_base/$dbase/$source" "$src_base/$dbase/$new_source"
 
 ##----------------------------------------------------------------------
