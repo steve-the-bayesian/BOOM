@@ -21,6 +21,9 @@
 #include "Samplers/TIM.hpp"
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
+#include "stats/moments.hpp"
+
+#include <set>
 
 namespace BOOM {
   namespace {
@@ -97,11 +100,11 @@ namespace BOOM {
         // The call to log_likelihood computes g and h with respect to
         // beta.  Afterwards, they need to be subset using chunk_mask.
         Vector g;
-        Matrix h;
+        SpdMatrix h;
         double ans = model_->log_likelihood(beta, g, h, nd);
 
         Vector *gradient_pointer = nd > 0 ? &g : nullptr;
-        Matrix *Hessian_pointer = nd > 1 ? &h : nullptr;
+        SpdMatrix *Hessian_pointer = nd > 1 ? &h : nullptr;
         const Selector &inclusion(model_->coef().inc());
         ans += prior_->logp_given_inclusion(beta, gradient_pointer,
                                             Hessian_pointer, inclusion, false);
@@ -125,10 +128,15 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   MLCS3::MultinomialLogitCompositeSpikeSlabSampler(
-      MultinomialLogitModel *model, const Ptr<MvnBase> &prior,
-      const Ptr<VariableSelectionPrior> &inclusion_prior, double tdf,
-      double rwm_variance_scale_factor, uint nthreads, int max_chunk_size,
-      bool check_initial_condition, RNG &seeding_rng)
+      MultinomialLogitModel *model,
+      const Ptr<MvnBase> &prior,
+      const Ptr<VariableSelectionPrior> &inclusion_prior,
+      double tdf,
+      double rwm_variance_scale_factor,
+      int nthreads,
+      int max_chunk_size,
+      bool check_initial_condition,
+      RNG &seeding_rng)
       : MLVS(model, prior, inclusion_prior, nthreads, check_initial_condition,
              seeding_rng),
         model_(model),
@@ -137,10 +145,17 @@ namespace BOOM {
         max_chunk_size_(max_chunk_size),
         tdf_(tdf),
         rwm_variance_scale_factor_(rwm_variance_scale_factor),
-        move_probs_(".45 .45 .10") {
+        move_probs_{.50, .40, .10, .00},
+        predictor_sd_current_(false) {
     if (max_chunk_size_ <= 0) {
       max_chunk_size_ = model_->beta().size();
     }
+
+    model_->add_observer(
+        [this](){
+          this->predictor_sd_current_ = false;
+        });
+    update_predictor_sd();
   }
 
   //----------------------------------------------------------------------
@@ -148,23 +163,36 @@ namespace BOOM {
     MoveType move(MoveType(rmulti_mt(rng(), move_probs_)));
     switch (move) {
       case DATA_AUGMENTATION_MOVE: {
+        std::cout << " DA move starting with " << model_->coef().nvars() << " variables.\n";
         MoveTimer timer = accounting_.start_time("DA");
         MLVS::draw();
         accounting_.record_acceptance("DA");
       } break;
 
       case RWM_MOVE:
+        std::cout << " RWM move starting with " << model_->coef().nvars() << " variables.\n";
         rwm_draw();
         break;
 
       case TIM_MOVE:
+        std::cout << " TIM move starting with " << model_->coef().nvars() << " variables.\n";
         tim_draw();
+        break;
+
+      case SPIKE_SLAB_RWM_MOVE:
+        std::cout << " SS_RWM move move starting with " << model_->coef().nvars() << " variables.\n";
+        spike_slab_rwm_move();
         break;
 
       default:
         report_error(
             "Unknown move type sampled in "
             "MultinomialLogitCompositeSpikeSlabSampler::draw().");
+    }
+
+    if (model_->coef().included_coefficients().size()
+        != model_->coef().nvars()) {
+      report_error("Something just messed up the dimension of beta.");
     }
   }
 
@@ -178,11 +206,11 @@ namespace BOOM {
     int full_chunk_size = compute_chunk_size();
     for (int chunk = 0; chunk < number_of_chunks; ++chunk) {
       MoveTimer move_timer = accounting_.start_time("TIMchunk");
-      MultinomialLogitLogPosteriorChunk logpost(model_, prior_.get(),
-                                                full_chunk_size, chunk);
+      MultinomialLogitLogPosteriorChunk logpost(
+          model_, prior_.get(), full_chunk_size, chunk);
       TIM tim_sampler(logpost, tdf_);
       int start = full_chunk_size * chunk;
-      int beta_dim = beta.size();  // type coercsion uint -> int
+      int beta_dim = beta.size();
       int chunk_size = std::min<int>(full_chunk_size, beta_dim - start);
       VectorView beta_chunk(beta, start, chunk_size);
       bool found_mode = tim_sampler.locate_mode(beta_chunk);
@@ -247,11 +275,103 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
+  // Choose a random coefficient.  Flip it's include/exclude status.
+  //
+  // AS of May 28, 2024, the spike_slab_rwm move is broken.  It needs a
+  // reversible jump Jacobian added.  Until then the move probability is set
+  // to zero in the constructor, and support for changing it is removed.
+  void MLCS3::spike_slab_rwm_move() {
+    int dim = model_->coef().nvars_possible();
+    int index = int(floor(runif_mt(rng()) * dim));
+
+    double original_log_posterior = this->logpri() + model_->log_likelihood();
+    double candidate_log_posterior;
+
+    double proposal_logprob;
+    double reverse_logprob;
+
+    std::cout << "coefficients started with "
+              << model_->coef().nvars() << " included variables.\n";
+
+    if (model_->coef().inc(index)) {
+      // The coefficient is included.  Propose setting it to zero.
+      double original_coefficient = model_->beta()[index];
+
+      // Conditional on the selected index the proposal deterministic.
+      proposal_logprob = 0.0;
+
+      model_->coef().flip(index);
+      candidate_log_posterior = model_->log_likelihood() + this->logpri();
+
+      reverse_logprob = dnorm(original_coefficient,
+                              0,
+                              1.0 / predictor_sd(index),
+                              true);
+
+      double numerator = candidate_log_posterior - proposal_logprob;
+      double denominator = original_log_posterior - reverse_logprob;
+
+      double logu = log(runif_mt(rng()));
+      if (numerator - denominator < logu) {
+        // success -- do nothing!
+        std::cout << "accepted flip in included position " << index
+                  << " for " << model_->coef().nvars()
+                  << " included variables.\n";
+      } else {
+        // Reject proposal.  Flip the coefficient back to 'include' and set it
+        // back to its original value.
+        model_->coef().flip(index);
+        model_->coef().set_coefficient(index, original_coefficient);
+        std::cout << "rejected flip in included position " << index
+                  << " for " << model_->coef().nvars()
+                  << " included variables.\n";
+      }
+
+    } else {
+      // The coefficient is excluded.  Propose including it.
+      model_->coef().flip(index);
+
+      //
+      double candidate_coefficient = rnorm_mt(rng(), 0, 1.0/predictor_sd(index));
+      proposal_logprob = dnorm(candidate_coefficient,
+                               0,
+                               1.0 / predictor_sd(index),
+                               true);
+      reverse_logprob = 0.0;
+
+      model_->coef().set_coefficient(index, candidate_coefficient);
+
+      candidate_log_posterior = model_->log_likelihood() + this->logpri();
+
+      double numerator = candidate_log_posterior - proposal_logprob;
+      double denominator = original_log_posterior - reverse_logprob;
+      double logu = log(runif_mt(rng()));
+      if (numerator - denominator < logu) {
+        // success -- do nothing!
+        std::cout << "accepted flip in excluded position " << index
+                  << " for " << model_->coef().nvars()
+                  << " included variables.\n";
+      } else {
+        // Reject proposal.
+        model_->coef().flip(index);
+        std::cout << "rejected flip in excluded position " << index
+                  << " for " << model_->coef().nvars()
+                  << " included variables.\n";
+      }
+    }
+  }
+
+  //----------------------------------------------------------------------
   LabeledMatrix MLCS3::timing_report() const { return accounting_.to_matrix(); }
 
-  void MLCS3::set_move_probabilities(double data_augmentation, double rwm,
-                                     double tim) {
-    if (data_augmentation < 0 || rwm < 0 || tim < 0) {
+  // AS of May 28, 2024, the spike_slab_rwm move is broken.  It needs a
+  // reversible jump Jacobian added.  Until then the move probability is set
+  // to zero in the constructor, and support for changing it is removed.
+  void MLCS3::set_move_probabilities(double data_augmentation,
+                                     double rwm,
+                                     double tim, //double spike_slab_rwm) {
+                                     ) {
+    if (data_augmentation < 0 || rwm < 0 || tim < 0 || spike_slab_rwm < 0) {
       report_error(
           "All probabilities must be non-negative in "
           "MultinomialLogitCompositeSpikeSlabSampler::"
@@ -260,6 +380,7 @@ namespace BOOM {
     move_probs_[DATA_AUGMENTATION_MOVE] = data_augmentation;
     move_probs_[RWM_MOVE] = rwm;
     move_probs_[TIM_MOVE] = tim;
+    move_probs_[SPIKE_SLAB_RWM_MOVE] = spike_slab_rwm;
     double total = sum(move_probs_);
     if (total == 0.0) {
       report_error("At least one move probability must be positive.");
@@ -268,6 +389,9 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
+  // Compute the size of the next 'chunk' (subset of the regression
+  // coefficients).  In most cases it will be 'max_chunk_size_", but if a
+  // partial chunk is all that remains it will be smaller.
   int MLCS3::compute_chunk_size() const {
     int nvars = model_->coef().nvars();
     if (max_chunk_size_ <= 0 || nvars == 0) return nvars;
@@ -290,6 +414,61 @@ namespace BOOM {
       ++number_of_chunks;
     }
     return number_of_chunks;
+  }
+
+  double MLCS3::predictor_sd(int which) const {
+    ChoiceDataPredictorMap predictor_map(
+        model_->subject_nvars(),
+        model_->choice_nvars(),
+        model_->Nchoices(),
+        false);
+    if (predictor_map.is_choice(which)) {
+      return choice_predictor_sd(predictor_map.choice_index(which));
+    } else {
+      return subject_predictor_sd_(predictor_map.subject_index(which).first);
+    }
+  }
+
+  double MLCS3::choice_predictor_sd(int choice_index) const {
+    update_predictor_sd();
+    return choice_predictor_sd_[choice_index];
+  }
+
+  double MLCS3::subject_predictor_sd(int subject_index) const {
+    update_predictor_sd();
+    return subject_predictor_sd_[subject_index];
+  }
+
+  //----------------------------------------------------------------------
+  void MLCS3::update_predictor_sd() const {
+    if (!predictor_sd_current_) {
+      subject_predictor_sd_.resize(model_->subject_nvars());
+      choice_predictor_sd_.resize(model_->choice_nvars());
+
+      Matrix subject_predictors(model_->sample_size(), model_->subject_nvars());
+      std::set<Vector> choice_predictors;
+      size_t i = 0;
+      for (const auto &dp : model_->dat()) {
+        subject_predictors.row(i) = dp->Xsubject();
+        for (int m = 0; m < dp->nchoices(); ++m) {
+          choice_predictors.insert(dp->Xchoice(m));
+        }
+      }
+      for (i = 0; i < subject_predictors.ncol(); ++i) {
+        subject_predictor_sd_[i] = sd(subject_predictors.col(i));
+      }
+
+      Matrix choice_predictor_matrix(choice_predictors.size(), model_->choice_nvars());
+      i = 0;
+      for (const auto &el : choice_predictors) {
+        choice_predictor_matrix.row(i) = el;
+      }
+      for (i = 0; i < choice_predictor_matrix.ncol(); ++i) {
+        choice_predictor_sd_[i] = sd(choice_predictor_matrix.col(i));
+      }
+    }
+
+    predictor_sd_current_ = true;
   }
 
 }  // namespace BOOM

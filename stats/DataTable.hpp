@@ -73,6 +73,12 @@ namespace BOOM {
       return vnames_;
     }
 
+    const std::string &variable_name(int i) const {
+      return vnames_[i];
+    }
+
+    int position(const std::string &vname) const;
+
    private:
     int numeric_count_;
     int categorical_count_;
@@ -323,8 +329,12 @@ namespace BOOM {
       return type_index_->variable_type(which_column);
     }
     Vector getvar(uint which_column) const;
+    Vector get_numeric(const std::string &vname) const;
+
     double getvar(int which_row, int which_column) const;
     CategoricalVariable get_nominal(uint which_column) const;
+    CategoricalVariable get_nominal(const std::string &vname) const;
+
     Ptr<LabeledCategoricalData> get_nominal(
         int which_row, int which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column) const;

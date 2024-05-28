@@ -26,6 +26,32 @@
 
 namespace BOOM {
 
+  // ChoiceData is a type of categorical data where a subject makes a choice
+  // from a set of available options.  The elements of ChoiceData are
+  //
+  //   - The item (categorical level) that was chosen, which can be represented
+  //     as an integer 0, ..., Nchoices - 1.
+  //
+  //   - The characteristics of the subject making the choice, which can be
+  //     represented as a numeric vector (like the predictor vector in a
+  //     logistic regression).
+  //
+  //   - The characteristics of the items in the choice set.  This can be
+  //     thought of as a matrix of predictors, with rows corresponding to choice
+  //     levels, and columns to characteristics.  More generally, this may be a
+  //     collection of vectors, if some characteristics don't make sense for
+  //     some choice levels.
+  //
+  // As an example, consider a person making a purchasing decision among several
+  // types of cars.  Examples of subject level predictors are the person's age,
+  // sex, and income.  Among the choice level predictors are the car's gas
+  // mileage, horsepower, and number of cup holders.
+  //
+  // TODO(steve): One complicating factor in choice data is that some choice
+  // occasions may offer a different choice set than others.  One way to resolve
+  // this issue os to store the choice_x predictors in a map keyed by the
+  // available choice levels.  This would involve updating the models that use
+  // ChoiceData to account for assumptions around fixed numbers of choices.
   class ChoiceData : public CategoricalData {
    public:
     // Args:
@@ -40,7 +66,8 @@ namespace BOOM {
     //     subject-level data.
     ChoiceData(const CategoricalData &y,
                const Ptr<VectorData> &subject_x,
-               const std::vector<Ptr<VectorData> > &choice_x);
+               const std::vector<Ptr<VectorData>> &choice_x
+               = std::vector<Ptr<VectorData>>());
 
     ChoiceData(const ChoiceData &rhs);
 
@@ -50,21 +77,21 @@ namespace BOOM {
     std::ostream &display(std::ostream &) const override;
 
     //--------- choice information ----
-    uint nchoices() const;     // number of possible choices
-    uint n_avail() const;      // number of choices actually available
-    bool avail(uint i) const;  // is choice i available to the subject?
+    int nchoices() const;     // number of possible choices
+    int n_avail() const;      // number of choices actually available
+    bool avail(int i) const;  // is choice i available to the subject?
 
-    uint subject_nvars() const;
-    uint choice_nvars() const;
+    int subject_nvars() const;
+    int choice_nvars() const;
 
     const uint &value() const override;
-    void set_y(uint y);
+    void set_y(int y);
 
     // The Vector of subject-level predictor variables.
     const Vector &Xsubject() const;
 
     // The Vector of choice-level predictor variables for choice i.
-    const Vector &Xchoice(uint i) const;
+    const Vector &Xchoice(int i) const;
 
     // Fills the matrix given in the first argument with the "design
     // matrix" corresponding to this observation.  Let Sx denote the
@@ -95,7 +122,7 @@ namespace BOOM {
     const Matrix &X(bool include_zero = true) const;
 
     void set_Xsubject(const Vector &x);
-    void set_Xchoice(const Vector &x, uint i);
+    void set_Xchoice(const Vector &x, int i);
 
    private:
     Ptr<VectorData> xsubject_;               // age of car buyer
@@ -110,6 +137,88 @@ namespace BOOM {
     mutable bool big_x_current_;
 
     bool check_big_x(bool include_zeros) const;
+  };
+
+  //===========================================================================
+  // A bivalent mapping between the "single-vector (expanded)" form of the
+  // predictors in a choice data point and the "natural form" where data are
+  // broken down into separate subject-level and choice-level predictors.
+  //
+  // In the "expanded" form, a predictor variable is the concatenation of
+  //   *) Several 0-vectors masking the subject variables, with
+  //   *) The subject-level predictors in a position corresponding to a given
+  //      choice level, and
+  //   *) The choice-level predictors (if any) bringing up the rear.
+  //
+  // In many settings (e.g. the typical handling of multinomial logit models)
+  // the subject level predictors for choice level 0 are assigned 0 regression
+  // coefficients.  In that case the leading 0's in the coefficient vector are
+  // typically left implicit.
+  class ChoiceDataPredictorMap {
+   public:
+    // Args:
+    //   subject_dim:  The number of subject-level predictors.
+    //   choice_dim: The dimension of the choice-level predictors (for a single
+    //     value of the choice variable).
+    //   num_choices:  The number of choice levels.
+    //   include_zeros: If true, then explicitly create positions for the
+    //     (normally implicit) set of zero coefficients describing choice level
+    //     0.  If false then those variables are omitted.
+    ChoiceDataPredictorMap(int subject_dim,
+                           int choice_dim,
+                           int num_choices,
+                           bool include_zeros=false)
+        : subject_dim_(subject_dim),
+          choice_dim_(choice_dim),
+          num_choices_(num_choices),
+          include_zeros_(include_zeros)
+    {}
+
+    // Return the position in the expanded predictor vector of the subject-level
+    // coefficient.
+    //
+    // Args:
+    //   subject_predictor:  The index of the subject-level predictor variable.
+    //   choice_level:  The
+    int long_subject_index(int subject_predictor, int choice_level) const;
+
+    // Return the index of a specific choice predictor in the expanded predictor
+    // variable.
+    //
+    // Args:
+    //   choice_index: The index of the choice variable (in the decomposed
+    //     structure).
+    //
+    // Returns:
+    //   The index of the same variable in the "one long vector" structure.
+    int long_choice_index(int choice_index) const;
+
+    // Given an index in the "expanded" form, return the (index, choice_level)
+    // of the subject level predictors.
+    //
+    // Args: long_index: The index of a variable in the expanded form.  It is
+    //   the caller's responsibility to ensure this index is less than the
+    //   cutoff for choice indices.
+    //
+    // Returns:
+    //   .first: The subject-level predictor index.
+    //   .second: The choice level to which the predictor variable belongs.
+    std::pair<int, int> subject_index(int long_index) const;
+
+    // Given an index in the "expanded" form, return the choice-level predictor
+    // index to which it corresponds.  It is the caller's responsibility to
+    // ensure that 'long_index' is in the 'choice' portion of the index space.
+    int choice_index(int long_index) const;
+
+    // Returns true iff long_index points to a spot in the expanded predictor
+    // vector corresponding to a choice variable.
+    bool is_choice(int long_index) const;
+
+   private:
+    int subject_dim_;
+    int choice_dim_;
+    int num_choices_;
+    bool include_zeros_;
   };
 
 }  // namespace BOOM

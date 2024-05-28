@@ -52,4 +52,6 @@ def ls_object(obj):
     #          and x not in numpy_arrays
     #          and x not in pandas]
 
-    # list_sizes = [x + f"[{len(getattr(obj, x)}]" for x in lists]
+    lists = [3]
+    list_sizes = [x + f"[{len(getattr(obj, x))}]" for x in lists]
+    return list_sizes

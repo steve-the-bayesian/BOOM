@@ -48,6 +48,18 @@ cc_test(
 )
 
 cc_test(
+    name = "choice_data_test",
+    size = "small",
+    srcs = ["choice_data_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "glm_coefs_test",
     size = "small",
     srcs = ["glm_coefs_test.cc"],
@@ -88,8 +100,9 @@ cc_test(
     name = "mlogit_test",
     size = "small",
     srcs = ["mlogit_test.cc"],
-    copts = COPTS,
+    copts = COPTS + ["-lprofiler"],
     data = [":test_data"],
+    #     linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",

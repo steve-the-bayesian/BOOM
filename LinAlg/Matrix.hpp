@@ -597,6 +597,12 @@ namespace BOOM {
     return Vector(A.begin(), A.end());
   }
 
+  inline Vector stack_columns(const Matrix &A) {
+    return vec(A);
+  }
+
+  Vector stack_rows(const Matrix &A);
+
 }  // namespace BOOM
 
 #endif  // BOOM_NEWLA_MATRIX_HPP

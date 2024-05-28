@@ -99,8 +99,9 @@ namespace BOOM {
   }
 
   void GlmCoefs::drop(uint i) {
+    included_coefficients_current_ = false;
     inc_.drop(i);
-    set_element(0.0, i, true);
+    VectorParams::set_element(0.0, i, true);
   }
 
   void GlmCoefs::flip(uint i) {
@@ -239,6 +240,14 @@ namespace BOOM {
     set_excluded_coefficients_to_zero();
   }
 
+  void GlmCoefs::set_coefficient(int index, double coefficient) {
+    if (!inc_[index]) {
+      inc_.add(index);
+      included_coefficients_current_ = false;
+    }
+    VectorParams::set_element(coefficient, index, true);
+  }
+
   void GlmCoefs::set_subset(const Vector &beta_subset, int start, bool signal) {
     VectorParams::set_subset(beta_subset, start, signal);
     set_excluded_coefficients_to_zero();
@@ -295,7 +304,7 @@ namespace BOOM {
   void GlmCoefs::set_excluded_coefficients_to_zero() {
     Selector excluded = inc().complement();
     for (auto i : excluded.included_positions()) {
-      set_element(0.0, i, true);
+      VectorParams::set_element(0.0, i, true);
     }
   }
 
@@ -368,7 +377,7 @@ namespace BOOM {
     for (int i = 0; i < nrow(); ++i) {
       for (int j = 0; j < ncol(); ++j) {
         if (!included_(i, j) && value()(i, j) != 0.0) {
-          set_element(i, j, 0.0);
+          MatrixParams::set_element(i, j, 0.0);
         }
       }
     }

@@ -547,4 +547,13 @@ namespace {
 
   }
 
+  TEST_F(MatrixTest, Stacking) {
+    Matrix A(2, 3);
+    A.row(0) = Vector{1, 2, 3};
+    A.row(1) = Vector{4, 5, 6};
+
+    EXPECT_TRUE(VectorEquals(stack_rows(A), Vector{1, 2, 3, 4, 5, 6}));
+    EXPECT_TRUE(VectorEquals(stack_columns(A), Vector{1, 4, 2, 5, 3, 6}));
+  }
+
 }  // namespace

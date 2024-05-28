@@ -116,6 +116,15 @@ namespace BOOM {
         && type_map_ == rhs.type_map_;
   }
 
+  int DataTypeIndex::position(const std::string &vname) const {
+    auto ans = std::find(vnames_.begin(), vnames_.end(), vname);
+    if (ans == vnames_.end()) {
+      return -1;
+    } else {
+      return ans - vnames_.begin();
+    }
+  }
+
   //===========================================================================
   MixedMultivariateData::MixedMultivariateData()
       : type_index_(new DataTypeIndex)
@@ -669,6 +678,16 @@ namespace BOOM {
     }
   }
 
+  Vector DataTable::get_numeric(const std::string &vname) const {
+    int pos = type_index_->position(vname);
+    if (pos < 0) {
+      std::ostringstream err;
+      err << "'" << vname << "' was not found among the column names.";
+      report_error(err.str());
+    }
+    return getvar(pos);
+  }
+
   double DataTable::getvar(int row, int col) const {
     VariableType type;
     int index;
@@ -684,8 +703,20 @@ namespace BOOM {
     VariableType type;
     int index;
     std::tie(type, index) = type_index_->type_map(n);
-    if (type != VariableType::categorical) wrong_type_error(1, n);
+    if (type != VariableType::categorical) {
+      wrong_type_error(1, n);
+    }
     return categorical_variables_[index];
+  }
+
+  CategoricalVariable DataTable::get_nominal(const std::string &vname) const {
+    int position = type_index_->position(vname);
+    if (position < 0) {
+      std::ostringstream err;
+      err << "'" << vname << "' was not found among the column names.";
+      report_error(err.str());
+    }
+    return get_nominal(position);
   }
 
   Ptr<LabeledCategoricalData> DataTable::get_nominal(int row, int col) const {

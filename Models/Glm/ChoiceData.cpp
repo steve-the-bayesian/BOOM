@@ -19,6 +19,9 @@
 #include "Models/Glm/ChoiceData.hpp"
 #include "LinAlg/Vector.hpp"
 
+#include "cpputil/report_error.hpp"
+#include <sstream>
+
 namespace BOOM {
 
   typedef ChoiceData CHD;
@@ -45,8 +48,8 @@ namespace BOOM {
         avail_(rhs.avail_),
         bigX_(rhs.bigX_),
         big_x_current_(rhs.big_x_current_) {
-    uint n = rhs.xchoice_.size();
-    for (uint i = 0; i < n; ++i) {
+    int n = rhs.xchoice_.size();
+    for (int i = 0; i < n; ++i) {
       xchoice_[i] = rhs.xchoice_[i]->clone();
     }
   }
@@ -57,26 +60,26 @@ namespace BOOM {
 
   std::ostream &CHD::display(std::ostream &out) const {
     CategoricalData::display(out) << " " << *xsubject_ << " ";
-    for (uint i = 0; i < xchoice_.size(); ++i) out << Xchoice(i) << " ";
+    for (int i = 0; i < xchoice_.size(); ++i) out << Xchoice(i) << " ";
     return out;
   }
 
-  uint CHD::nchoices() const { return CategoricalData::nlevels(); }
-  uint CHD::n_avail() const { return avail_.nvars(); }
-  bool CHD::avail(uint i) const { return avail_[i]; }
+  int CHD::nchoices() const { return CategoricalData::nlevels(); }
+  int CHD::n_avail() const { return avail_.nvars(); }
+  bool CHD::avail(int i) const { return avail_[i]; }
 
-  uint CHD::subject_nvars() const { return xsubject_->dim(); }
-  uint CHD::choice_nvars() const {
+  int CHD::subject_nvars() const { return xsubject_->dim(); }
+  int CHD::choice_nvars() const {
     if (xchoice_.empty()) return 0;
     return xchoice_[0]->dim();
   }
 
   const uint &CHD::value() const { return CategoricalData::value(); }
-  void CHD::set_y(uint y) { CategoricalData::set(y); }
+  void CHD::set_y(int y) { CategoricalData::set(y); }
 
   const Vector &CHD::Xsubject() const { return xsubject_->value(); }
 
-  const Vector &CHD::Xchoice(uint i) const {
+  const Vector &CHD::Xchoice(int i) const {
     if (!xchoice_.empty()) {
       return xchoice_[i]->value();
     } else
@@ -85,19 +88,19 @@ namespace BOOM {
 
   void CHD::set_Xsubject(const Vector &x) { xsubject_->set(x); }
 
-  void CHD::set_Xchoice(const Vector &x, uint i) { xchoice_[i]->set(x); }
+  void CHD::set_Xchoice(const Vector &x, int i) { xchoice_[i]->set(x); }
 
   const Matrix &CHD::write_x(Matrix &X, bool inc_zero) const {
     bool inc = inc_zero;
-    uint pch = choice_nvars();
-    uint psub = subject_nvars();
-    uint M = nchoices();
-    uint nc = pch + (inc ? M : M - 1) * psub;
+    int pch = choice_nvars();
+    int psub = subject_nvars();
+    int M = nchoices();
+    int nc = pch + (inc ? M : M - 1) * psub;
     X.resize(M, nc);
     X = 0;
 
     const Vector &xcu(Xsubject());
-    for (uint m = 0; m < M; ++m) {
+    for (int m = 0; m < M; ++m) {
       const Vector &xch(Xchoice(m));
       VectorViewIterator it = X.row_begin(m);
       if (inc || m > 0) {
@@ -122,6 +125,44 @@ namespace BOOM {
     if (!big_x_current_) return false;
     return bigX_.size() ==
            choice_nvars() + subject_nvars() * (nchoices() - 1 + include_zeros);
+  }
+
+  int ChoiceDataPredictorMap::long_subject_index(
+      int subject_predictor,
+      int choice_level) const {
+    if (choice_level >= num_choices_ || choice_level < 0) {
+      std::ostringstream err;
+      err << "Choice level " << choice_level << " out of bounds.\n";
+      report_error(err.str());
+    }
+    if (choice_level == 0 && !include_zeros_) {
+      report_error("Choice level 0 was requested from a "
+                   "ChoiceDataPredictorMap considering choice level 0 "
+                   "to be implicit.");
+    }
+    return (choice_level - 1 + include_zeros_) * subject_dim_ + subject_predictor;
+  }
+
+  int ChoiceDataPredictorMap::long_choice_index(int choice_index) const {
+    return (num_choices_ - 1 + include_zeros_) * subject_dim_ + choice_index;
+  }
+
+  std::pair<int, int> ChoiceDataPredictorMap::subject_index(
+      int long_index) const {
+    int choice = long_index / subject_dim_;
+    if (!include_zeros_) {
+      ++choice;
+    }
+    int index = long_index % subject_dim_;
+    return std::pair<int, int>(index, choice);
+  }
+
+  int ChoiceDataPredictorMap::choice_index(int long_index) const {
+    return long_index - (num_choices_ - 1 + include_zeros_) * subject_dim_;
+  }
+
+  bool ChoiceDataPredictorMap::is_choice(int long_index) const {
+    return long_index >= (num_choices_ - 1 + include_zeros_) * subject_dim_;
   }
 
 }  // namespace BOOM

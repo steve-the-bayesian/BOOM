@@ -33,7 +33,7 @@ namespace BOOM {
   //   throw_on_error: If true then an exception will be thrown if any elements
   //     of probs are less than zero, or if the sum does not equal 1.  If false,
   //     then the error message that would have been the body of the exception
-  //     is returned.  
+  //     is returned.
   //
   // Returns:
   //   If the input is a valid probability distribution then the empty string is
@@ -45,6 +45,6 @@ namespace BOOM {
                                   double tolerance = 1e-6,
                                   bool throw_on_error=true);
 
-}
+}  // namespace BOOM
 
 #endif  //  BOOM_CPPUTIL_DATA_CHECKING_HPP_

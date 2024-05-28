@@ -41,25 +41,25 @@ namespace BOOM {
   }  // namespace
   using std::ostringstream;
 
-  MLVS::MLVS(MLM *Mod, const Ptr<MvnBase> &Pri,
-             const Ptr<VariableSelectionPrior> &Vpri, uint nthreads,
+  MLVS::MLVS(MLM *Mod, const Ptr<MvnBase> &slab,
+             const Ptr<VariableSelectionPrior> &spike, uint nthreads,
              bool check_initial_condition, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
-        mod_(Mod),
-        pri(Pri),
-        vpri(Vpri),
-        suf_(mod_->beta_size(false)),
-        log_sampling_probs_(mod_->log_sampling_probs()),
-        downsampling_(log_sampling_probs_.size() == mod_->Nchoices()),
+        model_(Mod),
+        slab_(slab),
+        spike_(spike),
+        suf_(model_->beta_size(false)),
+        log_sampling_probs_(model_->log_sampling_probs()),
+        downsampling_(log_sampling_probs_.size() == model_->Nchoices()),
         select_(true),
-        max_nflips_(mod_->beta_size(false)) {
+        max_nflips_(model_->beta_size(false)) {
     if (check_initial_condition) {
       if (!std::isfinite(this->logpri())) {
         ostringstream err;
         err << "MLVS initialized with an a priori illegal value" << endl
             << "the initial Selector vector was: " << endl
-            << mod_->coef().inc() << endl
-            << *vpri << endl;
+            << model_->coef().inc() << endl
+            << *spike_ << endl;
         report_error(err.str());
       }
     }
@@ -77,20 +77,20 @@ namespace BOOM {
   void MLVS::clear_latent_data() { suf_.clear(); }
 
   Ptr<MlvsDataImputer> MLVS::create_worker(std::mutex &m) {
-    return new MlvsDataImputer(suf_, m, mod_, nullptr, rng());
+    return new MlvsDataImputer(suf_, m, model_, nullptr, rng());
   }
 
   void MLVS::assign_data_to_workers() {
-    BOOM::assign_data_to_workers(mod_->dat(), workers());
+    BOOM::assign_data_to_workers(model_->dat(), workers());
   }
 
   double MLVS::logpri() const {
-    const Selector &g = mod_->coef().inc();
-    double ans = vpri->logp(g);
+    const Selector &g = model_->coef().inc();
+    double ans = spike_->logp(g);
     if (ans == BOOM::negative_infinity()) return ans;
     if (g.nvars() > 0) {
-      ans += dmvn(g.select(mod_->beta()), g.select(pri->mu()),
-                  g.select(pri->siginv()), true);
+      ans += dmvn(g.select(model_->beta()), g.select(slab_->mu()),
+                  g.select(slab_->siginv()), true);
     }
     return ans;
   }
@@ -99,13 +99,13 @@ namespace BOOM {
   // Drawing parameters
 
   void MLVS::draw_beta() {
-    const Selector &inc(mod_->coef().inc());
+    const Selector &inc(model_->coef().inc());
     uint N = inc.nvars_possible();
     Vector Beta(N, 0.);
     if (inc.nvars() > 0) {
-      SpdMatrix Ominv = inc.select(pri->siginv());
+      SpdMatrix Ominv = inc.select(slab_->siginv());
       SpdMatrix ivar = Ominv + inc.select(suf_.xtwx());
-      Vector b = inc.select(suf_.xtwu()) + Ominv * inc.select(pri->mu());
+      Vector b = inc.select(suf_.xtwu()) + Ominv * inc.select(slab_->mu());
       b = ivar.solve(b);
       Vector beta = rmvn_ivar(b, ivar);
       uint n = b.size();
@@ -114,7 +114,7 @@ namespace BOOM {
         Beta[I] = beta[i];
       }
     }
-    mod_->set_beta(Beta);
+    model_->set_beta(Beta);
   }
 
   inline bool keep_flip(RNG &rng, double logp_old, double logp_new) {
@@ -125,7 +125,7 @@ namespace BOOM {
   }
 
   void MLVS::draw_inclusion_vector() {
-    Selector inc = mod_->coef().inc();
+    Selector inc = model_->coef().inc();
     uint nv = inc.nvars_possible();
     double logp = log_model_prob(inc);
     if (!std::isfinite(logp)) {
@@ -133,7 +133,7 @@ namespace BOOM {
       ostringstream err;
       err << "MLVS did not start with a legal configuration." << endl
           << "Selector vector:  " << inc << endl
-          << "beta: " << mod_->beta() << endl;
+          << "beta: " << model_->beta() << endl;
       report_error(err.str());
     }
 
@@ -149,7 +149,7 @@ namespace BOOM {
       else
         inc.flip(I);  // reject the flip, so flip back
     }
-    mod_->coef().set_inc(inc);
+    model_->coef().set_inc(inc);
   }
 
   void MLVS::suppress_model_selection() { select_ = false; }
@@ -161,18 +161,18 @@ namespace BOOM {
   // computing probabilities
 
   double MLVS::log_model_prob(const Selector &g) {
-    double num = vpri->logp(g);
+    double num = spike_->logp(g);
     if (num == BOOM::negative_infinity()) return num;
     if (g.nvars() == 0) {
       num -= -.5 * suf_.weighted_sum_of_squares();
       return num;
     }
 
-    Ominv = g.select(pri->siginv());
+    Ominv = g.select(slab_->siginv());
     num += .5 * Ominv.logdet();
     if (num == BOOM::negative_infinity()) return num;
 
-    Vector mu = g.select(pri->mu());
+    Vector mu = g.select(slab_->mu());
     Vector Ominv_mu = Ominv * mu;
     num -= .5 * mu.dot(Ominv_mu);
 

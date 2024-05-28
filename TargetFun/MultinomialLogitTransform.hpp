@@ -122,12 +122,19 @@ namespace BOOM {
 
     // Args:
     //   logits:  The vector of log odds (relative to class 0).
-    //   truncated: If true then the returned vector will have the same
+    //   truncated_probs: If true then the returned vector will have the same
     //     dimension as logits.  The elements will sum to less than 1, and the
     //     class probability for class 0 will be left implicit.  If false then
     //     the returned vector has one more element than the input, at the
     //     beginning, filled with the probability of class 0.
-    Vector to_probs(const Vector &logits, bool truncated = false) const;
+    //   truncated_logits: If true then the input logits are free to vary in all
+    //     dimensions.  If false, then the leading logit term must be zero.
+    Vector to_probs(const Vector &logits, bool truncated_probs = false) const;
+
+    // Transform the un-truncated vector of logits (including the initial
+    // element conventionally set to zero) to a same-sized vector of
+    // probabilities.
+    Vector to_probs_full(const Vector &logits_including_implict_zero) const;
 
     // Args:
     //   probs:  The vector of probabilities to transform.

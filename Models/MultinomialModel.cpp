@@ -110,13 +110,14 @@ namespace BOOM {
         DataPolicy(new MS(1)),
         PriorPolicy(),
         logp_current_(false) {
-    std::vector<Ptr<CategoricalData>> dvec(make_catdat_ptrs(names));
+    std::vector<Ptr<CategoricalData>> data_vector(
+        create_categorical_data(names));
 
-    uint nlev = dvec[0]->nlevels();
-    Vector probs(nlev, 1.0 / nlev);
+    uint nlevels = data_vector[0]->nlevels();
+    Vector probs(nlevels, 1.0 / nlevels);
     set_pi(probs);
 
-    set_data(dvec);
+    set_data(data_vector);
     mle();
     set_observer();
   }

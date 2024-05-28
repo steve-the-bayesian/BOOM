@@ -50,8 +50,13 @@ namespace BOOM {
     //     Otherwise return the number of available coefficients
     uint size(bool minimal = true) const override;
 
+    // The number of coefficients currently free to be nonzero.
     uint nvars() const;
+
+    // The total number of coefficients, whether 0 or nonzero.
     uint nvars_possible() const;
+
+    // The number of coefficients currently forced to be zero.
     uint nvars_excluded() const;
 
     // GlmCoefs can call predict on a vector of dimension nvars (i.e. the set of
@@ -86,6 +91,10 @@ namespace BOOM {
     // Set the dense vector of coefficients to beta.  If any elements are
     // excluded, then those elements will be set to zero.
     void set_Beta(const Vector &beta);
+
+    // Set the value of a specific coefficient.  If that coefficient is
+    // currently excluded, then its inclusion indicator will also be set.
+    void set_coefficient(int index, double coefficient);
 
     // Set the a subset of beta to the requested value.  If any elements of the
     // subset are excluded, those values will be set to zero, regardless of
