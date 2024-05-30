@@ -1,5 +1,5 @@
-#ifndef BOOM_MODELS_GRAPHICAL_NODE_HPP
-#define BOOM_MODELS_GRAPHICAL_NODE_HPP
+#ifndef BOOM_GRAPHICAL_MODELS_CLIQUE_HPP_
+#define BOOM_GRAPHICAL_MODELS_CLIQUE_HPP_
 
 /*
   Copyright (C) 2005-2024 Steven L. Scott
@@ -19,37 +19,30 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include <cpputil/Ptr.hpp>
-#include <cpputil/RefCounted.hpp>
-#include <vector>
-
+#include "Models/Graphical/Node.hpp"
+#include <set>
 
 namespace BOOM {
   namespace Graphical {
 
-    enum class NodeType{
-      DISCRETE = 0,
-      CONTINUOUS = 1,
-      ID = 2,
-    };
-
-    class Node : private RefCounted {
+    // A clique is a collection of nodes that are all neighbors.  I.e. each node
+    // is a neighbor of every other node in the clique.
+    class Clique {
      public:
-      virtual std::vector<Ptr<Node>> parents() = 0;
-      virtual std::vector<Ptr<Node>> children() = 0;
-      virtual std::vector<Ptr<Node>> neighbors() = 0;
-      virtual NodeType node_type() const = 0;
+      // Attempt to add a node to the Clique.  Return true iff the addition was
+      // successful
+      bool try_add(const Ptr<Node> &node);
+
+      // Two cliques are equal if their elements_ are equal.
+      bool operator==(const Clique &rhs) const {
+        return elements_ == rhs.elements_;
+      }
 
      private:
-      friend void intrusive_ptr_add_ref(Node *d) { d->up_count(); }
-      friend void intrusive_ptr_release(Node *d) {
-        d->down_count();
-        if (d->ref_count() == 0) delete d;
-      }
+      std::set<Ptr<Node>> elements_;
     };
 
-  }
+  } // namespace Graphical
 }  // namespace BOOM
 
-
-#endif  // BOOM_MODELS_GRAPHICAL_NODE_HPP
+#endif  //  BOOM_GRAPHICAL_MODELS_CLIQUE_HPP_
