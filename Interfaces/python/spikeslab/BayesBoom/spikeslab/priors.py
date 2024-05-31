@@ -255,6 +255,26 @@ def logit(p):
     return float(ans)
 
 
+def trimmed_logit(p):
+    """
+    Returns the logit (log (p / (1-p)) )of each element of p.  If an element of
+    p is either 0 or 1.  The absolute return value is capped at 7.
+
+    Args:
+      p: Either a numeric scalar probability, or a numpy array of probabilities,
+        or an object convertible to a numpy array by calling np.array(p).
+
+    Returns:
+      A scalar (if p is a scalar) or numpy array of the same shape as p.  Each
+      element is the trimmed logit transform of the corresponding input.
+    """
+
+    p = np.array(p)
+    p[p > .999] = .999
+    p[p < .001] = .001
+    return np.log(p / (1 - p))
+
+
 class LogitZellnerPrior:
     def __init__(self,
                  predictors,
@@ -292,12 +312,12 @@ class LogitZellnerPrior:
         self._precision = xtx
         self._mean = np.zeros(xdim)
         if successes is None:
-            self._mean[0] = logit(prior_success_probability)
+            self._mean[0] = trimmed_logit(prior_success_probability)
         else:
             if trials is None:
                 trials = np.ones(sample_size)
             p_hat = np.nanmean(successes / trials)
-            self._mean[0] = logit(p_hat)
+            self._mean[0] = trimmed_logit(p_hat)
         if not np.isfinite(self._mean[0]):
             self._mean[0] = 0.0
 
@@ -380,7 +400,7 @@ class PoissonZellnerPrior:
             if exposure is None:
                 exposure = np.ones(sample_size)
             p_hat = np.nanmean(counts / exposure)
-            self._mean[0] = logit(p_hat)
+            self._mean[0] = trimmed_logit(p_hat)
         if not np.isfinite(self._mean[0]):
             self._mean[0] = 0.0
 
