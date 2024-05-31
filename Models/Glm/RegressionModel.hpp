@@ -251,26 +251,8 @@ namespace BOOM {
   }
 
   //------------------------------------------------------------------
-  class RegressionDataPolicy
-      : public SufstatDataPolicy<RegressionData, RegSuf> {
-   public:
-    typedef RegressionDataPolicy DataPolicy;
-    typedef SufstatDataPolicy<RegressionData, RegSuf> DPBase;
-
-    explicit RegressionDataPolicy(const Ptr<RegSuf> &);
-    RegressionDataPolicy(const Ptr<RegSuf> &, const DatasetType &d);
-    template <class FwdIt>
-    RegressionDataPolicy(const Ptr<RegSuf> &, FwdIt Begin, FwdIt End);
-
-    RegressionDataPolicy(const RegressionDataPolicy &);
-    RegressionDataPolicy *clone() const override = 0;
-    RegressionDataPolicy &operator=(const RegressionDataPolicy &);
-  };
-  template <class Fwd>
-  RegressionDataPolicy::RegressionDataPolicy(const Ptr<RegSuf> &s, Fwd b, Fwd e)
-      : DPBase(s, b, e) {}
-
-  //------------------------------------------------------------------
+  using RegressionDataPolicy = SufstatDataPolicy<RegressionData, RegSuf>;
+  
   class RegressionModel : public GlmModel,
                           public ParamPolicy_2<GlmCoefs, UnivParams>,
                           public RegressionDataPolicy,
