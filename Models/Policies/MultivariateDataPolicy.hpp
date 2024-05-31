@@ -30,9 +30,9 @@ namespace BOOM {
       : virtual public Model {
    public:
 
-    // Here Data must resolve to either a DataTable or a MixedMultivariateData.  If
+    // An exception is thrown unless Data resolves to either a DataTable or a
+    // MixedMultivariateData.
     void add_data(const Ptr<Data> &data_dp) override;
-
     void add_data(const Ptr<DataTable> &data_table);
     void add_data(const Ptr<MixedMultivariateData> &data_point);
 
@@ -43,8 +43,8 @@ namespace BOOM {
 
    private:
     Ptr<DataTable> data_;
-  }
+  };
 
-}
+}  // namespace BOOM
 
 #endif  // BOOM_MODELS_POLICIES_MULTIVARIATE_DATA_POLICY_HPP_

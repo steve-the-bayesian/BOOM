@@ -28,8 +28,18 @@
 
 #include "Models/GraphicalModel/Node.hpp"
 
+#include <vector>
+#include <map>
+
 namespace BOOM {
 
+  // A graphical model is a model for multivariate data of mixed type.  The
+  // graphical models handled here are directed graphical models also known as
+  // "Bayesian networks" (See https://en.wikipedia.org/wiki/Bayesian_network).
+  //
+  // The model is described by a collection of nodes, corresponding to varibles
+  // in a data frame.  The nodes are connected by directed edges where the
+  // direction of the connection refers to which nodes are 
   class GraphicalModel
       : public CompositeParamPolicy,
         public IID_DataPolicy<MixedMultivariateData>,
@@ -38,13 +48,21 @@ namespace BOOM {
     using Graphical::Node;
 
    public:
+    void add_node(const Ptr<Node> &node);
+
+    // If each element of data_point is fully observed, logp returns the sum of
+    // the result of calling logp on each of the nodes applied to its portion of
+    // data_point.
     double logp(const MixedMultivariateData &data_point) const;
 
-    void add_data(const Ptr<DataTable> &data_table);
-    void add_data(const Ptr<MixedMultivariateData> &data_point);
-
+    // Simulate a new data point.
+    //
+    // Args:
+    //   rng: The random number generator used to drive the simulation.
+    //   input:  A data point with data elements
+    Ptr<MixedMultivariateData> simulate(RNG &rng, Ptr<MixedMultivariateData> &input);
+    
    private:
-
     std::vector<Ptr<Node>> nodes_;
     std::map<std::string, Ptr<Node>> node_names_;
   };
