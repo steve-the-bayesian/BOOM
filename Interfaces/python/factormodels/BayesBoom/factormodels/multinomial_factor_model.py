@@ -163,7 +163,7 @@ class MultinomialFactorModel(FactorModelBase):
             probs[x, known_users.values] = 1.0
             posterior_sampler.set_prior_class_probabilities(
                 known_users.index,
-                probs)
+                R.to_boom_matrix(probs))
 
         model.set_method(posterior_sampler)
         return posterior_sampler
