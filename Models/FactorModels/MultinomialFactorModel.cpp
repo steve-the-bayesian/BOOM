@@ -216,4 +216,25 @@ namespace BOOM {
     }
   }
 
+  void MultinomialFactorModel::extract_data(
+      std::vector<std::string> &user_ids_output,
+      std::vector<std::string> &site_ids_output,
+      std::vector<int> &count_output) const {
+    user_ids_output.clear();
+    site_ids_output.clear();
+    count_output.clear();
+
+    for (const auto &visitor_el : visitors_) {
+      const Ptr<Visitor> &visitor(visitor_el.second);
+      const std::string &visitor_id = visitor->id();
+      for (const auto &site_el : visitor->sites_visited()) {
+        const std::string &site_id(site_el.first->id());
+        int num_visits = site_el.second;
+        user_ids_output.push_back(visitor_id);
+        site_ids_output.push_back(site_id);
+        count_output.push_back(num_visits);
+      }
+    }
+  }
+
 }  // namespace BOOM

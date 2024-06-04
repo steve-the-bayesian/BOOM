@@ -39,6 +39,8 @@ class FactorModelBase:
         self._prior_class_membership_probabilites = (
             np.full(nlevels, 1.0 / nlevels))
 
+        self._known_users = pd.Series()
+
     @property
     def model(self):
         if hasattr(self, "_model"):

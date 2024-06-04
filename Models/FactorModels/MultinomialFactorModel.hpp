@@ -202,6 +202,17 @@ namespace BOOM {
     // Otherwise return nullptr.
     Ptr<Visitor> visitor(const std::string &id) const;
 
+    // All three arguments are output arguments.  On output they will all be the
+    // same size.
+    //
+    // Args:
+    //   On output:
+    //     count_output[i] is the number of times user user_ids_output[i]
+    //     visited site site_ids_output[i].
+    void extract_data(std::vector<std::string> &user_ids_output,
+                      std::vector<std::string> &site_ids_output,
+                      std::vector<int> &count_output) const;
+    
    private:
     int num_classes_;
 

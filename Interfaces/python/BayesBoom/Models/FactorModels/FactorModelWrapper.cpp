@@ -16,6 +16,7 @@
 #include "uint.hpp"
 
 #include <sstream>
+#include <tuple>
 
 namespace py = pybind11;
 PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
@@ -421,6 +422,15 @@ namespace BayesBoom {
              "  site_id:  A vector of integer ID's identifying the site.\n"
              "  num_visits:  A vector of integers giving the number of times "
              "each visitor visited the corresponding site.\n")
+        .def("extract_data",
+             [](MultinomialFactorModel &model) {
+               std::vector<std::string> user_ids;
+               std::vector<std::string> site_ids;
+               std::vector<int> counts;
+               model.extract_data(user_ids, site_ids, counts);
+               return std::make_tuple(user_ids, site_ids, counts);
+             },
+             "Returns a tuple containing the user_ids, site_ids, and visit counts.")
         .def_property_readonly(
             "num_users",
             [](MultinomialFactorModel &model) {

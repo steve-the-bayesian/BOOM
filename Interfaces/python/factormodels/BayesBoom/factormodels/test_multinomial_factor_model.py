@@ -3,8 +3,14 @@ import unittest
 from BayesBoom.test_utils import random_strings
 
 from BayesBoom.factormodels import (
-    MultinomialFactorModel
+    MultinomialFactorModel,
+    MultinomialFactorModelJsonEncoder,
+    MultinomialFactorModelJsonDecoder
 )
+
+import json
+import pickle
+from io import BytesIO
 
 # from BayesBoom.R import delete_if_present
 # import BayesBoom.R as R
@@ -228,8 +234,38 @@ class MultinomialFactorModelTest(unittest.TestCase):
         self.assertTrue(np.allclose(probs, probs2))
         print("Done with model run!")
 
+    def test_json(self):
+        model = self.build_model()
+        num_known = 800
+        known_users = self._user_classes.iloc[:num_known]
+        niter = 100
+        model.set_known_user_demographics(known_users)
+        model.run_mcmc(niter=niter)
 
-_debug_mode = False
+        json_string = json.dumps(model, cls=MultinomialFactorModelJsonEncoder)
+        other_model = json.loads(json_string,
+                                 cls=MultinomialFactorModelJsonDecoder)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+
+    def test_pickle(self):
+        model = self.build_model()
+        num_known = 800
+        known_users = self._user_classes.iloc[:num_known]
+        niter = 100
+        model.set_known_user_demographics(known_users)
+        model.run_mcmc(niter=niter)
+
+        fname = "multinomial_factor_model.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open(fname, "rb") as pkl:
+            other_model = pickle.load(pkl)
+
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+
+
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
@@ -250,9 +286,8 @@ if _debug_mode:
         rig.setUp()
 
     rig.smoke_test()
-    rig.test_prior_class_probabilities()
-    rig.test_mcmc()
-    rig.test_predictions()
+    rig.test_json()
+    rig.test_pickle()
 
     print("Goodbye, cruel world!")
 

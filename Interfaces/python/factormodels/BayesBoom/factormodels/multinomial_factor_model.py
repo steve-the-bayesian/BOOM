@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
-from .factor_model_base import FactorModelBase
+from factor_model_base import FactorModelBase
+import json
 
 
 class MultinomialFactorModel(FactorModelBase):
@@ -167,3 +168,109 @@ class MultinomialFactorModel(FactorModelBase):
 
         model.set_method(posterior_sampler)
         return posterior_sampler
+
+    def __getstate__(self):
+        payload = {
+            "nlevels": self.nlevels,
+            "user_ids": self._user_ids,
+            "site_ids": self._site_ids,
+            "user_draws": self._user_draws,
+            "site_draws":  self._site_draws,
+            "default_site_name": self._default_site_name,
+            "known_users": self._known_users,
+            "prior_class_probabilities":
+            self._prior_class_membership_probabilites,
+            "behavioral_data": self._model.extract_data()
+        }
+        return payload
+
+    def __setstate__(self, payload):
+        self._model = boom.MultinomialFactorModel(int(payload["nlevels"]))
+        self._user_ids = payload["user_ids"]
+        self._site_ids = payload["site_ids"]
+        self._user_draws = np.array(payload["user_draws"])
+        self._site_draws = np.array(payload["site_draws"])
+        self._default_site_name = payload["default_site_name"]
+        self._known_users = payload["known_users"]
+
+        self._prior_class_membership_probabilites = payload[
+            "prior_class_probabilities"]
+
+        behavioral_data = payload.get("behavioral_data", None)
+        if behavioral_data is not None:
+            self.add_data(
+                behavioral_data[0],
+                behavioral_data[1],
+                behavioral_data[2])
+
+
+class MultinomialFactorModelJsonEncoder(json.JSONEncoder):
+    """
+    Overrides the 'default' method from JSONEncoder.  This allows a model object
+    to be encoded using the standard algorithm:
+
+    encoded_model = json.dumps(model, cls=MultinomialFactorModelJsonEncoder)
+    """
+
+    def default(self, obj):
+        """
+        Args:
+          obj: A MultinomialFactorModel object to be encoded.
+
+        Returns a JSON-encoded string containing the model artifacts.
+        """
+
+        series_encoder = R.PdSeriesJsonEncoder()
+
+        # Everything in 'payload' must be a JSON-encodable object.
+        payload = {
+            "nlevels": obj.nlevels,
+            "user_ids": obj._user_ids,
+            "site_ids": obj._site_ids,
+            "user_draws": obj._user_draws.tolist(),
+            "site_draws":  obj._site_draws.tolist(),
+            "default_site_name": obj._default_site_name,
+            "known_users": series_encoder.default(obj._known_users),
+            "prior_class_probabilities":
+            obj._prior_class_membership_probabilites.tolist(),
+            "behavioral_data": obj._model.extract_data()
+        }
+
+        return json.loads(json.dumps(payload))
+
+
+class MultinomialFactorModelJsonDecoder(json.JSONDecoder):
+    """
+    Overrides the "decode" method from JSONDecoder.  This allows a model object
+    to be deserialized from json_string using the standard algorithm:
+
+    model = json.loads(json_string, cls=MultinomialFactorModelJsonDecoder)
+    """
+
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        model = MultinomialFactorModel(int(payload["nlevels"]))
+        model._user_ids = payload["user_ids"]
+        model._site_ids = payload["site_ids"]
+        model._user_draws = np.array(payload["user_draws"])
+        model._site_draws = np.array(payload["site_draws"])
+        model._default_site_name = payload["default_site_name"]
+
+        series_decoder = R.PdSeriesJsonDecoder()
+        model._known_users = series_decoder.decode_from_dict(
+            payload["known_users"])
+
+        model._prior_class_membership_probabilites = np.array(
+            payload["prior_class_probabilities"])
+
+        behavioral_data = payload.get("behavioral_data", None)
+        if behavioral_data is not None:
+            model.add_data(
+                behavioral_data[0],
+                behavioral_data[1],
+                behavioral_data[2])
+
+        return model
