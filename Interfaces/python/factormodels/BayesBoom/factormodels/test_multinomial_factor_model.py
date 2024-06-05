@@ -1,6 +1,7 @@
 import unittest
 # import matplotlib.pyplot as plt
 from BayesBoom.test_utils import random_strings
+import BayesBoom.R as R
 
 from BayesBoom.factormodels import (
     MultinomialFactorModel,
@@ -262,6 +263,8 @@ class MultinomialFactorModelTest(unittest.TestCase):
         with open(fname, "rb") as pkl:
             other_model = pickle.load(pkl)
 
+        R.delete_if_present(fname)
+        
         self.assertIsInstance(other_model, MultinomialFactorModel)
 
 
