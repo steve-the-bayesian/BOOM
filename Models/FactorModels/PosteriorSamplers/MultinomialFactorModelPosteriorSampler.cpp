@@ -158,60 +158,58 @@ namespace BOOM {
   //   }
   // }
 
+  void Sampler::fill_site_map() {
+    if (site_map_.empty()) {
+      Int counter = 0;
+      for (const auto &site_it : model_->sites()) {
+        const std::string &site_id(site_it.first);
+        site_map_[site_id] = counter++;
+        reverse_site_map_.push_back(site_id);
+      }
+    }
+  }
+
   // The posterior distribution across site parameters is independent across
   // categories, but not across sites.
   void Sampler::draw_site_parameters() {
-    // Assemble the site map and reverse site map.  It would be faster to make
-    // these member variables, because they won't change across iterations.
-    std::map<std::string, Int> site_map;
-    std::vector<std::string> reverse_site_map;
+    fill_site_map();
     int number_of_classes = model_->number_of_classes();
     Int number_of_sites = model_->number_of_sites();
-    Int counter = 0;
-    for (const auto &site_it : model_->sites()) {
-      const std::string &site_id(site_it.first);
-      site_map[site_id] = counter++;
-      reverse_site_map.push_back(site_id);
-    }
 
-    // Assemble the vectors of counts.  One Vector for each category.  Start by
-    // creating the data structures and putting in the priors.
-    std::vector<Vector> counts;
-    for (int k = 0; k < number_of_classes; ++k) {
-      counts.push_back(Vector(number_of_sites, 0.1));
-    }
+    // Assemble the vectors of counts.  These are the number of visits by
+    // distinct visitors to each site, in each category.
+    //
+    // Start by creating the data structures and putting in the priors.
+    // Counts starts off with a Dirichlet priror in each category with 0.1 prior
+    // counts.
+    Matrix counts(number_of_sites, number_of_classes, 0.1);
 
     // Now add the observed data from the visitors.
-    for (const auto &visitor_it : model_->visitors()) {
-      const Ptr<Visitor> &visitor(visitor_it.second);
+    for (const auto &visitor_el : model_->visitors()) {
+      const Ptr<Visitor> &visitor(visitor_el.second);
       int category = visitor->imputed_class_membership();
-      for (const auto &site_it : visitor->sites_visited()) {
-        const Ptr<Site> &site(site_it.first);
-        Int site_index = site_map[site->id()];
-        ++counts[category][site_index];
+      for (const auto &site_el : visitor->sites_visited()) {
+        const Ptr<Site> &site(site_el.first);
+        Int site_index = site_map_[site->id()];
+        ++counts(site_index, category);
       }
     }
 
     // Ready to draw the model parameters.  These are structured the same way as
     // the counts.
-    std::vector<Vector> probs;
+    Matrix probs(number_of_sites, number_of_classes);
     for (int k = 0; k < number_of_classes; ++k) {
-      probs.push_back(rdirichlet_mt(rng(), counts[k]));
+      probs.col(k) = rdirichlet_mt(rng(), counts.col(k));
     }
 
-    for (Int i = 0; i < number_of_sites; ++i) {
-      Ptr<Site> site = model_->site(reverse_site_map[i]);
-      Vector site_probs(number_of_classes);
-      for (int k = 0; k < number_of_classes; ++k) {
-        site_probs[k] = probs[k][i];
-      }
-      site->set_probs(site_probs);
+    Int row_counter = 0;
+    for (auto &el : model_->sites()) {
+      el.second->set_probs(probs.row(row_counter++));
     }
   }
 
   double Sampler::logpri() const {
     return negative_infinity();
   }
-
 
 }  // namespace BOOM

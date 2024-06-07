@@ -29,7 +29,8 @@ namespace BOOM {
 
   namespace MfmThreading {
 
-    //=================================================================
+    //=========================================================================
+    // A worker to help implement multi-threading.  Each thread in the pro
     class VisitorImputer {
       using Visitor = FactorModels::MultinomialVisitor;
 
@@ -64,6 +65,17 @@ namespace BOOM {
 
   }  // namespace MfmThreading
 
+  //===========================================================================
+  // A posterior sampler MulinomialFactorModel objects.  The sampler alternates
+  // between imputing class membership and drawing site-level parameters.  The
+  // imputation step is parallelizable because (large number of) users are
+  // conditionally independent given site-level parameters.
+  //
+  // The same is not true of Sites.  For each level of the latent category in
+  // the MultinomialFactorModel, the collection of all site parameters is one
+  // giant Dirichlet random variable.  Of course, a draw from a Dirichlet is a
+  // draw from a bunch of independent gamma's, normalized by their sum.  That
+  // might work.
   class MultinomialFactorModelPosteriorSampler
       : public PosteriorSampler
   {
@@ -107,6 +119,17 @@ namespace BOOM {
 
     std::vector<MfmThreading::VisitorImputer> visitor_imputers_;
     ThreadWorkerPool pool_;
+
+    // The site_map_ connects site id's with their position in the model's
+    // "sites" object, so we can say "site 'blah.com' is in position 12.
+    std::map<std::string, Int> site_map_;
+
+    // The reverse_site_map_ maps position to the site ID.  Thus "the site in
+    // position 12 is 'blah.com'."
+    std::vector<std::string> reverse_site_map_;
+
+    // If site_map_ and reverse_site_map_ are empty, fill them.
+    void fill_site_map();
   };
 
 }  // namespace BOOM
