@@ -113,8 +113,13 @@ namespace BOOM {
     return new MultinomialFactorModel(*this);
   }
 
+  void MultinomialFactorModel::add_site(const Ptr<Site> &site) {
+    sites_[site->id()] = site;
+  }
+
   void MultinomialFactorModel::add_data(const Ptr<Data> &data_point) {
-    Ptr<MultinomialFactorData> native_data_point = data_point.dcast<MultinomialFactorData>();
+    Ptr<MultinomialFactorData> native_data_point =
+        data_point.dcast<MultinomialFactorData>();
     if (!native_data_point) {
       report_error("Data point could not be caset to MultinomialFactorData.");
     }
