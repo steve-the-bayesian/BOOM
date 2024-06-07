@@ -149,6 +149,17 @@ namespace {
     std::ofstream visitor_out("visitor_draws.out");
     visitor_out << class_indicators << "\n";
     visitor_out << visitor_draws;
+
+    sampler->set_num_threads(8);
+    for (int i = 0; i < niter; ++i) {
+      model.sample_posterior();
+      for (int j = 0; j < num_visitors; ++j) {
+        visitor_draws(i, j) = model.visitor(std::to_string(j))->imputed_class_membership();
+      }
+    }
+    std::ofstream threaded_visitor_out("visitor_draws_threaded.out");
+    threaded_visitor_out << class_indicators << "\n";
+    threaded_visitor_out << visitor_draws;
   }
 
 }  // namespace

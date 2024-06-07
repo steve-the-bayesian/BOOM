@@ -23,19 +23,60 @@
 #include "Models/FactorModels/MultinomialFactorModel.hpp"
 #include "Models/FactorModels/PosteriorSamplers/VisitorPriorManager.hpp"
 
+#include "cpputil/ThreadTools.hpp"
+
 namespace BOOM {
+
+  namespace MfmThreading {
+
+    //=================================================================
+    class VisitorImputer {
+      using Visitor = FactorModels::MultinomialVisitor;
+
+     public:
+      VisitorImputer(RNG &rng,
+                     VisitorPriorManager *prior_manager)
+          : rng_(seed_rng(rng)),
+            prior_manager_(prior_manager)
+      {}
+
+      size_t num_visitors() const {
+        return visitors_.size();
+      }
+
+      void add_visitor(const Ptr<Visitor> &visitor) {
+        visitors_.push_back(visitor);
+      }
+
+      void clear_visitors() {
+        visitors_.clear();
+      }
+
+      void impute_visitors();
+
+      void impute_visitor(Visitor &visitor);
+
+     private:
+      RNG rng_;
+      const VisitorPriorManager *prior_manager_;
+      std::vector<Ptr<Visitor>> visitors_;
+    };
+
+  }  // namespace MfmThreading
 
   class MultinomialFactorModelPosteriorSampler
       : public PosteriorSampler
   {
     using Visitor = FactorModels::MultinomialVisitor;
     using Site = FactorModels::MultinomialSite;
-    
+
    public:
     MultinomialFactorModelPosteriorSampler(
         MultinomialFactorModel *model,
         const Vector &default_prior_class_probabilities,
         RNG & seeding_rng = GlobalRng::rng);
+
+    void set_num_threads(int num_threads);
 
     void draw() override;
     double logpri() const override;
@@ -45,7 +86,7 @@ namespace BOOM {
     void impute_visitor(Visitor &visitor);
 
     void draw_site_parameters();
-    
+
     void set_prior_class_probabilities(
         const std::string &visitor_id,
         const Vector &probs) {
@@ -56,16 +97,18 @@ namespace BOOM {
         const std::string &visitor_id) const {
       return visitor_prior_.prior_class_probabilities(visitor_id);
     }
-    
+
    private:
     MultinomialFactorModel *model_;
     VisitorPriorManager visitor_prior_;
 
     // Raise an exception if any elements of logprob are non-finite.
-    void check_logprob(const Vector &logprob) const;
+    // void check_logprob(const Vector &logprob) const;
+
+    std::vector<MfmThreading::VisitorImputer> visitor_imputers_;
+    ThreadWorkerPool pool_;
   };
 
-  
 }  // namespace BOOM
 
 #endif  // BOOM_MULTINOMIAL_FACTOR_MODEL_POSTERIOR_SAMPLER_HPP_

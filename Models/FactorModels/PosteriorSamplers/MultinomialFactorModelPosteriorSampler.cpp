@@ -24,10 +24,54 @@
 
 namespace BOOM {
 
+  void check_logprob(const Vector &logprob) {
+    for (size_t i = 0; i < logprob.size(); ++i) {
+      if (!std::isfinite(logprob[i])) {
+        std::ostringstream err;
+        err << "Element " << i << " is non-finite in:\n"
+            << logprob;
+        report_error(err.str());
+      }
+    }
+  }
+
+  namespace MfmThreading {
+    using Visitor = FactorModels::MultinomialVisitor;
+    using Site = FactorModels::MultinomialSite;
+
+    void VisitorImputer::impute_visitors() {
+      for (auto &visitor : visitors_) {
+        impute_visitor(*visitor);
+      }
+    }
+
+    void VisitorImputer::impute_visitor(Visitor &visitor) {
+
+      const Vector &prob(prior_manager_->prior_class_probabilities(visitor.id()));
+      if (prob.max() > .999) {
+        visitor.set_class_probabilities(prob);
+        visitor.set_class_member_indicator(prob.imax());
+      } else {
+        Vector logprob = log(prob);
+        for (const auto &it : visitor.sites_visited()) {
+          const Ptr<Site> &site(it.first);
+          logprob += site->logprob();
+          check_logprob(logprob);
+        }
+        Vector post = logprob.normalize_logprob();
+        visitor.set_class_probabilities(post);
+        visitor.set_class_member_indicator(rmulti_mt(rng_, post));
+      }
+    }
+
+  }  // namespace MfmThreading
+
   namespace {
     using Sampler = MultinomialFactorModelPosteriorSampler;
     using Visitor = FactorModels::MultinomialVisitor;
     using Site = FactorModels::MultinomialSite;
+
+    using VisitorImputer = MfmThreading::VisitorImputer;
   }  // namespace
 
   Sampler::MultinomialFactorModelPosteriorSampler(
@@ -37,7 +81,33 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng),
         model_(model),
         visitor_prior_(default_prior_class_probabilities)
-  {}
+  {
+    set_num_threads(1);
+  }
+
+  void Sampler::set_num_threads(int num_threads) {
+    if (num_threads < 1) {
+      num_threads = 1;
+    }
+    visitor_imputers_.clear();
+
+    for (int i = 0; i < num_threads; ++i) {
+      visitor_imputers_.push_back(VisitorImputer(
+          rng(), &visitor_prior_));
+    }
+
+    size_t counter = 0;
+    for (const auto &el : model_->visitors()) {
+      visitor_imputers_[counter++ % num_threads].add_visitor(el.second);
+    }
+
+    if (num_threads <= 1) {
+      pool_.set_number_of_threads(0);
+    } else {
+      pool_.set_number_of_threads(num_threads);
+    }
+
+  }
 
   void Sampler::draw() {
     impute_visitors();
@@ -45,34 +115,52 @@ namespace BOOM {
     // draw_hyperprior();
   }
 
-
   void Sampler::impute_visitors() {
-    for (auto &visitor_it : model_->visitors()) {
-      Ptr<Visitor> &visitor(visitor_it.second);
-      impute_visitor(*visitor);
-    }
-  }
-
-  void Sampler::impute_visitor(Visitor &visitor) {
-    const Vector &prob(prior_class_probabilities(visitor.id()));
-    if (prob.max() > .999) {
-      visitor.set_class_probabilities(prob);
-      visitor.set_class_member_indicator(prob.imax());
+    if (visitor_imputers_.size() == 1) {
+      visitor_imputers_[0].impute_visitors();
     } else {
-      Vector logprob = log(prob);
-      for (const auto &it : visitor.sites_visited()) {
-        const Ptr<Site> &site(it.first);
-        logprob += site->logprob();
-        check_logprob(logprob);
+      std::vector<std::future<void>> futures;
+      for (size_t i = 0; i < visitor_imputers_.size(); ++i) {
+        VisitorImputer *imputer = &visitor_imputers_[i];
+        futures.emplace_back(
+            pool_.submit(
+                [imputer]() {imputer->impute_visitors();}));
       }
-      Vector post = logprob.normalize_logprob();
-      visitor.set_class_probabilities(post);
-      visitor.set_class_member_indicator(rmulti_mt(rng(), post));
+
+      for (int i = 0; i < futures.size(); ++i) {
+        futures[i].get();
+      }
     }
   }
 
-  void Sampler::draw_site_parameters() {
+  // void Sampler::impute_visitors() {
+  //   for (auto &visitor_it : model_->visitors()) {
+  //     Ptr<Visitor> &visitor(visitor_it.second);
+  //     impute_visitor(*visitor);
+  //   }
+  // }
 
+  // void Sampler::impute_visitor(Visitor &visitor) {
+  //   const Vector &prob(prior_class_probabilities(visitor.id()));
+  //   if (prob.max() > .999) {
+  //     visitor.set_class_probabilities(prob);
+  //     visitor.set_class_member_indicator(prob.imax());
+  //   } else {
+  //     Vector logprob = log(prob);
+  //     for (const auto &it : visitor.sites_visited()) {
+  //       const Ptr<Site> &site(it.first);
+  //       logprob += site->logprob();
+  //       check_logprob(logprob);
+  //     }
+  //     Vector post = logprob.normalize_logprob();
+  //     visitor.set_class_probabilities(post);
+  //     visitor.set_class_member_indicator(rmulti_mt(rng(), post));
+  //   }
+  // }
+
+  // The posterior distribution across site parameters is independent across
+  // categories, but not across sites.
+  void Sampler::draw_site_parameters() {
     // Assemble the site map and reverse site map.  It would be faster to make
     // these member variables, because they won't change across iterations.
     std::map<std::string, Int> site_map;
@@ -125,15 +213,5 @@ namespace BOOM {
     return negative_infinity();
   }
 
-  void Sampler::check_logprob(const Vector &logprob) const {
-    for (size_t i = 0; i < logprob.size(); ++i) {
-      if (!std::isfinite(logprob[i])) {
-        std::ostringstream err;
-        err << "Element " << i << " is non-finite in:\n"
-            << logprob;
-        report_error(err.str());
-      }
-    }
-  }
 
 }  // namespace BOOM
