@@ -146,6 +146,10 @@ namespace BOOM {
 
     MultinomialFactorModel *clone() const override;
 
+    // Make the model aware of a specific site, without necessarily requiring
+    // visits to the site.
+    void add_site(const Ptr<Site> &site);
+    
     // Record one or more visits by a visitor to a single site.  If the model
     // already manages of visitor (or site) with the given id's then those
     // objects are adjusted by recording the visit.  If either visitor_id or

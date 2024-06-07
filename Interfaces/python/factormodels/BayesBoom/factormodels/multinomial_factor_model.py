@@ -12,6 +12,16 @@ class MultinomialFactorModel(FactorModelBase):
         super().__init__(nlevels)
         self._model = boom.MultinomialFactorModel(int(nlevels))
         self._default_site_name = "Other"
+        self._omit_data_when_serializing = False
+
+    def omit_data_when_serializing(self, omit: bool = True):
+        """
+        If omit is True then when this object is serialized by either JSON or
+        pickle the training data used to fit the model will be omitted from the
+        serialization.  Obviously, omitted data won't be present when the model
+        is later deserialized.
+        """
+        self._omit_data_when_serializing = omit
 
     @property
     def has_hierarchical_prior(self):
@@ -171,33 +181,39 @@ class MultinomialFactorModel(FactorModelBase):
 
     def __getstate__(self):
         payload = {
+            "omit_data": self._omit_data_when_serializing,
             "nlevels": self.nlevels,
-            "user_ids": self._user_ids,
             "site_ids": self._site_ids,
-            "user_draws": self._user_draws,
             "site_draws":  self._site_draws,
             "default_site_name": self._default_site_name,
-            "known_users": self._known_users,
             "prior_class_probabilities":
             self._prior_class_membership_probabilites,
-            "behavioral_data": self._model.extract_data()
         }
+
+        if not self._omit_data_when_serializing:
+            payload["user_ids"] = self._user_ids
+            payload["user_draws"] = self._user_draws
+            payload["known_users"] = self._known_users
+            payload["behavioral_data"] = self._model.extract_data()
+
         return payload
 
     def __setstate__(self, payload):
         self._model = boom.MultinomialFactorModel(int(payload["nlevels"]))
-        self._user_ids = payload["user_ids"]
+        self._omit_data_when_serializing = bool(payload["omit_data"])
         self._site_ids = payload["site_ids"]
-        self._user_draws = np.array(payload["user_draws"])
         self._site_draws = np.array(payload["site_draws"])
         self._default_site_name = payload["default_site_name"]
-        self._known_users = payload["known_users"]
-
         self._prior_class_membership_probabilites = payload[
             "prior_class_probabilities"]
+        self._model.add_sites(self._site_ids)
 
-        behavioral_data = payload.get("behavioral_data", None)
-        if behavioral_data is not None:
+        if not self._omit_data_when_serializing:
+            self._user_ids = payload["user_ids"]
+            self._user_draws = np.array(payload["user_draws"])
+            self._known_users = payload["known_users"]
+
+            behavioral_data = payload.get("behavioral_data", None)
             self.add_data(
                 behavioral_data[0],
                 behavioral_data[1],
@@ -219,58 +235,58 @@ class MultinomialFactorModelJsonEncoder(json.JSONEncoder):
 
         Returns a JSON-encoded string containing the model artifacts.
         """
-
-        series_encoder = R.PdSeriesJsonEncoder()
-
-        # Everything in 'payload' must be a JSON-encodable object.
+        # Everything in 'payload' must be a JSON-encodable object, so numpy
+        # objects must be converted to list, and pandas objects must be
+        # separately encoded to preserve their metadata about the index, etc.
         payload = {
-            "nlevels": obj.nlevels,
-            "user_ids": obj._user_ids,
+            "omit_data": int(obj._omit_data_when_serializing),
+            "nlevels": int(obj.nlevels),
             "site_ids": obj._site_ids,
-            "user_draws": obj._user_draws.tolist(),
             "site_draws":  obj._site_draws.tolist(),
             "default_site_name": obj._default_site_name,
-            "known_users": series_encoder.default(obj._known_users),
             "prior_class_probabilities":
             obj._prior_class_membership_probabilites.tolist(),
-            "behavioral_data": obj._model.extract_data()
         }
+
+        if not obj._omit_data_when_serializing:
+            series_encoder = R.PdSeriesJsonEncoder()
+            payload["user_ids"] = obj._user_ids
+            payload["user_draws"] = obj._user_draws.tolist()
+            payload["known_users"] = series_encoder.default(obj._known_users)
+            payload["behavioral_data"] = obj._model.extract_data()
 
         return json.loads(json.dumps(payload))
 
 
 class MultinomialFactorModelJsonDecoder(json.JSONDecoder):
-    """
-    Overrides the "decode" method from JSONDecoder.  This allows a model object
-    to be deserialized from json_string using the standard algorithm:
-
-    model = json.loads(json_string, cls=MultinomialFactorModelJsonDecoder)
-    """
-
     def decode(self, json_string):
         payload = json.loads(json_string)
         return self.decode_from_dict(payload)
 
     def decode_from_dict(self, payload):
         model = MultinomialFactorModel(int(payload["nlevels"]))
-        model._user_ids = payload["user_ids"]
+        model._omit_data_when_serializing = bool(payload["omit_data"])
         model._site_ids = payload["site_ids"]
-        model._user_draws = np.array(payload["user_draws"])
         model._site_draws = np.array(payload["site_draws"])
         model._default_site_name = payload["default_site_name"]
-
-        series_decoder = R.PdSeriesJsonDecoder()
-        model._known_users = series_decoder.decode_from_dict(
-            payload["known_users"])
-
         model._prior_class_membership_probabilites = np.array(
             payload["prior_class_probabilities"])
 
-        behavioral_data = payload.get("behavioral_data", None)
-        if behavioral_data is not None:
-            model.add_data(
-                behavioral_data[0],
-                behavioral_data[1],
-                behavioral_data[2])
+        model._model.add_sites(model._site_ids)
+
+        if not model._omit_data_when_serializing:
+            model._user_ids = payload["user_ids"]
+            model._user_draws = np.array(payload["user_draws"])
+
+            series_decoder = R.PdSeriesJsonDecoder()
+            model._known_users = series_decoder.decode_from_dict(
+                payload["known_users"])
+
+            behavioral_data = payload.get("behavioral_data", None)
+            if behavioral_data is not None:
+                model.add_data(
+                    behavioral_data[0],
+                    behavioral_data[1],
+                    behavioral_data[2])
 
         return model

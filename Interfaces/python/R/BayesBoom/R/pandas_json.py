@@ -93,7 +93,7 @@ class PdSeriesJsonEncoder(json.JSONEncoder):
 
     def default(self, obj):
         dtype = str(obj.dtype)
-        payload = {"dtype": dtype, "version": 2}
+        payload = {"dtype": dtype}
 
         if is_numeric_dtype(obj.dtype):
             payload["data"] = self.encode_numeric(obj)

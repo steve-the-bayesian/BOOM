@@ -400,6 +400,19 @@ namespace BayesBoom {
              py::arg("num_classes"),
              "Args:\n\n"
              "  num_classes:  The number of classes in the factor model.\n")
+        .def("add_sites",
+             [](MultinomialFactorModel &model, 
+                const std::vector<std::string> &site_names) {
+               for (const std::string &site_name : site_names) {
+                 using Site = ::BOOM::FactorModels::MultinomialSite;                 
+                 model.add_site(new Site(site_name, model.number_of_classes()));
+               }
+             },
+             py::arg("site_names"),
+             "Make the model aware of a group of sites, without requiring visits "
+             "to those sites.\n\n"
+             "Args:\n\n"
+             "  site_names:  A list of site names to add.")
         .def("add_data",
              [](MultinomialFactorModel &model,
                 const std::vector<std::string> &visitor_id,

@@ -11,7 +11,6 @@ from BayesBoom.factormodels import (
 
 import json
 import pickle
-from io import BytesIO
 
 # from BayesBoom.R import delete_if_present
 # import BayesBoom.R as R
@@ -29,9 +28,10 @@ def simulate_user_classes(num_users, probs):
     return pd.Series(user_values, index=user_labels)
 
 
-def simulate_site_params(num_sites, num_categories):
+def simulate_site_params(num_sites, num_categories, default_site_name="Other"):
     values = np.random.rand(num_sites, num_categories)
     labels = random_strings(num_sites, 20, ensure_unique=True)
+    labels[0] = default_site_name
     totals = np.sum(values, axis=0)
     values = values / totals
     return pd.DataFrame(values, index=labels)
@@ -247,6 +247,28 @@ class MultinomialFactorModelTest(unittest.TestCase):
         other_model = json.loads(json_string,
                                  cls=MultinomialFactorModelJsonDecoder)
         self.assertIsInstance(other_model, MultinomialFactorModel)
+        # The deserialized model is functionally equivalent to the original
+        # model if they produce the same posterior distributions.
+        test_users = self._data["user"].unique()[:3]
+        test_data = self._data[self._data["user"].isin(test_users)]
+
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+        # Now do the same check with data omitted.
+        model.omit_data_when_serializing()
+        json_string = json.dumps(model, cls=MultinomialFactorModelJsonEncoder)
+        other_model = json.loads(json_string,
+                                 cls=MultinomialFactorModelJsonDecoder)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
 
     def test_pickle(self):
         model = self.build_model()
@@ -262,13 +284,38 @@ class MultinomialFactorModelTest(unittest.TestCase):
 
         with open(fname, "rb") as pkl:
             other_model = pickle.load(pkl)
-
         R.delete_if_present(fname)
-        
         self.assertIsInstance(other_model, MultinomialFactorModel)
 
+        # The deserialized model is functionally equivalent to the original
+        # model if they produce the same posterior distributions.
+        test_users = self._data["user"].unique()[:3]
+        test_data = self._data[self._data["user"].isin(test_users)]
 
-_debug_mode = True
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+        # Now run the same test code in "light mode" after omitting data.
+        model.omit_data_when_serializing()
+        fname = "multinomial_factor_model.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+        with open(fname, "rb") as pkl:
+            other_model = pickle.load(pkl)
+        R.delete_if_present(fname)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa
