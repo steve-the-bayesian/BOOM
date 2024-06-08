@@ -31,6 +31,7 @@ namespace BOOM {
   namespace FactorModels {
     class MultinomialSite;
 
+    //==========================================================================
     class MultinomialVisitor : public VisitorBase {
      public:
       // Args:
@@ -69,13 +70,16 @@ namespace BOOM {
         sites_visited_.clear();
       }
 
+      // Absorb the data from rhs into *this.
+      void merge(const MultinomialVisitor &rhs);
+
      private:
       // The map is keyed by a raw pointer to the visited site.  The value is a
       // count of the number of times the site was visited by this Visitor.
       std::map<Ptr<MultinomialSite>, int, IdLess<MultinomialSite>> sites_visited_;
     };
 
-
+    //==========================================================================
     class MultinomialSite : public SiteBase {
      public:
 
@@ -107,6 +111,9 @@ namespace BOOM {
         observed_visitors_.clear();
       }
 
+      // Absorb the data from rhs into *this.
+      void merge(const MultinomialSite &rhs);
+
      private:
       // visit_probs_[k] is the probability that a user in class k, when
       // choosing a site to visit, would visit this site.  For a fixed value of
@@ -130,6 +137,7 @@ namespace BOOM {
     };
   }  // namespace FactorModels
 
+  //===========================================================================
   class MultinomialFactorModel
       : public ManyParamPolicy,
         public PriorPolicy
@@ -149,7 +157,7 @@ namespace BOOM {
     // Make the model aware of a specific site, without necessarily requiring
     // visits to the site.
     void add_site(const Ptr<Site> &site);
-    
+
     // Record one or more visits by a visitor to a single site.  If the model
     // already manages of visitor (or site) with the given id's then those
     // objects are adjusted by recording the visit.  If either visitor_id or
@@ -169,6 +177,7 @@ namespace BOOM {
 
     // Absorb the data from a second PoissonFactorModel into this model.
     void combine_data(const Model &other_model, bool just_suf = true) override;
+    void combine_data_mt(const MultinomialFactorModel &rhs);
 
     // The number of latent classes being modeled.
     int number_of_classes() const {return num_classes_;}
@@ -216,7 +225,7 @@ namespace BOOM {
     void extract_data(std::vector<std::string> &user_ids_output,
                       std::vector<std::string> &site_ids_output,
                       std::vector<int> &count_output) const;
-    
+
    private:
     int num_classes_;
 
