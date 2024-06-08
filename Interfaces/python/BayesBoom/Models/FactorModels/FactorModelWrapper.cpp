@@ -13,13 +13,57 @@
 
 #include "cpputil/Ptr.hpp"
 #include "cpputil/report_error.hpp"
+#include "cpputil/ThreadTools.hpp"
 #include "uint.hpp"
 
 #include <sstream>
 #include <tuple>
+#include <thread>
 
 namespace py = pybind11;
 PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
+
+namespace {
+  using namespace BOOM;
+
+  // Prior to calling this function the caller must ensure that visitor, site,
+  // and num_visits all have the same number of elements.
+  void add_data_mt(MultinomialFactorModel &model,
+                   const std::vector<std::string> &visitor,
+                   const std::vector<std::string> &site,
+                   const std::vector<int> &num_visits) {
+    int num_threads = std::thread::hardware_concurrency() - 1;
+    size_t num_elements = visitor.size();
+    size_t chunk_size = num_elements / num_threads;
+
+    ThreadWorkerPool pool;
+    pool.add_threads(num_threads);
+    std::vector<std::future<void>> futures;
+
+    std::vector<Ptr<MultinomialFactorModel>> readers;
+    size_t cursor = 0;
+    for (int i = 0; i < num_threads; ++i, cursor += chunk_size) {
+      NEW(MultinomialFactorModel, reader)(model.number_of_classes());
+      readers.push_back(reader);
+
+      auto task = [reader, cursor, chunk_size, num_elements,
+                   &visitor, &site, &num_visits]() {
+        for (size_t i = cursor;
+             i < std::min<size_t>(cursor + chunk_size, num_elements);
+             ++i) {
+          reader->record_visit(visitor[i], site[i], num_visits[i]);
+        }
+      };
+      futures.emplace_back(pool.submit(task));
+      cursor += chunk_size;
+    }
+
+    for (int i = 0; i < futures.size(); ++i) {
+      futures[i].get();
+      model.combine_data(*readers[i]);
+    }
+  }
+}
 
 namespace BayesBoom {
   using namespace BOOM;
@@ -67,7 +111,7 @@ namespace BayesBoom {
       }
       return ans;
     }
-    
+
     // Compute the posterior distribution of each user's class membership based
     // on the user's id.  This version of the function is for users who were NOT
     // part of the training data, so their ID's are NOT part of the model.
@@ -106,7 +150,7 @@ namespace BayesBoom {
       if (burn >= niter) {
         return prior;
       }
-      
+
       Vector log_prior = log(prior);
       auto unchecked_site_draws = site_draws.unchecked<3>();
       auto it = site_index_map.find(default_site_name);
@@ -168,7 +212,7 @@ namespace BayesBoom {
       if (!visitor || prior.max() > .999) {
         return prior;
       }
-               
+
       size_t niter = site_draws.shape(0);
       size_t nclass = site_draws.shape(2);
       if (burn < 0) {
@@ -177,7 +221,7 @@ namespace BayesBoom {
       if (burn >= niter) {
         return prior;
       }
-               
+
       std::vector<Ptr<Site>> sites;
       std::map<std::string, size_t> site_index_map;
       for (const auto &it : visitor->sites_visited()) {
@@ -189,7 +233,7 @@ namespace BayesBoom {
       // The dimensions of site_draws are
       // - niter
       // - site
-      // - class 
+      // - class
       Vector log_prior = log(prior);
       auto unchecked_site_draws = site_draws.unchecked<3>();
       Vector posterior(log_prior.size(), 0.0);
@@ -206,9 +250,9 @@ namespace BayesBoom {
       }
       return posterior / (niter - burn);
     }
-    
+
   }  // namespace
-  
+
   void FactorModel_def(py::module &boom) {
     //===========================================================================
     py::class_<FactorModels::VisitorBase,
@@ -241,7 +285,7 @@ namespace BayesBoom {
             },
             "The number of distinct sites visited at least one time.\n")
         ;
-    
+
     //===========================================================================
     py::class_<FactorModels::PoissonVisitor,
                FactorModels::VisitorBase,
@@ -321,7 +365,7 @@ namespace BayesBoom {
             "The number of distinct visitors that have visited the site "
             "one or more times.")
         ;
-    
+
     //===========================================================================
     py::class_<FactorModels::PoissonSite,
                FactorModels::SiteBase,
@@ -401,10 +445,10 @@ namespace BayesBoom {
              "Args:\n\n"
              "  num_classes:  The number of classes in the factor model.\n")
         .def("add_sites",
-             [](MultinomialFactorModel &model, 
+             [](MultinomialFactorModel &model,
                 const std::vector<std::string> &site_names) {
                for (const std::string &site_name : site_names) {
-                 using Site = ::BOOM::FactorModels::MultinomialSite;                 
+                 using Site = ::BOOM::FactorModels::MultinomialSite;
                  model.add_site(new Site(site_name, model.number_of_classes()));
                }
              },
@@ -423,8 +467,13 @@ namespace BayesBoom {
                  report_error("visitor_id, site_id, and num_visits must "
                               "all have the same length.");
                }
-               for (size_t i = 0; i < visitor_id.size(); ++i) {
-                 model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
+               if (std::thread::hardware_concurrency() > 2
+                   && visitor_id.size() > 1e+5) {
+                 add_data_mt(model, visitor_id, site_id, num_visits);
+               } else {
+                 for (size_t i = 0; i < visitor_id.size(); ++i) {
+                   model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
+                 }
                }
              },
              py::arg("visitor_id"),
@@ -603,7 +652,7 @@ namespace BayesBoom {
              "  burn:  The number of mcmc draws to discard as burn-in.\n")
         .def("infer_posterior_distributions",
              [](MultinomialFactorModel &model,
-                const std::vector<std::string> & priors_index, 
+                const std::vector<std::string> & priors_index,
                 const Matrix &priors,
                 const Vector &default_prior,
                 const std::vector<std::string> &user_ids,
@@ -611,7 +660,7 @@ namespace BayesBoom {
                 const std::string &default_site_name,
                 py::array_t<double> site_draws,
                 int burn) {
-               
+
                std::map<std::string, Int> site_index_map = model.site_index_map();
                std::map<std::string, std::vector<std::string>> visitation;
                if (user_ids.size() != sites_visited.size()) {
@@ -625,7 +674,7 @@ namespace BayesBoom {
                for (size_t i = 0; i < priors_index.size(); ++i) {
                  id_map[priors_index[i]] = i;
                }
-               
+
                Int num_users = visitation.size();
                Matrix ans(num_users, model.number_of_classes());
                std::vector<std::string> ordered_unique_user_ids;
@@ -637,7 +686,7 @@ namespace BayesBoom {
                  Vector posterior_distribution =
                      compute_multinomial_posterior_class_probabilities(
                          get_prior(user_id, priors, id_map, default_prior),
-                         unique_elements(el.second), 
+                         unique_elements(el.second),
                          site_index_map,
                          default_site_name,
                          site_draws,
@@ -648,7 +697,7 @@ namespace BayesBoom {
                return LabeledMatrix(ans,
                                     ordered_unique_user_ids,
                                     std::vector<std::string>());
-               
+
              },
              py::arg("priors_index"),
              py::arg("priors"),
@@ -712,7 +761,7 @@ namespace BayesBoom {
                return out.str();
              })
         ;
-    
+
     //===========================================================================
     py::class_<PoissonFactorModel,
                PriorPolicy,
@@ -1027,8 +1076,8 @@ namespace BayesBoom {
                sampler.impute_visitors();
              })
         ;
-        
-    
+
+
     //===========================================================================
     py::class_<PoissonFactorHierarchicalSampler,
                PoissonFactorPosteriorSamplerBase,
@@ -1114,7 +1163,7 @@ namespace BayesBoom {
             })
         ;
 
-    
+
     //===========================================================================
     py::class_<PoissonFactorModelIndependentGammaPosteriorSampler,
                PoissonFactorPosteriorSamplerBase,
