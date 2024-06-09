@@ -95,8 +95,6 @@ namespace BOOM {
 
     int number_of_classes() const {return model_->number_of_classes();}
     void impute_visitors();
-    void impute_visitor(Visitor &visitor);
-
     void draw_site_parameters();
 
     void set_prior_class_probabilities(
@@ -120,16 +118,18 @@ namespace BOOM {
     std::vector<MfmThreading::VisitorImputer> visitor_imputers_;
     ThreadWorkerPool pool_;
 
-    // The site_map_ connects site id's with their position in the model's
-    // "sites" object, so we can say "site 'blah.com' is in position 12.
-    std::map<std::string, Int> site_map_;
+    // Fill the unknown_visitors_ object and recompute known_site_visit_counts_.
+    //
+    // There is a subtlety here
+    void fill_unknown_visitors();
 
-    // The reverse_site_map_ maps position to the site ID.  Thus "the site in
-    // position 12 is 'blah.com'."
-    std::vector<std::string> reverse_site_map_;
+    // Visitors with unknown categories.
+    std::set<Ptr<Visitor>> unknown_visitors_;
 
-    // If site_map_ and reverse_site_map_ are empty, fill them.
-    void fill_site_map();
+    // Site visit counts from visitors with known categories, as defined by
+    // having a prior category probability above a high threshold (e.g. .999)
+    // for a single category.
+    Matrix known_site_visit_counts_;
   };
 
 }  // namespace BOOM
