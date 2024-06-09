@@ -13,6 +13,12 @@ class MultinomialFactorModel(FactorModelBase):
         self._model = boom.MultinomialFactorModel(int(nlevels))
         self._default_site_name = "Other"
         self._omit_data_when_serializing = False
+        self._num_threads = 1
+
+    def set_num_threads(self, num_threads: int):
+        if num_threads < 1:
+            num_threads = 1
+        self._num_threads = int(num_threads)
 
     def omit_data_when_serializing(self, omit: bool = True):
         """
@@ -162,20 +168,25 @@ class MultinomialFactorModel(FactorModelBase):
         self._site_draws[iteration, :, :] = self._model.site_params.to_numpy()
 
     def _assign_sampler(self, model):
+        print("Creating posterior sampler object.")
         posterior_sampler = boom.MultinomialFactorModelPosteriorSampler(
             model,
             R.to_boom_vector(self._prior_class_membership_probabilites))
 
         known_users = getattr(self, "_known_users", None)
         if known_users is not None and len(known_users) > 0:
+            print("python: handling 'known_users'.")
             num_known = len(known_users)
             probs = np.zeros((num_known, self.nlevels))
             x = np.arange(num_known)
             probs[x, known_users.values] = 1.0
+            print("python: setting prior class probabilities for "
+                  f"{len(known_users)} users.")
             posterior_sampler.set_prior_class_probabilities(
                 known_users.index,
                 R.to_boom_matrix(probs))
 
+        posterior_sampler.set_num_threads(self._num_threads)
         model.set_method(posterior_sampler)
         return posterior_sampler
 
@@ -188,6 +199,7 @@ class MultinomialFactorModel(FactorModelBase):
             "default_site_name": self._default_site_name,
             "prior_class_probabilities":
             self._prior_class_membership_probabilites,
+            "num_threads": self._num_threads
         }
 
         if not self._omit_data_when_serializing:
@@ -207,6 +219,8 @@ class MultinomialFactorModel(FactorModelBase):
         self._prior_class_membership_probabilites = payload[
             "prior_class_probabilities"]
         self._model.add_sites(self._site_ids)
+
+        self._num_threads = payload.get("num_threads", 1)
 
         if not self._omit_data_when_serializing:
             self._user_ids = payload["user_ids"]
@@ -246,6 +260,7 @@ class MultinomialFactorModelJsonEncoder(json.JSONEncoder):
             "default_site_name": obj._default_site_name,
             "prior_class_probabilities":
             obj._prior_class_membership_probabilites.tolist(),
+            "num_threads": int(obj._num_threads),
         }
 
         if not obj._omit_data_when_serializing:
@@ -271,6 +286,7 @@ class MultinomialFactorModelJsonDecoder(json.JSONDecoder):
         model._default_site_name = payload["default_site_name"]
         model._prior_class_membership_probabilites = np.array(
             payload["prior_class_probabilities"])
+        model._num_threads = int(payload.get("num_threads", 1))
 
         model._model.add_sites(model._site_ids)
 

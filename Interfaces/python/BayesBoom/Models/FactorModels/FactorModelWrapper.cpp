@@ -60,6 +60,7 @@ namespace {
 
     for (int i = 0; i < futures.size(); ++i) {
       futures[i].get();
+      // std::cout << "Combining data from reader " << i << "." << std::endl;
       model.combine_data(*readers[i]);
     }
   }
@@ -471,6 +472,11 @@ namespace BayesBoom {
                    && visitor_id.size() > 1e+5) {
                  add_data_mt(model, visitor_id, site_id, num_visits);
                } else {
+                 std::cout << "hardware_concurrency = "
+                           << std::thread::hardware_concurrency()
+                           << ".\n"
+                           << "Reading data the old fashioned way."
+                           << std::endl;
                  for (size_t i = 0; i < visitor_id.size(); ++i) {
                    model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
                  }
@@ -739,6 +745,12 @@ namespace BayesBoom {
                               "the number of classes.");
                }
                for (size_t i = 0; i < visitor_ids.size(); ++i) {
+                 if (i < 10 || i % 1000 == 0) {
+                   std::cout << "Setting prior class probabilities for user "
+                             << i << " of " << visitor_ids.size()
+                             << "."
+                             << std::endl;
+                 }
                  model.visitor(
                      visitor_ids[i])->set_class_probabilities(
                          prior_probs.row(i));
@@ -974,6 +986,14 @@ namespace BayesBoom {
              "user-specific prior has not been specified for that user.\n"
              "  seeding_rng:  The random number generator used to seed this "
              "sampler's RNG.\n")
+        .def("set_num_threads",
+             [](MultinomialFactorModelPosteriorSampler &sampler,
+                int num_threads) {
+               sampler.set_num_threads(num_threads);
+             },
+             py::arg("num_threads"),
+             "Args:\n\n"
+             "  num_threads:  The desired number of threads to use.\n")
         .def("prior_class_probabilities",
              [](MultinomialFactorModelPosteriorSampler &sampler,
                 const std::string &user_id) {
@@ -1009,6 +1029,9 @@ namespace BayesBoom {
                }
 
                for (size_t i = 0; i < user_ids.size(); ++i) {
+                 if (i % 100000 == 0) {
+                   std::cout << "C++ Setting prior class probs for row " << i << std::endl;
+                 }
                  sampler.set_prior_class_probabilities(
                      user_ids[i], probs.row(i));
                }

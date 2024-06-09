@@ -19,6 +19,7 @@
 */
 
 #include <map>
+#include <set>
 #include <string>
 #include "LinAlg/Vector.hpp"
 
@@ -33,9 +34,7 @@ namespace BOOM {
     //   default_prior: The discrete probability distribution to use as a prior
     //     over a visitor's class membership category when no visitor-specific
     //     prior is specified.
-    VisitorPriorManager(const Vector &default_prior)
-        : default_prior_class_probabilities_(default_prior)
-    {}
+    VisitorPriorManager(const Vector &default_prior);
 
     int number_of_classes() const {
       return default_prior_class_probabilities_.size();
@@ -57,6 +56,9 @@ namespace BOOM {
    private:
     Vector default_prior_class_probabilities_;
     std::map<std::string, Vector> prior_class_probabilities_;
+
+    std::vector<std::set<std::string>> known_users_;
+    std::vector<Vector> known_user_probabilities_;
   };
 
   

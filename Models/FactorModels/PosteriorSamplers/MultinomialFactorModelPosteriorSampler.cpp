@@ -99,6 +99,8 @@ namespace BOOM {
   }
 
   void Sampler::set_num_threads(int num_threads) {
+    std::cout << "setting num_threads = " << num_threads << std::endl;
+    
     if (num_threads < 1) {
       num_threads = 1;
     }
@@ -108,26 +110,35 @@ namespace BOOM {
       visitor_imputers_.push_back(VisitorImputer(
           rng(), &visitor_prior_));
     }
-
+    std::cout << "visitor_imputers_ has " << visitor_imputers_.size()
+              << " elements." << std::endl;
+    
     // If the "known_visitors" optimization has been set, then only impute the
     // unknown visitors.  Otherwise impute all the visitors.
     size_t counter = 0;
     if (unknown_visitors_.empty()) {
+      std::cout << "Filling imputers with visitors." << std::endl;
       for (const auto &el : model_->visitors()) {
         visitor_imputers_[counter++ % num_threads].add_visitor(el.second);
       }
+      std::cout << "Done filling imputers with visitors." << std::endl;
     } else {
+      std::cout << "Filling imputers with unknown_visitors_." << std::endl;
       for (const Ptr<Visitor> &visitor : unknown_visitors_) {
         visitor_imputers_[counter++ % num_threads].add_visitor(visitor);
       }
+      std::cout << "Done filling imputers with unknown_visitors_." << std::endl;
     }
 
+    std::cout << "adjusting the number of threads in the thread pool."
+              << std::endl;
     if (num_threads <= 1) {
       pool_.set_number_of_threads(0);
     } else {
       pool_.set_number_of_threads(num_threads);
     }
 
+    std::cout << "done with set_num_threads." << std::endl;
   }
 
   void Sampler::draw() {
@@ -138,8 +149,10 @@ namespace BOOM {
 
   void Sampler::impute_visitors() {
     if (visitor_imputers_.size() == 1) {
+      std::cout << "imputing visitors using a single imputer." << std::endl;
       visitor_imputers_[0].impute_visitors();
     } else {
+      std::cout << "imputing visitors using multiple threads." << std::endl;      
       std::vector<std::future<void>> futures;
       for (size_t i = 0; i < visitor_imputers_.size(); ++i) {
         VisitorImputer *imputer = &visitor_imputers_[i];
@@ -149,18 +162,21 @@ namespace BOOM {
       }
 
       for (int i = 0; i < futures.size(); ++i) {
-        futures[i].get();
+        std::cout << "Waiting for imputation thread " << i << "." << std::endl;
+            futures[i].get();
       }
     }
   }
 
   void Sampler::fill_unknown_visitors() {
     if (unknown_visitors_.empty()) {
+      std::cout << "filling unknown_visitors_" << std::endl;
       known_site_visit_counts_ = Matrix(
           model_->number_of_sites(),
           model_->number_of_classes(),
           0.0);
 
+      std::cout << "Iterating through users...\n";
       for (const auto &visitor_el : model_->visitors()) {
         const Ptr<Visitor> &visitor(visitor_el.second);
         const Vector &prior(prior_class_probabilities(visitor->id()));
@@ -171,8 +187,9 @@ namespace BOOM {
           increment_counts(visitor, category, known_site_visit_counts_, *model_);
         }
       }
-
+      std::cout << "Done iterating through users.\n";
       if (visitor_imputers_.size() > 1) {
+        std::cout << "Resetting threads.\n";
         int num_threads = visitor_imputers_.size();
         set_num_threads(1);
         set_num_threads(num_threads);
@@ -187,6 +204,7 @@ namespace BOOM {
     int number_of_classes = model_->number_of_classes();
     Int number_of_sites = model_->number_of_sites();
 
+    std::cout << "building prior counts matrix." << std::endl;
     // Assemble the vectors of counts.  These are the number of visits by
     // distinct visitors to each site, in each category.
     //
@@ -198,12 +216,15 @@ namespace BOOM {
 
     // Now add the observed data from the visitors.
     if (unknown_visitors_.empty()) {
+      std::cout << "Adding to counts by looping over all visitors." << std::endl;
+      
       for (const auto &visitor_el : model_->visitors()) {
         const Ptr<Visitor> &visitor(visitor_el.second);
         int category = visitor->imputed_class_membership();
         increment_counts(visitor, category, counts, *model_);
       }
     } else {
+      std::cout << "Adding to counts by looping over unkown visitors." << std::endl;
       counts += known_site_visit_counts_;
       for (const Ptr<Visitor> &visitor: unknown_visitors_) {
         increment_counts(visitor,
@@ -213,6 +234,7 @@ namespace BOOM {
       }
     }
 
+    std::cout << "Computing probs." << std::endl;
     // Ready to draw the model parameters.  These are structured the same way as
     // the counts.
     Matrix probs(number_of_sites, number_of_classes);

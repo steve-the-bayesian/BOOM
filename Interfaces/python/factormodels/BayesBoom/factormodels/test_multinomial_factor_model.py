@@ -155,6 +155,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
         known_users = self._user_classes.iloc[:num_known]
         niter = 1000
         model.set_known_user_demographics(known_users)
+        model.set_num_threads(15)
         model.run_mcmc(niter=niter)
         print("Done with model run!")
 
@@ -213,6 +214,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
         known_users = self._user_classes.iloc[:num_known]
         niter = 1000
         model.set_known_user_demographics(known_users)
+        model.set_nthreads(14)
         model.run_mcmc(niter=niter)
         user_ids = model.user_ids[-5:-1]
         probs = model.posterior_class_probabilities(user_ids)

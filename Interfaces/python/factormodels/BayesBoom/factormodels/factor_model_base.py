@@ -110,7 +110,7 @@ class FactorModelBase:
             self._site_ids = self._model.site_ids
         return self._site_ids
 
-    def add_data(self, user, site, count):
+    def add_data(self, user, site, count, max_chunk_size: int = 1000000):
         """
         Args:
           user: a vector of strings giving the user ID.
@@ -129,9 +129,30 @@ class FactorModelBase:
                 f"The 'user' ({len(user)}) and 'site' ({len(count)}) arguments "
                 "must have the same length")
 
-        self._model.add_data(R.to_numpy(user).astype(str),
-                             R.to_numpy(site).astype(str),
-                             R.to_numpy(count).astype(int))
+        print("converting user to numpy")
+        user = R.to_numpy(user.astype(str))
+
+        print("converting site to numpy")
+        site = R.to_numpy(site.astype(str))
+
+        print("converting count to numpy")
+        count = R.to_numpy(count).astype(int)
+
+        print("Adding data to the boom model.")
+        cursor = 0
+        nrows = len(user)
+        while cursor + max_chunk_size < nrows:
+            print("Adding data chunk starting at row ", cursor, ".")
+            end = cursor + max_chunk_size
+            self._model.add_data(user[cursor:end].astype(str),
+                                 site[cursor:end].astype(str),
+                                 count[cursor:end].astype(int))
+            cursor += max_chunk_size
+
+        if cursor != nrows:
+            self._model.add_data(user[cursor:nrows].astype(str),
+                                 site[cursor:nrows].astype(str),
+                                 count[cursor:nrows].astype(int))
 
     def site(self, site_id: str):
         if self.model:
@@ -184,8 +205,11 @@ class FactorModelBase:
           ping: Print a status update every 'ping' iterations.  If ping <= 0 or
             if ping is None then no status updates are printed.
         """
+        print("Allocating posterior sampler.")
         self._posterior_sampler = self._assign_sampler(self._model)
+        print("allocating space.")
         self._allocate_space(niter)
+        print("copying site ids.")
         self._site_ids = self._model.site_ids
         if ping == -8675309:
             ping = max(1, int(niter / 10))
