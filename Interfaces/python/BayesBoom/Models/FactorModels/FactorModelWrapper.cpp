@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <pybind11/iostream.h>
 
 #include "Models/FactorModels/PoissonFactorModel.hpp"
 #include "Models/FactorModels/MultinomialFactorModel.hpp"
@@ -32,35 +33,56 @@ namespace {
                    const std::vector<std::string> &visitor,
                    const std::vector<std::string> &site,
                    const std::vector<int> &num_visits) {
+
+    py::scoped_ostream_redirect stream(
+        std::cout,                                // std::ostream&
+        py::module_::import("sys").attr("stdout") // Python output
+    );
+    
     int num_threads = std::thread::hardware_concurrency() - 1;
     size_t num_elements = visitor.size();
     size_t chunk_size = num_elements / num_threads;
 
+    std::cout << "Adding data using add_data_mt." << std::endl;
+    
     ThreadWorkerPool pool;
     pool.add_threads(num_threads);
     std::vector<std::future<void>> futures;
 
     std::vector<Ptr<MultinomialFactorModel>> readers;
     size_t cursor = 0;
+    // Launch the threads.
     for (int i = 0; i < num_threads; ++i, cursor += chunk_size) {
       NEW(MultinomialFactorModel, reader)(model.number_of_classes());
       readers.push_back(reader);
 
       auto task = [reader, cursor, chunk_size, num_elements,
                    &visitor, &site, &num_visits]() {
+        size_t end = cursor + chunk_size;
         for (size_t i = cursor;
-             i < std::min<size_t>(cursor + chunk_size, num_elements);
+             i < std::min<size_t>(end, num_elements);
              ++i) {
           reader->record_visit(visitor[i], site[i], num_visits[i]);
         }
       };
       futures.emplace_back(pool.submit(task));
-      cursor += chunk_size;
+      std::cout << "Cursor ended at " << cursor << "." << std::endl;
     }
 
+    // Mop up any extra data while the threads are running.
+    if (cursor < num_elements) {
+      std::cout << "Base model is mopping up." << std::endl;
+      for (; cursor < num_elements; ++cursor) {
+        model.record_visit(visitor[cursor],
+                           site[cursor],
+                           num_visits[cursor]);
+      }
+    }
+
+    // Join the threads and combine their work into the main model.
     for (int i = 0; i < futures.size(); ++i) {
       futures[i].get();
-      // std::cout << "Combining data from reader " << i << "." << std::endl;
+      std::cout << "Combining data from reader " << i << "." << std::endl;
       model.combine_data(*readers[i]);
     }
   }
@@ -462,14 +484,15 @@ namespace BayesBoom {
              [](MultinomialFactorModel &model,
                 const std::vector<std::string> &visitor_id,
                 const std::vector<std::string> &site_id,
-                const std::vector<int> &num_visits) {
+                const std::vector<int> &num_visits,
+                long thread_threshold) {
                if (visitor_id.size() != site_id.size()
                    || visitor_id.size() != num_visits.size()) {
                  report_error("visitor_id, site_id, and num_visits must "
                               "all have the same length.");
                }
                if (std::thread::hardware_concurrency() > 2
-                   && visitor_id.size() > 1e+5) {
+                   && visitor_id.size() > thread_threshold) {
                  add_data_mt(model, visitor_id, site_id, num_visits);
                } else {
                  std::cout << "hardware_concurrency = "
@@ -485,11 +508,15 @@ namespace BayesBoom {
              py::arg("visitor_id"),
              py::arg("site_id"),
              py::arg("num_visits"),
+             py::arg("thread_threshold") = static_cast<long>(1e+5),
              "Args:\n\n"
              "  visitor_id: A vector of integer ID's identifying the visitor.\n"
              "  site_id:  A vector of integer ID's identifying the site.\n"
              "  num_visits:  A vector of integers giving the number of times "
-             "each visitor visited the corresponding site.\n")
+             "each visitor visited the corresponding site.\n"
+             "  thread_threshold:  If more observations than this are present "
+             "the model object will use threading to read the data "
+             "concurrently.\n")
         .def("extract_data",
              [](MultinomialFactorModel &model) {
                std::vector<std::string> user_ids;
@@ -732,38 +759,42 @@ namespace BayesBoom {
              "  site_draws:  A 3-way numpy array of MCMC draws of "
              "site parameters.\n"
              "  burn:  The number of mcmc draws to discard as burn-in.\n")
-        .def("set_prior_class_probabilities",
-             [](MultinomialFactorModel &model,
-                const std::vector<std::string> &visitor_ids,
-                const Matrix &prior_probs) {
-               if (visitor_ids.size() != prior_probs.nrow()) {
-                 report_error("The number of rows in 'prior_probs' must match "
-                              "the length of 'visitor_ids'." );
-               }
-               if (prior_probs.ncol() != model.number_of_classes()) {
-                 report_error("The number of columns in prior_probs must equal "
-                              "the number of classes.");
-               }
-               for (size_t i = 0; i < visitor_ids.size(); ++i) {
-                 if (i < 10 || i % 1000 == 0) {
-                   std::cout << "Setting prior class probabilities for user "
-                             << i << " of " << visitor_ids.size()
-                             << "."
-                             << std::endl;
-                 }
-                 model.visitor(
-                     visitor_ids[i])->set_class_probabilities(
-                         prior_probs.row(i));
-               }
-             },
-             py::arg("visitor_ids"),
-             py::arg("prior_probs"),
-             "Args:\n\n"
-             "  visitor_ids:  A list of strings giving the ID's of the "
-             "visitors whose prior probabilities are to be set.\n"
-             "  prior_probs: A Matrix, with one row per visitor giving the "
-             "probability distribution of that visitor's latent class "
-             "membership.\n")
+        // .def("set_prior_class_probabilities",
+        //      [](MultinomialFactorModel &model,
+        //         const std::vector<std::string> &visitor_ids,
+        //         const Matrix &prior_probs) {
+        //        py::scoped_ostream_redirect stream(
+        //            std::cout,                                // std::ostream&
+        //            py::module_::import("sys").attr("stdout") // Python output
+                   
+        //        if (visitor_ids.size() != prior_probs.nrow()) {
+        //          report_error("The number of rows in 'prior_probs' must match "
+        //                       "the length of 'visitor_ids'." );
+        //        }
+        //        if (prior_probs.ncol() != model.number_of_classes()) {
+        //          report_error("The number of columns in prior_probs must equal "
+        //                       "the number of classes.");
+        //        }
+        //        for (size_t i = 0; i < visitor_ids.size(); ++i) {
+        //          if (i < 10 || i % 1000 == 0) {
+        //            std::cout << "Setting prior class probabilities for user "
+        //                      << i << " of " << visitor_ids.size()
+        //                      << "."
+        //                      << std::endl;
+        //          }
+        //          model.visitor(
+        //              visitor_ids[i])->set_class_probabilities(
+        //                  prior_probs.row(i));
+        //        }
+        //      },
+        //      py::arg("visitor_ids"),
+        //      py::arg("prior_probs"),
+        //      "Args:\n\n"
+        //      "  visitor_ids:  A list of strings giving the ID's of the "
+        //      "visitors whose prior probabilities are to be set.\n"
+        //      "  prior_probs: A Matrix, with one row per visitor giving the "
+        //      "probability distribution of that visitor's latent class "
+        //      "membership.\n")
         .def("__repr__",
              [](MultinomialFactorModel &model) {
                std::ostringstream out;
@@ -1018,6 +1049,11 @@ namespace BayesBoom {
              [](MultinomialFactorModelPosteriorSampler &sampler,
                 std::vector<std::string> &user_ids,
                 const Matrix &probs) {
+
+               py::scoped_ostream_redirect stream(
+                   std::cout,                                // std::ostream&
+                   py::module_::import("sys").attr("stdout") // Python output
+                                                  );
                if (user_ids.size() != probs.nrow()) {
                  std::ostringstream err;
                  err << "The vector of user ids's must have size ("
@@ -1029,8 +1065,9 @@ namespace BayesBoom {
                }
 
                for (size_t i = 0; i < user_ids.size(); ++i) {
-                 if (i % 100000 == 0) {
-                   std::cout << "C++ Setting prior class probs for row " << i << std::endl;
+                 if (i % 1000 == 0) {
+                   std::cout << "C++ Setting prior class probs for user " << i
+                             << " of " << user_ids.size() << "." << std::endl;
                  }
                  sampler.set_prior_class_probabilities(
                      user_ids[i], probs.row(i));

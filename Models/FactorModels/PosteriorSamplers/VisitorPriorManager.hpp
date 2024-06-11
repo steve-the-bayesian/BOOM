@@ -52,6 +52,19 @@ namespace BOOM {
     // The prior distribution of class membership for the specified user.
     const Vector &prior_class_probabilities(
         const std::string &visitor_id) const;
+
+    // The number of visitors with known categories.
+    size_t number_known() const;
+
+    // The number of visitors with unknown categories.
+    size_t number_unknown() const {
+      return prior_class_probabilities_.size();
+    }
+
+    // The total number of visitors being managed.
+    size_t number_of_visitors() const {
+      return number_unknown() + number_known();
+    }
     
    private:
     Vector default_prior_class_probabilities_;

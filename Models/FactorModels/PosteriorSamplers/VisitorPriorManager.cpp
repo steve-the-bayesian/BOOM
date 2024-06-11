@@ -34,6 +34,14 @@ namespace BOOM {
     }
   }
 
+
+  size_t VisitorPriorManager::number_known() const {
+    size_t ans = 0;
+    for (const auto &el : known_users_) {
+      ans += el.size(); 
+    }
+    return ans;
+  }
   
   void VisitorPriorManager::set_prior_class_probabilities(
       const std::string &visitor_id,

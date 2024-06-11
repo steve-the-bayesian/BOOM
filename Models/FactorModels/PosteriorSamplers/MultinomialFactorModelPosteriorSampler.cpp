@@ -21,6 +21,7 @@
 #include "cpputil/report_error.hpp"
 #include "cpputil/math_utils.hpp"
 #include <sstream>
+#include <ctime>
 
 namespace BOOM {
   using Visitor = FactorModels::MultinomialVisitor;
@@ -149,8 +150,20 @@ namespace BOOM {
 
   void Sampler::impute_visitors() {
     if (visitor_imputers_.size() == 1) {
-      std::cout << "imputing visitors using a single imputer." << std::endl;
+      clock_t start_time = clock();
+      std::cout << "imputing visitors using a single imputer covering "
+                << visitor_imputers_[0].num_visitors()
+                << " visitors " << std::endl;
+      std::cout << "The PriorManager thinks there are "
+                << visitor_prior_.number_known()
+                << " known visitors and "
+                << visitor_prior_.number_of_visitors()
+                << " total visitors." << std::endl;
       visitor_imputers_[0].impute_visitors();
+      clock_t end_time = clock();
+      std::cout << "took " << double(end_time - start_time) / CLOCKS_PER_SEC
+                << " seconds." << std::endl;
+      
     } else {
       std::cout << "imputing visitors using multiple threads." << std::endl;      
       std::vector<std::future<void>> futures;
@@ -212,6 +225,7 @@ namespace BOOM {
     //
     // Counts starts off with a Dirichlet prior in each category with 0.1 prior
     // observations per site for that category.
+    clock_t start_time = clock();
     Matrix counts(number_of_sites, number_of_classes, 0.1);
 
     // Now add the observed data from the visitors.
@@ -224,16 +238,30 @@ namespace BOOM {
         increment_counts(visitor, category, counts, *model_);
       }
     } else {
-      std::cout << "Adding to counts by looping over unkown visitors." << std::endl;
+      std::cout << "Adding to counts by looping over "
+                << unknown_visitors_.size() << " unknown visitors." << std::endl;
       counts += known_site_visit_counts_;
+      clock_t addition_checkpoint = clock();
+      std::cout << "Adding the matrices took "
+                << double(addition_checkpoint - start_time) / CLOCKS_PER_SEC
+                << " seconds. " << std::endl;
+      
       for (const Ptr<Visitor> &visitor: unknown_visitors_) {
         increment_counts(visitor,
                          visitor->imputed_class_membership(),
                          counts,
                          *model_);
       }
+      clock_t increment_checkpoint = clock();
+      std::cout << "Incrementing counts took "
+                << double(increment_checkpoint - addition_checkpoint) / CLOCKS_PER_SEC
+                << " seconds." << std::endl;
     }
-
+    clock_t counts_checkpoint = clock();
+    std::cout << "Building counts took "
+              << double(counts_checkpoint - start_time) / CLOCKS_PER_SEC
+              << " seconds." << std::endl;
+    
     std::cout << "Computing probs." << std::endl;
     // Ready to draw the model parameters.  These are structured the same way as
     // the counts.
@@ -242,10 +270,19 @@ namespace BOOM {
       probs.col(k) = rdirichlet_mt(rng(), counts.col(k));
     }
 
+    clock_t simulation_checkpoint = clock();
+    std::cout << "Simulating probs took "
+              << double(simulation_checkpoint - counts_checkpoint) / CLOCKS_PER_SEC
+              << " seconds." << std::endl;
+
     Int row_counter = 0;
     for (auto &el : model_->sites()) {
       el.second->set_probs(probs.row(row_counter++));
     }
+    clock_t assignment_checkpoint = clock();
+    std::cout << "Assigning probs to Site objects took "
+              << double(assignment_checkpoint - simulation_checkpoint) / CLOCKS_PER_SEC
+              << " seconds." << std::endl;
   }
 
   double Sampler::logpri() const {
