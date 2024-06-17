@@ -13,6 +13,7 @@
 #include "Models/MvnModel.hpp"
 
 #include "cpputil/Ptr.hpp"
+#include "cpputil/DefaultMap.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/ThreadTools.hpp"
 #include "uint.hpp"
@@ -86,6 +87,7 @@ namespace {
       model.combine_data(*readers[i]);
     }
   }
+  
 }
 
 namespace BayesBoom {
@@ -148,62 +150,60 @@ namespace BayesBoom {
     //   site_index_map: A mapping between user-id's and their position numbers
     //     in the Monte Carlo draws of model parameters (the 'site_draws'
     //     argument).
-    //   default_site_name: The site name to use when a site on the list of
-    //     visited sites does not appear in the 'site index map'.  This is the
-    //     "All Other" category into which unmodelled sites are collapsed.  This
-    //     name must appear in site_index_map.
     //   site_draws: The numpy array of MCMC draws of site-level parameters.
     //     Dimensions are [niter x site-index x latent category]
     //   burn:  The number of MCMC iterations to discard as burn-in.
     //
     // Returns:
     //   The posterior distribution of class membership for the requested user.
-    Vector compute_multinomial_posterior_class_probabilities(
+    Vector compute_multinomial_posterior_class_probabilities_without_model(
         const Vector &prior,
         const std::vector<std::string> &sites_visited,
-        const std::map<std::string, Int> &site_index_map,
-        const std::string &default_site_name,
+        const DefaultMap<std::string, Int> &site_index_map,
         const py::array_t<double> &site_draws,
         int burn) {
-      size_t niter = site_draws.shape(0);
-      size_t nclass = site_draws.shape(2);
-      if (burn < 0) {
-        burn = 0;
-      }
-      if (burn >= niter) {
-        return prior;
-      }
-
-      Vector log_prior = log(prior);
-      auto unchecked_site_draws = site_draws.unchecked<3>();
-      auto it = site_index_map.find(default_site_name);
-      if (it == site_index_map.end()) {
-        report_error("default site name was not found in the site index map.");
-      }
-      Int default_site_index = it->second;
-      std::vector<Int> site_index;
-      for (const std::string &site_name : sites_visited) {
-        it = site_index_map.find(site_name);
-        if (it != site_index_map.end()) {
-          site_index.push_back(it->second);
-        } else {
-          site_index.push_back(default_site_index);
+      try {
+        size_t niter = site_draws.shape(0);
+        size_t nclass = site_draws.shape(2);
+        if (burn < 0) {
+          burn = 0;
         }
-      }
+        if (burn >= niter) {
+          return prior;
+        }
 
-      Vector posterior(log_prior.size(), 0.0);
-      for (size_t i = burn; i < niter; ++i) {
-        Vector tmp_log_posterior = log_prior;
-        for (size_t j = 0; j < sites_visited.size(); ++j) {
-          Int site_index = site_index_map.at(sites_visited[j]);
-          for (size_t k = 0; k < nclass; ++k) {
-            tmp_log_posterior[k] += unchecked_site_draws(
-                i, site_index, k);
+        Vector log_prior = log(prior);
+        auto unchecked_site_draws = site_draws.unchecked<3>();
+
+        Vector posterior(log_prior.size(), 0.0);
+        
+        for (size_t iteration = burn; iteration < niter; ++iteration) {
+          Vector tmp_log_posterior = log_prior;
+          for (size_t site_num = 0; site_num < sites_visited.size(); ++site_num) {
+            try {
+              Int site_index = site_index_map[sites_visited[site_num]];
+              for (size_t category = 0; category < nclass; ++category) {
+                tmp_log_posterior[category] += unchecked_site_draws(
+                    iteration, site_index, category);
+              }
+              posterior += tmp_log_posterior.normalize_logprob();
+            } catch (std::exception &e) {
+              std::cout << "An exception occurred in FactorModelWrapper::"
+                        << "compute_multinomial_posterior_class_probabilities"
+                        << "_without_model"
+                        << " when looking up the index for site " << site_num << ", "
+                        << sites_visited[site_num] << "."
+                        << std::endl;
+            }
           }
         }
-        posterior += tmp_log_posterior.normalize_logprob();
+        return posterior / (niter - burn);
+      } catch(std::exception &e) {
+        std::cout << "Exception encountered in compute_multinomial_posterior_"
+            "class_probabilities_without_model.  "
+            << e.what() << std::endl;
+        throw e;
       }
-      return posterior / (niter - burn);
     }
 
     // Compute the posterior distribution of each user's class membership based
@@ -694,7 +694,19 @@ namespace BayesBoom {
                 py::array_t<double> site_draws,
                 int burn) {
 
-               std::map<std::string, Int> site_index_map = model.site_index_map();
+               py::scoped_ostream_redirect stream(
+                   std::cout,                                // std::ostream&
+                   py::module_::import("sys").attr("stdout") // Python output
+                                                  );
+               
+               try {
+               // The map from site ID's to site index numbers.
+               std::map<std::string, Int> raw_site_index_map = model.site_index_map();
+               DefaultMap<std::string, Int> site_index_map(
+                   &raw_site_index_map, default_site_name);
+               
+               // visitation is the mapping from a user ID to the set of sites
+               // that were visited (site id's).
                std::map<std::string, std::vector<std::string>> visitation;
                if (user_ids.size() != sites_visited.size()) {
                  report_error("user_ids and sites_visited must be the same size.");
@@ -716,21 +728,37 @@ namespace BayesBoom {
                for (const auto &el : visitation) {
                  std::string user_id = el.first;
                  ordered_unique_user_ids.push_back(user_id);
-                 Vector posterior_distribution =
-                     compute_multinomial_posterior_class_probabilities(
-                         get_prior(user_id, priors, id_map, default_prior),
-                         unique_elements(el.second),
-                         site_index_map,
-                         default_site_name,
-                         site_draws,
-                         burn);
-                 ans.row(output_index++) = posterior_distribution;
+                 try {
+                   Vector posterior_distribution =
+                       compute_multinomial_posterior_class_probabilities_without_model(
+                           get_prior(user_id, priors, id_map, default_prior),
+                           unique_elements(el.second),
+                           site_index_map,
+                           site_draws,
+                           burn);
+                   ans.row(output_index++) = posterior_distribution;
+                 } catch (std::exception &e) {
+                   std::cout << "An exception occurred in FactorModelWrapper::"
+                             << "infer_posterior_distributions when calling "
+                       "compute_multinomial_posterior_class_probabilities"
+                             << " for user " << user_id << ".\n"
+                             << e.what()
+                             << std::endl;
+                 }
                }
 
                return LabeledMatrix(ans,
                                     ordered_unique_user_ids,
                                     std::vector<std::string>());
-
+               } catch (std::exception &e) {
+                 std::cout << "Exception in FactorModelWrapper::"
+                           << "infer_posterior_distributions.  \n"
+                           << e.what()
+                           << std::endl;
+                 return LabeledMatrix(Matrix(),
+                                      std::vector<std::string>(),
+                                      std::vector<std::string>());
+               }
              },
              py::arg("priors_index"),
              py::arg("priors"),
@@ -759,42 +787,6 @@ namespace BayesBoom {
              "  site_draws:  A 3-way numpy array of MCMC draws of "
              "site parameters.\n"
              "  burn:  The number of mcmc draws to discard as burn-in.\n")
-        // .def("set_prior_class_probabilities",
-        //      [](MultinomialFactorModel &model,
-        //         const std::vector<std::string> &visitor_ids,
-        //         const Matrix &prior_probs) {
-        //        py::scoped_ostream_redirect stream(
-        //            std::cout,                                // std::ostream&
-        //            py::module_::import("sys").attr("stdout") // Python output
-                   
-        //        if (visitor_ids.size() != prior_probs.nrow()) {
-        //          report_error("The number of rows in 'prior_probs' must match "
-        //                       "the length of 'visitor_ids'." );
-        //        }
-        //        if (prior_probs.ncol() != model.number_of_classes()) {
-        //          report_error("The number of columns in prior_probs must equal "
-        //                       "the number of classes.");
-        //        }
-        //        for (size_t i = 0; i < visitor_ids.size(); ++i) {
-        //          if (i < 10 || i % 1000 == 0) {
-        //            std::cout << "Setting prior class probabilities for user "
-        //                      << i << " of " << visitor_ids.size()
-        //                      << "."
-        //                      << std::endl;
-        //          }
-        //          model.visitor(
-        //              visitor_ids[i])->set_class_probabilities(
-        //                  prior_probs.row(i));
-        //        }
-        //      },
-        //      py::arg("visitor_ids"),
-        //      py::arg("prior_probs"),
-        //      "Args:\n\n"
-        //      "  visitor_ids:  A list of strings giving the ID's of the "
-        //      "visitors whose prior probabilities are to be set.\n"
-        //      "  prior_probs: A Matrix, with one row per visitor giving the "
-        //      "probability distribution of that visitor's latent class "
-        //      "membership.\n")
         .def("__repr__",
              [](MultinomialFactorModel &model) {
                std::ostringstream out;

@@ -130,10 +130,10 @@ class FactorModelBase:
                 "must have the same length")
 
         print("converting user to numpy")
-        user = R.to_numpy(user.astype(str))
+        user = R.to_numpy(user).astype(str)
 
         print("converting site to numpy")
-        site = R.to_numpy(site.astype(str))
+        site = R.to_numpy(site).astype(str)
 
         print("converting count to numpy")
         count = R.to_numpy(count).astype(int)

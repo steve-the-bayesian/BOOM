@@ -272,6 +272,21 @@ class MultinomialFactorModelTest(unittest.TestCase):
             test_data["user"], test_data["site"])
         self.assertTrue(np.allclose(post1, post2))
 
+        # Check that we can do posterior inference with data that was not
+        # part of the training set.
+        num_test_users = 100
+        test_user_names = random_strings(num_test_users, 20, ensure_unique=True)
+        test_user_classes = pd.Series(
+            np.random.choice(range(model.nlevels), 100),
+            index=test_user_names)
+        more_test_data = simulate_multinomial_factor_data(
+            test_user_classes, self._site_params)
+        post1 = model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
     def test_pickle(self):
         model = self.build_model()
         num_known = 800
@@ -316,8 +331,22 @@ class MultinomialFactorModelTest(unittest.TestCase):
             test_data["user"], test_data["site"])
         self.assertTrue(np.allclose(post1, post2))
 
+        # Check that we can do posterior inference with data that was not
+        # part of the training set.
+        num_test_users = 100
+        test_user_names = random_strings(num_test_users, 20, ensure_unique=True)
+        test_user_classes = pd.Series(
+            np.random.choice(range(model.nlevels), 100),
+            index=test_user_names)
+        more_test_data = simulate_multinomial_factor_data(
+            test_user_classes, self._site_params)
+        post1 = model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
 
-_debug_mode = False
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa

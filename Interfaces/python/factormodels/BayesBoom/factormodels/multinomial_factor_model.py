@@ -93,9 +93,22 @@ class MultinomialFactorModel(FactorModelBase):
         if not isinstance(priors, pd.DataFrame):
             raise Exception("'priors' must be a pandas DataFrame.")
 
+        if not (priors.shape[0] == len(unique_user_ids)):
+            raise Exception("Each user ID needs a distinct prior.")
+
+        if not (default_prior.shape[0] == priors.shape[1]):
+            raise Exception("The dimension of default prior must match the "
+                            "number of columns in priors.")
+
         # get default_site_name, default_prior
         if (burn < 0) or (not burn):
             burn = 0
+
+        if isinstance(user_ids, pd.Series):
+            user_ids = user_ids.values
+
+        if isinstance(sites_visited, pd.Series):
+            sites_visited = sites_visited.values
 
         tmp_probs = self._model.infer_posterior_distributions(
                 priors.index.tolist(),
