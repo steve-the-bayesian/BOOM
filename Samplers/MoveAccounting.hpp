@@ -30,6 +30,7 @@
 namespace BOOM {
 
   class MoveAccounting;
+  
   // A MoveTimer class will record the amount of time between its
   // creation and its destruction.
   class MoveTimer {

@@ -100,8 +100,6 @@ namespace BOOM {
   }
 
   void Sampler::set_num_threads(int num_threads) {
-    std::cout << "setting num_threads = " << num_threads << std::endl;
-    
     if (num_threads < 1) {
       num_threads = 1;
     }
@@ -111,35 +109,26 @@ namespace BOOM {
       visitor_imputers_.push_back(VisitorImputer(
           rng(), &visitor_prior_));
     }
-    std::cout << "visitor_imputers_ has " << visitor_imputers_.size()
-              << " elements." << std::endl;
     
     // If the "known_visitors" optimization has been set, then only impute the
     // unknown visitors.  Otherwise impute all the visitors.
     size_t counter = 0;
     if (unknown_visitors_.empty()) {
-      std::cout << "Filling imputers with visitors." << std::endl;
       for (const auto &el : model_->visitors()) {
         visitor_imputers_[counter++ % num_threads].add_visitor(el.second);
       }
-      std::cout << "Done filling imputers with visitors." << std::endl;
     } else {
-      std::cout << "Filling imputers with unknown_visitors_." << std::endl;
       for (const Ptr<Visitor> &visitor : unknown_visitors_) {
         visitor_imputers_[counter++ % num_threads].add_visitor(visitor);
       }
-      std::cout << "Done filling imputers with unknown_visitors_." << std::endl;
     }
 
-    std::cout << "adjusting the number of threads in the thread pool."
-              << std::endl;
     if (num_threads <= 1) {
       pool_.set_number_of_threads(0);
     } else {
       pool_.set_number_of_threads(num_threads);
     }
 
-    std::cout << "done with set_num_threads." << std::endl;
   }
 
   void Sampler::draw() {
@@ -149,23 +138,10 @@ namespace BOOM {
   }
 
   void Sampler::impute_visitors() {
+    MoveTimer timer = accounting_.start_time("impute_visitors");
     if (visitor_imputers_.size() == 1) {
-      clock_t start_time = clock();
-      std::cout << "imputing visitors using a single imputer covering "
-                << visitor_imputers_[0].num_visitors()
-                << " visitors " << std::endl;
-      std::cout << "The PriorManager thinks there are "
-                << visitor_prior_.number_known()
-                << " known visitors and "
-                << visitor_prior_.number_of_visitors()
-                << " total visitors." << std::endl;
       visitor_imputers_[0].impute_visitors();
-      clock_t end_time = clock();
-      std::cout << "took " << double(end_time - start_time) / CLOCKS_PER_SEC
-                << " seconds." << std::endl;
-      
     } else {
-      std::cout << "imputing visitors using multiple threads." << std::endl;      
       std::vector<std::future<void>> futures;
       for (size_t i = 0; i < visitor_imputers_.size(); ++i) {
         VisitorImputer *imputer = &visitor_imputers_[i];
@@ -175,8 +151,7 @@ namespace BOOM {
       }
 
       for (int i = 0; i < futures.size(); ++i) {
-        std::cout << "Waiting for imputation thread " << i << "." << std::endl;
-            futures[i].get();
+        futures[i].get();
       }
     }
   }

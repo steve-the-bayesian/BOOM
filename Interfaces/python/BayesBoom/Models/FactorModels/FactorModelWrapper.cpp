@@ -44,8 +44,6 @@ namespace {
     size_t num_elements = visitor.size();
     size_t chunk_size = num_elements / num_threads;
 
-    std::cout << "Adding data using add_data_mt." << std::endl;
-    
     ThreadWorkerPool pool;
     pool.add_threads(num_threads);
     std::vector<std::future<void>> futures;
@@ -67,12 +65,10 @@ namespace {
         }
       };
       futures.emplace_back(pool.submit(task));
-      std::cout << "Cursor ended at " << cursor << "." << std::endl;
     }
 
     // Mop up any extra data while the threads are running.
     if (cursor < num_elements) {
-      std::cout << "Base model is mopping up." << std::endl;
       for (; cursor < num_elements; ++cursor) {
         model.record_visit(visitor[cursor],
                            site[cursor],
@@ -83,7 +79,6 @@ namespace {
     // Join the threads and combine their work into the main model.
     for (int i = 0; i < futures.size(); ++i) {
       futures[i].get();
-      std::cout << "Combining data from reader " << i << "." << std::endl;
       model.combine_data(*readers[i]);
     }
   }
@@ -162,46 +157,38 @@ namespace BayesBoom {
         const DefaultMap<std::string, Int> &site_index_map,
         const py::array_t<double> &site_draws,
         int burn) {
+      size_t niter = site_draws.shape(0);
+      size_t nclass = site_draws.shape(2);
+      if (burn < 0) {
+        burn = 0;
+      }
+      if (burn >= niter) {
+        return prior;
+      }
       try {
-        size_t niter = site_draws.shape(0);
-        size_t nclass = site_draws.shape(2);
-        if (burn < 0) {
-          burn = 0;
-        }
-        if (burn >= niter) {
-          return prior;
-        }
 
         Vector log_prior = log(prior);
         auto unchecked_site_draws = site_draws.unchecked<3>();
-
         Vector posterior(log_prior.size(), 0.0);
         
         for (size_t iteration = burn; iteration < niter; ++iteration) {
           Vector tmp_log_posterior = log_prior;
           for (size_t site_num = 0; site_num < sites_visited.size(); ++site_num) {
-            try {
-              Int site_index = site_index_map[sites_visited[site_num]];
-              for (size_t category = 0; category < nclass; ++category) {
-                tmp_log_posterior[category] += unchecked_site_draws(
-                    iteration, site_index, category);
-              }
-              posterior += tmp_log_posterior.normalize_logprob();
-            } catch (std::exception &e) {
-              std::cout << "An exception occurred in FactorModelWrapper::"
-                        << "compute_multinomial_posterior_class_probabilities"
-                        << "_without_model"
-                        << " when looking up the index for site " << site_num << ", "
-                        << sites_visited[site_num] << "."
-                        << std::endl;
+            Int site_index = site_index_map[sites_visited[site_num]];
+            for (size_t category = 0; category < nclass; ++category) {
+              tmp_log_posterior[category] += unchecked_site_draws(
+                  iteration, site_index, category);
             }
+            Vector tmp_posterior = tmp_log_posterior.normalize_logprob();
           }
+          posterior += tmp_log_posterior.normalize_logprob();
         }
+
         return posterior / (niter - burn);
       } catch(std::exception &e) {
         std::cout << "Exception encountered in compute_multinomial_posterior_"
             "class_probabilities_without_model.  "
-            << e.what() << std::endl;
+                  << e.what() << std::endl;
         throw e;
       }
     }
@@ -495,11 +482,6 @@ namespace BayesBoom {
                    && visitor_id.size() > thread_threshold) {
                  add_data_mt(model, visitor_id, site_id, num_visits);
                } else {
-                 std::cout << "hardware_concurrency = "
-                           << std::thread::hardware_concurrency()
-                           << ".\n"
-                           << "Reading data the old fashioned way."
-                           << std::endl;
                  for (size_t i = 0; i < visitor_id.size(); ++i) {
                    model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
                  }
@@ -694,62 +676,56 @@ namespace BayesBoom {
                 py::array_t<double> site_draws,
                 int burn) {
 
+               if (user_ids.size() != sites_visited.size()) {
+                 report_error("user_ids and sites_visited must be the same size.");
+               }
+                 
+               // Redirect std::cout to python.stdout so that error messages
+               // will appear in the python shell or notebook.
                py::scoped_ostream_redirect stream(
                    std::cout,                                // std::ostream&
                    py::module_::import("sys").attr("stdout") // Python output
                                                   );
-               
                try {
-               // The map from site ID's to site index numbers.
-               std::map<std::string, Int> raw_site_index_map = model.site_index_map();
-               DefaultMap<std::string, Int> site_index_map(
-                   &raw_site_index_map, default_site_name);
+                 // The map from site ID's to site index numbers.
+                 std::map<std::string, Int> raw_site_index_map = model.site_index_map();
+                 DefaultMap<std::string, Int> site_index_map(
+                     &raw_site_index_map, default_site_name);
                
-               // visitation is the mapping from a user ID to the set of sites
-               // that were visited (site id's).
-               std::map<std::string, std::vector<std::string>> visitation;
-               if (user_ids.size() != sites_visited.size()) {
-                 report_error("user_ids and sites_visited must be the same size.");
-               }
-               for (size_t i = 0; i < user_ids.size(); ++i) {
-                 visitation[user_ids[i]].push_back(sites_visited[i]);
-               }
+                 // Compute the mapping from a user ID to the set of sites that
+                 // were visited (site id's).
+                 std::map<std::string, std::vector<std::string>> visitation;
+                 for (size_t i = 0; i < user_ids.size(); ++i) {
+                   visitation[user_ids[i]].push_back(sites_visited[i]);
+                 }
 
-               std::map<std::string, size_t> id_map;
-               for (size_t i = 0; i < priors_index.size(); ++i) {
-                 id_map[priors_index[i]] = i;
-               }
+                 // Compute the mapping from a user-id name to the user's index.
+                 std::map<std::string, size_t> id_to_index_map;
+                 for (size_t i = 0; i < priors_index.size(); ++i) {
+                   id_to_index_map[priors_index[i]] = i;
+                 }
 
-               Int num_users = visitation.size();
-               Matrix ans(num_users, model.number_of_classes());
-               std::vector<std::string> ordered_unique_user_ids;
+                 Int num_users = visitation.size();
+                 Matrix ans(num_users, model.number_of_classes());
+                 std::vector<std::string> ordered_unique_user_ids;
 
-               size_t output_index = 0;
-               for (const auto &el : visitation) {
-                 std::string user_id = el.first;
-                 ordered_unique_user_ids.push_back(user_id);
-                 try {
+                 size_t output_index = 0;
+                 for (const auto &el : visitation) {
+                   std::string user_id = el.first;
+                   ordered_unique_user_ids.push_back(user_id);
                    Vector posterior_distribution =
                        compute_multinomial_posterior_class_probabilities_without_model(
-                           get_prior(user_id, priors, id_map, default_prior),
+                           get_prior(user_id, priors, id_to_index_map, default_prior),
                            unique_elements(el.second),
                            site_index_map,
                            site_draws,
                            burn);
                    ans.row(output_index++) = posterior_distribution;
-                 } catch (std::exception &e) {
-                   std::cout << "An exception occurred in FactorModelWrapper::"
-                             << "infer_posterior_distributions when calling "
-                       "compute_multinomial_posterior_class_probabilities"
-                             << " for user " << user_id << ".\n"
-                             << e.what()
-                             << std::endl;
                  }
-               }
 
-               return LabeledMatrix(ans,
-                                    ordered_unique_user_ids,
-                                    std::vector<std::string>());
+                 return LabeledMatrix(ans,
+                                      ordered_unique_user_ids,
+                                      std::vector<std::string>());
                } catch (std::exception &e) {
                  std::cout << "Exception in FactorModelWrapper::"
                            << "infer_posterior_distributions.  \n"
@@ -1057,10 +1033,6 @@ namespace BayesBoom {
                }
 
                for (size_t i = 0; i < user_ids.size(); ++i) {
-                 if (i % 1000 == 0) {
-                   std::cout << "C++ Setting prior class probs for user " << i
-                             << " of " << user_ids.size() << "." << std::endl;
-                 }
                  sampler.set_prior_class_probabilities(
                      user_ids[i], probs.row(i));
                }

@@ -24,6 +24,7 @@
 #include "Models/FactorModels/PosteriorSamplers/VisitorPriorManager.hpp"
 
 #include "cpputil/ThreadTools.hpp"
+#include "Samplers/MoveAccounting.hpp"
 
 namespace BOOM {
 
@@ -65,6 +66,7 @@ namespace BOOM {
 
   }  // namespace MfmThreading
 
+  
   //===========================================================================
   // A posterior sampler MulinomialFactorModel objects.  The sampler alternates
   // between imputing class membership and drawing site-level parameters.  The
@@ -130,6 +132,8 @@ namespace BOOM {
     // having a prior category probability above a high threshold (e.g. .999)
     // for a single category.
     Matrix known_site_visit_counts_;
+
+    MoveAccounting accounting_;
   };
 
 }  // namespace BOOM
