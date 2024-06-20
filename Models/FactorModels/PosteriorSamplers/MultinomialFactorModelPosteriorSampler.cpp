@@ -20,6 +20,7 @@
 #include "distributions.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/math_utils.hpp"
+#include "cpputil/DefaultMap.hpp"
 #include <sstream>
 #include <ctime>
 
@@ -29,10 +30,10 @@ namespace BOOM {
   inline void increment_counts(const Ptr<Visitor> &visitor,
                                int category,
                                Matrix &counts,
-                               const MultinomialFactorModel &model) {
+                               const DefaultMap<std::string, Int> &site_index_map) {
     for (const auto &site_el : visitor->sites_visited()) {
       const Ptr<Site> &site(site_el.first);
-      ++counts(model.get_site_index(site->id()), category);
+      ++counts(site_index_map[site->id()], category);
     }
   }
 
@@ -109,7 +110,7 @@ namespace BOOM {
       visitor_imputers_.push_back(VisitorImputer(
           rng(), &visitor_prior_));
     }
-    
+
     // If the "known_visitors" optimization has been set, then only impute the
     // unknown visitors.  Otherwise impute all the visitors.
     size_t counter = 0;
@@ -158,13 +159,14 @@ namespace BOOM {
 
   void Sampler::fill_unknown_visitors() {
     if (unknown_visitors_.empty()) {
-      std::cout << "filling unknown_visitors_" << std::endl;
       known_site_visit_counts_ = Matrix(
           model_->number_of_sites(),
           model_->number_of_classes(),
           0.0);
 
-      std::cout << "Iterating through users...\n";
+      std::map<std::string, Int> raw_site_index_map = model_->site_index_map();
+      DefaultMap<std::string, Int> site_index_map(&raw_site_index_map,
+                                                  model_->default_site_name());
       for (const auto &visitor_el : model_->visitors()) {
         const Ptr<Visitor> &visitor(visitor_el.second);
         const Vector &prior(prior_class_probabilities(visitor->id()));
@@ -172,12 +174,13 @@ namespace BOOM {
         if (prior[category] < .999) {
           unknown_visitors_.insert(visitor);
         } else {
-          increment_counts(visitor, category, known_site_visit_counts_, *model_);
+          increment_counts(visitor,
+                           category,
+                           known_site_visit_counts_,
+                           site_index_map);
         }
       }
-      std::cout << "Done iterating through users.\n";
       if (visitor_imputers_.size() > 1) {
-        std::cout << "Resetting threads.\n";
         int num_threads = visitor_imputers_.size();
         set_num_threads(1);
         set_num_threads(num_threads);
@@ -192,7 +195,6 @@ namespace BOOM {
     int number_of_classes = model_->number_of_classes();
     Int number_of_sites = model_->number_of_sites();
 
-    std::cout << "building prior counts matrix." << std::endl;
     // Assemble the vectors of counts.  These are the number of visits by
     // distinct visitors to each site, in each category.
     //
@@ -200,44 +202,28 @@ namespace BOOM {
     //
     // Counts starts off with a Dirichlet prior in each category with 0.1 prior
     // observations per site for that category.
-    clock_t start_time = clock();
     Matrix counts(number_of_sites, number_of_classes, 0.1);
-
+    std::map<std::string, Int> raw_site_index_map = model_->site_index_map();
+    DefaultMap<std::string, Int> site_index_map(&raw_site_index_map,
+                                                model_->default_site_name());
     // Now add the observed data from the visitors.
     if (unknown_visitors_.empty()) {
-      std::cout << "Adding to counts by looping over all visitors." << std::endl;
-      
+
       for (const auto &visitor_el : model_->visitors()) {
         const Ptr<Visitor> &visitor(visitor_el.second);
         int category = visitor->imputed_class_membership();
-        increment_counts(visitor, category, counts, *model_);
+        increment_counts(visitor, category, counts, site_index_map);
       }
     } else {
-      std::cout << "Adding to counts by looping over "
-                << unknown_visitors_.size() << " unknown visitors." << std::endl;
       counts += known_site_visit_counts_;
-      clock_t addition_checkpoint = clock();
-      std::cout << "Adding the matrices took "
-                << double(addition_checkpoint - start_time) / CLOCKS_PER_SEC
-                << " seconds. " << std::endl;
-      
       for (const Ptr<Visitor> &visitor: unknown_visitors_) {
         increment_counts(visitor,
                          visitor->imputed_class_membership(),
                          counts,
-                         *model_);
+                         site_index_map);
       }
-      clock_t increment_checkpoint = clock();
-      std::cout << "Incrementing counts took "
-                << double(increment_checkpoint - addition_checkpoint) / CLOCKS_PER_SEC
-                << " seconds." << std::endl;
     }
-    clock_t counts_checkpoint = clock();
-    std::cout << "Building counts took "
-              << double(counts_checkpoint - start_time) / CLOCKS_PER_SEC
-              << " seconds." << std::endl;
-    
-    std::cout << "Computing probs." << std::endl;
+
     // Ready to draw the model parameters.  These are structured the same way as
     // the counts.
     Matrix probs(number_of_sites, number_of_classes);
@@ -245,19 +231,10 @@ namespace BOOM {
       probs.col(k) = rdirichlet_mt(rng(), counts.col(k));
     }
 
-    clock_t simulation_checkpoint = clock();
-    std::cout << "Simulating probs took "
-              << double(simulation_checkpoint - counts_checkpoint) / CLOCKS_PER_SEC
-              << " seconds." << std::endl;
-
     Int row_counter = 0;
     for (auto &el : model_->sites()) {
       el.second->set_probs(probs.row(row_counter++));
     }
-    clock_t assignment_checkpoint = clock();
-    std::cout << "Assigning probs to Site objects took "
-              << double(assignment_checkpoint - simulation_checkpoint) / CLOCKS_PER_SEC
-              << " seconds." << std::endl;
   }
 
   double Sampler::logpri() const {

@@ -101,8 +101,10 @@ namespace BOOM {
 
   }  // namespace FactorModels
 
-  MultinomialFactorModel::MultinomialFactorModel(int num_classes)
-      : num_classes_(num_classes)
+  MultinomialFactorModel::MultinomialFactorModel(int num_classes,
+                                                 const std::string &default_site_name)
+      : num_classes_(num_classes),
+        default_site_name_(default_site_name)
   {}
 
   MultinomialFactorModel::MultinomialFactorModel(const MultinomialFactorModel &rhs) {
@@ -112,6 +114,7 @@ namespace BOOM {
   MultinomialFactorModel & MultinomialFactorModel::operator=(
       const MultinomialFactorModel &rhs) {
     if (&rhs != this) {
+      default_site_name_ = rhs.default_site_name_;
       clear_data();
       for (const auto &visitor_it : rhs.visitors_) {
         const Ptr<Visitor> &visitor(visitor_it.second);

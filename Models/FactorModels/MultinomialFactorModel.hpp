@@ -146,13 +146,26 @@ namespace BOOM {
     using Site = FactorModels::MultinomialSite;
     using Visitor = FactorModels::MultinomialVisitor;
 
-    explicit MultinomialFactorModel(int num_classes);
+    // Args:
+    //   num_classes:  The number of latent categories a user can be in.
+    //   default_site_name: The name to use when an unfamilar site is
+    //     encountered.
+    explicit MultinomialFactorModel(
+        int num_classes,
+        const std::string &default_site_name = "Other");
     MultinomialFactorModel(const MultinomialFactorModel &rhs);
     MultinomialFactorModel(MultinomialFactorModel &&rhs) = default;
     MultinomialFactorModel &operator=(const MultinomialFactorModel &rhs);
     MultinomialFactorModel &operator=(MultinomialFactorModel &&rhs) = default;
 
     MultinomialFactorModel *clone() const override;
+
+    void set_default_site_name(const std::string &default_site_name) {
+      default_site_name_ = default_site_name;
+    }
+    const std::string &default_site_name() const {
+      return default_site_name_;
+    }
 
     // Make the model aware of a specific site, without necessarily requiring
     // visits to the site.
@@ -232,6 +245,8 @@ namespace BOOM {
     // Sites and visitors stored in order of their ID's.
     std::map<std::string, Ptr<Visitor>> visitors_;
     std::map<std::string, Ptr<Site>> sites_;
+
+    std::string default_site_name_;
   };
 }  // namespace BOOM
 

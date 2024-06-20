@@ -8,10 +8,10 @@ import json
 
 class MultinomialFactorModel(FactorModelBase):
 
-    def __init__(self, nlevels):
+    def __init__(self, nlevels, default_site_name: str = "Other"):
         super().__init__(nlevels)
-        self._model = boom.MultinomialFactorModel(int(nlevels))
-        self._default_site_name = "Other"
+        self._model = boom.MultinomialFactorModel(
+            int(nlevels), default_site_name)
         self._omit_data_when_serializing = False
         self._num_threads = 1
 
@@ -34,11 +34,11 @@ class MultinomialFactorModel(FactorModelBase):
         return False
 
     def set_default_site_name(self, default_site_name):
-        self._default_site_name = default_site_name
+        self._model.set_default_site_name(default_site_name)
 
     @property
     def default_site_name(self):
-        return self._default_site_name
+        return self._model.default_site_name;
 
     def site_draws(self, site_id):
         idx = np.searchsorted(self._site_ids, site_id)
@@ -117,7 +117,6 @@ class MultinomialFactorModel(FactorModelBase):
                     self._prior_class_membership_probabilites),
                 user_ids=user_ids.tolist(),
                 sites_visited=sites_visited.tolist(),
-                default_site_name=str(self.default_site_name),
                 site_draws=self._site_draws,
                 burn=burn)
 
@@ -209,7 +208,7 @@ class MultinomialFactorModel(FactorModelBase):
             "nlevels": self.nlevels,
             "site_ids": self._site_ids,
             "site_draws":  self._site_draws,
-            "default_site_name": self._default_site_name,
+            "default_site_name": self.default_site_name,
             "prior_class_probabilities":
             self._prior_class_membership_probabilites,
             "num_threads": self._num_threads
@@ -224,11 +223,13 @@ class MultinomialFactorModel(FactorModelBase):
         return payload
 
     def __setstate__(self, payload):
-        self._model = boom.MultinomialFactorModel(int(payload["nlevels"]))
+        self._model = boom.MultinomialFactorModel(
+            int(payload["nlevels"]),
+            str(payload["default_site_name"])
+        )
         self._omit_data_when_serializing = bool(payload["omit_data"])
         self._site_ids = payload["site_ids"]
         self._site_draws = np.array(payload["site_draws"])
-        self._default_site_name = payload["default_site_name"]
         self._prior_class_membership_probabilites = payload[
             "prior_class_probabilities"]
         self._model.add_sites(self._site_ids)
@@ -270,7 +271,7 @@ class MultinomialFactorModelJsonEncoder(json.JSONEncoder):
             "nlevels": int(obj.nlevels),
             "site_ids": obj._site_ids,
             "site_draws":  obj._site_draws.tolist(),
-            "default_site_name": obj._default_site_name,
+            "default_site_name": obj.default_site_name,
             "prior_class_probabilities":
             obj._prior_class_membership_probabilites.tolist(),
             "num_threads": int(obj._num_threads),
@@ -292,11 +293,13 @@ class MultinomialFactorModelJsonDecoder(json.JSONDecoder):
         return self.decode_from_dict(payload)
 
     def decode_from_dict(self, payload):
-        model = MultinomialFactorModel(int(payload["nlevels"]))
+        model = MultinomialFactorModel(
+            int(payload["nlevels"]),
+            str(payload["default_site_name"])
+        )
         model._omit_data_when_serializing = bool(payload["omit_data"])
         model._site_ids = payload["site_ids"]
         model._site_draws = np.array(payload["site_draws"])
-        model._default_site_name = payload["default_site_name"]
         model._prior_class_membership_probabilites = np.array(
             payload["prior_class_probabilities"])
         model._num_threads = int(payload.get("num_threads", 1))

@@ -39,7 +39,7 @@ namespace {
         std::cout,                                // std::ostream&
         py::module_::import("sys").attr("stdout") // Python output
     );
-    
+
     int num_threads = std::thread::hardware_concurrency() - 1;
     size_t num_elements = visitor.size();
     size_t chunk_size = num_elements / num_threads;
@@ -82,7 +82,7 @@ namespace {
       model.combine_data(*readers[i]);
     }
   }
-  
+
 }
 
 namespace BayesBoom {
@@ -170,7 +170,7 @@ namespace BayesBoom {
         Vector log_prior = log(prior);
         auto unchecked_site_draws = site_draws.unchecked<3>();
         Vector posterior(log_prior.size(), 0.0);
-        
+
         for (size_t iteration = burn; iteration < niter; ++iteration) {
           Vector tmp_log_posterior = log_prior;
           for (size_t site_num = 0; site_num < sites_visited.size(); ++site_num) {
@@ -448,12 +448,17 @@ namespace BayesBoom {
                BOOM::Ptr<MultinomialFactorModel>>(
                    boom, "MultinomialFactorModel", py::multiple_inheritance())
         .def(py::init(
-            [](int num_classes) {
-              return new MultinomialFactorModel(num_classes);
+            [](int num_classes,
+               const std::string &default_site_name) {
+              return new MultinomialFactorModel(
+                  num_classes, default_site_name);
             }),
              py::arg("num_classes"),
+             py::arg("default_site_name") = "Other",
              "Args:\n\n"
-             "  num_classes:  The number of classes in the factor model.\n")
+             "  num_classes:  The number of classes in the factor model.\n"
+             "  default_site_name:  The name to use when an unfamilar site "
+             "is encountered.\n")
         .def("add_sites",
              [](MultinomialFactorModel &model,
                 const std::vector<std::string> &site_names) {
@@ -473,6 +478,11 @@ namespace BayesBoom {
                 const std::vector<std::string> &site_id,
                 const std::vector<int> &num_visits,
                 long thread_threshold) {
+
+               py::scoped_ostream_redirect stream(
+                   std::cout,
+                   py::module_::import("sys").attr("stdout"));
+
                if (visitor_id.size() != site_id.size()
                    || visitor_id.size() != num_visits.size()) {
                  report_error("visitor_id, site_id, and num_visits must "
@@ -480,9 +490,13 @@ namespace BayesBoom {
                }
                if (std::thread::hardware_concurrency() > 2
                    && visitor_id.size() > thread_threshold) {
+                 std::cout << "Using threads to load data." << std::endl;
                  add_data_mt(model, visitor_id, site_id, num_visits);
                } else {
+                 std::cout << "Loading data the old fashioned way" << std::endl;
                  for (size_t i = 0; i < visitor_id.size(); ++i) {
+                   std::cout << "record " << i << " of " << visitor_id.size()
+                             << "." << std::endl;
                    model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
                  }
                }
@@ -508,6 +522,16 @@ namespace BayesBoom {
                return std::make_tuple(user_ids, site_ids, counts);
              },
              "Returns a tuple containing the user_ids, site_ids, and visit counts.")
+        .def_property_readonly(
+            "default_site_name",
+            [](MultinomialFactorModel &model){
+              return model.default_site_name();
+            })
+        .def("set_default_site_name",
+             [](MultinomialFactorModel &model,
+                const std::string &name) {
+               model.set_default_site_name(name);
+             })
         .def_property_readonly(
             "num_users",
             [](MultinomialFactorModel &model) {
@@ -672,14 +696,13 @@ namespace BayesBoom {
                 const Vector &default_prior,
                 const std::vector<std::string> &user_ids,
                 const std::vector<std::string> &sites_visited,
-                const std::string &default_site_name,
                 py::array_t<double> site_draws,
                 int burn) {
 
                if (user_ids.size() != sites_visited.size()) {
                  report_error("user_ids and sites_visited must be the same size.");
                }
-                 
+
                // Redirect std::cout to python.stdout so that error messages
                // will appear in the python shell or notebook.
                py::scoped_ostream_redirect stream(
@@ -690,8 +713,8 @@ namespace BayesBoom {
                  // The map from site ID's to site index numbers.
                  std::map<std::string, Int> raw_site_index_map = model.site_index_map();
                  DefaultMap<std::string, Int> site_index_map(
-                     &raw_site_index_map, default_site_name);
-               
+                     &raw_site_index_map, model.default_site_name());
+
                  // Compute the mapping from a user ID to the set of sites that
                  // were visited (site id's).
                  std::map<std::string, std::vector<std::string>> visitation;
@@ -741,7 +764,6 @@ namespace BayesBoom {
              py::arg("default_prior"),
              py::arg("user_ids"),
              py::arg("sites_visited"),
-             py::arg("default_site_name"),
              py::arg("site_draws"),
              py::arg("burn") = 0,
              "Args: \n\n"
@@ -756,10 +778,6 @@ namespace BayesBoom {
              "  sites_visited:  A list of distinct websites visited by a "
              "single user.  This argument and 'user_ids' should be thought "
              "of as a pair.\n"
-             "  default_site_name:  The name to use for a site appearing in "
-             "'sites_visited' that was not observed during model training.  "
-             "This is the 'All Other' category into which extraneous sites "
-             "are collapsed.\n"
              "  site_draws:  A 3-way numpy array of MCMC draws of "
              "site parameters.\n"
              "  burn:  The number of mcmc draws to discard as burn-in.\n")

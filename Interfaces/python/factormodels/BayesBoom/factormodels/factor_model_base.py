@@ -149,10 +149,13 @@ class FactorModelBase:
                                  count[cursor:end].astype(int))
             cursor += max_chunk_size
 
-        if cursor != nrows:
+        if cursor < nrows:
+            print("Done with chunks.  Adding final piece with "
+                  f"{nrows - cursor} rows.")
             self._model.add_data(user[cursor:nrows].astype(str),
                                  site[cursor:nrows].astype(str),
                                  count[cursor:nrows].astype(int))
+        print("Done adding data!")
 
     def site(self, site_id: str):
         if self.model:

@@ -28,7 +28,7 @@ namespace BOOM {
   // A wrapper for a const std::map that includes a default value.  When looking
   // up an element in the map, if the key is not found, the default key is used
   // instead.
-  template<class KEY, class VALUE> 
+  template<class KEY, class VALUE>
   class DefaultMap {
    public:
     using MapType = std::map<KEY, VALUE>;
@@ -46,7 +46,8 @@ namespace BOOM {
     {
       const auto it = base_map_->find(default_key_);
       if (it == base_map_->end()) {
-        report_error("Default key is not present in the base map.");
+        report_error("Error in DefaultMap constructor.  "
+                     "Default key is not present in the base map.");
       }
       default_value_ = it->second;
     }
@@ -58,7 +59,7 @@ namespace BOOM {
     const VALUE & operator[](const KEY &key) const {
       return this->at(key);
     }
-    
+
     // Element access, alternate form.  If the requested key is not present, the
     // value corresponding to 'default_key' is returned.  This differs from
     // base_map->at(), which would generate an exception in that case.
@@ -70,14 +71,14 @@ namespace BOOM {
         return it->second;
       }
     }
-    
+
    private:
     const std::map<KEY, VALUE> *base_map_;
 
     KEY default_key_;
     VALUE default_value_;
   };
-  
+
 }  // namespace BOOM
 
 
