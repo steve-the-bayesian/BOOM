@@ -29,6 +29,7 @@ namespace BOOM {
   class MultivariateDataPolicy
       : virtual public Model {
    public:
+    MultivariateDataPolicy();
 
     // Here Data must resolve to either a DataTable or a MixedMultivariateData.  If
     void add_data(const Ptr<Data> &data_dp) override;
@@ -42,8 +43,9 @@ namespace BOOM {
     const DataTable &data() const {return *data_;}
 
    private:
+    // Upon construction data_ points to an empty DataTable.
     Ptr<DataTable> data_;
-  }
+  };
 
 }
 
