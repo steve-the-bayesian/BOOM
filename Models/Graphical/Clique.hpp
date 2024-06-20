@@ -20,17 +20,17 @@
 */
 
 #include "Models/Graphical/Node.hpp"
-#include <set>
+#include "cpputil/SortedVector.hpp"
 
 namespace BOOM {
   namespace Graphical {
 
     // A clique is a collection of nodes that are all neighbors.  I.e. each node
     // is a neighbor of every other node in the clique.
-    class Clique {
+    class Clique : private RefCounted {
      public:
-      // Attempt to add a node to the Clique.  Return true iff the addition was
-      // successful
+      // Attempt to add a node, which may or may not belong, to the Clique.
+      // Return true iff the addition was successful.
       bool try_add(const Ptr<Node> &node);
 
       // Two cliques are equal if their elements_ are equal.
@@ -38,9 +38,27 @@ namespace BOOM {
         return elements_ == rhs.elements_;
       }
 
+      std::string print() const;
+
+      size_t size() const {
+        return elements_.size();
+      }
+
+      const SortedVector<Ptr<Node>> &elements() const {
+        return elements_;
+      }
+
      private:
-      std::set<Ptr<Node>> elements_;
+      friend void intrusive_ptr_add_ref(Clique *d) { d->up_count(); }
+      friend void intrusive_ptr_release(Clique *d) {
+        d->down_count();
+        if (d->ref_count() == 0) delete d;
+      }
+
+      SortedVector<Ptr<Node>> elements_;
     };
+
+    std::vector<Ptr<Clique>> find_cliques(const std::vector<Ptr<Node>> &nodes);
 
   } // namespace Graphical
 }  // namespace BOOM

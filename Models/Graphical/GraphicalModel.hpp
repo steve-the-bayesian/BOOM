@@ -44,9 +44,7 @@ namespace BOOM {
     void add_data(const Ptr<MixedMultivariateData> &data_point);
 
    private:
-
-    std::vector<Ptr<Node>> nodes_;
-    std::map<std::string, Ptr<Node>> node_names_;
+    std::vector<Ptr<DirectedNode>> nodes_;
   };
 
 }  // namespace BOOM
