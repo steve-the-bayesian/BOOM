@@ -109,6 +109,18 @@ cc_test(
 )
 
 cc_test(
+    name = "sorted_vector_test",
+    size = "small",
+    srcs = ["sorted_vector_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "string_split_test",
     size = "small",
     srcs = ["string_split_test.cc"],
