@@ -8,7 +8,7 @@ namespace {
 
   // Shufle the same vector many times, and check that the values in each vector
   // position are uniformly distributed.
-  TEST(SortedVectorTest, Union) {
+  TEST(SortedVectorTest, UnionIntersection) {
     GlobalRng::rng.seed(8675309);
 
     SortedVector<int> values{1, 2, 1, 1, 3};

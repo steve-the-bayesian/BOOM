@@ -25,16 +25,22 @@
 // insert operations) is a drop-in replacement for std::set.  His arguments are
 // given in https://lafstern.org/matt/col1.pdf
 
-// TODO: As of right now this is not a fully fledged STL container class, and it
-//       is missing some elements of both the set and vector classes.  The plan
-//       is to add those as they become relevant in actual working code that
-//       uses this class.
-
 #include <vector>
 #include <algorithm>
 #include <initializer_list>
 
 namespace BOOM {
+
+  // A replacement for std::set.  A SortedVector keeps unique copies of its
+  // elements stored in ascending order.  Insertion is costlier than with a
+  // std::set (for large numbers of elements), but lookups are just as fast and
+  // memory use is substantially less.  As a bonus you can get random access to
+  // elements through array-style indexing.
+  //
+  // TODO: As of right now this is not a fully fledged STL container class, and
+  //       it is missing some elements of both the set and vector classes.  The
+  //       plan is to add those as they become relevant in actual working code
+  //       that uses this class.
   template <class T, class COMPARE = std::less<T>>
   class SortedVector {
    public:

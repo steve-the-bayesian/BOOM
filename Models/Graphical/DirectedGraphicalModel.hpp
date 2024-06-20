@@ -1,5 +1,5 @@
-#ifndef BOOM_MODELS_GRAPHICAL_GRAPHICALMODEL_HPP_
-#define BOOM_MODELS_GRAPHICAL_GRAPHICALMODEL_HPP_
+#ifndef BOOM_MODELS_GRAPHICAL_DIRECTEDGRAPHICALMODEL_HPP_
+#define BOOM_MODELS_GRAPHICAL_DIRECTEDGRAPHICALMODEL_HPP_
 
 /*
   Copyright (C) 2005-2024 Steven L. Scott
@@ -26,18 +26,23 @@
 
 #include "stats/DataTable.hpp"  // home of MixedMultivariateData
 
-#include "Models/GraphicalModel/Node.hpp"
+#include "Models/Graphical/Node.hpp"
 
 namespace BOOM {
 
-  class GraphicalModel
+  class DirectedGraphicalModel
       : public CompositeParamPolicy,
         public IID_DataPolicy<MixedMultivariateData>,
         public PriorPolicy
   {
     using Graphical::Node;
+    using Graphical::DirectedNode;
 
    public:
+    DirectedGraphicalModel();
+
+    void add_node(const Ptr<DirectedNode> &node);
+
     double logp(const MixedMultivariateData &data_point) const;
 
     void add_data(const Ptr<DataTable> &data_table);
@@ -45,8 +50,11 @@ namespace BOOM {
 
    private:
     std::vector<Ptr<DirectedNode>> nodes_;
+
+    mutable bool junction_tree_current_
+    mutable std::vector<Ptr<Clique>> junction_tree_;
   };
 
 }  // namespace BOOM
 
-#endif  //  BOOM_MODELS_GRAPHICAL_GRAPHICALMODEL_HPP_
+#endif  //  BOOM_MODELS_GRAPHICAL_DIRECTEDGRAPHICALMODEL_HPP_
