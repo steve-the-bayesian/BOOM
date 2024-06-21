@@ -80,6 +80,11 @@ namespace BOOM {
         return neighbors_.count(node);
       }
 
+     protected:
+      void set_name(const std::string &name) const {
+        name_ = name;
+      }
+
      private:
       friend void intrusive_ptr_add_ref(Node *d) { d->up_count(); }
       friend void intrusive_ptr_release(Node *d) {
@@ -88,7 +93,7 @@ namespace BOOM {
       }
 
       int id_;
-      std::string name_;
+      mutable std::string name_;
 
       std::set<Ptr<Node>> neighbors_;
     };
@@ -141,6 +146,21 @@ namespace BOOM {
       std::vector<Ptr<DirectedNode>> parents_;
       std::vector<Ptr<DirectedNode>> children_;
 
+    };
+
+    class MoralNode : public Node {
+     public:
+      MoralNode(const Ptr<DirectedNode> &base_node)
+          : Node(base_node->id(), base_node->name()),
+            base_node_(base_node)
+      {}
+
+      const Ptr<DirectedNode> &base_node() const {
+        return base_node_;
+      }
+
+     private:
+      Ptr<DirectedNode> base_node_;
     };
 
   }

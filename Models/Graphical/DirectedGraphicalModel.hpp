@@ -20,23 +20,28 @@
 */
 
 #include "Models/ModelTypes.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/MultivariateDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 
 #include "stats/DataTable.hpp"  // home of MixedMultivariateData
 
 #include "Models/Graphical/Node.hpp"
+#include "Models/Graphical/Clique.hpp"
+
+#include "cpputil/SortedVector.hpp"
 
 namespace BOOM {
 
   class DirectedGraphicalModel
       : public CompositeParamPolicy,
-        public IID_DataPolicy<MixedMultivariateData>,
+        public MultivariateDataPolicy,
         public PriorPolicy
   {
-    using Graphical::Node;
-    using Graphical::DirectedNode;
+    using Node = ::BOOM::Graphical::Node;
+    using DirectedNode = ::BOOM::Graphical::DirectedNode;
+    using MoralNode = ::BOOM::Graphical::MoralNode;
+    using Clique = ::BOOM::Graphical::Clique;
 
    public:
     DirectedGraphicalModel();
@@ -45,13 +50,29 @@ namespace BOOM {
 
     double logp(const MixedMultivariateData &data_point) const;
 
-    void add_data(const Ptr<DataTable> &data_table);
-    void add_data(const Ptr<MixedMultivariateData> &data_point);
+    // Create a
+    std::vector<Ptr<MoralNode>> create_moral_graph(
+        const std::vector<Ptr<DirectedNode>> &nodes) const;
+
+    void accumulate_evidence(const Ptr<MixedMultivariateData> &data_point);
+    void distribute_evidence(const Ptr<MixedMultivariateData> &data_point);
 
    private:
-    std::vector<Ptr<DirectedNode>> nodes_;
 
-    mutable bool junction_tree_current_
+    void ensure_junction_tree() const;
+
+    // Compare two nodes by their id.
+    struct IdLess {
+      bool operator()(const Ptr<::BOOM::Graphical::Node> &n1,
+                      const Ptr<::BOOM::Graphical::Node> &n2) const {
+        return n1->id() < n2->id();
+      }
+    };
+
+    SortedVector<Ptr<DirectedNode>,
+                 IdLess> nodes_;
+
+    mutable bool junction_tree_current_;
     mutable std::vector<Ptr<Clique>> junction_tree_;
   };
 

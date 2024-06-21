@@ -47,6 +47,6 @@ namespace BOOM {
     Ptr<DataTable> data_;
   };
 
-}
+}  // namespace BOOM
 
 #endif  // BOOM_MODELS_POLICIES_MULTIVARIATE_DATA_POLICY_HPP_

@@ -27,8 +27,15 @@ namespace BOOM {
 
     // A clique is a collection of nodes that are all neighbors.  I.e. each node
     // is a neighbor of every other node in the clique.
-    class Clique : private RefCounted {
+    class Clique : public Node {
      public:
+
+      Clique(int id, const std::string &name = "")
+          : Node(id, name)
+      {}
+
+      const std::string &name() const override;
+
       // Attempt to add a node, which may or may not belong, to the Clique.
       // Return true iff the addition was successful.
       bool try_add(const Ptr<Node> &node);
@@ -49,12 +56,6 @@ namespace BOOM {
       }
 
      private:
-      friend void intrusive_ptr_add_ref(Clique *d) { d->up_count(); }
-      friend void intrusive_ptr_release(Clique *d) {
-        d->down_count();
-        if (d->ref_count() == 0) delete d;
-      }
-
       SortedVector<Ptr<Node>> elements_;
     };
 

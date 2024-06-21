@@ -19,8 +19,22 @@
 #include "Models/Graphical/Clique.hpp"
 #include "Models/Graphical/Node.hpp"
 
+#include <sstream>
+
 namespace BOOM {
   namespace Graphical {
+
+    const std::string &Clique::name() const {
+      std::ostringstream name_maker;
+      for (int i = 0; i < elements_.size(); ++i) {
+        name_maker << elements_[i]->name();
+        if (i + 1 < elements_.size()) {
+          name_maker << ":";
+        }
+      }
+      Node::set_name(name_maker.str());
+      return Node::name();
+    }
 
     bool Clique::try_add(const Ptr<Node> &node) {
       for (const auto &el : elements_) {
@@ -41,7 +55,7 @@ namespace BOOM {
         }
 
         if (membership_count == 0) {
-          NEW(Clique, clique)();
+          NEW(Clique, clique)(cliques_.size());
           clique->try_add(node);
           cliques_.push_back(clique);
           return true;
