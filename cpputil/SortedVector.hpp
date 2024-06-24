@@ -93,6 +93,22 @@ namespace BOOM {
       return find(t) != end();
     }
 
+    // Remove the element with value t.  Return the iterator to the element after
+    // t.
+    const_iterator remove(const T& t) {
+      const_iterator it = std::lower_bound(begin(), end(), t, cmp);
+      return erase(it);
+    }
+
+    // Erase the element at position 'it'.  Return the iterator to the element
+    // after 'it'.
+    const_iterator erase(const const_iterator &it) {
+      if (it != end()) {
+        elements_.erase(it);
+      }
+      return it;
+    }
+
     size_t size() const {
       return elements_.size();
     }
@@ -118,6 +134,16 @@ namespace BOOM {
         }
       }
       return ans;
+    }
+
+    // Return true iff *this and rhs have an empty intersection.
+    bool disjoint_from(const SortedVector &rhs) const {
+      for (const auto &el : rhs.elements_) {
+        if (this->contains(el)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     // This is called set_union instead of union because union is a C++ reserved

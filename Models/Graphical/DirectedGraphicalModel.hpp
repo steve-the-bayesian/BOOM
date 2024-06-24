@@ -61,6 +61,7 @@ namespace BOOM {
 
     void ensure_junction_tree() const;
 
+
     // Compare two nodes by their id.
     struct IdLess {
       bool operator()(const Ptr<::BOOM::Graphical::Node> &n1,
@@ -74,6 +75,8 @@ namespace BOOM {
 
     mutable bool junction_tree_current_;
     mutable std::vector<Ptr<Clique>> junction_tree_;
+
+    std::function<double(Ptr<MoralNode>)> triangulation_heuristic_;
   };
 
 }  // namespace BOOM

@@ -39,6 +39,10 @@ namespace BOOM {
       DATETIME = 3,
     };
 
+    class DirectedNode;
+    class MoralNode;
+    class Clique;
+
     //===========================================================================
     // A Node is an undirected node in a graph.  In the context of graphical
     // models, it may represent a variable (e.g. in a Markov random field) or a
@@ -62,6 +66,34 @@ namespace BOOM {
       // An optional human-interpretable string indicating the node's relevance.
       virtual const std::string & name() const {return name_;}
 
+      // A double dispatch method for promoting a base class node to a node of a
+      // specific type.  Faster than casting.  Each concrete node class will
+      // have a reflect method that returns 'this' if called from the same
+      // class, and a pointer to Node if not.
+      virtual Node *promote(const Ptr<Node> &rhs) = 0;
+      virtual const Node *promote_const(const Ptr<Node> &rhs) const = 0;
+
+      virtual DirectedNode *reflect_directed_node() {
+        return nullptr;
+      }
+      virtual const DirectedNode *reflect_const_directed_node() const {
+        return nullptr;
+      }
+
+      virtual MoralNode *reflect_moral_node() {
+        return nullptr;
+      }
+      virtual const MoralNode *reflect_const_moral_node() const {
+        return nullptr;
+      }
+
+      virtual Clique *reflect_clique() {
+        return nullptr;
+      }
+      virtual const Clique *reflect_const_clique() const {
+        return nullptr;
+      }
+
       //---------------------------------------------------------------------------
       // Parents, children, neighbors.
       //---------------------------------------------------------------------------
@@ -83,6 +115,10 @@ namespace BOOM {
      protected:
       void set_name(const std::string &name) const {
         name_ = name;
+      }
+
+      void set_id(int id) {
+        id_ = id;
       }
 
      private:
@@ -108,6 +144,20 @@ namespace BOOM {
       {}
 
       virtual NodeType node_type() const = 0;
+
+      DirectedNode * promote(const Ptr<Node> &rhs) override {
+        return rhs->reflect_directed_node();
+      }
+      const DirectedNode * promote_const(const Ptr<Node> &rhs) const override {
+        return rhs->reflect_const_directed_node();
+      }
+
+      DirectedNode * reflect_directed_node() override {
+        return this;
+      }
+      const DirectedNode * reflect_const_directed_node() const override {
+        return this;
+      }
 
       // Args:
       //   parent:  A parent of this this node.
@@ -152,15 +202,41 @@ namespace BOOM {
      public:
       MoralNode(const Ptr<DirectedNode> &base_node)
           : Node(base_node->id(), base_node->name()),
-            base_node_(base_node)
+            base_node_(base_node),
+            triangulation_number_(-1)
       {}
 
       const Ptr<DirectedNode> &base_node() const {
         return base_node_;
       }
 
+      MoralNode *promote(const Ptr<Node> &rhs) override {
+        return rhs->reflect_moral_node();
+      }
+      const MoralNode *promote_const(const Ptr<Node> &rhs) const override {
+        return rhs->reflect_const_moral_node();
+      }
+
+      MoralNode *reflect_moral_node() {
+        return this;
+      }
+      const MoralNode *reflect_const_moral_node() const {
+        return this;
+      }
+
+      // The 'triangulation_number' is a node ordering device that is part of an
+      // algorithm for triangulating the moral graph.  See Cowell et al. p 58.
+      int triangulation_number() const {
+        return triangulation_number_;
+      }
+
+      void set_triangulation_number(int number) {
+        triangulation_number_ = number;
+      }
+
      private:
       Ptr<DirectedNode> base_node_;
+      int triangulation_number_;
     };
 
   }

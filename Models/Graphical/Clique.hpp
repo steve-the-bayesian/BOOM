@@ -36,6 +36,20 @@ namespace BOOM {
 
       const std::string &name() const override;
 
+      Clique * promote(const Ptr<Node> &rhs) {
+        return rhs->reflect_clique();
+      }
+      const Clique * promote_const(const Ptr<Node> &rhs) const {
+        return rhs->reflect_const_clique();
+      }
+
+      Clique * reflect_clique() override {
+        return this;
+      }
+      const Clique * reflect_const_clique() const override {
+        return this;
+      }
+
       // Attempt to add a node, which may or may not belong, to the Clique.
       // Return true iff the addition was successful.
       bool try_add(const Ptr<Node> &node);
@@ -55,11 +69,23 @@ namespace BOOM {
         return elements_;
       }
 
+      bool shares_node_with(const Ptr<Clique> &other) const {
+        return elements_.disjoint_from(other->elements_);
+      }
+
      private:
       SortedVector<Ptr<Node>> elements_;
     };
 
     std::vector<Ptr<Clique>> find_cliques(const std::vector<Ptr<Node>> &nodes);
+
+    class CliqueTree {
+     public:
+      int y;
+
+     private:
+      std::vector<Ptr<Clique>> elements_;
+    };
 
   } // namespace Graphical
 }  // namespace BOOM

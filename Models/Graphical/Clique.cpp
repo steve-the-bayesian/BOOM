@@ -78,6 +78,18 @@ namespace BOOM {
         }
       }
 
+      void establish_links(std::vector<Ptr<Clique>> &cliques) const {
+        for (size_t i = 0; i < cliques.size(); ++i ){
+          Ptr<Clique> &first(cliques[i]);
+          for (size_t j = i + 1; j < cliques.size(); ++j) {
+            Ptr<Clique> &second(cliques[j]);
+            if (first->shares_node_with(second)) {
+              first->add_neighbor(second);
+            }
+          }
+        }
+      }
+
       const std::vector<Ptr<Clique>> &cliques() const {
         return cliques_;
       }

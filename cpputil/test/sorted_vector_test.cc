@@ -34,4 +34,27 @@ namespace {
     EXPECT_EQ(intersection[1], 3);
   }
 
+  TEST(SortedVectorTest, InsertAndErase) {
+    SortedVector<int> values;
+
+    values.insert(5);
+    values.insert(3);
+    values.insert(7);
+    values.insert(1);
+    values.insert(1);
+
+    EXPECT_EQ(values.size(), 4);
+    EXPECT_EQ(values[0], 1);
+    EXPECT_EQ(values[1], 3);
+    EXPECT_EQ(values[2], 5);
+    EXPECT_EQ(values[3], 7);
+
+    values.remove(3);
+    EXPECT_EQ(values.size(), 3);
+    auto it = values.remove(5);
+    EXPECT_EQ(*it, 7);
+    EXPECT_EQ(values[0], 1);
+    EXPECT_EQ(values[1], 7);
+  }
+
 }  // namespace
