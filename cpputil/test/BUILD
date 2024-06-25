@@ -142,3 +142,14 @@ cc_test(
         "@gtest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "timer_test",
+    size = "small",
+    srcs = ["timer_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:gtest_main",
+    ],
+)
