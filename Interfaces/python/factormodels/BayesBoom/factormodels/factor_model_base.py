@@ -129,13 +129,8 @@ class FactorModelBase:
                 f"The 'user' ({len(user)}) and 'site' ({len(count)}) arguments "
                 "must have the same length")
 
-        print("converting user to numpy")
         user = R.to_numpy(user).astype(str)
-
-        print("converting site to numpy")
         site = R.to_numpy(site).astype(str)
-
-        print("converting count to numpy")
         count = R.to_numpy(count).astype(int)
 
         print("Adding data to the boom model.")
@@ -208,11 +203,8 @@ class FactorModelBase:
           ping: Print a status update every 'ping' iterations.  If ping <= 0 or
             if ping is None then no status updates are printed.
         """
-        print("Allocating posterior sampler.")
         self._posterior_sampler = self._assign_sampler(self._model)
-        print("allocating space.")
         self._allocate_space(niter)
-        print("copying site ids.")
         self._site_ids = self._model.site_ids
         if ping == -8675309:
             ping = max(1, int(niter / 10))

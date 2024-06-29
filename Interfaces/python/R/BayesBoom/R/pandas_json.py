@@ -19,6 +19,9 @@ Utilities to serialize and deserialize Pandas data objects.
 # ===========================================================================
 
 class PdDataFrameJsonEncoder(json.JSONEncoder):
+    """
+    JSON encoder class for pandas DataFrame objects.
+    """
 
     def default(self, obj):
         columns = {}
@@ -38,6 +41,9 @@ class PdDataFrameJsonEncoder(json.JSONEncoder):
 
 
 class PdDataFrameJsonDecoder(json.JSONDecoder):
+    """
+    JSON decoder class for pandas DataFrame objects.
+    """
     def decode(self, json_string):
         payload = json.loads(json_string)
         return self.decode_from_dict(payload)
@@ -52,8 +58,8 @@ class PdDataFrameJsonDecoder(json.JSONDecoder):
 
         for vname in column_names:
             # If the column name is an integer, then ans.loc[] is needed to
-            # unambiguously refer to the right column.  The payload may or may
-            # not convert the integer to a string.
+            # unambiguously refer to the correct column.  The payload may or
+            # may not convert the integer to a string.
             try:
                 ans.loc[:, vname] = series_decoder.decode_from_dict(
                     payload["column_values"][vname])
@@ -76,9 +82,8 @@ class PdDataFrameJsonDecoder(json.JSONDecoder):
 
 
 # ===========================================================================
-# Series Frames
+# Series
 # ===========================================================================
-
 
 class PdSeriesJsonEncoder(json.JSONEncoder):
     """

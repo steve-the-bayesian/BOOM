@@ -164,14 +164,6 @@ namespace BOOM {
     try {
       const MultinomialFactorModel & rhs_model(dynamic_cast<const MultinomialFactorModel &>(rhs));
       combine_data_mt(rhs_model);
-      // for (const auto &visitor_el : rhs_model.visitors()) {
-      //   const Ptr<Visitor> &visitor(visitor_el.second);
-      //   for (const auto &site_el : visitor->sites_visited()) {
-      //     const Ptr<Site> &site(site_el.first);
-      //     int ntimes = site_el.second;
-      //     record_visit(visitor->id(), site->id(), ntimes);
-      //   }
-      // }
     } catch (const std::bad_cast &ex) {
       report_error("Could not convert model to MultinomialFactorModel");
     } catch (const std::exception &ex) {

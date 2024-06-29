@@ -180,20 +180,16 @@ class MultinomialFactorModel(FactorModelBase):
         self._site_draws[iteration, :, :] = self._model.site_params.to_numpy()
 
     def _assign_sampler(self, model):
-        print("Creating posterior sampler object.")
         posterior_sampler = boom.MultinomialFactorModelPosteriorSampler(
             model,
             R.to_boom_vector(self._prior_class_membership_probabilites))
 
         known_users = getattr(self, "_known_users", None)
         if known_users is not None and len(known_users) > 0:
-            print("python: handling 'known_users'.")
             num_known = len(known_users)
             probs = np.zeros((num_known, self.nlevels))
             x = np.arange(num_known)
             probs[x, known_users.values] = 1.0
-            print("python: setting prior class probabilities for "
-                  f"{len(known_users)} users.")
             posterior_sampler.set_prior_class_probabilities(
                 known_users.index,
                 R.to_boom_matrix(probs))
