@@ -37,12 +37,16 @@ namespace BOOM {
 
     void start() {
       start_time_ = clock_.now();
+      running_ = true;
     }
 
     void stop() {
-      stop_time_ = clock_.now();
-      std::chrono::duration<double> dt = stop_time_ - start_time_;
-      elapsed_time_ += dt.count();
+      if (running_) {
+        stop_time_ = clock_.now();
+        std::chrono::duration<double> dt = stop_time_ - start_time_;
+        elapsed_time_ += dt.count();
+        running_ = false;
+      }
     }
 
     void clear() {
@@ -58,6 +62,7 @@ namespace BOOM {
     std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
     std::chrono::time_point<std::chrono::high_resolution_clock> stop_time_;
     double elapsed_time_;
+    bool running_;
   };
 
   //===========================================================================
@@ -105,7 +110,7 @@ namespace BOOM {
   // A Timer that can be started at the beginning of a function or code block.
   // When the timer goes out of scope it records in 'recorder' the amount of
   // time since its creation.
-  class ScopedTimer : Timer {
+  class ScopedTimer : public Timer {
    public:
 
     // Args:
@@ -118,8 +123,10 @@ namespace BOOM {
     {}
 
     ~ScopedTimer() {
-      stop();
-      recorder_->record_elapsed_time(category_, time_in_seconds());
+      if (recorder_) {
+        stop();
+        recorder_->record_elapsed_time(category_, time_in_seconds());
+      }
     }
 
    private:
