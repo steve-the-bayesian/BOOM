@@ -117,7 +117,7 @@ class MultinomialFactorModel(FactorModelBase):
                     self._prior_class_membership_probabilites),
                 user_ids=user_ids.tolist(),
                 sites_visited=sites_visited.tolist(),
-                site_draws=self._site_draws,
+                log_site_draws=np.log(self._site_draws),
                 burn=burn)
 
         probs = R.to_pd_dataframe(tmp_probs)
@@ -162,7 +162,7 @@ class MultinomialFactorModel(FactorModelBase):
         ans = self._model.posterior_class_probabilities(
             self._posterior_sampler,
             user_id,
-            self._site_draws,
+            np.log(self._site_draws),
             int(burn)).to_numpy()
 
         return pd.DataFrame(ans, index=user_id)
