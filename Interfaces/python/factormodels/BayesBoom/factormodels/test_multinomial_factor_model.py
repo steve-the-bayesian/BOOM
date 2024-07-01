@@ -1,10 +1,16 @@
 import unittest
 # import matplotlib.pyplot as plt
 from BayesBoom.test_utils import random_strings
+import BayesBoom.R as R
 
 from BayesBoom.factormodels import (
-    MultinomialFactorModel
+    MultinomialFactorModel,
+    MultinomialFactorModelJsonEncoder,
+    MultinomialFactorModelJsonDecoder
 )
+
+import json
+import pickle
 
 # from BayesBoom.R import delete_if_present
 # import BayesBoom.R as R
@@ -22,9 +28,10 @@ def simulate_user_classes(num_users, probs):
     return pd.Series(user_values, index=user_labels)
 
 
-def simulate_site_params(num_sites, num_categories):
+def simulate_site_params(num_sites, num_categories, default_site_name="Other"):
     values = np.random.rand(num_sites, num_categories)
     labels = random_strings(num_sites, 20, ensure_unique=True)
+    labels[0] = default_site_name
     totals = np.sum(values, axis=0)
     values = values / totals
     return pd.DataFrame(values, index=labels)
@@ -148,6 +155,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
         known_users = self._user_classes.iloc[:num_known]
         niter = 1000
         model.set_known_user_demographics(known_users)
+        model.set_num_threads(15)
         model.run_mcmc(niter=niter)
         print("Done with model run!")
 
@@ -206,6 +214,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
         known_users = self._user_classes.iloc[:num_known]
         niter = 1000
         model.set_known_user_demographics(known_users)
+        model.set_nthreads(14)
         model.run_mcmc(niter=niter)
         user_ids = model.user_ids[-5:-1]
         probs = model.posterior_class_probabilities(user_ids)
@@ -228,8 +237,116 @@ class MultinomialFactorModelTest(unittest.TestCase):
         self.assertTrue(np.allclose(probs, probs2))
         print("Done with model run!")
 
+    def test_json(self):
+        model = self.build_model()
+        num_known = 800
+        known_users = self._user_classes.iloc[:num_known]
+        niter = 100
+        model.set_known_user_demographics(known_users)
+        model.run_mcmc(niter=niter)
 
-_debug_mode = False
+        json_string = json.dumps(model, cls=MultinomialFactorModelJsonEncoder)
+        other_model = json.loads(json_string,
+                                 cls=MultinomialFactorModelJsonDecoder)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+        # The deserialized model is functionally equivalent to the original
+        # model if they produce the same posterior distributions.
+        test_users = self._data["user"].unique()[:3]
+        test_data = self._data[self._data["user"].isin(test_users)]
+
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+        # Now do the same check with data omitted.
+        model.omit_data_when_serializing()
+        json_string = json.dumps(model, cls=MultinomialFactorModelJsonEncoder)
+        other_model = json.loads(json_string,
+                                 cls=MultinomialFactorModelJsonDecoder)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+        # Check that we can do posterior inference with data that was not
+        # part of the training set.
+        num_test_users = 100
+        test_user_names = random_strings(num_test_users, 20, ensure_unique=True)
+        test_user_classes = pd.Series(
+            np.random.choice(range(model.nlevels), 100),
+            index=test_user_names)
+        more_test_data = simulate_multinomial_factor_data(
+            test_user_classes, self._site_params)
+        post1 = model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+    def test_pickle(self):
+        model = self.build_model()
+        num_known = 800
+        known_users = self._user_classes.iloc[:num_known]
+        niter = 100
+        model.set_known_user_demographics(known_users)
+        model.run_mcmc(niter=niter)
+
+        fname = "multinomial_factor_model.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open(fname, "rb") as pkl:
+            other_model = pickle.load(pkl)
+        R.delete_if_present(fname)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+
+        # The deserialized model is functionally equivalent to the original
+        # model if they produce the same posterior distributions.
+        test_users = self._data["user"].unique()[:3]
+        test_data = self._data[self._data["user"].isin(test_users)]
+
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+        # Now run the same test code in "light mode" after omitting data.
+        model.omit_data_when_serializing()
+        fname = "multinomial_factor_model.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+        with open(fname, "rb") as pkl:
+            other_model = pickle.load(pkl)
+        R.delete_if_present(fname)
+        self.assertIsInstance(other_model, MultinomialFactorModel)
+
+        post1 = model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            test_data["user"], test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+        # Check that we can do posterior inference with data that was not
+        # part of the training set.
+        num_test_users = 100
+        test_user_names = random_strings(num_test_users, 20, ensure_unique=True)
+        test_user_classes = pd.Series(
+            np.random.choice(range(model.nlevels), 100),
+            index=test_user_names)
+        more_test_data = simulate_multinomial_factor_data(
+            test_user_classes, self._site_params)
+        post1 = model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        post2 = other_model.infer_posterior_distributions(
+            more_test_data["user"], more_test_data["site"])
+        self.assertTrue(np.allclose(post1, post2))
+
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
@@ -250,9 +367,8 @@ if _debug_mode:
         rig.setUp()
 
     rig.smoke_test()
-    rig.test_prior_class_probabilities()
-    rig.test_mcmc()
-    rig.test_predictions()
+    rig.test_json()
+    rig.test_pickle()
 
     print("Goodbye, cruel world!")
 

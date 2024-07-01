@@ -363,7 +363,8 @@ namespace BOOM {
     //   col_names: Can be an empty vector if no col_names are
     //     desired.  If non-empty, col_names.size() == m.ncol() must
     //     be true.
-    LabeledMatrix(const Matrix &m, const std::vector<std::string> &row_names,
+    LabeledMatrix(const Matrix &m,
+                  const std::vector<std::string> &row_names,
                   const std::vector<std::string> &col_names);
     const std::vector<std::string> &row_names() const { return row_names_; }
     const std::vector<std::string> &col_names() const { return col_names_; }

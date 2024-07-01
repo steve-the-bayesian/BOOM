@@ -31,6 +31,7 @@ namespace BOOM {
   namespace FactorModels {
     class MultinomialSite;
 
+    //==========================================================================
     class MultinomialVisitor : public VisitorBase {
      public:
       // Args:
@@ -69,13 +70,16 @@ namespace BOOM {
         sites_visited_.clear();
       }
 
+      // Absorb the data from rhs into *this.
+      void merge(const MultinomialVisitor &rhs);
+
      private:
       // The map is keyed by a raw pointer to the visited site.  The value is a
       // count of the number of times the site was visited by this Visitor.
       std::map<Ptr<MultinomialSite>, int, IdLess<MultinomialSite>> sites_visited_;
     };
 
-
+    //==========================================================================
     class MultinomialSite : public SiteBase {
      public:
 
@@ -107,6 +111,9 @@ namespace BOOM {
         observed_visitors_.clear();
       }
 
+      // Absorb the data from rhs into *this.
+      void merge(const MultinomialSite &rhs);
+
      private:
       // visit_probs_[k] is the probability that a user in class k, when
       // choosing a site to visit, would visit this site.  For a fixed value of
@@ -130,6 +137,7 @@ namespace BOOM {
     };
   }  // namespace FactorModels
 
+  //===========================================================================
   class MultinomialFactorModel
       : public ManyParamPolicy,
         public PriorPolicy
@@ -138,13 +146,30 @@ namespace BOOM {
     using Site = FactorModels::MultinomialSite;
     using Visitor = FactorModels::MultinomialVisitor;
 
-    explicit MultinomialFactorModel(int num_classes);
+    // Args:
+    //   num_classes:  The number of latent categories a user can be in.
+    //   default_site_name: The name to use when an unfamilar site is
+    //     encountered.
+    explicit MultinomialFactorModel(
+        int num_classes,
+        const std::string &default_site_name = "Other");
     MultinomialFactorModel(const MultinomialFactorModel &rhs);
     MultinomialFactorModel(MultinomialFactorModel &&rhs) = default;
     MultinomialFactorModel &operator=(const MultinomialFactorModel &rhs);
     MultinomialFactorModel &operator=(MultinomialFactorModel &&rhs) = default;
 
     MultinomialFactorModel *clone() const override;
+
+    void set_default_site_name(const std::string &default_site_name) {
+      default_site_name_ = default_site_name;
+    }
+    const std::string &default_site_name() const {
+      return default_site_name_;
+    }
+
+    // Make the model aware of a specific site, without necessarily requiring
+    // visits to the site.
+    void add_site(const Ptr<Site> &site);
 
     // Record one or more visits by a visitor to a single site.  If the model
     // already manages of visitor (or site) with the given id's then those
@@ -165,6 +190,7 @@ namespace BOOM {
 
     // Absorb the data from a second PoissonFactorModel into this model.
     void combine_data(const Model &other_model, bool just_suf = true) override;
+    void combine_data_mt(const MultinomialFactorModel &rhs);
 
     // The number of latent classes being modeled.
     int number_of_classes() const {return num_classes_;}
@@ -202,12 +228,25 @@ namespace BOOM {
     // Otherwise return nullptr.
     Ptr<Visitor> visitor(const std::string &id) const;
 
+    // All three arguments are output arguments.  On output they will all be the
+    // same size.
+    //
+    // Args:
+    //   On output:
+    //     count_output[i] is the number of times user user_ids_output[i]
+    //     visited site site_ids_output[i].
+    void extract_data(std::vector<std::string> &user_ids_output,
+                      std::vector<std::string> &site_ids_output,
+                      std::vector<int> &count_output) const;
+
    private:
     int num_classes_;
 
     // Sites and visitors stored in order of their ID's.
     std::map<std::string, Ptr<Visitor>> visitors_;
     std::map<std::string, Ptr<Site>> sites_;
+
+    std::string default_site_name_;
   };
 }  // namespace BOOM
 

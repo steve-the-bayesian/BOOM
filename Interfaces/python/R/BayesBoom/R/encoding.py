@@ -15,7 +15,7 @@ def register_encoding_json_encoder(statistical_encoder_name,
                                    json_encoder_class,
                                    json_decoder_class):
     """
-    Add a JSONEncoder/JSONDeocder pair to the registry.
+    Add a JSONEncoder/JSONDecoder pair to the registry.
     """
     global JSON_ENCODER_REGISTRY
     global JSON_DECODER_REGISTRY

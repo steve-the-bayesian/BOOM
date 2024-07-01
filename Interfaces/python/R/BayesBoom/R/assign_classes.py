@@ -1,9 +1,10 @@
 import BayesBoom.boom as boom
 from .boom_py_utils import to_boom_matrix, to_boom_vector
+import numpy as np
 
 
 def assign_classes(posterior_class_probabilities,
-                   global_target,
+                   global_target=None,
                    max_kl=1.0):
     """
     Assign class memberships to a collection of object, while maintaining an
@@ -15,8 +16,12 @@ def assign_classes(posterior_class_probabilities,
         object, and each column to a potential class value.
         marginal_posteriors[i, j] is the posterior probability that object i
         belongs to class j.
+
       global_target: A boom.Vector containing the discrete probability
-        distribution of class membership for the  population.
+        distribution of class membership for the population.  If None, then the
+        global target is taken as the (row-)mean of the
+        posterior_class_probabilities matrix.
+
       max_kl: The largest tolerable Kullback-Liebler divergence between the
         empirical distribution of the assigned values, and the global target
         distribution.
@@ -24,6 +29,9 @@ def assign_classes(posterior_class_probabilities,
     Returns:
       A list of integers indicating the class assignment for each object.
     """
+    if global_target is None:
+        global_target = np.mean(posterior_class_probabilities, axis=0)
+
     assigner = ClassAssigner()
     assigner.set_max_kl(max_kl)
     return assigner.assign(
