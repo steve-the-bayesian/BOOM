@@ -107,6 +107,8 @@ namespace BOOM {
   // the assigned value to the maximum value.  These two components of cost
   // should be on comparable scales.
   double ClassAssigner::cost_function(const std::vector<int> &assignment) const {
+    // Step 1: compute the averge log-likelihood ratio "distance" between the
+    //   assignment and the MAP assignment.
     double cost = 0;
     for (size_t i = 0; i < assignment.size(); ++i) {
       ConstVectorView probs(marginal_posteriors_.row(i));
@@ -117,9 +119,12 @@ namespace BOOM {
     }
     cost /= assignment.size();
 
+    // Step 2: Add in the KL divergence between the target distribution and the
+    //   empirical distribution of the assignment.  The KL divergence is
+    //   multiplied by a scale factor that can be used to trade off between
+    //   individual assignments and closeness to the target.
     FrequencyDistribution empirical_distribution(
         assignment, 0, marginal_posteriors_.ncol() - 1);
-
     cost += distribution_scale_factor_ * kl_divergence(
         global_target_,
         empirical_distribution.relative_frequencies());

@@ -361,10 +361,7 @@ namespace BOOM {
           ans = tmp;
         }
       }
-      std::sort(ans.begin(), ans.end());
-      auto it = std::unique(ans.begin(), ans.end());
-      ans.erase(it, ans.end());
-      return ans;
+      return make_unique_inplace(ans);
     }
 
     //----------------------------------------------------------------------
