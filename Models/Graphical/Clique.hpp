@@ -20,17 +20,38 @@
 */
 
 #include "Models/Graphical/Node.hpp"
-#include <set>
+#include "cpputil/SortedVector.hpp"
 
 namespace BOOM {
   namespace Graphical {
 
     // A clique is a collection of nodes that are all neighbors.  I.e. each node
     // is a neighbor of every other node in the clique.
-    class Clique {
+    class Clique : public Node {
      public:
-      // Attempt to add a node to the Clique.  Return true iff the addition was
-      // successful
+
+      Clique(int id, const std::string &name = "")
+          : Node(id, name)
+      {}
+
+      const std::string &name() const override;
+
+      Clique * promote(const Ptr<Node> &rhs) {
+        return rhs->reflect_clique();
+      }
+      const Clique * promote_const(const Ptr<Node> &rhs) const {
+        return rhs->reflect_const_clique();
+      }
+
+      Clique * reflect_clique() override {
+        return this;
+      }
+      const Clique * reflect_const_clique() const override {
+        return this;
+      }
+
+      // Attempt to add a node, which may or may not belong, to the Clique.
+      // Return true iff the addition was successful.
       bool try_add(const Ptr<Node> &node);
 
       // Two cliques are equal if their elements_ are equal.
@@ -38,8 +59,32 @@ namespace BOOM {
         return elements_ == rhs.elements_;
       }
 
+      std::string print() const;
+
+      size_t size() const {
+        return elements_.size();
+      }
+
+      const SortedVector<Ptr<Node>> &elements() const {
+        return elements_;
+      }
+
+      bool shares_node_with(const Ptr<Clique> &other) const {
+        return elements_.disjoint_from(other->elements_);
+      }
+
      private:
-      std::set<Ptr<Node>> elements_;
+      SortedVector<Ptr<Node>> elements_;
+    };
+
+    std::vector<Ptr<Clique>> find_cliques(const std::vector<Ptr<Node>> &nodes);
+
+    class CliqueTree {
+     public:
+      int y;
+
+     private:
+      std::vector<Ptr<Clique>> elements_;
     };
 
   } // namespace Graphical

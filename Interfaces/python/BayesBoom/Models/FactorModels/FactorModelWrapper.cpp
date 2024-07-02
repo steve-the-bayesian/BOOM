@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <pybind11/iostream.h>
 
 #include "Models/FactorModels/PoissonFactorModel.hpp"
 #include "Models/FactorModels/MultinomialFactorModel.hpp"
@@ -12,13 +13,77 @@
 #include "Models/MvnModel.hpp"
 
 #include "cpputil/Ptr.hpp"
+#include "cpputil/DefaultMap.hpp"
 #include "cpputil/report_error.hpp"
+#include "cpputil/ThreadTools.hpp"
 #include "uint.hpp"
 
 #include <sstream>
+#include <tuple>
+#include <thread>
 
 namespace py = pybind11;
 PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
+
+namespace {
+  using namespace BOOM;
+
+  // Prior to calling this function the caller must ensure that visitor, site,
+  // and num_visits all have the same number of elements.
+  void add_data_mt(MultinomialFactorModel &model,
+                   const std::vector<std::string> &visitor,
+                   const std::vector<std::string> &site,
+                   const std::vector<int> &num_visits) {
+
+    py::scoped_ostream_redirect stream(
+        std::cout,                                // std::ostream&
+        py::module_::import("sys").attr("stdout") // Python output
+    );
+
+    int num_threads = std::thread::hardware_concurrency() - 1;
+    size_t num_elements = visitor.size();
+    size_t chunk_size = num_elements / num_threads;
+
+    ThreadWorkerPool pool;
+    pool.add_threads(num_threads);
+    std::vector<std::future<void>> futures;
+
+    std::vector<Ptr<MultinomialFactorModel>> readers;
+    size_t cursor = 0;
+    // Launch the threads.
+    for (int i = 0; i < num_threads; ++i, cursor += chunk_size) {
+      NEW(MultinomialFactorModel, reader)(model.number_of_classes());
+      readers.push_back(reader);
+
+      auto task = [reader, cursor, chunk_size, num_elements,
+                   &visitor, &site, &num_visits]() {
+        size_t end = cursor + chunk_size;
+        for (size_t i = cursor;
+             i < std::min<size_t>(end, num_elements);
+             ++i) {
+          reader->record_visit(visitor[i], site[i], num_visits[i]);
+        }
+      };
+      futures.emplace_back(pool.submit(task));
+    }
+
+    // Mop up any extra data while the threads are running.
+    if (cursor < num_elements) {
+      for (; cursor < num_elements; ++cursor) {
+        model.record_visit(visitor[cursor],
+                           site[cursor],
+                           num_visits[cursor]);
+      }
+    }
+
+    // Join the threads and combine their work into the main model.
+    for (int i = 0; i < futures.size(); ++i) {
+      futures[i].get();
+      model.combine_data(*readers[i]);
+    }
+  }
+
+}
 
 namespace BayesBoom {
   using namespace BOOM;
@@ -66,7 +131,7 @@ namespace BayesBoom {
       }
       return ans;
     }
-    
+
     // Compute the posterior distribution of each user's class membership based
     // on the user's id.  This version of the function is for users who were NOT
     // part of the training data, so their ID's are NOT part of the model.
@@ -78,64 +143,59 @@ namespace BayesBoom {
     //     is the caller's responsibility to ensure there are no repeats in this
     //     list.
     //   site_index_map: A mapping between user-id's and their position numbers
-    //     in the Monte Carlo draws of model parameters (the 'site_draws'
+    //     in the Monte Carlo draws of model parameters (the 'log_site_draws'
     //     argument).
-    //   default_site_name: The site name to use when a site on the list of
-    //     visited sites does not appear in the 'site index map'.  This is the
-    //     "All Other" category into which unmodelled sites are collapsed.  This
-    //     name must appear in site_index_map.
-    //   site_draws: The numpy array of MCMC draws of site-level parameters.
-    //     Dimensions are [niter x site-index x latent category]
+    //   log_site_draws: The numpy array of MCMC draws of site-level parameters.
+    //     Dimensions are [niter x site-index x latent category].  These are the
+    //     logs of the conditional visitation probabilities for a site, given
+    //     class membership.
     //   burn:  The number of MCMC iterations to discard as burn-in.
     //
     // Returns:
     //   The posterior distribution of class membership for the requested user.
-    Vector compute_multinomial_posterior_class_probabilities(
+    Vector compute_multinomial_posterior_class_probabilities_without_model(
         const Vector &prior,
         const std::vector<std::string> &sites_visited,
-        const std::map<std::string, Int> &site_index_map,
-        const std::string &default_site_name,
-        const py::array_t<double> &site_draws,
+        const DefaultMap<std::string, Int> &site_index_map,
+        const py::array_t<double> &log_site_draws,
         int burn) {
-      size_t niter = site_draws.shape(0);
-      size_t nclass = site_draws.shape(2);
+      size_t niter = log_site_draws.shape(0);
+      size_t nclass = log_site_draws.shape(2);
       if (burn < 0) {
         burn = 0;
       }
       if (burn >= niter) {
         return prior;
       }
-      
-      Vector log_prior = log(prior);
-      auto unchecked_site_draws = site_draws.unchecked<3>();
-      auto it = site_index_map.find(default_site_name);
-      if (it == site_index_map.end()) {
-        report_error("default site name was not found in the site index map.");
-      }
-      Int default_site_index = it->second;
-      std::vector<Int> site_index;
-      for (const std::string &site_name : sites_visited) {
-        it = site_index_map.find(site_name);
-        if (it != site_index_map.end()) {
-          site_index.push_back(it->second);
-        } else {
-          site_index.push_back(default_site_index);
+      try {
+        Vector log_prior = log(prior);
+        auto unchecked_log_site_draws = log_site_draws.unchecked<3>();
+        Vector posterior(log_prior.size(), 0.0);
+        std::vector<Int> site_index_array;
+        for (size_t site_num = 0; site_num < sites_visited.size(); ++site_num) {
+          site_index_array.push_back(site_index_map[sites_visited[site_num]]);
         }
-      }
 
-      Vector posterior(log_prior.size(), 0.0);
-      for (size_t i = burn; i < niter; ++i) {
-        Vector tmp_log_posterior = log_prior;
-        for (size_t j = 0; j < sites_visited.size(); ++j) {
-          Int site_index = site_index_map.at(sites_visited[j]);
-          for (size_t k = 0; k < nclass; ++k) {
-            tmp_log_posterior[k] += unchecked_site_draws(
-                i, site_index, k);
+        for (size_t iteration = burn; iteration < niter; ++iteration) {
+          Vector tmp_log_posterior = log_prior;
+          for (size_t site_num = 0; site_num < sites_visited.size(); ++site_num) {
+            Int site_index = site_index_array[site_num];
+            for (size_t category = 0; category < nclass; ++category) {
+              tmp_log_posterior[category] += unchecked_log_site_draws(
+                  iteration, site_index, category);
+            }
           }
+          Vector tmp_posterior = tmp_log_posterior.normalize_logprob();
+          posterior += tmp_posterior;
         }
-        posterior += tmp_log_posterior.normalize_logprob();
+
+        return posterior / (niter - burn);
+      } catch(std::exception &e) {
+        std::cout << "Exception encountered in compute_multinomial_posterior_"
+            "class_probabilities_without_model.  "
+                  << e.what() << std::endl;
+        throw e;
       }
-      return posterior / (niter - burn);
     }
 
     // Compute the posterior distribution of each user's class membership based
@@ -146,7 +206,7 @@ namespace BayesBoom {
     //   model:  The model object in which to look up users.
     //   sampler:  The posterior sampler responsible for training the model.
     //   visitor_id:  The ID to look up.
-    //   site_draws: The numpy array of site parameters stored in the python
+    //   log_site_draws: The numpy array of site parameters stored in the python
     //     model object (as opposed to the BOOM model object, which only stores
     //     current parameters, not a full parameter history).
     //   burn:  The number of MCMC iterations to discard as burn-in.
@@ -157,7 +217,7 @@ namespace BayesBoom {
         MultinomialFactorModel &model,
         const MultinomialFactorModelPosteriorSampler &sampler,
         const std::string &visitor_id,
-        py::array_t<double> site_draws,
+        py::array_t<double> log_site_draws,
         int burn) {
       using Visitor = ::BOOM::FactorModels::MultinomialVisitor;
       using Site = ::BOOM::FactorModels::MultinomialSite;
@@ -167,16 +227,16 @@ namespace BayesBoom {
       if (!visitor || prior.max() > .999) {
         return prior;
       }
-               
-      size_t niter = site_draws.shape(0);
-      size_t nclass = site_draws.shape(2);
+
+      size_t niter = log_site_draws.shape(0);
+      size_t nclass = log_site_draws.shape(2);
       if (burn < 0) {
         burn = 0;
       }
       if (burn >= niter) {
         return prior;
       }
-               
+
       std::vector<Ptr<Site>> sites;
       std::map<std::string, size_t> site_index_map;
       for (const auto &it : visitor->sites_visited()) {
@@ -185,19 +245,19 @@ namespace BayesBoom {
         site_index_map[site->id()] = model.get_site_index(site->id());
       }
 
-      // The dimensions of site_draws are
+      // The dimensions of log_site_draws are
       // - niter
       // - site
-      // - class 
+      // - class
       Vector log_prior = log(prior);
-      auto unchecked_site_draws = site_draws.unchecked<3>();
+      auto unchecked_log_site_draws = log_site_draws.unchecked<3>();
       Vector posterior(log_prior.size(), 0.0);
       for (size_t i = burn; i < niter; ++i) {
-        Vector tmp_log_posterior = log(prior);
+        Vector tmp_log_posterior = log_prior;
         for (size_t j = 0; j < sites.size(); ++j) {
           long site_index = site_index_map[sites[j]->id()];
           for (size_t k = 0; k < nclass; ++k) {
-            tmp_log_posterior[k] += unchecked_site_draws(
+            tmp_log_posterior[k] += unchecked_log_site_draws(
                 i, site_index, k);
           }
         }
@@ -205,11 +265,11 @@ namespace BayesBoom {
       }
       return posterior / (niter - burn);
     }
-    
+
   }  // namespace
-  
+
+  //===========================================================================
   void FactorModel_def(py::module &boom) {
-    //===========================================================================
     py::class_<FactorModels::VisitorBase,
                BOOM::Ptr<FactorModels::VisitorBase>>(
                    boom, "FactorModelVisitorBase")
@@ -240,7 +300,7 @@ namespace BayesBoom {
             },
             "The number of distinct sites visited at least one time.\n")
         ;
-    
+
     //===========================================================================
     py::class_<FactorModels::PoissonVisitor,
                FactorModels::VisitorBase,
@@ -320,7 +380,7 @@ namespace BayesBoom {
             "The number of distinct visitors that have visited the site "
             "one or more times.")
         ;
-    
+
     //===========================================================================
     py::class_<FactorModels::PoissonSite,
                FactorModels::SiteBase,
@@ -393,34 +453,90 @@ namespace BayesBoom {
                BOOM::Ptr<MultinomialFactorModel>>(
                    boom, "MultinomialFactorModel", py::multiple_inheritance())
         .def(py::init(
-            [](int num_classes) {
-              return new MultinomialFactorModel(num_classes);
+            [](int num_classes,
+               const std::string &default_site_name) {
+              return new MultinomialFactorModel(
+                  num_classes, default_site_name);
             }),
              py::arg("num_classes"),
+             py::arg("default_site_name") = "Other",
              "Args:\n\n"
-             "  num_classes:  The number of classes in the factor model.\n")
+             "  num_classes:  The number of classes in the factor model.\n"
+             "  default_site_name:  The name to use when an unfamilar site "
+             "is encountered.\n")
+        .def("add_sites",
+             [](MultinomialFactorModel &model,
+                const std::vector<std::string> &site_names) {
+               for (const std::string &site_name : site_names) {
+                 using Site = ::BOOM::FactorModels::MultinomialSite;
+                 model.add_site(new Site(site_name, model.number_of_classes()));
+               }
+             },
+             py::arg("site_names"),
+             "Make the model aware of a group of sites, without requiring visits "
+             "to those sites.\n\n"
+             "Args:\n\n"
+             "  site_names:  A list of site names to add.")
         .def("add_data",
              [](MultinomialFactorModel &model,
                 const std::vector<std::string> &visitor_id,
                 const std::vector<std::string> &site_id,
-                const std::vector<int> &num_visits) {
+                const std::vector<int> &num_visits,
+                long thread_threshold) {
+
+               py::scoped_ostream_redirect stream(
+                   std::cout,
+                   py::module_::import("sys").attr("stdout"));
+
                if (visitor_id.size() != site_id.size()
                    || visitor_id.size() != num_visits.size()) {
                  report_error("visitor_id, site_id, and num_visits must "
                               "all have the same length.");
                }
-               for (size_t i = 0; i < visitor_id.size(); ++i) {
-                 model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
+               if (std::thread::hardware_concurrency() > 2
+                   && visitor_id.size() > thread_threshold) {
+                 std::cout << "Using threads to load data." << std::endl;
+                 add_data_mt(model, visitor_id, site_id, num_visits);
+               } else {
+                 std::cout << "Loading data the old fashioned way" << std::endl;
+                 for (size_t i = 0; i < visitor_id.size(); ++i) {
+                   std::cout << "record " << i << " of " << visitor_id.size()
+                             << "." << std::endl;
+                   model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
+                 }
                }
              },
              py::arg("visitor_id"),
              py::arg("site_id"),
              py::arg("num_visits"),
+             py::arg("thread_threshold") = static_cast<long>(1e+5),
              "Args:\n\n"
              "  visitor_id: A vector of integer ID's identifying the visitor.\n"
              "  site_id:  A vector of integer ID's identifying the site.\n"
              "  num_visits:  A vector of integers giving the number of times "
-             "each visitor visited the corresponding site.\n")
+             "each visitor visited the corresponding site.\n"
+             "  thread_threshold:  If more observations than this are present "
+             "the model object will use threading to read the data "
+             "concurrently.\n")
+        .def("extract_data",
+             [](MultinomialFactorModel &model) {
+               std::vector<std::string> user_ids;
+               std::vector<std::string> site_ids;
+               std::vector<int> counts;
+               model.extract_data(user_ids, site_ids, counts);
+               return std::make_tuple(user_ids, site_ids, counts);
+             },
+             "Returns a tuple containing the user_ids, site_ids, and visit counts.")
+        .def_property_readonly(
+            "default_site_name",
+            [](MultinomialFactorModel &model){
+              return model.default_site_name();
+            })
+        .def("set_default_site_name",
+             [](MultinomialFactorModel &model,
+                const std::string &name) {
+               model.set_default_site_name(name);
+             })
         .def_property_readonly(
             "num_users",
             [](MultinomialFactorModel &model) {
@@ -542,98 +658,127 @@ namespace BayesBoom {
              [](MultinomialFactorModel &model,
                 const MultinomialFactorModelPosteriorSampler &sampler,
                 const std::string &visitor_id,
-                py::array_t<double> site_draws,
+                py::array_t<double> log_site_draws,
                 int burn) {
                return compute_multinomial_posterior_class_probabilities(
-                   model, sampler, visitor_id, site_draws, burn);
+                   model, sampler, visitor_id, log_site_draws, burn);
              },
              py::arg("sampler"),
              py::arg("visitor_id"),
-             py::arg("site_draws"),
+             py::arg("log_site_draws"),
              py::arg("burn") = 0,
              "docs go here")
         .def("posterior_class_probabilities",
              [](MultinomialFactorModel &model,
                 MultinomialFactorModelPosteriorSampler &sampler,
                 const std::vector<std::string> &user_ids,
-                py::array_t<double> site_draws,
+                py::array_t<double> log_site_draws,
                 int burn) {
                size_t num_users = user_ids.size();
                Matrix ans(num_users, model.number_of_classes());
                for (size_t i = 0; i < num_users; ++i) {
                  ans.row(i) = compute_multinomial_posterior_class_probabilities(
-                     model, sampler, user_ids[i], site_draws, burn);
+                     model, sampler, user_ids[i], log_site_draws, burn);
                }
                return ans;
              },
              py::arg("sampler"),
              py::arg("user_ids"),
-             py::arg("site_draws"),
+             py::arg("log_site_draws"),
              py::arg("burn") = 0,
              "Args:\n\n"
              "  sampler:  The boom.MultinomialFactorModelPosteriorSampler "
              "object responsible for the model.\n"
              "  user_ids:  The (string) ID's for which posterior distributions "
              "are desired.\n"
-             "  site_draws:  A 3-way numpy array of MCMC draws of "
+             "  log_site_draws:  A 3-way numpy array of MCMC draws of "
              "site parameters.\n"
              "  burn:  The number of mcmc draws to discard as burn-in.\n")
         .def("infer_posterior_distributions",
              [](MultinomialFactorModel &model,
-                const std::vector<std::string> & priors_index, 
+                const std::vector<std::string> & priors_index,
                 const Matrix &priors,
                 const Vector &default_prior,
                 const std::vector<std::string> &user_ids,
                 const std::vector<std::string> &sites_visited,
-                const std::string &default_site_name,
-                py::array_t<double> site_draws,
+                py::array_t<double> log_site_draws,
                 int burn) {
-               
-               std::map<std::string, Int> site_index_map = model.site_index_map();
-               std::map<std::string, std::vector<std::string>> visitation;
+
                if (user_ids.size() != sites_visited.size()) {
                  report_error("user_ids and sites_visited must be the same size.");
                }
-               for (size_t i = 0; i < user_ids.size(); ++i) {
-                 visitation[user_ids[i]].push_back(sites_visited[i]);
-               }
 
-               std::map<std::string, size_t> id_map;
-               for (size_t i = 0; i < priors_index.size(); ++i) {
-                 id_map[priors_index[i]] = i;
-               }
-               
-               Int num_users = visitation.size();
-               Matrix ans(num_users, model.number_of_classes());
-               std::vector<std::string> ordered_unique_user_ids;
+               // Redirect std::cout to python.stdout so that error messages
+               // will appear in the python shell or notebook.
+               py::scoped_ostream_redirect stream(
+                   std::cout,                                // std::ostream&
+                   py::module_::import("sys").attr("stdout") // Python output
+                                                  );
+               try {
+                 // The map from site ID's to site index numbers.
+                 std::map<std::string, Int> raw_site_index_map = model.site_index_map();
+                 DefaultMap<std::string, Int> site_index_map(
+                     &raw_site_index_map, model.default_site_name());
 
-               size_t output_index = 0;
-               for (const auto &el : visitation) {
-                 std::string user_id = el.first;
-                 ordered_unique_user_ids.push_back(user_id);
-                 Vector posterior_distribution =
-                     compute_multinomial_posterior_class_probabilities(
-                         get_prior(user_id, priors, id_map, default_prior),
-                         unique_elements(el.second), 
-                         site_index_map,
-                         default_site_name,
-                         site_draws,
-                         burn);
-                 ans.row(output_index++) = posterior_distribution;
-               }
+                 // Compute the mapping from a user ID to the set of sites that
+                 // were visited (site id's).
+                 std::map<std::string, std::vector<std::string>> visitation;
+                 for (size_t i = 0; i < user_ids.size(); ++i) {
+                   visitation[user_ids[i]].push_back(sites_visited[i]);
+                 }
 
-               return LabeledMatrix(ans,
-                                    ordered_unique_user_ids,
-                                    std::vector<std::string>());
-               
+                 // Compute the mapping from a user-id name to the user's index.
+                 std::map<std::string, size_t> id_to_index_map;
+                 for (size_t i = 0; i < priors_index.size(); ++i) {
+                   id_to_index_map[priors_index[i]] = i;
+                 }
+
+                 Int num_users = visitation.size();
+                 Matrix ans(num_users, model.number_of_classes());
+                 std::vector<std::string> ordered_unique_user_ids;
+
+                 size_t output_index = 0;
+                 for (const auto &el : visitation) {
+                   if (PyErr_CheckSignals() != 0) {
+                     throw py::error_already_set();
+                     // report_error("Signal detected.  Aborting.");
+                   }
+
+                   std::string user_id = el.first;
+                   if (output_index % 1000 == 0) {
+                     std::cout << "i = " << output_index << " of " << num_users
+                               << std::endl;
+                   }
+                   ordered_unique_user_ids.push_back(user_id);
+                   Vector posterior_distribution =
+                       compute_multinomial_posterior_class_probabilities_without_model(
+                           get_prior(user_id, priors, id_to_index_map, default_prior),
+                           unique_elements(el.second),
+                           site_index_map,
+                           log_site_draws,
+                           burn);
+                   ans.row(output_index++) = posterior_distribution;
+                 }
+
+                 return LabeledMatrix(ans,
+                                      ordered_unique_user_ids,
+                                      std::vector<std::string>());
+               } catch (std::exception &e) {
+                 std::cout << "Exception in FactorModelWrapper::"
+                           << "infer_posterior_distributions.  \n"
+                           << e.what()
+                           << std::endl;
+                 return LabeledMatrix(Matrix(),
+                                      std::vector<std::string>(),
+                                      std::vector<std::string>());
+               }
              },
              py::arg("priors_index"),
              py::arg("priors"),
              py::arg("default_prior"),
              py::arg("user_ids"),
              py::arg("sites_visited"),
-             py::arg("default_site_name"),
-             py::arg("site_draws"),
+             py::arg("log_site_draws"),
              py::arg("burn") = 0,
              "Args: \n\n"
              "  priors_index:  A list of strings containing the user_id's "
@@ -647,39 +792,9 @@ namespace BayesBoom {
              "  sites_visited:  A list of distinct websites visited by a "
              "single user.  This argument and 'user_ids' should be thought "
              "of as a pair.\n"
-             "  default_site_name:  The name to use for a site appearing in "
-             "'sites_visited' that was not observed during model training.  "
-             "This is the 'All Other' category into which extraneous sites "
-             "are collapsed.\n"
-             "  site_draws:  A 3-way numpy array of MCMC draws of "
+             "  log_site_draws:  A 3-way numpy array of MCMC draws of "
              "site parameters.\n"
              "  burn:  The number of mcmc draws to discard as burn-in.\n")
-        .def("set_prior_class_probabilities",
-             [](MultinomialFactorModel &model,
-                const std::vector<std::string> &visitor_ids,
-                const Matrix &prior_probs) {
-               if (visitor_ids.size() != prior_probs.nrow()) {
-                 report_error("The number of rows in 'prior_probs' must match "
-                              "the length of 'visitor_ids'." );
-               }
-               if (prior_probs.ncol() != model.number_of_classes()) {
-                 report_error("The number of columns in prior_probs must equal "
-                              "the number of classes.");
-               }
-               for (size_t i = 0; i < visitor_ids.size(); ++i) {
-                 model.visitor(
-                     visitor_ids[i])->set_class_probabilities(
-                         prior_probs.row(i));
-               }
-             },
-             py::arg("visitor_ids"),
-             py::arg("prior_probs"),
-             "Args:\n\n"
-             "  visitor_ids:  A list of strings giving the ID's of the "
-             "visitors whose prior probabilities are to be set.\n"
-             "  prior_probs: A Matrix, with one row per visitor giving the "
-             "probability distribution of that visitor's latent class "
-             "membership.\n")
         .def("__repr__",
              [](MultinomialFactorModel &model) {
                std::ostringstream out;
@@ -689,7 +804,7 @@ namespace BayesBoom {
                return out.str();
              })
         ;
-    
+
     //===========================================================================
     py::class_<PoissonFactorModel,
                PriorPolicy,
@@ -902,6 +1017,14 @@ namespace BayesBoom {
              "user-specific prior has not been specified for that user.\n"
              "  seeding_rng:  The random number generator used to seed this "
              "sampler's RNG.\n")
+        .def("set_num_threads",
+             [](MultinomialFactorModelPosteriorSampler &sampler,
+                int num_threads) {
+               sampler.set_num_threads(num_threads);
+             },
+             py::arg("num_threads"),
+             "Args:\n\n"
+             "  num_threads:  The desired number of threads to use.\n")
         .def("prior_class_probabilities",
              [](MultinomialFactorModelPosteriorSampler &sampler,
                 const std::string &user_id) {
@@ -926,6 +1049,11 @@ namespace BayesBoom {
              [](MultinomialFactorModelPosteriorSampler &sampler,
                 std::vector<std::string> &user_ids,
                 const Matrix &probs) {
+
+               py::scoped_ostream_redirect stream(
+                   std::cout,                                // std::ostream&
+                   py::module_::import("sys").attr("stdout") // Python output
+                                                  );
                if (user_ids.size() != probs.nrow()) {
                  std::ostringstream err;
                  err << "The vector of user ids's must have size ("
@@ -1004,8 +1132,8 @@ namespace BayesBoom {
                sampler.impute_visitors();
              })
         ;
-        
-    
+
+
     //===========================================================================
     py::class_<PoissonFactorHierarchicalSampler,
                PoissonFactorPosteriorSamplerBase,
@@ -1091,7 +1219,7 @@ namespace BayesBoom {
             })
         ;
 
-    
+
     //===========================================================================
     py::class_<PoissonFactorModelIndependentGammaPosteriorSampler,
                PoissonFactorPosteriorSamplerBase,

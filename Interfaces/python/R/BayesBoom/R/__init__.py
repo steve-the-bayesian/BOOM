@@ -81,6 +81,15 @@ from .lm import LinearModel, lm, AnovaTable
 
 from .mcmc import suggest_burn, report_progress
 
+from .pandas_json import (
+    PdDataFrameJsonEncoder,
+    PdDataFrameJsonDecoder,
+    PdSeriesJsonEncoder,
+    PdSeriesJsonDecoder,
+    PdIndexJsonEncoder,
+    PdIndexJsonDecoder,
+)
+
 from .plots import (
     abline,
     AddSegments,

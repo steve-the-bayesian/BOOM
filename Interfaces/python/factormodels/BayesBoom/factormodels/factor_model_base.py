@@ -39,6 +39,8 @@ class FactorModelBase:
         self._prior_class_membership_probabilites = (
             np.full(nlevels, 1.0 / nlevels))
 
+        self._known_users = pd.Series()
+
     @property
     def model(self):
         if hasattr(self, "_model"):
@@ -108,7 +110,7 @@ class FactorModelBase:
             self._site_ids = self._model.site_ids
         return self._site_ids
 
-    def add_data(self, user, site, count):
+    def add_data(self, user, site, count, max_chunk_size: int = 1000000):
         """
         Args:
           user: a vector of strings giving the user ID.
@@ -127,9 +129,28 @@ class FactorModelBase:
                 f"The 'user' ({len(user)}) and 'site' ({len(count)}) arguments "
                 "must have the same length")
 
-        self._model.add_data(R.to_numpy(user).astype(str),
-                             R.to_numpy(site).astype(str),
-                             R.to_numpy(count).astype(int))
+        user = R.to_numpy(user).astype(str)
+        site = R.to_numpy(site).astype(str)
+        count = R.to_numpy(count).astype(int)
+
+        print("Adding data to the boom model.")
+        cursor = 0
+        nrows = len(user)
+        while cursor + max_chunk_size < nrows:
+            print("Adding data chunk starting at row ", cursor, ".")
+            end = cursor + max_chunk_size
+            self._model.add_data(user[cursor:end].astype(str),
+                                 site[cursor:end].astype(str),
+                                 count[cursor:end].astype(int))
+            cursor += max_chunk_size
+
+        if cursor < nrows:
+            print("Done with chunks.  Adding final piece with "
+                  f"{nrows - cursor} rows.")
+            self._model.add_data(user[cursor:nrows].astype(str),
+                                 site[cursor:nrows].astype(str),
+                                 count[cursor:nrows].astype(int))
+        print("Done adding data!")
 
     def site(self, site_id: str):
         if self.model:

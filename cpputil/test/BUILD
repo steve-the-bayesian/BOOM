@@ -25,6 +25,17 @@ cc_test(
 )
 
 cc_test(
+    name = "default_map_test",
+    size = "small",
+    srcs = ["default_map_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "find_test",
     size = "small",
     srcs = ["find_test.cc"],
@@ -109,6 +120,18 @@ cc_test(
 )
 
 cc_test(
+    name = "sorted_vector_test",
+    size = "small",
+    srcs = ["sorted_vector_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "string_split_test",
     size = "small",
     srcs = ["string_split_test.cc"],
@@ -128,6 +151,17 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "timer_test",
+    size = "small",
+    srcs = ["timer_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
         "@gtest//:gtest_main",
     ],
 )

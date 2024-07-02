@@ -125,14 +125,14 @@ namespace {
     NEW(VariableSelectionPrior, spike)(Vector(beta_dim, 1.0 / beta_dim));
     NEW(MultinomialLogitCompositeSpikeSlabSampler, sampler)(
         model.get(), slab, spike);
-    sampler->set_move_probabilities(.80, 0, .20, 0);
+    sampler->set_move_probabilities(.80, 0, .20);
     model->set_method(sampler);
 
     std::cout << "Finding MLE.\n";
     model->mle();
 
     // Create space to hold the MCMC draws.
-    int niter = 1000;
+    int niter = 600;
     std::vector<Matrix> beta_draws;
     for (int m = 0; m < model->Nchoices(); ++m) {
       beta_draws.push_back(Matrix(niter, Xsubject.ncol(), 0.0));

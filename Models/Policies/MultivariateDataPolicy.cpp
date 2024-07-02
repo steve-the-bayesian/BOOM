@@ -21,45 +21,49 @@
 
 namespace BOOM {
 
+  MultivariateDataPolicy::MultivariateDataPolicy()
+      : data_(new DataTable)
+  {}
+
   void MultivariateDataPolicy::add_data(const Ptr<Data> &data_point) {
-    if (Ptr<DataTable> dtable = data_point.dcast<DataTable>()) {
-      add_data(dtable);
-    } else if (Ptr<MixedMultivariateData> dpoint =
-               data_point.dcast<MixedMultivariateData>()) {
-      add_data(dpoint);
-    } else {
-      report_error("Data could not be cast to either DataTable "
-                   "or MixedMultivariateData.");
+    Ptr<MixedMultivariateData> row = data_point.dcast<MixedMultivariateData>();
+    if (!!row) {
+      add_data(row);
+      return;
     }
+
+    Ptr<DataTable> table = data_point.dcast<DataTable>();
+    if (!!table) {
+      add_data(table);
+      return;
+    }
+    report_error("data_point could not be cast to either "
+                 "MixedMultivariateData or DataTable.");
+  }
+
+  void MultivariateDataPolicy::add_data(const Ptr<MixedMultivariateData> &data_point) {
+    data_->append_row(*data_point);
   }
 
   void MultivariateDataPolicy::add_data(const Ptr<DataTable> &data_table) {
-    if (!!data_) {
-      data_->rbind(*data_table);
-    } else {
-      data_ = data_table;
-    }
-  }
-
-  void MultivariateDataPolicy::add_data(
-      const Ptr<MixedMultivariateData> &data_point) {
-    if (!!data_) {
-      data_->append_row(*data_point);
-    } else {
-      data_.reset(new DataTable);
-      data_->append_row(*data_point);
-    }
+    data_->rbind(*data_table);
   }
 
   void MultivariateDataPolicy::clear_data() {
-    data_ = nullptr;
+    data_.reset(new DataTable);
   }
 
-  void MultivariateDataPolicy::combine_data(const Model &other_model,
-                                            bool just_suf) {
-    const MultivariateDataPolicy &other(
-        dynamic_cast<const MultivariateDataPolicy &>(other_model));
-    add_data(other.data_);
+  void MultivariateDataPolicy::combine_data(const Model &other_model, bool) {
+    try {
+      const MultivariateDataPolicy &other_policy(
+          dynamic_cast<const MultivariateDataPolicy&>(other_model));
+      data_->rbind(*other_policy.data_);
+    } catch (const std::exception &e) {
+      std::ostringstream err;
+      err << "Could not convert other_model to MultivariateDataPolicy.\n"
+          << e.what();
+      report_error(err.str());
+    }
   }
 
 }  // namespace BOOM

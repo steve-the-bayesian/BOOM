@@ -174,6 +174,11 @@ namespace BOOM {
           include_zeros_(include_zeros)
     {}
 
+    // The dimension of the expanded predictor.
+    int xdim() const {
+      return (num_choices_ - 1 + include_zeros_) * subject_dim_ + choice_dim_;
+    }
+    
     // Return the position in the expanded predictor vector of the subject-level
     // coefficient.
     //

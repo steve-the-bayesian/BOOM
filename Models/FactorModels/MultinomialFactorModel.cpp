@@ -41,6 +41,19 @@ namespace BOOM {
       return ans;
     }
 
+    void Visitor::merge(const Visitor &rhs) {
+      for (const auto &sites_el : rhs.sites_visited_) {
+        int count = sites_el.second;
+        const Ptr<Site> &site(sites_el.first);
+        auto it = sites_visited_.find(site);
+        if (it == sites_visited_.end()) {
+          sites_visited_[site] = count;
+        } else {
+          it->second += count;
+        }
+      }
+    }
+
     Site::MultinomialSite(const std::string &id, int num_classes)
         : SiteBase(id),
           visit_probs_(new VectorParams(Vector(num_classes, .5)))
@@ -70,10 +83,28 @@ namespace BOOM {
       logprob_complement_ = log(1.0 - visit_probs_->value());
     }
 
+    void Site::merge(const Site &rhs) {
+      if (rhs.id() != id()) {
+        report_error("Attempt to merge sites with different ID's.");
+      }
+      for (const auto &visitor_el : rhs.observed_visitors_) {
+        int count = visitor_el.second;
+        const Ptr<Visitor> &visitor(visitor_el.first);
+        auto it = observed_visitors_.find(visitor);
+        if (it == observed_visitors_.end()) {
+          observed_visitors_[visitor] = count;
+        } else {
+          it->second += count;
+        }
+      }
+    }
+
   }  // namespace FactorModels
 
-  MultinomialFactorModel::MultinomialFactorModel(int num_classes)
-      : num_classes_(num_classes)
+  MultinomialFactorModel::MultinomialFactorModel(int num_classes,
+                                                 const std::string &default_site_name)
+      : num_classes_(num_classes),
+        default_site_name_(default_site_name)
   {}
 
   MultinomialFactorModel::MultinomialFactorModel(const MultinomialFactorModel &rhs) {
@@ -83,6 +114,7 @@ namespace BOOM {
   MultinomialFactorModel & MultinomialFactorModel::operator=(
       const MultinomialFactorModel &rhs) {
     if (&rhs != this) {
+      default_site_name_ = rhs.default_site_name_;
       clear_data();
       for (const auto &visitor_it : rhs.visitors_) {
         const Ptr<Visitor> &visitor(visitor_it.second);
@@ -113,8 +145,13 @@ namespace BOOM {
     return new MultinomialFactorModel(*this);
   }
 
+  void MultinomialFactorModel::add_site(const Ptr<Site> &site) {
+    sites_[site->id()] = site;
+  }
+
   void MultinomialFactorModel::add_data(const Ptr<Data> &data_point) {
-    Ptr<MultinomialFactorData> native_data_point = data_point.dcast<MultinomialFactorData>();
+    Ptr<MultinomialFactorData> native_data_point =
+        data_point.dcast<MultinomialFactorData>();
     if (!native_data_point) {
       report_error("Data point could not be caset to MultinomialFactorData.");
     }
@@ -126,14 +163,7 @@ namespace BOOM {
   void MultinomialFactorModel::combine_data(const Model &rhs, bool) {
     try {
       const MultinomialFactorModel & rhs_model(dynamic_cast<const MultinomialFactorModel &>(rhs));
-      for (const auto &visitor_it : rhs_model.visitors()) {
-        const Ptr<Visitor> &visitor(visitor_it.second);
-        for (const auto &site_it : visitor->sites_visited()) {
-          const Ptr<Site> &site(site_it.first);
-          int ntimes = site_it.second;
-          record_visit(visitor->id(), site->id(), ntimes);
-        }
-      }
+      combine_data_mt(rhs_model);
     } catch (const std::bad_cast &ex) {
       report_error("Could not convert model to MultinomialFactorModel");
     } catch (const std::exception &ex) {
@@ -141,9 +171,37 @@ namespace BOOM {
     }
   }
 
+  void MultinomialFactorModel::combine_data_mt(const MultinomialFactorModel &rhs) {
+    // Step 1 Merge each site from rhs into this->sites_.
+    for (const auto &rhs_site : rhs.sites_) {
+      const std::string &site_id(rhs_site.first);
+      const Ptr<Site> &site(rhs_site.second);
+      auto it = sites_.find(site_id);
+      if (it == sites_.end()) {
+        // If rhs has a site we don't we can just steal its pointer.
+        sites_[site_id] = site;
+      } else {
+        // If we both have a site then merge the visits.
+        sites_[site_id]->merge(*site);
+      }
+    }
+
+    // Step 2: Merge each visitor.
+    for (const auto &rhs_visitor : rhs.visitors_) {
+      const std::string &visitor_id(rhs_visitor.first);
+      const Ptr<Visitor> &visitor(rhs_visitor.second);
+      auto it = visitors_.find(visitor_id);
+      if (it == visitors_.end()) {
+        visitors_[visitor_id] = visitor;
+      } else {
+        it->second->merge(*visitor);
+      }
+    }
+  }
+
   void MultinomialFactorModel::clear_data() {
-    for (auto &site_it : sites_) {
-      site_it.second->clear();
+    for (auto &site_el : sites_) {
+      site_el.second->clear();
     }
     sites_.clear();
 
@@ -213,6 +271,27 @@ namespace BOOM {
       return nullptr;
     } else {
       return it->second;
+    }
+  }
+
+  void MultinomialFactorModel::extract_data(
+      std::vector<std::string> &user_ids_output,
+      std::vector<std::string> &site_ids_output,
+      std::vector<int> &count_output) const {
+    user_ids_output.clear();
+    site_ids_output.clear();
+    count_output.clear();
+
+    for (const auto &visitor_el : visitors_) {
+      const Ptr<Visitor> &visitor(visitor_el.second);
+      const std::string &visitor_id = visitor->id();
+      for (const auto &site_el : visitor->sites_visited()) {
+        const std::string &site_id(site_el.first->id());
+        int num_visits = site_el.second;
+        user_ids_output.push_back(visitor_id);
+        site_ids_output.push_back(site_id);
+        count_output.push_back(num_visits);
+      }
     }
   }
 

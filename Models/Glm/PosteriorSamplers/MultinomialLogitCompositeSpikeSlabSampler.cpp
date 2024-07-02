@@ -163,24 +163,24 @@ namespace BOOM {
     MoveType move(MoveType(rmulti_mt(rng(), move_probs_)));
     switch (move) {
       case DATA_AUGMENTATION_MOVE: {
-        std::cout << " DA move starting with " << model_->coef().nvars() << " variables.\n";
+        //        std::cout << " DA move starting with " << model_->coef().nvars() << " variables.\n";
         MoveTimer timer = accounting_.start_time("DA");
         MLVS::draw();
         accounting_.record_acceptance("DA");
       } break;
 
       case RWM_MOVE:
-        std::cout << " RWM move starting with " << model_->coef().nvars() << " variables.\n";
+        // std::cout << " RWM move starting with " << model_->coef().nvars() << " variables.\n";
         rwm_draw();
         break;
 
       case TIM_MOVE:
-        std::cout << " TIM move starting with " << model_->coef().nvars() << " variables.\n";
+        // std::cout << " TIM move starting with " << model_->coef().nvars() << " variables.\n";
         tim_draw();
         break;
 
       case SPIKE_SLAB_RWM_MOVE:
-        std::cout << " SS_RWM move move starting with " << model_->coef().nvars() << " variables.\n";
+        // std::cout << " SS_RWM move move starting with " << model_->coef().nvars() << " variables.\n";
         spike_slab_rwm_move();
         break;
 
@@ -290,8 +290,8 @@ namespace BOOM {
     double proposal_logprob;
     double reverse_logprob;
 
-    std::cout << "coefficients started with "
-              << model_->coef().nvars() << " included variables.\n";
+    // std::cout << "coefficients started with "
+    //           << model_->coef().nvars() << " included variables.\n";
 
     if (model_->coef().inc(index)) {
       // The coefficient is included.  Propose setting it to zero.
@@ -314,17 +314,17 @@ namespace BOOM {
       double logu = log(runif_mt(rng()));
       if (numerator - denominator < logu) {
         // success -- do nothing!
-        std::cout << "accepted flip in included position " << index
-                  << " for " << model_->coef().nvars()
-                  << " included variables.\n";
+        // std::cout << "accepted flip in included position " << index
+        //           << " for " << model_->coef().nvars()
+        //           << " included variables.\n";
       } else {
         // Reject proposal.  Flip the coefficient back to 'include' and set it
         // back to its original value.
         model_->coef().flip(index);
         model_->coef().set_coefficient(index, original_coefficient);
-        std::cout << "rejected flip in included position " << index
-                  << " for " << model_->coef().nvars()
-                  << " included variables.\n";
+        // std::cout << "rejected flip in included position " << index
+        //           << " for " << model_->coef().nvars()
+        //           << " included variables.\n";
       }
 
     } else {
@@ -348,15 +348,15 @@ namespace BOOM {
       double logu = log(runif_mt(rng()));
       if (numerator - denominator < logu) {
         // success -- do nothing!
-        std::cout << "accepted flip in excluded position " << index
-                  << " for " << model_->coef().nvars()
-                  << " included variables.\n";
+        // std::cout << "accepted flip in excluded position " << index
+        //           << " for " << model_->coef().nvars()
+        //           << " included variables.\n";
       } else {
         // Reject proposal.
         model_->coef().flip(index);
-        std::cout << "rejected flip in excluded position " << index
-                  << " for " << model_->coef().nvars()
-                  << " included variables.\n";
+        // std::cout << "rejected flip in excluded position " << index
+        //           << " for " << model_->coef().nvars()
+        //           << " included variables.\n";
       }
     }
   }
