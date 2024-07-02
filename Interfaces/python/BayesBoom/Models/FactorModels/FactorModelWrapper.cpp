@@ -132,9 +132,9 @@ namespace BayesBoom {
       return ans;
     }
 
-    // Compute the posterior distribution of each user's class membership based
-    // on the user's id.  This version of the function is for users who were NOT
-    // part of the training data, so their ID's are NOT part of the model.
+    // Compute the posterior distribution of a single user's class membership
+    // based on the collection of sites visited by the user.  This function is
+    // appropriate for users who were not part of the training data.
     //
     // Args:
     //   prior: The (potentially user-specific) prior distribution of class
