@@ -36,7 +36,7 @@ namespace BOOM {
       CATEGORICAL = 0,
       CONTINUOUS = 1,
       ID = 2,
-      DATE_TIME = 3,
+      DATETIME = 3,
     };
 
     class DirectedNode;
@@ -51,20 +51,6 @@ namespace BOOM {
     // This code assumes that all Node objects are held in a Ptr.
     class Node : private RefCounted {
      public:
-      // Args:
-      //   position: Each node is responsible for modeling a single column in a
-      //     data frame.  Position refers to the column number (or field number
-      //     in a MixedMultivariateData object), counting from 0.
-      //   name:  The name of the variable in the data table.
-      Node(int position, const std::string &name);
-      
-      const std::string &name() const {return name_;}
-      
-      virtual std::vector<Ptr<Node>> parents() = 0;
-      virtual std::vector<Ptr<Node>> children() = 0;
-      virtual std::vector<Ptr<Node>> neighbors() = 0;
-      virtual NodeType node_type() const = 0;
-
       // Args:
       //   id:  An index uniquely identifying the node in the graph.
       //   name:  A string, intended for human consumption.
