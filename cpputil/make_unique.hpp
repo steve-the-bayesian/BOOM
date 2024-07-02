@@ -25,6 +25,18 @@
 namespace BOOM {
 
   // Args:
+  //   input:  A vector of objects to be sorted and deduplicated.
+  // Returns:
+  //   The input is returned, after being sorted and deduplicated.
+  template <class T>
+  std::vector<T> & make_unique_inplace(std::vector<T> &input) {
+    std::sort(input.begin(), input.end());
+    auto it = std::unique(input.begin(), input.end());
+    input.erase(it, input.end());
+    return input;
+  }
+  
+  // Args:
   //   input: A vector of objects for which operators == and < are
   //     both defined.
   // Returns:
@@ -38,11 +50,9 @@ namespace BOOM {
   template <class T>
   std::vector<T> make_unique(const std::vector<T> &input) {
     std::vector<T> ans(input);
-    std::sort(ans.begin(), ans.end());
-    auto it = std::unique(ans.begin(), ans.end());
-    ans.erase(it, ans.end());
-    return ans;
+    return make_unique_inplace(ans);
   }
+
 
 }  // namespace BOOM
 
