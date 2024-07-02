@@ -1,7 +1,9 @@
 import unittest
 import BayesBoom.R as R
+import BayesBoom.test_utils as tu
 import numpy as np
 import scipy.stats as ss
+import pandas as pd
 
 
 class TestAssignClasses(unittest.TestCase):
@@ -45,12 +47,13 @@ class TestAssignClasses(unittest.TestCase):
         classes = R.assign_classes(
             self._posterior,
             self._class_probs)
-        self.assertIsInstance(classes, list)
+        self.assertIsInstance(classes, pd.Series)
 
         assigner = R.ClassAssigner()
         classes2 = assigner.assign(self._posterior,
                                    self._class_probs)
         self.assertLess(assigner.kl, .10)
+        self.assertIsInstance(classes2, pd.Series)
 
         freq1 = R.table(classes)
         freq1 = freq1 / np.sum(freq1)
@@ -78,6 +81,21 @@ class TestAssignClasses(unittest.TestCase):
         num_mistakes2 = np.sum(classes2 != truth)
         self.assertLess(num_mistakes1, 10)
         self.assertLess(num_mistakes2, 10)
+
+    def test_index(self):
+        self.simulate_data(sample_size=100,
+                           class_probs=np.array([.3, .5, .2]),
+                           binomial_n=100,
+                           binomial_probs=np.array([.2, .5, .8]))
+        self._posterior = pd.DataFrame(self._posterior,
+                                       index=tu.random_strings(
+                                           self._posterior.shape[0],
+                                           10,
+                                           ensure_unique=True))
+        classes = R.assign_classes(self._posterior)
+        self.assertIsInstance(classes, pd.Series)
+        self.assertEqual(classes.index[0], self._posterior.index[0])
+        self.assertEqual(classes.index[12], self._posterior.index[12])
 
 
 _debug_mode = False

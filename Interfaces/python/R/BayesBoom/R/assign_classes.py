@@ -1,6 +1,7 @@
 import BayesBoom.boom as boom
 from .boom_py_utils import to_boom_matrix, to_boom_vector
 import numpy as np
+import pandas as pd
 
 
 def assign_classes(posterior_class_probabilities,
@@ -12,16 +13,14 @@ def assign_classes(posterior_class_probabilities,
     distribution.
 
     Args:
-      marginal_posteriors: A boom.Matrix, with each row corresponding to an
-        object, and each column to a potential class value.
-        marginal_posteriors[i, j] is the posterior probability that object i
-        belongs to class j.
-
-      global_target: A boom.Vector containing the discrete probability
+      posterior_class_probabilities: A Matrix, numpy array, or DataFrame, with
+        each row corresponding to an object, and each column to a potential
+        class value.  posterior_class_probabilities[i, j] is the posterior
+        probability that object i belongs to class j.
+      global_target: A vector containing the discrete probability
         distribution of class membership for the population.  If None, then the
         global target is taken as the (row-)mean of the
         posterior_class_probabilities matrix.
-
       max_kl: The largest tolerable Kullback-Liebler divergence between the
         empirical distribution of the assigned values, and the global target
         distribution.
@@ -34,10 +33,7 @@ def assign_classes(posterior_class_probabilities,
 
     assigner = ClassAssigner()
     assigner.set_max_kl(max_kl)
-    return assigner.assign(
-        to_boom_matrix(posterior_class_probabilities),
-        to_boom_vector(global_target),
-        boom.GlobalRng.rng)
+    return assigner.assign(posterior_class_probabilities, global_target)
 
 
 class ClassAssigner:
@@ -74,7 +70,8 @@ class ClassAssigner:
         """
         self._assigner.set_max_iterations(int(niter))
 
-    def assign(self, marginal_posteriors,
+    def assign(self,
+               marginal_posteriors,
                global_target,
                rng=boom.GlobalRng.rng):
         """
@@ -83,20 +80,26 @@ class ClassAssigner:
         distribution.
 
         Args:
-          marginal_posteriors: A boom.Matrix, with each row corresponding to an
-            object, and each column to a potential class value.
-            marginal_posteriors[i, j] is the posterior probability that object i
-            belongs to class j.
+          marginal_posteriors: A matrix, numpy array, or DataFrame with each row
+            corresponding to an object, and each column to a potential class
+            value. marginal_posteriors[i, j] is the posterior probability that
+            object i belongs to class j.
           global_target: A boom.Vector containing the discrete probability
             distribution of class membership for the  population.
+          rng:  A boom.RNG used to drive the simulated annealing algorithm.
 
         Returns:
-          A list of integers indicating the class assignment for each object.
+          A pd.Series of integers indicating the class assignment for each
+          object.
         """
-        return self._assigner.assign(
+        return_index = getattr(marginal_posteriors, "index", None)
+
+        ans = self._assigner.assign(
             to_boom_matrix(marginal_posteriors),
             to_boom_vector(global_target),
             rng=rng)
+
+        return pd.Series(ans, index=return_index, dtype="int")
 
     @property
     def kl(self):
