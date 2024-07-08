@@ -59,10 +59,16 @@ namespace BOOM {
 
    private:
 
+    // If the junction tree has not yet been built, or if something has been
+    // done to invalidate it, rebuild the tree.
+    //
+    // Effects:
+    //   junction_tree_ is rebuilt if needed.
+    //   junction_tree_current_ is set to true.
     void ensure_junction_tree() const;
 
-
-    // Compare two nodes by their id.
+    // A class to represent the desired node ordering, which is to compare two
+    // nodes by their id.
     struct IdLess {
       bool operator()(const Ptr<::BOOM::Graphical::Node> &n1,
                       const Ptr<::BOOM::Graphical::Node> &n2) const {
@@ -70,12 +76,13 @@ namespace BOOM {
       }
     };
 
-    SortedVector<Ptr<DirectedNode>,
-                 IdLess> nodes_;
+    SortedVector<Ptr<DirectedNode>, IdLess> nodes_;
 
     mutable bool junction_tree_current_;
     mutable std::vector<Ptr<Clique>> junction_tree_;
 
+    // When building a junction tree, the moral graph needs to be triangulated,
+    // which means nodes need to be added
     std::function<double(Ptr<MoralNode>)> triangulation_heuristic_;
   };
 

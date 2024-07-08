@@ -22,6 +22,8 @@
 #include "cpputil/Ptr.hpp"
 #include "cpputil/RefCounted.hpp"
 
+#include "stats/DataTable.hpp"  // contains DataTable and MixedMultivariateData.
+
 #include <vector>
 #include <set>
 #include <string>

@@ -88,6 +88,16 @@ namespace BOOM {
     return ans;
   }
 
+  // Args:
+  //   elimination_sets:  A collection of sets of MoralNodes produced by the triangulation algorithm.
+  //
+  // Effects:
+  //   The elimination sets are combined into Cliques and stored in the Junction_tree
+  std::vector<Ptr<Clique>> make_elimination_tree(
+      std::vector<std::set<Ptr<MoralNode>>> &elimination_sets) {
+
+  }
+
   //===========================================================================
   // Choose one node from nodes to optimize some function to be named later.
   // Return the chosen node, and remove it from 'nodes'.
@@ -155,8 +165,14 @@ namespace BOOM {
     make_elimination_tree(elimination_sets);
   }
 
-  void make_elimination_tree(std::vector<std::set<Ptr<MoralNode>>>)
 
+  //===========================================================================
+  // If the junction tree has not yet been built, or if something has been
+  // done to invalidate it, rebuild the tree.
+  //
+  // Effects:
+  //   junction_tree_ is rebuilt if needed.
+  //   junction_tree_current_ is set to true.
   void DirectedGraphicalModel::ensure_junction_tree() const {
     if (junction_tree_current_) {
       return;
@@ -168,7 +184,7 @@ namespace BOOM {
     triangulate_moral_graph(moral_nodes, triangulation_heuristic_);
 
     junction_tree_ = find_cliques(std::vector<Ptr<Node>>(
-        moral_nodes.begin(), moral_nodes.end()));
+        moral_nodes.begin(), moral_nodes.end()));a
 
     // Arrange cliques into a tree.
 
@@ -176,4 +192,4 @@ namespace BOOM {
 
   }
 
-}
+}  // namespace BOOM
