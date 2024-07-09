@@ -6,7 +6,8 @@ import pandas as pd
 
 def assign_classes(posterior_class_probabilities,
                    global_target=None,
-                   max_kl=1.0):
+                   max_kl=1.0,
+                   append_prob: bool = False):
     """
     Assign class memberships to a collection of object, while maintaining an
     empirical distribution of assigned classes close to a global target
@@ -24,16 +25,24 @@ def assign_classes(posterior_class_probabilities,
       max_kl: The largest tolerable Kullback-Liebler divergence between the
         empirical distribution of the assigned values, and the global target
         distribution.
+      append_prob: If True then append a column to the output giving the
+        posterior probability of the assigned class.
 
     Returns:
-      A list of integers indicating the class assignment for each object.
+      If append_prob is True then the return value is a pd.Series of integers
+      indicating the class assignment for each object.  If append_prob is True
+      then the class assignments are the first column in a two column data
+      frame.  The second column is the posterior probability of the class
+      assignement (taken from posterior_class_probabilities).
     """
     if global_target is None:
         global_target = np.mean(posterior_class_probabilities, axis=0)
 
     assigner = ClassAssigner()
     assigner.set_max_kl(max_kl)
-    return assigner.assign(posterior_class_probabilities, global_target)
+    return assigner.assign(posterior_class_probabilities,
+                           global_target=global_target,
+                           append_prob=append_prob)
 
 
 class ClassAssigner:
@@ -73,6 +82,7 @@ class ClassAssigner:
     def assign(self,
                marginal_posteriors,
                global_target,
+               append_prob: bool = False,
                rng=boom.GlobalRng.rng):
         """
         Assign class memberships to a collection of object, while maintaining an
@@ -86,11 +96,17 @@ class ClassAssigner:
             object i belongs to class j.
           global_target: A boom.Vector containing the discrete probability
             distribution of class membership for the  population.
+          append_prob: If True then append a column to the output giving the
+            posterior probability of the assigned class.
           rng:  A boom.RNG used to drive the simulated annealing algorithm.
 
         Returns:
-          A pd.Series of integers indicating the class assignment for each
-          object.
+           If append_prob is True then the return value is a pd.Series of
+           integers indicating the class assignment for each object.  If
+           append_prob is True then the class assignments are the first column
+           in a two column data frame.  The second column is the posterior
+           probability of the class assignement (taken from
+           posterior_class_probabilities).
         """
         return_index = getattr(marginal_posteriors, "index", None)
 
@@ -98,8 +114,17 @@ class ClassAssigner:
             to_boom_matrix(marginal_posteriors),
             to_boom_vector(global_target),
             rng=rng)
-
-        return pd.Series(ans, index=return_index, dtype="int")
+        if append_prob:
+            post = np.array(marginal_posteriors)
+            nobs = post.shape[0]
+            prob = post[range(nobs), ans]
+            ans = pd.DataFrame({
+                "class": ans,
+                "prob": prob,
+            })
+        else:
+            ans = pd.Series(ans, index=return_index, dtype="int")
+        return ans
 
     @property
     def kl(self):

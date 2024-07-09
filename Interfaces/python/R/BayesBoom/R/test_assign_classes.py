@@ -63,6 +63,13 @@ class TestAssignClasses(unittest.TestCase):
         kl = R.kl_divergence(freq1, freq2)
         self.assertLess(kl, .1)
 
+        classes_and_probs = R.assign_classes(
+            self._posterior,
+            self._class_probs,
+            append_prob=True)
+        self.assertIsInstance(classes_and_probs, pd.DataFrame)
+        print(classes_and_probs)
+
     def test_assignment_strong_case(self):
         self.simulate_data(sample_size=1000,
                            class_probs=np.array([.3, .4, .3]),
