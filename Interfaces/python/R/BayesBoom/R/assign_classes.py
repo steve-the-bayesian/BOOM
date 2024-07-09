@@ -118,10 +118,13 @@ class ClassAssigner:
             post = np.array(marginal_posteriors)
             nobs = post.shape[0]
             prob = post[range(nobs), ans]
-            ans = pd.DataFrame({
-                "class": ans,
-                "prob": prob,
-            })
+            ans = pd.DataFrame(
+                {
+                    "class": ans,
+                    "prob": prob,
+                },
+                index=return_index
+            )
         else:
             ans = pd.Series(ans, index=return_index, dtype="int")
         return ans

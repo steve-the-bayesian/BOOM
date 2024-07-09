@@ -104,6 +104,11 @@ class TestAssignClasses(unittest.TestCase):
         self.assertEqual(classes.index[0], self._posterior.index[0])
         self.assertEqual(classes.index[12], self._posterior.index[12])
 
+        classes_and_probs = R.assign_classes(self._posterior, append_prob=True)
+        self.assertIsInstance(classes_and_probs, pd.DataFrame)
+        self.assertEqual(classes_and_probs.index[0], self._posterior.index[0])
+        self.assertEqual(classes_and_probs.index[12], self._posterior.index[12])
+
 
 _debug_mode = False
 
