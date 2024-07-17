@@ -57,4 +57,23 @@ namespace {
     EXPECT_EQ(values[1], 7);
   }
 
+  TEST(SortedVectorTest, TestIsSubset) {
+    SortedVector<int> values;
+    values.insert(2);
+    values.insert(3);
+    values.insert(4);
+
+    SortedVector<int> superset;
+    superset.insert(1);
+    superset.insert(2);
+    superset.insert(3);
+    superset.insert(4);
+    superset.insert(5);
+
+    EXPECT_TRUE(values.is_subset(superset));
+
+    values.insert(7);
+    EXPECT_FALSE(values.is_subset(superset));
+  }
+
 }  // namespace

@@ -146,6 +146,11 @@ namespace BOOM {
       return true;
     }
 
+    // this->is_subset(that) returns true iff *this is a subset of that.
+    bool is_subset(const SortedVector &rhs) const {
+      return std::includes(rhs.begin(), rhs.end(), begin(), end());
+    }
+
     // This is called set_union instead of union because union is a C++ reserved
     // word (a union of two types).
     SortedVector<T, COMPARE> set_union(const SortedVector &rhs) const {
