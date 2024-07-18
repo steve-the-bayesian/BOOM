@@ -25,3 +25,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "junction_tree_test",
+    size = "small",
+    srcs = ["junction_tree_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)

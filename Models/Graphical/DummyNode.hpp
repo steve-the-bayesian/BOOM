@@ -34,6 +34,10 @@ namespace BOOM {
       NodeType node_type() const override {
         return NodeType::DUMMY;
       }
+
+      double logp(const MixedMultivariateData &dp) const override {
+        return 0.0;
+      }
     };
 
   }  // namespace Graphical

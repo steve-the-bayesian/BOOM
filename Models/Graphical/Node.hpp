@@ -43,7 +43,6 @@ namespace BOOM {
 
     class DirectedNode;
     class MoralNode;
-    class Clique;
 
     //===========================================================================
     // A Node is an undirected node in a graph.  In the context of graphical
@@ -67,52 +66,6 @@ namespace BOOM {
       // An optional human-interpretable string indicating the node's relevance.
       virtual const std::string & name() const {return name_;}
 
-      // A double dispatch method for promoting a base class node to a node of a
-      // specific type.  Faster than casting.  Each concrete node class will
-      // have a reflect method that returns 'this' if called from the same
-      // class, and a pointer to Node if not.
-      virtual Node *promote(const Ptr<Node> &rhs) = 0;
-      virtual const Node *promote_const(const Ptr<Node> &rhs) const = 0;
-
-      virtual DirectedNode *reflect_directed_node() {
-        return nullptr;
-      }
-      virtual const DirectedNode *reflect_const_directed_node() const {
-        return nullptr;
-      }
-
-      virtual MoralNode *reflect_moral_node() {
-        return nullptr;
-      }
-      virtual const MoralNode *reflect_const_moral_node() const {
-        return nullptr;
-      }
-
-      virtual Clique *reflect_clique() {
-        return nullptr;
-      }
-      virtual const Clique *reflect_const_clique() const {
-        return nullptr;
-      }
-
-      //---------------------------------------------------------------------------
-      // Parents, children, neighbors.
-      //---------------------------------------------------------------------------
-      void add_neighbor(const Ptr<Node> &node, bool reciprocate = true) {
-        neighbors_.insert(node);
-        if (reciprocate) {
-          node->add_neighbor(this, false);
-        }
-      }
-
-      std::set<Ptr<Node>> neighbors() const {
-        return neighbors_;
-      }
-
-      bool is_neighbor(const Ptr<Node> &node) const {
-        return neighbors_.count(node);
-      }
-
      protected:
       void set_name(const std::string &name) const {
         name_ = name;
@@ -132,7 +85,14 @@ namespace BOOM {
       int id_;
       mutable std::string name_;
 
-      std::set<Ptr<Node>> neighbors_;
+    };
+
+    // Order nodes by their ID.
+    struct IdLess {
+      bool operator()(const Ptr<::BOOM::Graphical::Node> &n1,
+                      const Ptr<::BOOM::Graphical::Node> &n2) const {
+        return n1->id() < n2->id();
+      }
     };
 
     //===========================================================================
@@ -144,26 +104,14 @@ namespace BOOM {
           : Node(id, name)
       {}
 
+      virtual NodeType node_type() const = 0;
+
       // This node's contribution to the log density of dp.  The conditional
       // distribution of this node's chunk of dp, given its parents.
       //
       // The Node knows how to pick out the relevant bits of dp, as well as pass
       // the relevant bits to its parents for conditioning.
       virtual double logp(const MixedMultivariateData &dp) const = 0;
-
-      DirectedNode * promote(const Ptr<Node> &rhs) override {
-        return rhs->reflect_directed_node();
-      }
-      const DirectedNode * promote_const(const Ptr<Node> &rhs) const override {
-        return rhs->reflect_const_directed_node();
-      }
-
-      DirectedNode * reflect_directed_node() override {
-        return this;
-      }
-      const DirectedNode * reflect_const_directed_node() const override {
-        return this;
-      }
 
       // Args:
       //   parent:  A parent of this this node.
@@ -197,11 +145,11 @@ namespace BOOM {
       // Return true iff 'this' is a child of 'node'.
       bool is_child(const Ptr<DirectedNode> &node) const;
 
+      bool is_neighbor(const Ptr<DirectedNode> &node) const;
 
      private:
       std::vector<Ptr<DirectedNode>> parents_;
       std::vector<Ptr<DirectedNode>> children_;
-
     };
 
     //===========================================================================
@@ -211,44 +159,37 @@ namespace BOOM {
      public:
       MoralNode(const Ptr<DirectedNode> &base_node)
           : Node(base_node->id(), base_node->name()),
-            base_node_(base_node),
-            triangulation_number_(-1)
+            base_node_(base_node)
       {}
 
       const Ptr<DirectedNode> &base_node() const {
         return base_node_;
       }
 
-      MoralNode *promote(const Ptr<Node> &rhs) override {
-        return rhs->reflect_moral_node();
-      }
-      const MoralNode *promote_const(const Ptr<Node> &rhs) const override {
-        return rhs->reflect_const_moral_node();
+      void set_id(int id) { Node::set_id(id); }
+
+      void add_neighbor(const Ptr<MoralNode> &node, bool reciprocate = true) {
+        neighbors_.insert(node);
+        if (reciprocate) {
+          node->add_neighbor(this, false);
+        }
       }
 
-      MoralNode *reflect_moral_node() {
-        return this;
-      }
-      const MoralNode *reflect_const_moral_node() const {
-        return this;
+      std::set<Ptr<MoralNode>> neighbors() const {
+        return neighbors_;
       }
 
-      // The 'triangulation_number' is a node ordering device that is part of an
-      // algorithm for triangulating the moral graph.  See Cowell et al. p 58.
-      int triangulation_number() const {
-        return triangulation_number_;
-      }
-
-      void set_triangulation_number(int number) {
-        triangulation_number_ = number;
+      bool is_neighbor(const Ptr<MoralNode> &node) const {
+        return neighbors_.count(node);
       }
 
      private:
       Ptr<DirectedNode> base_node_;
-      int triangulation_number_;
+
+      std::set<Ptr<MoralNode>> neighbors_;
     };
 
-  }
+  } // namespace Graphical
 }  // namespace BOOM
 
 

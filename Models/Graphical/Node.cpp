@@ -44,7 +44,6 @@ namespace BOOM {
     void DirectedNode::add_parent(const Ptr<DirectedNode> &parent, bool reciprocate) {
       if (!is_in(parent, parents_)) {
         parents_.push_back(parent);
-        add_neighbor(parent, reciprocate);
         if (reciprocate) {
           parent->add_child(this, false);
         }
@@ -58,7 +57,6 @@ namespace BOOM {
     void DirectedNode::add_child(const Ptr<DirectedNode> &child, bool reciprocate) {
       if (!is_in(child, children_)) {
         children_.push_back(child);
-        add_neighbor(child, reciprocate);
         if (reciprocate) {
           child->add_parent(this, false);
         }
@@ -68,6 +66,11 @@ namespace BOOM {
     bool DirectedNode::is_child(const Ptr<DirectedNode> &node) const {
       return is_in(this, node->children());
     }
+
+    bool DirectedNode::is_neighbor(const Ptr<DirectedNode> &node) const {
+      return is_in(node, parents_) || is_in(node, children_);
+    }
+
 
   }  // namespace Graphical
 }  // namespace BOOM
