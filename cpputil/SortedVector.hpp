@@ -167,6 +167,22 @@ namespace BOOM {
       return ans;
     }
 
+    // Absorb all the elements from rhs into this.  Equivalent to *this =
+    // set_union(*this, rhs);
+    void absorb(const SortedVector &rhs) {
+      std::vector<T> merge_space;
+      std::merge(
+          elements_.begin(),
+          elements_.end(),
+          rhs.elements_.begin(),
+          rhs.elements_.end(),
+          std::back_inserter(merge_space));
+      auto it = std::unique(merge_space.begin(),
+                            merge_space.end());
+      merge_space.erase(it, merge_space.end());
+      elements_.swap(merge_space);
+    }
+
    private:
     std::vector<T> elements_;
     COMPARE cmp;
