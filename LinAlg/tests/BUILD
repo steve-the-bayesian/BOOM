@@ -15,6 +15,14 @@ cc_test(
 )
 
 cc_test(
+    name = "generic_array_test",
+    size = "small",
+    srcs = ["generic_array_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "Cholesky_test",
     size = "small",
     srcs = ["Cholesky_test.cc"],

@@ -27,6 +27,7 @@
 #include "LinAlg/VectorView.hpp"
 
 #include <vector>
+#include <sstream>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -418,6 +419,139 @@ namespace BOOM {
 
    private:
     Vector data_;
+  };
+
+  // A mapping from a multivariate index to a column-major array storage format.
+  //
+  // Template Args:
+  //   INT: The desired storage type for integer values.
+  //
+  // Args:
+  //   index:  The collection of indices pointing to a single array element.
+  //   dim:  The dimensions (aka "extent" or "shape") of the array.
+  //   strides: The number of steps between successive elements in the same
+  //     dimension.  strides[i] is the number of steps you must advance in the
+  //     raw data structure to increment the i'th index by one.
+  //
+  // Returns:
+  //   The position of the element at 'index' in the underlying memory storage
+  //   block.
+  template <class INT = int>
+  inline INT array_index(const std::vector<INT> &index,
+                         const std::vector<INT> &dim,
+                         const std::vector<INT> &strides) {
+    if (index.size() != dim.size()) {
+      std::ostringstream err;
+      err << "Wrong number of dimensions passed to "
+          << "ConstArrayBase::operator[]."
+          << "  Expected " << dim.size() << " got " << index.size() << "."
+          << endl;
+      report_error(err.str());
+    }
+    INT pos = 0;
+    for (INT i = 0; i < dim.size(); ++i) {
+      INT ind = index[i];
+      if (ind < 0 || ind >= dim[i]) {
+        std::ostringstream err;
+        err << "Index " << i
+            << " out of bounds in ConstArrayBase::operator[]."
+            << " Value passed = " << ind << " legal range: [0, " << dim[i] - 1
+            << "]." << endl;
+        report_error(err.str());
+      }
+      pos += index[i] * strides[i];
+    }
+    return pos;
+  }
+
+  // Compute the vector of strides for an array stored in dense vector storage.
+  // Args:
+  //   dims: The dimensions (aka "extents" or "shape") of the array to be
+  //     stored.
+  //
+  // Returns:
+  //   A vector of strides, where strides[i] is the number of positions in raw
+  //   storage between array elements in dimension i.  For example, in a 2-way
+  //   array (a matrix), moving to the next row (dimension 0) involves moving 1
+  //   step, while moving to the next column (dimension 1) means moving "number
+  //   of rows" spaces.
+  template <class INT>
+  std::vector<INT> compute_array_strides(const std::vector<INT> &dims) {
+    std::vector<INT> strides(dims);
+    INT last_stride = 1;
+    for (size_t i = 0; i < dims.size(); ++i) {
+      strides[i] = last_stride;
+      last_stride *= dims[i];
+    }
+    return strides;
+  }
+
+  // A generic array of objects.
+  //
+  // Template Args:
+  //   VALUE:  The type of value stored in the array.
+  //   INT:  The type of integer used to index the array.
+  template <class VALUE, class INT = int>
+  class GenericArray {
+   public:
+
+    GenericArray() {}
+
+    GenericArray(const std::vector<INT> &dims, const std::vector<VALUE> &data)
+        : dims_(dims),
+          data_(data)
+    {
+      check_dimensions(dims_, data_.size());
+      strides_ = compute_array_strides(dims);
+    }
+
+    bool empty() const {return dims_.empty();}
+
+    int ndim() const { return dims_.size(); }
+    int dim(int i) const { return dims_[i]; }
+    const std::vector<int> &dim() const { return dims_; }
+
+    // stride(i) is the number of steps you must advance in data()
+    // to increment the i'th index by one.
+    int stride(int i) const { return strides_[i]; }
+    const std::vector<int> &strides() const { return strides_; }
+
+    // size() is the number of elements stored in the array.  It is
+    // the product of dims_;
+    int size() const;
+
+    void check_dimensions(const std::vector<INT> &dims, size_t size) const {
+      INT product = 1;
+      for (const auto &el : dims) {
+        product *= el;
+      }
+      if (product != size) {
+        std::ostringstream err;
+        err << "Generic array failed dimension check.  The product of [";
+        for (size_t i = 0; i < dims.size(); ++i) {
+          err << dims[i];
+          if (i + 1 < dims.size()) {
+            err << ", ";
+          }
+        }
+        err << "] is " << product << " but the required size is "
+            << size << ".";
+        report_error(err.str());
+      }
+    }
+
+    VALUE &operator[](const std::vector<INT> &index) {
+      return data_[array_index<INT>(index, dims_, strides_)];
+    }
+
+    const VALUE &operator[](const std::vector<INT> &index) const {
+      return data_[array_index<INT>(index, dims_, strides_)];
+    }
+
+   private:
+    std::vector<INT> dims_;
+    std::vector<VALUE> data_;
+    std::vector<INT> strides_;
   };
 
 }  // namespace BOOM
