@@ -30,15 +30,14 @@ namespace BOOM {
   namespace Graphical {
 
     // A clique is NodeSet of nodes that are all neighbors of one another.
-    template <class NODETYPE>
-    class Clique : public NodeSet<NODETYPE> {
+    class Clique : public NodeSet<MoralNode> {
      public:
       // An empty Clique.
       Clique() {}
 
       // Create a Clique from a NodeSet.  All nodes in node_set must be
       // neighbors of one another.  Otherwise an exception is generated.
-      Clique(const NodeSet<NODETYPE> &node_set) {
+      Clique(const NodeSet<MoralNode> &node_set) {
         for (const auto &el : node_set.elements()) {
           bool ok = try_add(el);
           if (!ok) {
@@ -50,9 +49,9 @@ namespace BOOM {
         }
       }
 
-      const std::string &name() const override {
-        return NodeSet<NODETYPE>::name();
-      }
+      // const std::string &name() const override {
+      //   return NodeSet<MoralNode>::name();
+      // }
 
       // Attempt to add a node, which may or may not belong, to the Clique.
       // Return true iff the addition was successful.
@@ -66,13 +65,13 @@ namespace BOOM {
       //
       // Returns:
       //   A flag indicating whether 'node' was added to this object's elements.
-      bool try_add(const Ptr<NODETYPE> &node){
+      bool try_add(const Ptr<MoralNode> &node){
         for (const auto &el : elements()) {
           if (!node->is_neighbor(el)) {
             return false;
           }
         }
-        NodeSet<NODETYPE>::add(node);
+        NodeSet<MoralNode>::add(node);
         return true;
       }
 
@@ -82,35 +81,40 @@ namespace BOOM {
       }
 
       // The underlying set of elements comprising the Clique.
-      const SortedVector<Ptr<NODETYPE>> &elements() const {
-        return NodeSet<NODETYPE>::elements();
-      }
+      // const SortedVector<Ptr<MoralNode>> &elements() const {
+      //   return NodeSet<MoralNode>::elements();
+      // }
 
-      size_t size() const {
-        return elements().size();
-      }
+      // size_t size() const {
+      //   return elements().size();
+      // }
 
       // Return true iff *this and other have at least one element in common.
       bool shares_node_with(const Ptr<Clique> &other) const {
         return !elements().disjoint_from(other->elements());
       }
 
+      bool contains(const Ptr<DirectedNode> &node) const {
+        for (const auto &el : elements()) {
+          if (el->base_node() == node) {
+            return true;
+          }
+        }
+        return false;
+      }
     };
 
     //===========================================================================
-
-
-    template <class NODETYPE>
     class CliqueFinder {
      public:
-      bool add_node(const Ptr<NODETYPE> &node) {
+      bool add_node(const Ptr<MoralNode> &node) {
         int membership_count = 0;
         for (size_t i = 0; i < cliques_.size(); ++i) {
           membership_count += cliques_[i]->try_add(node);
         }
 
         if (membership_count == 0) {
-          NEW(Clique<NODETYPE>, clique)();
+          NEW(Clique, clique)();
           clique->try_add(node);
           cliques_.push_back(clique);
           return true;
@@ -119,25 +123,25 @@ namespace BOOM {
         }
       }
 
-      void find_cliques(const std::vector<Ptr<NODETYPE>> &nodes) {
+      void find_cliques(const std::vector<Ptr<MoralNode>> &nodes) {
         for (size_t i = 0; i < nodes.size(); ++i) {
-          const Ptr<NODETYPE> &node(nodes[i]);
+          const Ptr<MoralNode> &node(nodes[i]);
           bool added_new_clique = add_node(node);
           if (added_new_clique) {
-            Ptr<Clique<NODETYPE>> &clique(cliques_.back());
+            Ptr<Clique> &clique(cliques_.back());
             for (size_t j = 0; j < i; ++j) {
-              const Ptr<NODETYPE> &old_node(nodes[j]);
+              const Ptr<MoralNode> &old_node(nodes[j]);
               clique->try_add(old_node);
             }
           }
         }
       }
 
-      void establish_links(std::vector<Ptr<Clique<NODETYPE>>> &cliques) const {
+      void establish_links(std::vector<Ptr<Clique>> &cliques) const {
         for (size_t i = 0; i < cliques.size(); ++i ){
-          Ptr<Clique<NODETYPE>> &first(cliques[i]);
+          Ptr<Clique> &first(cliques[i]);
           for (size_t j = i + 1; j < cliques.size(); ++j) {
-            Ptr<Clique<NODETYPE>> &second(cliques[j]);
+            Ptr<Clique> &second(cliques[j]);
             if (first->shares_node_with(second)) {
               first->add_neighbor(second);
             }
@@ -145,20 +149,29 @@ namespace BOOM {
         }
       }
 
-      const std::vector<Ptr<Clique<NODETYPE>>> &cliques() const {
+      const std::vector<Ptr<Clique>> &cliques() const {
         return cliques_;
       }
 
      private:
-      std::vector<Ptr<Clique<NODETYPE>>> cliques_;
+      std::vector<Ptr<Clique>> cliques_;
     };
 
-
+    //==========================================================================
     // A mix of categorical and conditionally Gaussian distributions.
     // Some values are marked as known.
-    class CliqueMarginalDistribution {
+    class CliqueMarginalDistribution : private RefCounted {
+      friend void intrusive_ptr_add_ref(CliqueMarginalDistribution *d) {
+        d->up_count();
+      }
+      friend void intrusive_ptr_release(CliqueMarginalDistribution *d) {
+        d->down_count();
+        if (d->ref_count() == 0) delete d;
+      }
+
      public:
       void marginalize();
+
      private:
       std::map<Ptr<Node>, int> known_discrete_variables_;
       std::map<Ptr<Node>, double> known_gaussian_variables_;
@@ -168,10 +181,9 @@ namespace BOOM {
       SpdMatrix unknown_gaussian_potential_precisions_;
     };
 
-    template <class NODETYPE>
-    std::vector<Ptr<Clique<NODETYPE>>> find_cliques(
-        const std::vector<Ptr<NODETYPE>> &nodes) {
-      CliqueFinder<NODETYPE> clique_finder;
+    inline std::vector<Ptr<Clique>> find_cliques(
+        const std::vector<Ptr<MoralNode>> &nodes) {
+      CliqueFinder clique_finder;
       clique_finder.find_cliques(nodes);
        return clique_finder.cliques();
     }

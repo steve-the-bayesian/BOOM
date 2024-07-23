@@ -22,6 +22,68 @@
 namespace BOOM {
   namespace Graphical {
 
+    //---------------------------------------------------------------------------
+    // Take a set of directed nodes, marry the parents of each child node, and
+    // drop the arrows.  The output of this function is a collection of
+    // MoralNodes, each of which holds a pointer to a directed base node.
+    //
+    // Args:
+    //   directed_nodes:  Nodes of the directed graph to be moralized.
+    //
+    // Returns:
+    //   The nodes of a moral graph, obtained by "marrying the parents" of each
+    //   node in 'nodes', then dropping the arrows.
+    std::vector<Ptr<MoralNode>> create_moral_graph(
+        const std::vector<Ptr<DirectedNode>> &directed_nodes) {
+
+      std::map<Ptr<DirectedNode>, Ptr<MoralNode>, IdLess> moral_nodes;
+      for (const Ptr<DirectedNode> &base_node : directed_nodes) {
+        NEW(MoralNode, moral_node)(base_node);
+        moral_nodes[base_node] = moral_node;
+      }
+
+      for (const Ptr<DirectedNode> &base_node : directed_nodes) {
+        Ptr<MoralNode> moral_node = moral_nodes[base_node];
+        // Each node is neighbors with its parents.
+        for (const Ptr<DirectedNode> &node : base_node->parents()) {
+          moral_node->add_neighbor(moral_nodes[node]);
+          // All of the parents are neighbors with each other.
+          for (const Ptr<DirectedNode> &other_node : base_node->parents()) {
+            if (node != other_node) {
+              moral_nodes[node]->add_neighbor(moral_nodes[other_node]);
+            }
+          }
+        }
+
+        // A node is neighbors with its children.
+        for (const Ptr<DirectedNode> &node : base_node->children()) {
+          moral_node->add_neighbor(moral_nodes[node]);
+        }
+      }
+      std::vector<Ptr<MoralNode>> ans;
+      for (const auto &el : moral_nodes) {
+        ans.push_back(el.second);
+      }
+      return ans;
+    }
+
+
+    namespace {
+      // Returns true iff all parents of each node in the clique are also in the
+      // clique.
+      bool is_root(const Ptr<Clique> &clique) {
+        for (const auto &el : clique->elements()) {
+          Ptr<DirectedNode> base = el->base_node();
+          for (const auto &parent : base->parents()) {
+            if (!clique->contains(parent)) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+    }  // namespace
+
     std::string print_moral_node(const Ptr<MoralNode> &node) {
       std::ostringstream out;
       out << node->id() << ' ' << node->name() << " |";
@@ -91,7 +153,58 @@ namespace BOOM {
       prune_elimination_tree(elimination_sets);
       cliques_ = make_junction_tree_from_elimination_sets(
           elimination_sets);
+      root_ = find_root(cliques_);
     }
+
+    Ptr<Clique> JunctionTree::find_root(
+        const std::vector<Ptr<Clique>> &cliques) const {
+      for (int i = 0; i < cliques.size(); ++i) {
+        if (is_root(cliques[i])) {
+          return cliques[i];
+        }
+      }
+      report_error("Could not identify a root node.");
+      return Ptr<Clique>(nullptr);
+    }
+
+    //---------------------------------------------------------------------------
+    // Accumulating evidence.  Need to start from a node without parents.
+    double JunctionTree::accumulate_evidence(const MixedMultivariateData &dp) {
+      double logp = initialize_forward_algorithm(dp, root_);
+      // for (Ptr<Clique> neighbor : root_->neighbors()) {
+      //   logp += collect_additional_evidence(dp, neighbor, root_);
+      // }
+      return logp;
+    }
+
+    // Args:
+    //   data_point: The data point (e.g. a row in a data frame) that provides
+    //     "evidence" to propagate across the junction tree.
+    //   root: A root node of the junction tree.  Each node in the root must
+    //     have all its parents in the root.  At least one node must have no
+    //     parents.
+    double JunctionTree::initialize_forward_algorithm(
+        const MixedMultivariateData &data_point,
+        const Ptr<Clique> &root) {
+      double logp = 0;
+
+      Ptr<CliqueMarginalDistribution> marg = evidence_[root];
+
+      // Identify which nodes are known/unknown.
+      for (const Ptr<MoralNode> &moral : root->elements()) {
+        //
+        if (moral->base_node()->is_variable_observed(data_point)) {
+
+        } else {
+
+        }
+
+      }
+
+      // Identify which nodes have no parents.
+      return logp;
+    }
+
 
     //---------------------------------------------------------------------------
     std::string JunctionTree::print_cliques() const {
@@ -104,50 +217,6 @@ namespace BOOM {
     }
 
     //---------------------------------------------------------------------------
-    // Take a set of directed nodes, marry the parents of each child node, and
-    // drop the arrows.  The output of this function is a collection of
-    // MoralNodes, each of which holds a pointer to a directed base node.
-    //
-    // Args:
-    //   directed_nodes:  Nodes of the directed graph to be moralized.
-    //
-    // Returns:
-    //   The nodes of a moral graph, obtained by "marrying the parents" of each
-    //   node in 'nodes', then dropping the arrows.
-    std::vector<Ptr<MoralNode>> JunctionTree::create_moral_graph(
-        const std::vector<Ptr<DirectedNode>> &directed_nodes) {
-
-      std::map<Ptr<DirectedNode>, Ptr<MoralNode>, IdLess> moral_nodes;
-      for (const Ptr<DirectedNode> &base_node : directed_nodes) {
-        NEW(MoralNode, moral_node)(base_node);
-        moral_nodes[base_node] = moral_node;
-      }
-
-      for (const Ptr<DirectedNode> &base_node : directed_nodes) {
-        Ptr<MoralNode> moral_node = moral_nodes[base_node];
-        // Each node is neighbors with its parents.
-        for (const Ptr<DirectedNode> &node : base_node->parents()) {
-          moral_node->add_neighbor(moral_nodes[node]);
-          // All of the parents are neighbors with each other.
-          for (const Ptr<DirectedNode> &other_node : base_node->parents()) {
-            if (node != other_node) {
-              moral_nodes[node]->add_neighbor(moral_nodes[other_node]);
-            }
-          }
-        }
-
-        // A node is neighbors with its children.
-        for (const Ptr<DirectedNode> &node : base_node->children()) {
-          moral_node->add_neighbor(moral_nodes[node]);
-        }
-      }
-      std::vector<Ptr<MoralNode>> ans;
-      for (const auto &el : moral_nodes) {
-        ans.push_back(el.second);
-      }
-      return ans;
-    }
-    //---------------------------------------------------------------------------
     // Args:
     //   elimination_sets: A collection of sets of MoralNodes produced by the
     //     triangulation algorithm.
@@ -158,13 +227,13 @@ namespace BOOM {
 
     // Implementation detail for 'ensure_junction_tree'.  Algorithm 4.8 from
     // Cowell et al.
-    std::vector<Ptr<Clique<MoralNode>>>
+    std::vector<Ptr<Clique>>
     JunctionTree::make_junction_tree_from_elimination_sets(
         std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets) {
       // Step 1: promote the elimination sets to cliques.
-      std::vector<Ptr<Clique<MoralNode>>> cliques;
+      std::vector<Ptr<Clique>> cliques;
       for (int i = 0; i < elimination_sets.size(); ++i) {
-        cliques.push_back(new Clique<MoralNode>(*elimination_sets[i]));
+        cliques.push_back(new Clique(*elimination_sets[i]));
       }
 
       // Step 2: links between the cliques using Algorithm 4.8 from Cowell et

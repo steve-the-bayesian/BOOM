@@ -68,7 +68,8 @@ namespace BOOM {
     // data_point may be missing.
     double logp(const MixedMultivariateData &data_point) const;
 
-    void set_triangulation_heuristic(const Graphical::JunctionTree::Criterion &criterion) {
+    void set_triangulation_heuristic(
+        const Graphical::JunctionTree::Criterion &criterion) {
       junction_tree_.set_triangulation_heuristic(criterion);
     }
 

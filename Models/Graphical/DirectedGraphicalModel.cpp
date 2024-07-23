@@ -17,7 +17,6 @@
 */
 
 #include "Models/Graphical/Node.hpp"
-#include "Models/Graphical/NodeSet.hpp"
 #include "Models/Graphical/Clique.hpp"
 #include "Models/Graphical/DirectedGraphicalModel.hpp"
 #include "cpputil/report_error.hpp"
@@ -42,6 +41,11 @@ namespace BOOM {
 
     nodes_.insert(node);
     junction_tree_current_ = false;
+  }
+
+  double DirectedGraphicalModel::logp(const MixedMultivariateData &dp) const {
+    ensure_junction_tree();
+    return junction_tree_.accumulate_evidence(dp);
   }
 
 

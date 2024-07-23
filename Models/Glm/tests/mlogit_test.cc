@@ -132,7 +132,8 @@ namespace {
     model->mle();
 
     // Create space to hold the MCMC draws.
-    int niter = 600;
+    //    int niter = 600;
+    int niter = 100;
     std::vector<Matrix> beta_draws;
     for (int m = 0; m < model->Nchoices(); ++m) {
       beta_draws.push_back(Matrix(niter, Xsubject.ncol(), 0.0));

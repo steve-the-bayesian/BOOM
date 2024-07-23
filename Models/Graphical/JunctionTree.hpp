@@ -44,13 +44,18 @@ namespace BOOM {
       std::vector<Ptr<MoralNode>> moral_nodes_;
     };
 
+    // Produce a collection of MoralNodes by marrying the parents of each
+    // directed node, and then dropping the arrows.
+    std::vector<Ptr<MoralNode>> create_moral_graph(
+        const std::vector<Ptr<DirectedNode>> &directed_nodes);
+
     //===========================================================================
     // A tree of cliques in the moral, triangulated graph generated from a DAG.
     class JunctionTree {
      public:
       using Criterion = std::function<double(const Ptr<MoralNode> &)>;
-      using Evidence = std::map<Ptr<Clique<MoralNode>>,
-                                CliqueMarginalDistribution>;
+      using Evidence = std::map<Ptr<Clique>,
+                                Ptr<CliqueMarginalDistribution>>;
 
       // An empty junction tree.  The tree can be populated by a call to
       // build().
@@ -77,12 +82,17 @@ namespace BOOM {
       // Fill the "evidence_" structure with marginal distributions describing
       // the conditional distribution of each clique given any observed data
       // seen by its ancestors.
-      void accumulate_evidence(const Ptr<MixedMultivariateData> &data_point);
+      //
+      // Returns:
+      double accumulate_evidence(const MixedMultivariateData &data_point);
+
+      const Evidence & evidence() const {
+        return evidence_;
+      }
 
       // Update the evidence_ structure so that each marginal clique
       // distribution conditions on all observed data in 'data_point'.
-      void distribute_evidence(const Ptr<MixedMultivariateData> &data_point,
-                               Evidence &evidence);
+      void distribute_evidence(const Ptr<MixedMultivariateData> &data_point);
 
       size_t number_of_cliques() const {
         return cliques_.size();
@@ -104,14 +114,36 @@ namespace BOOM {
       // after the vertical bars are its neighbors.
       std::string print_cliques() const;
 
+      // Find a root node in the tree of cliques, where at least one node has a
+      // base element with no parents, and where all nodes with parents have
+      // those parents present in the clique.
+      //
+      // Args:
+      //   cliques:  A collection of cliques arranged in a tree structure.
+      //
+      // Returns:
+      //   The collection of cliques, with the root node in position 0, arranged
+      //   with the running intersection property.
+      Ptr<Clique> find_root(const std::vector<Ptr<Clique>> &cliques) const;
+
      private:
       //===========================================================================
+      // Implementation details for the forward-backward algorithm.
+      double initialize_forward_algorithm(const MixedMultivariateData &data_point,
+                                          const Ptr<Clique> &root);
+
+      double collect_additional_evidence(
+          const MixedMultivariateData &data_point,
+          const Ptr<Clique> &neighbor,
+          const Ptr<Clique> &root);
+
+
       // Utilities used in building the junction tree
 
-      // Produce a collection of MoralNodes by marrying the parents of each
-      // directed node, and then dropping the arrows.
-      std::vector<Ptr<MoralNode>> create_moral_graph(
-          const std::vector<Ptr<DirectedNode>> & directed_nodes);
+      // // Produce a collection of MoralNodes by marrying the parents of each
+      // // directed node, and then dropping the arrows.
+      // std::vector<Ptr<MoralNode>> create_moral_graph(
+      //     const std::vector<Ptr<DirectedNode>> & directed_nodes);
 
       // Choose the node from among &nodes that minimizes 'heuristic'.
       Ptr<MoralNode> choose_node(
@@ -132,7 +164,7 @@ namespace BOOM {
           std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
           int start_from = 0);
 
-      std::vector<Ptr<Clique<MoralNode>>>
+      std::vector<Ptr<Clique>>
       make_junction_tree_from_elimination_sets(
           std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets);
 
@@ -143,7 +175,8 @@ namespace BOOM {
       // Data members
       std::vector<Ptr<DirectedNode>> directed_nodes_;
       Criterion triangulation_heuristic_;
-      std::vector<Ptr<Clique<MoralNode>>> cliques_;
+      std::vector<Ptr<Clique>> cliques_;
+      Ptr<Clique> root_;
 
       // Evidence is used during calls to "accumulate_evidence" or
       // "distribute_evidence".

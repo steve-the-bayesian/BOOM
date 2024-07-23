@@ -100,9 +100,25 @@ namespace BOOM {
     // in a data frame).
     class DirectedNode : public Node {
      public:
+      // Args:
+      //   id: The position in a data frame or MixedMultivariateData where this
+      //     node's variable can be found.
+      //   name: The column name in a data frame, or name in a
+      //     MixedMultivariateData, describing the variable to be modeled.
       DirectedNode(int id, const std::string &name = "")
-          : Node(id, name)
+          : Node(id, name),
+            variable_index_(id)
       {}
+
+      // Find the position of a variable with name matching the name of this node.
+      // If no such variable is found, then the variable's index is set to -1.
+      //
+      // Args:
+      //   data_point: The data to search for the relevant variable name.
+      //   throw_on_error: If true, then an exception is thrown if the variable
+      //     name is not found.
+      void find_variable(const MixedMultivariateData &data_point,
+                         bool throw_on_error = true);
 
       virtual NodeType node_type() const = 0;
 
@@ -112,6 +128,10 @@ namespace BOOM {
       // The Node knows how to pick out the relevant bits of dp, as well as pass
       // the relevant bits to its parents for conditioning.
       virtual double logp(const MixedMultivariateData &dp) const = 0;
+
+      bool is_variable_observed(const MixedMultivariateData &data_point) const {
+        return data_point.variable(variable_index_).missing() == Data::observed;
+      }
 
       // Args:
       //   parent:  A parent of this this node.
@@ -150,6 +170,10 @@ namespace BOOM {
      private:
       std::vector<Ptr<DirectedNode>> parents_;
       std::vector<Ptr<DirectedNode>> children_;
+
+      // The position in a data frame or MixedMultivariateData where this node's
+      // variable is found.
+      int variable_index_;
     };
 
     //===========================================================================
