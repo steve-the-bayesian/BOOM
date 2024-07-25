@@ -64,6 +64,14 @@ cc_test(
 )
 
 cc_test(
+    name = "moments_test",
+    size = "small",
+    srcs = ["moments_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
     name = "quantile_test",
     size = "small",
     srcs = ["quantile_test.cc"],
