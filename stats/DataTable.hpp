@@ -286,9 +286,9 @@ namespace BOOM {
     //
     // If the data table is empty, appending the first variable determines the
     // number of rows.
-    virtual void append_variable(const Vector &v, const std::string &name);
-    virtual void append_variable(const CategoricalVariable &cv,
-                                 const std::string &name);
+    void append_variable(const Vector &v, const std::string &name);
+    void append_variable(const CategoricalVariable &cv,
+                         const std::string &name);
 
     // If the data table is empty, appending the first row determines the number
     // and type of columns.
