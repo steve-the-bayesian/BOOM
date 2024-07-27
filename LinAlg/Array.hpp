@@ -486,6 +486,79 @@ namespace BOOM {
     return strides;
   }
 
+  //===========================================================================
+  // The GenericArray class needs an iterator.  To make things work we need to
+  // forward declare the GenericArray template class, declare the iterator
+  // class, and instantiate the iterator's member functions that depend on
+  // GenericArray after the GenericArray definition.
+  template<class VALUE, class INT> class GenericArray;
+
+  template <class VALUE, class INT>
+  class GenericArrayIterator {
+   public:
+    GenericArrayIterator(GenericArray<VALUE, INT> *host);
+
+    VALUE& operator*();
+    bool operator==(const GenericArrayIterator &rhs) const;
+    bool operator!=(const GenericArrayIterator &rhs) const;
+
+    GenericArrayIterator &operator++() {
+      ++position_;
+      return *this;
+    }
+
+    const std::vector<int> &position() const {
+      return position_.position();
+    }
+
+    void set_position(const std::vector<int> &position) {
+      position_.set_position(position);
+    }
+
+    GenericArrayIterator &set_to_end() {
+      position_.set_to_end();
+      return *this;
+    }
+
+   private:
+    GenericArray<VALUE, INT> *host_;
+    ArrayPositionManager position_;
+  };
+
+  template <class VALUE, class INT>
+  class GenericArrayConstIterator {
+   public:
+    GenericArrayConstIterator(const GenericArray<VALUE, INT> *host);
+
+    const VALUE& operator*() const;
+    bool operator==(const GenericArrayConstIterator &rhs) const;
+    bool operator!=(const GenericArrayConstIterator &rhs) const;
+
+    GenericArrayConstIterator &operator++() {
+      ++position_;
+      return *this;
+    }
+
+    const std::vector<int> &position() const {
+      return position_.position();
+    }
+
+    void set_position(const std::vector<int> &position) {
+      position_.set_position(position);
+    }
+
+    GenericArrayConstIterator &set_to_end() {
+      position_.set_to_end();
+      return *this;
+    }
+
+   private:
+    GenericArray<VALUE, INT> *host_;
+    ArrayPositionManager position_;
+  };
+
+
+  //===========================================================================
   // A generic array of objects.
   //
   // Template Args:
@@ -520,6 +593,27 @@ namespace BOOM {
     // the product of dims_;
     int size() const;
 
+    // Iterators
+    GenericArrayIterator<VALUE, INT> begin() {
+      return GenericArrayIterator<VALUE, INT>(this);
+    }
+
+    GenericArrayIterator<VALUE, INT> end() {
+      GenericArrayIterator<VALUE, INT> it(this);
+      it.set_to_end();
+      return it;
+    }
+
+    GenericArrayConstIterator<VALUE, INT> begin() const {
+      return GenericArrayConstIterator<VALUE, INT>(this);
+    }
+
+    GenericArrayConstIterator<VALUE, INT> end() const {
+      GenericArrayConstIterator<VALUE, INT> it(this);
+      it.set_to_end();
+      return it;
+    }
+
     void check_dimensions(const std::vector<INT> &dims, size_t size) const {
       INT product = 1;
       for (const auto &el : dims) {
@@ -553,6 +647,65 @@ namespace BOOM {
     std::vector<VALUE> data_;
     std::vector<INT> strides_;
   };
+
+  //===========================================================================
+  // Member function definitions for GenericArrayIterator and
+  // GenericArrayConstIterator.
+
+  template<class VALUE, class INT>
+  GenericArrayIterator<VALUE, INT>::GenericArrayIterator(
+      GenericArray<VALUE, INT> *host):
+      host_(host),
+      position_(host->dim())
+  {}
+
+  template<class VALUE, class INT>
+  VALUE &GenericArrayIterator<VALUE, INT>::operator*() {
+    if (position_.at_end()) {
+      report_error("GenericArrayIterator dereference past end of data.");
+    }
+    return (*host_)[position_.position()];
+  }
+
+  template<class VALUE, class INT>
+  bool GenericArrayIterator<VALUE, INT>::operator==(
+      const GenericArrayIterator &rhs) const {
+    return (host_ == rhs.host_) && (position_ == rhs.position_);
+  }
+
+  template<class VALUE, class INT>
+  bool GenericArrayIterator<VALUE, INT>::operator!=(
+      const GenericArrayIterator &rhs) const {
+    return (host_ != rhs.host_) || (position_ != rhs.position_);
+  }
+
+  // Now for the Const case.
+  template<class VALUE, class INT>
+  GenericArrayConstIterator<VALUE, INT>::GenericArrayConstIterator(
+      const GenericArray<VALUE, INT> *host):
+      host_(host),
+      position_(host->dim())
+  {}
+
+  template<class VALUE, class INT>
+  const VALUE &GenericArrayConstIterator<VALUE, INT>::operator*() const {
+    if (position_.at_end()) {
+      report_error("GenericArrayConstIterator dereference past end of data.");
+    }
+    return (*host_)[position_.position()];
+  }
+
+  template<class VALUE, class INT>
+  bool GenericArrayConstIterator<VALUE, INT>::operator==(
+      const GenericArrayConstIterator &rhs) const {
+    return (host_ == rhs.host_) && (position_ == rhs.position_);
+  }
+
+  template<class VALUE, class INT>
+  bool GenericArrayConstIterator<VALUE, INT>::operator!=(
+      const GenericArrayConstIterator &rhs) const {
+    return (host_ != rhs.host_) || (position_ != rhs.position_);
+  }
 
 }  // namespace BOOM
 

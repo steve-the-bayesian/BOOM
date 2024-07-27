@@ -508,6 +508,7 @@ namespace BOOM {
   }
 
   ArrayIterator ArrayView::begin() { return ArrayIterator(this); }
+
   ConstArrayIterator ArrayView::begin() const {
     return ConstArrayIterator(this);
   }
