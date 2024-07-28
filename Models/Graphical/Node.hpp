@@ -120,7 +120,10 @@ namespace BOOM {
       void find_variable(const MixedMultivariateData &data_point,
                          bool throw_on_error = true);
 
+      void set_variable_index(int index) { variable_index_ = index; }
+
       virtual NodeType node_type() const = 0;
+      virtual Int output_dim() const = 0;
 
       // This node's contribution to the log density of dp.  The conditional
       // distribution of this node's chunk of dp, given its parents.

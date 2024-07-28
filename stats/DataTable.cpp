@@ -636,11 +636,11 @@ namespace BOOM {
   }
 
   //======================================================================
-  uint DataTable::nlevels(uint i) const {
+  int DataTable::nlevels(uint i) const {
     VariableType type;
     int index;
     std::tie(type, index) = type_index_->type_map(i);
-    if (type == VariableType::numeric) return 1;
+    if (type == VariableType::numeric) return -1;
     return categorical_variables_[index][0]->nlevels();
   }
 

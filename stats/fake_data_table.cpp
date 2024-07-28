@@ -23,13 +23,13 @@
 namespace BOOM {
 
   namespace {
+
+    // Generate a categorical variable with levels 'level_1', 'level_2', etc.
     CategoricalVariable generate_categorical_variable(size_t sample_size, int nlevels) {
       std::vector<std::string> labels;
       for (int i = 0; i < nlevels; ++i) {
         labels.push_back(std::string("Level_") + std::to_string(i));
       }
-
-      NEW(CatKey, key);
       std::vector<int> levels;
       for (size_t i = 0; i < sample_size; ++i) {
         double u;
@@ -39,6 +39,8 @@ namespace BOOM {
         int value = std::floor(u * nlevels);
         levels.push_back(value);
       }
+
+      NEW(CatKey, key)(labels);
 
       CategoricalVariable ans(levels, key);
       return ans;

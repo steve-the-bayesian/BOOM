@@ -35,6 +35,10 @@ namespace BOOM {
         return NodeType::DUMMY;
       }
 
+      Int output_dim() const override {
+        return -1;
+      }
+
       double logp(const MixedMultivariateData &dp) const override {
         return 0.0;
       }

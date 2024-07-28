@@ -14,15 +14,6 @@ cc_test(
     deps = DEPS,
 )
 
-cc_test(
-    name = "data_table_test",
-    size = "small",
-    srcs = ["data_table_test.cc"],
-    copts = COPTS,
-    data = [":test_data"],
-    deps = DEPS,
-)
-
 filegroup(
     name = "test_data",
     srcs = [
@@ -30,6 +21,15 @@ filegroup(
         "CarsClean.csv",
         "autopref.txt",
     ],
+)
+
+cc_test(
+    name = "data_table_test",
+    size = "small",
+    srcs = ["data_table_test.cc"],
+    copts = COPTS,
+    data = [":test_data"],
+    deps = DEPS,
 )
 
 cc_test(
@@ -60,6 +60,15 @@ cc_test(
     size = "small",
     srcs = ["logit_test.cc"],
     copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "mixed_multivariate_data_test",
+    size = "small",
+    srcs = ["mixed_multivariate_data_test.cc"],
+    copts = COPTS,
+    data = [":test_data"],
     deps = DEPS,
 )
 

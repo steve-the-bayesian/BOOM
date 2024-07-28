@@ -257,10 +257,8 @@ namespace BOOM {
   // name dummy variables.
   class DataTable : public Data {
    public:
-    typedef std::vector<double> dvector;
-
-    //--- constructors ---
-    // Creates an empty data table.
+    // Empty data table that can be populated by calls to 'append_row',
+    // 'append_variable', or 'read_file'.
     DataTable();
 
     // Creates a data table from a file
@@ -278,6 +276,7 @@ namespace BOOM {
     DataTable *clone() const override;
     std::ostream &display(std::ostream &out) const override;
 
+    //
     void read_file(const std::string &filename,
                    bool header = false,
                    const std::string &sep = "");
@@ -287,12 +286,22 @@ namespace BOOM {
     // If the data table is empty, appending the first variable determines the
     // number of rows.
     void append_variable(const Vector &v, const std::string &name);
+    void cbind(const Vector &v, const std::string, &name) {
+      append_variable(v, name);
+    }
+
     void append_variable(const CategoricalVariable &cv,
                          const std::string &name);
+    void cbind(const CategoricalVariable &cv, const std::string &name) {
+      append_variable(cv, name);
+    }
 
     // If the data table is empty, appending the first row determines the number
     // and type of columns.
     void append_row(const MixedMultivariateData &row);
+    void rbind(const MixedMultivariateData &row) {
+      append_row(row);
+    }
 
     //--- size  ---
     // Number of variables stored in the table
@@ -306,9 +315,9 @@ namespace BOOM {
     int nobs() const {return nrow();}  // syntactic sugar.
 
     // The number of levels for variable i.  If the variable is numeric then the
-    // answer is 1.  Otherwise the number of levels is returned for categorical
+    // answer is -1.  Otherwise the number of levels is returned for categorical
     // variables.
-    uint nlevels(uint i) const;
+    int nlevels(uint i) const;
 
     //--- look inside ---
     std::ostream &print(std::ostream &out, uint from = 0,
