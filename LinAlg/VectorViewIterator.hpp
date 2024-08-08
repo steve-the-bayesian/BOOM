@@ -45,23 +45,34 @@ namespace BOOM {
       return *this;
     }
 
-    bool operator==(const VVI &rhs) const { return pos == rhs.pos; }
-    bool operator!=(const VVI &rhs) const { return pos != rhs.pos; }
+    bool operator==(const VVI &rhs) const {
+      return pos == rhs.pos;
+    }
 
-    double &operator*() const { return *pos; }
+    bool operator!=(const VVI &rhs) const {
+      return pos != rhs.pos;
+    }
+
+    double &operator*() const {
+      return *pos;
+    }
+
     VVI &operator++() {
       pos += stride;
       return *this;
     }
+
     VVI operator++(int) {
       VVI ans(*this);
       pos += stride;
       return ans;
     }
+
     VVI &operator--() {
       pos -= stride;
       return *this;
     }
+
     VVI operator--(int) {
       VVI ans(*this);
       pos -= stride;
