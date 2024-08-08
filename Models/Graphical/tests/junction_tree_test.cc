@@ -2,11 +2,15 @@
 
 #include "Models/Graphical/Node.hpp"
 #include "Models/Graphical/DummyNode.hpp"
+#include "Models/Graphical/MultinomialNode.hpp"
 #include "Models/Graphical/Clique.hpp"
 #include "Models/Graphical/JunctionTree.hpp"
 
 #include "distributions.hpp"
 #include "distributions/rng.hpp"
+
+#include "stats/DataTable.hpp"
+#include "stats/fake_data_table.hpp"
 
 namespace {
   using namespace BOOM;
@@ -98,7 +102,7 @@ namespace {
   }
 
   //    A                  A
-  //   ↙ ↘                / \
+  //   ↙ ↘                / \      (not a multiline comment)
   //  B → C   --->       B - C
   //  ↓ ↘ ↓              | \ |
   //  D ← E              D - E
@@ -126,6 +130,26 @@ namespace {
     JunctionTree jtree(nodes_);
     EXPECT_EQ(jtree.number_of_nodes(), 5);
     EXPECT_EQ(jtree.number_of_cliques(), 2);
+  }
+
+  // A -> B
+  // Both categorical.
+  // Impute A if B is observed.  Impute B if A is observed.
+  TEST_F(JunctionTreeTest, TestImputeMissingData) {
+    DataTable data = fake_data_table(10, 0, {2, 2});
+    NEW(MultinomialNode, V1)(data, "V1");
+    NEW(MultinomialNode, V2)(data, "V2");
+    V1->add_child(V2);
+
+    JunctionTree tree({V1, V2});
+    Ptr<MixedMultivariateData> row1 = data.row(0);
+    row1->mutable_categorical(1)->set_missing_status(
+        Data::missing_status::completely_missing);
+
+    EXPECT_EQ(row1->categorical(1).missing(),
+              Data::missing_status::completely_missing);
+
+    // tree.impute_missing_values(*row1, GlobalRng::rng);
   }
 
 }

@@ -22,6 +22,7 @@
 #include "Models/Graphical/Node.hpp"
 #include "Models/Graphical/NodeSet.hpp"
 #include "Models/Graphical/Clique.hpp"
+#include "Models/Graphical/UndirectedGraph.hpp"
 
 #include <functional>
 #include <vector>
@@ -56,6 +57,8 @@ namespace BOOM {
       using Criterion = std::function<double(const Ptr<MoralNode> &)>;
       using Evidence = std::map<Ptr<Clique>,
                                 Ptr<CliqueMarginalDistribution>>;
+      using CliqueTree = UndirectedGraph<Ptr<Clique>>;
+      using EliminationTree = UndirectedGraph<Ptr<NodeSet<MoralNode>>>;
 
       // An empty junction tree.  The tree can be populated by a call to
       // build().
@@ -95,7 +98,7 @@ namespace BOOM {
       void distribute_evidence(const Ptr<MixedMultivariateData> &data_point);
 
       size_t number_of_cliques() const {
-        return cliques_.size();
+        return clique_graph_.size();
       }
 
       size_t number_of_nodes() const {
@@ -122,22 +125,45 @@ namespace BOOM {
       //   cliques:  A collection of cliques arranged in a tree structure.
       //
       // Returns:
-      //   The collection of cliques, with the root node in position 0, arranged
-      //   with the running intersection property.
-      Ptr<Clique> find_root(const std::vector<Ptr<Clique>> &cliques) const;
+      //   A legal root node in the tree.
+      Ptr<Clique> find_root(const UndirectedGraph<Ptr<Clique>> &graph) const;
+
+      // The neighbors of a given clique in the JunctionTree.
+      const std::set<Ptr<Clique>> &neighbors(const Ptr<Clique> &clique) const {
+        return clique_graph_.neighbors(clique);
+      }
 
      private:
-      //===========================================================================
+      //========================================================================
       // Implementation details for the forward-backward algorithm.
-      double initialize_forward_algorithm(const MixedMultivariateData &data_point,
-                                          const Ptr<Clique> &root);
-
-      double collect_additional_evidence(
+      //
+      // Args:
+      //   data_point:  The data point being evaluated.
+      //   root:  The clique in the junction tree serving as the root node.
+      //
+      // Returns:
+      //   The contribution to log likelihood from the information in 'root'.
+      double initialize_forward_algorithm(
           const MixedMultivariateData &data_point,
-          const Ptr<Clique> &neighbor,
           const Ptr<Clique> &root);
 
+      // One step in the forward recursion.
+      //
+      // Args:
+      //   data_point: The data point providing the evidence.
+      //   neighbor: The clique in the junction tree around which evidence is to
+      //     be collected.
+      //   source: The clique in the junction tree passing the message to
+      //     'clique'.
+      //
+      // Returns:
+      //   The incremental contribution to log likelihood.
+      double collect_additional_evidence(
+          const MixedMultivariateData &data_point,
+          const Ptr<Clique> &clique,
+          const Ptr<Clique> &source);
 
+      //========================================================================
       // Utilities used in building the junction tree
 
       // // Produce a collection of MoralNodes by marrying the parents of each
@@ -147,7 +173,8 @@ namespace BOOM {
 
       // Choose the node from among &nodes that minimizes 'heuristic'.
       Ptr<MoralNode> choose_node(
-          SortedVector<Ptr<MoralNode>> &nodes, Criterion &heuristic);
+          SortedVector<Ptr<MoralNode>> &nodes,
+          Criterion &heuristic);
 
       // Take an undirected graph of MoralNodes, potentially re-order them, and
       // add edges so that the graph is triangulated.  Return the collections of
@@ -157,16 +184,17 @@ namespace BOOM {
           std::vector<Ptr<MoralNode>> &nodes);
 
       // Impose a tree stucture on the collection of elimination sets.
-      void make_elimination_tree(
+      EliminationTree make_elimination_tree(
           std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets);
 
       void prune_elimination_tree(
           std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+          EliminationTree &tree,
           int start_from = 0);
 
-      std::vector<Ptr<Clique>>
-      make_junction_tree_from_elimination_sets(
-          std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets);
+      std::vector<Ptr<Clique>> make_junction_tree(
+          std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+          EliminationTree &tree);
 
       void make_dense(Ptr<NodeSet<MoralNode>> &nodes);
       int find_second_largest_index(const NodeSet<MoralNode> &nodes);
@@ -175,7 +203,8 @@ namespace BOOM {
       // Data members
       std::vector<Ptr<DirectedNode>> directed_nodes_;
       Criterion triangulation_heuristic_;
-      std::vector<Ptr<Clique>> cliques_;
+
+      UndirectedGraph<Ptr<Clique>> clique_graph_;
       Ptr<Clique> root_;
 
       // Evidence is used during calls to "accumulate_evidence" or

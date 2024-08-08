@@ -102,21 +102,24 @@ namespace BOOM {
       return out.str();
     }
 
-    std::string print_node_set(const Ptr<NodeSet<MoralNode>> &elimination_set) {
+    template <class NODESET>
+    std::string print_node_set(
+        const Ptr<NODESET> &set,
+        const UndirectedGraph<Ptr<NODESET>> &graph) {
       std::ostringstream out;
-      out << elimination_set->id() << ' ' << elimination_set->name() << " |";
-      for (const auto &neighbor : elimination_set->neighbors()) {
+      out << set->id() << ' ' << set->name() << " |";
+      for (const auto &neighbor : graph.neighbors(set)) {
         out << ' ' << neighbor->id() << ' ' << neighbor->name();
       }
       return out.str();
     }
 
-    std::string print_node_sets(
-        const std::vector<Ptr<NodeSet<MoralNode>>> &sets) {
+    template <class NODESET>
+    std::string print_node_sets(const UndirectedGraph<Ptr<NODESET>> &graph) {
       std::ostringstream out;
       out << "----- Elimination Sets: -----\n";
-      for (const auto &elimination_set : sets) {
-        out << print_node_set(elimination_set) << std::endl;
+      for (const auto &set : graph) {
+        out << print_node_set(set, graph) << std::endl;
       }
       return out.str();
     }
@@ -149,31 +152,32 @@ namespace BOOM {
           create_moral_graph(directed_nodes_);
       std::vector<Ptr<NodeSet<MoralNode>>> elimination_sets =
           triangulate_moral_graph(moral_nodes);
-      make_elimination_tree(elimination_sets);
-      prune_elimination_tree(elimination_sets);
-      cliques_ = make_junction_tree_from_elimination_sets(
-          elimination_sets);
-      root_ = find_root(cliques_);
+      EliminationTree elimination_tree = make_elimination_tree(elimination_sets);
+      prune_elimination_tree(elimination_sets, elimination_tree);
+      make_junction_tree(elimination_sets, elimination_tree);
+      root_ = find_root(clique_graph_);
     }
 
     Ptr<Clique> JunctionTree::find_root(
-        const std::vector<Ptr<Clique>> &cliques) const {
-      for (int i = 0; i < cliques.size(); ++i) {
-        if (is_root(cliques[i])) {
-          return cliques[i];
+        const UndirectedGraph<Ptr<Clique>> &graph) const {
+      if (!graph.empty()) {
+        for (const Ptr<Clique> &clique: graph) {
+          if (is_root(clique)) {
+            return clique;
+          }
         }
+        report_error("Could not identify a root node.");
       }
-      report_error("Could not identify a root node.");
-      return Ptr<Clique>(nullptr);
+      return nullptr;
     }
 
     //---------------------------------------------------------------------------
     // Accumulating evidence.  Need to start from a node without parents.
     double JunctionTree::accumulate_evidence(const MixedMultivariateData &dp) {
       double logp = initialize_forward_algorithm(dp, root_);
-      // for (Ptr<Clique> neighbor : root_->neighbors()) {
-      //   logp += collect_additional_evidence(dp, neighbor, root_);
-      // }
+      for (Ptr<Clique> neighbor : neighbors(root_)) {
+        logp += collect_additional_evidence(dp, neighbor, root_);
+      }
       return logp;
     }
 
@@ -192,8 +196,8 @@ namespace BOOM {
 
       // Identify which nodes are known/unknown.
       for (const Ptr<MoralNode> &moral : root->elements()) {
-        //
-        if (moral->base_node()->is_variable_observed(data_point)) {
+        // TODO:  This is just a stub right now.
+        if (!moral->base_node()->is_missing(data_point)) {
 
         } else {
 
@@ -203,15 +207,24 @@ namespace BOOM {
 
       // Identify which nodes have no parents.
       return logp;
+   }
+    //---------------------------------------------------------------------------
+    double JunctionTree::collect_additional_evidence(
+        const MixedMultivariateData &data_point,
+        const Ptr<Clique> &target,
+        const Ptr<Clique> &source) {
+      double logp = 0.0;
+      report_error("JunctionTree::collect_additional_evidence is not yet "
+                   "implemented.");
+      return logp;
     }
-
 
     //---------------------------------------------------------------------------
     std::string JunctionTree::print_cliques() const {
       std::ostringstream out;
       out << "----- Cliques: -----\n";
-      for (const auto &clique : cliques_) {
-        out << print_node_set(clique) << std::endl;
+      for (const auto &clique : clique_graph_) {
+        out << print_node_set<Clique>(clique, clique_graph_) << std::endl;
       }
       return out.str();
     }
@@ -228,8 +241,9 @@ namespace BOOM {
     // Implementation detail for 'ensure_junction_tree'.  Algorithm 4.8 from
     // Cowell et al.
     std::vector<Ptr<Clique>>
-    JunctionTree::make_junction_tree_from_elimination_sets(
-        std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets) {
+    JunctionTree::make_junction_tree(
+        std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+        EliminationTree &neighbors) {
       // Step 1: promote the elimination sets to cliques.
       std::vector<Ptr<Clique>> cliques;
       for (int i = 0; i < elimination_sets.size(); ++i) {
@@ -245,7 +259,9 @@ namespace BOOM {
             cliques[i]->elements().intersection(running_union);
         for (int j = 0; j < i; ++j) {
           if (!cliques[j]->elements().disjoint_from(intersection)) {
-            cliques[i]->add_neighbor(cliques[j]);
+            clique_graph_.add_neighbor(cliques[i], cliques[j]);
+            ////// TODO: need to copy neighbor relationships from the
+            ////// elimination tree to the clique tree.
           }
         }
         running_union.absorb(cliques[i]->elements());
@@ -334,16 +350,23 @@ namespace BOOM {
     // Effects:
     //   The elimination sets are arranged into an (undirected) elimination tree
     //   by adding neighbor links between the sets.
-    void JunctionTree::make_elimination_tree(
+    JunctionTree::EliminationTree JunctionTree::make_elimination_tree(
         std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets) {
+
+      EliminationTree tree;
+      for (size_t i = 0; i < elimination_sets.size(); ++i) {
+        tree.add_element(elimination_sets[i]);
+      }
+
       for (size_t i = 0; i < elimination_sets.size(); ++i) {
         elimination_sets[i]->set_id(i);
         if (elimination_sets[i]->size() > 1) {
-          elimination_sets[i]->add_neighbor(
-              elimination_sets[find_second_largest_index(
-                  *elimination_sets[i])]);
+          Ptr<NodeSet<MoralNode>> neighbor = elimination_sets[
+              find_second_largest_index(*elimination_sets[i])];
+          tree.add_neighbor(elimination_sets[i], neighbor);
         }
       }
+      return tree;
     }
 
     // Prune the nodes of the elimination tree using Lemma 4.16 of Cowell et al.
@@ -354,13 +377,16 @@ namespace BOOM {
     // On exit, elimination_sets
     void JunctionTree::prune_elimination_tree(
         std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+        JunctionTree::EliminationTree &tree,
         int start_from) {
       for (Int i = start_from; i < elimination_sets.size(); ++i) {
         for (Int j = i + 1; j < elimination_sets.size(); ++j) {
           if (elimination_sets[i]->is_subset(*elimination_sets[j])) {
+            Ptr<NodeSet<MoralNode>> redundant = elimination_sets[i];
+            tree.erase(tree.find(elimination_sets[i]));
             elimination_sets[i] = elimination_sets[j];
             elimination_sets.erase(elimination_sets.begin() + j);
-            prune_elimination_tree(elimination_sets, i);
+            prune_elimination_tree(elimination_sets, tree, i);
             return;
           }
         }
@@ -397,6 +423,14 @@ namespace BOOM {
           node->add_neighbor(*other_it);
         }
       }
+    }
+
+    void JunctionTree::impute_missing_values(
+        MixedMultivariateData &data_point,
+        RNG &rng) {
+
+      report_error("Not yet implemented");
+
     }
 
   }  // namespace Graphical

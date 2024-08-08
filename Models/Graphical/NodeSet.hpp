@@ -47,10 +47,19 @@ namespace BOOM {
         Node::set_id(id);
       }
 
-      NodeSet(const SortedVector<NODETYPE> &elements)
+      explicit NodeSet(const SortedVector<NODETYPE> &elements)
           : Node(-1, ""),
             elements_(elements)
       {}
+
+      std::ostream &print(std::ostream &out) const override {
+        out << "[";
+        for (const auto &node : elements_) {
+          out << *node << ' ';
+        }
+        out << "]";
+        return out;
+      }
 
       //-----------------------------------------------------------------------
       // Set interface
@@ -61,35 +70,11 @@ namespace BOOM {
         recompute_name();
       }
 
-      // Syntactic sugar.
+      // Syntactic sugar for 'add'.
       void insert(const Ptr<NODETYPE> &node) { add(node); }
 
       const SortedVector<Ptr<NODETYPE>> &elements() const {
         return elements_;
-      }
-
-      //-----------------------------------------------------------------------
-      // Container interface
-      iterator begin() { return elements_.begin();}
-      iterator end() { return elements_.end();}
-      const_iterator begin() const { return elements_.begin();}
-      const_iterator end() const { return elements_.end();}
-      size_t size() const {return elements_.size();}
-
-      //-----------------------------------------------------------------------
-      // NodeSet as a node in a hypergraph.
-      void add_neighbor(const Ptr<NodeSet<NODETYPE>> &nodeset,
-                        bool reciprocate = true) {
-        neighbors_.insert(nodeset);
-        if (reciprocate) {
-          // Don't reciprocate the reciprocation, or there will be an infinite
-          // loop.
-          nodeset->add_neighbor(this, false);
-        }
-      }
-
-      const std::set<Ptr<NodeSet<NODETYPE>>> &neighbors() const {
-        return neighbors_;
       }
 
       bool is_subset(const NodeSet<NODETYPE> &other) const {
@@ -105,9 +90,16 @@ namespace BOOM {
         return NodeSet(elements_.intersection(other.elements_));
       }
 
+      //-----------------------------------------------------------------------
+      // Container interface
+      iterator begin() { return elements_.begin();}
+      iterator end() { return elements_.end();}
+      const_iterator begin() const { return elements_.begin();}
+      const_iterator end() const { return elements_.end();}
+      size_t size() const {return elements_.size();}
+
      private:
       SortedVector<Ptr<NODETYPE>> elements_;
-      std::set<Ptr<Graphical::NodeSet<NODETYPE>>> neighbors_;
 
       // The name of the NodeSet is the name of the
       void recompute_name() {

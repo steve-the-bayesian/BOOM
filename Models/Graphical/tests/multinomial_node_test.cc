@@ -21,5 +21,10 @@ namespace {
 
   TEST_F(MultinomialNodeTest, test_stuff) {
     data_ = fake_data_table(100, 0, {3, 2, 4});
+    for (const auto &el : data_.vnames()) {
+      std::cout << el << "\n";
+    }
+
+    NEW(MultinomialNode, v1)(data_, "V1");
   }
 }

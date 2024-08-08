@@ -23,13 +23,14 @@
 
 #include "Models/Graphical/Node.hpp"
 #include "Models/Graphical/NodeSet.hpp"
+#include "Models/Graphical/UndirectedGraph.hpp"
 #include "LinAlg/Array.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace Graphical {
 
-    // A clique is NodeSet of nodes that are all neighbors of one another.
+    // A clique is NodeSet of MoralNode's that are all neighbors of one another.
     class Clique : public NodeSet<MoralNode> {
      public:
       // An empty Clique.
@@ -107,28 +108,26 @@ namespace BOOM {
     //===========================================================================
     class CliqueFinder {
      public:
-      bool add_node(const Ptr<MoralNode> &node) {
+      Ptr<Clique> add_node(const Ptr<MoralNode> &node) {
         int membership_count = 0;
-        for (size_t i = 0; i < cliques_.size(); ++i) {
-          membership_count += cliques_[i]->try_add(node);
+        for (auto &clique : cliques_) {
+          membership_count += clique->try_add(node);
         }
 
         if (membership_count == 0) {
           NEW(Clique, clique)();
           clique->try_add(node);
-          cliques_.push_back(clique);
-          return true;
+          cliques_.add_element(clique);
+          return clique;
         } else {
-          return false;
+          return nullptr;
         }
       }
 
       void find_cliques(const std::vector<Ptr<MoralNode>> &nodes) {
         for (size_t i = 0; i < nodes.size(); ++i) {
-          const Ptr<MoralNode> &node(nodes[i]);
-          bool added_new_clique = add_node(node);
-          if (added_new_clique) {
-            Ptr<Clique> &clique(cliques_.back());
+          Ptr<Clique> clique = add_node(nodes[i]);
+          if (!!clique) {
             for (size_t j = 0; j < i; ++j) {
               const Ptr<MoralNode> &old_node(nodes[j]);
               clique->try_add(old_node);
@@ -137,24 +136,27 @@ namespace BOOM {
         }
       }
 
-      void establish_links(std::vector<Ptr<Clique>> &cliques) const {
-        for (size_t i = 0; i < cliques.size(); ++i ){
-          Ptr<Clique> &first(cliques[i]);
-          for (size_t j = i + 1; j < cliques.size(); ++j) {
-            Ptr<Clique> &second(cliques[j]);
+      void establish_links(UndirectedGraph<Ptr<Clique>> &cliques) const {
+        using CIT = UndirectedGraph<Ptr<Clique>>::const_iterator;
+        for (CIT it1 = cliques.begin(); it1 != cliques.end(); ++it1) {
+          const Ptr<Clique> &first(*it1);
+          CIT it2 = it1;
+          ++it2;
+          for (; it2 != cliques.end(); ++it2) {
+            const Ptr<Clique> &second(*it2);
             if (first->shares_node_with(second)) {
-              first->add_neighbor(second);
+              cliques.add_neighbor(first, second);
             }
           }
         }
       }
 
-      const std::vector<Ptr<Clique>> &cliques() const {
+      const UndirectedGraph<Ptr<Clique>> &cliques() const {
         return cliques_;
       }
 
      private:
-      std::vector<Ptr<Clique>> cliques_;
+      UndirectedGraph<Ptr<Clique>> cliques_;
     };
 
     //==========================================================================
@@ -181,13 +183,12 @@ namespace BOOM {
       SpdMatrix unknown_gaussian_potential_precisions_;
     };
 
-    inline std::vector<Ptr<Clique>> find_cliques(
+    inline UndirectedGraph<Ptr<Clique>> find_cliques(
         const std::vector<Ptr<MoralNode>> &nodes) {
       CliqueFinder clique_finder;
       clique_finder.find_cliques(nodes);
-       return clique_finder.cliques();
+      return clique_finder.cliques();
     }
-
 
   } // namespace Graphical
 }  // namespace BOOM
