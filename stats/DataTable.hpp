@@ -35,6 +35,21 @@
 
 namespace BOOM {
 
+  // A DataTable is a rectangular array of mixed type data.  Each column in a
+  // DataTable contains data of homogeneous type: numeric, categorical, ordinal,
+  // datetime, etc.
+  //
+  // A single row of a DataTable is represented by the type
+  // MixedMultivariateData.  The type information in a DataTable and a
+  // MixedMultivariateData is kept in a DataTypeIndex, which can be shared by a
+  // DataTable and potentially multiple MixedMultivariateData objects.
+  //
+  // Columns in a DataTable are represented by different data types.  Vector is
+  // used for numeric data.  CategoricalVariable and DateTimeVariable are used
+  // for categorical and DateTime objects, respectively.  Using these variable
+  // types (instead of vectors of integers and DateTime objects) allows for
+  // observation-by-observation data missingness.
+
   enum class VariableType {unknown = -1, numeric, categorical, datetime};
 
   //===========================================================================
@@ -276,7 +291,7 @@ namespace BOOM {
     DataTable *clone() const override;
     std::ostream &display(std::ostream &out) const override;
 
-    //
+    // Read a DataTable from a text file.
     void read_file(const std::string &filename,
                    bool header = false,
                    const std::string &sep = "");
@@ -286,21 +301,24 @@ namespace BOOM {
     // If the data table is empty, appending the first variable determines the
     // number of rows.
     void append_variable(const Vector &v, const std::string &name);
-    void cbind(const Vector &v, const std::string, &name) {
+    DataTable &cbind(const Vector &v, const std::string &name) {
       append_variable(v, name);
+      return *this;
     }
 
     void append_variable(const CategoricalVariable &cv,
                          const std::string &name);
-    void cbind(const CategoricalVariable &cv, const std::string &name) {
+    DataTable &cbind(const CategoricalVariable &cv, const std::string &name) {
       append_variable(cv, name);
+      return *this;
     }
 
     // If the data table is empty, appending the first row determines the number
     // and type of columns.
     void append_row(const MixedMultivariateData &row);
-    void rbind(const MixedMultivariateData &row) {
+    DataTable &rbind(const MixedMultivariateData &row) {
       append_row(row);
+      return *this;
     }
 
     //--- size  ---
@@ -358,8 +376,9 @@ namespace BOOM {
     Ptr<MixedMultivariateData> row(uint row_index) const;
 
     //--- Compute a design matrix ---
-    LabeledMatrix design(bool add_icpt = false) const;
-    LabeledMatrix design(const Selector &include, bool add_icpt = false) const;
+    LabeledMatrix design(bool add_intercept = false) const;
+    LabeledMatrix design(const Selector &include,
+                         bool add_intercept = false) const;
 
     // Bind the rows of rhs below the rows of *this.  The variable
     // types of *this and rhs must match, and all categorical

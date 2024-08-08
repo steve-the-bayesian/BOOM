@@ -537,14 +537,15 @@ namespace BOOM {
     return type_index_->total_number_of_fields();
   }
 
-  LabeledMatrix DataTable::design(bool add_int) const {
+  LabeledMatrix DataTable::design(bool add_intercept) const {
     std::vector<bool> include(nvars(), true);
-    return design(Selector(include), add_int);
+    return design(Selector(include), add_intercept);
   }
 
   //------------------------------------------------------------
-  LabeledMatrix DataTable::design(const Selector &include, bool add_int) const {
-    uint dimension = add_int ? 1 : 0;
+  LabeledMatrix DataTable::design(const Selector &include,
+                                  bool add_intercept) const {
+    uint dimension = add_intercept ? 1 : 0;
     for (uint i = 0; i < include.nvars(); ++i) {
       uint J = include.indx(i);
       uint incremental_dimension = 1;
@@ -557,8 +558,8 @@ namespace BOOM {
     uint number_of_observations = nobs();
     Matrix X(number_of_observations, dimension);
     for (uint i = 0; i < number_of_observations; ++i) {
-      if (add_int) X(i, 0) = 1.0;
-      uint column = add_int ? 1 : 0;
+      if (add_intercept) X(i, 0) = 1.0;
+      uint column = add_intercept ? 1 : 0;
       for (uint j = 0; j < include.nvars(); ++j) {
         uint J = include.indx(j);
         VariableType type;
@@ -577,7 +578,7 @@ namespace BOOM {
     }
 
     std::vector<std::string> dimnames;
-    if (add_int) {
+    if (add_intercept) {
       dimnames.push_back("Intercept");
     }
     for (uint j = 0; j < include.nvars(); ++j) {

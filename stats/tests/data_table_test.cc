@@ -75,9 +75,9 @@ namespace {
     EXPECT_EQ(table.variable_type(4), VariableType::categorical);
     EXPECT_EQ(table.variable_type(5), VariableType::categorical);
 
-    EXPECT_EQ(table.nlevels(0), 1);
-    EXPECT_EQ(table.nlevels(1), 1);
-    EXPECT_EQ(table.nlevels(2), 1);
+    EXPECT_EQ(table.nlevels(0), -1);
+    EXPECT_EQ(table.nlevels(1), -1);
+    EXPECT_EQ(table.nlevels(2), -1);
     EXPECT_EQ(table.nlevels(3), 4);
     EXPECT_EQ(table.nlevels(4), 2);
     EXPECT_EQ(table.nlevels(5), 3);
