@@ -132,8 +132,8 @@ class SpikeSlabArPrior:
                  prior_sd=None,
                  prior_df=1,
                  expected_r2=0.5,
-                 sigma_upper_limit=np.Inf,
-                 max_flips=np.Inf):
+                 sigma_upper_limit=np.inf,
+                 max_flips=np.inf):
         self._lags = int(lags)
         if self._lags < 0:
             raise Exception("'lags' argument must be non-negative.")
