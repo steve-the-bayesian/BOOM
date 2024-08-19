@@ -33,7 +33,7 @@ namespace {
   TEST_F(SimulatedAnnealingTest, SmallExample) {
     auto target = [](const Vector &x) {
       double ans = 17;
-      for (int i = 0; i < x.size(); ++i) {
+      for (size_t i = 0; i < x.size(); ++i) {
         ans += square(x[i] - i);
       }
       return ans;
@@ -49,12 +49,12 @@ namespace {
     double min_value = opt.minimize(x, GlobalRng::rng);
 
     // std::cout << "fun count:  "  << opt.function_count() << "\n";
-    
+
     EXPECT_GE(min_value, 17.0);
     EXPECT_LE(min_value, 17.1);
 
     double eps = 1e-2;
-    
+
     EXPECT_NEAR(x[0], 0.0, eps);
     EXPECT_NEAR(x[1], 1.0, eps);
     EXPECT_NEAR(x[2], 2.0, eps);
