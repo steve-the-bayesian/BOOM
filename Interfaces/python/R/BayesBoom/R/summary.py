@@ -146,7 +146,7 @@ def weekday(datetime):
     day_codes = datetime.dt.weekday
     obs = ~day_codes.isna()
     ans = pd.Series(
-        pd.Categorical([np.NaN] * datetime.shape[0], categories=day_names),
+        pd.Categorical([np.nan] * datetime.shape[0], categories=day_names),
         index=datetime.index
     )
     # The code below works around an issue in numpy / pandas where they fail to
@@ -174,7 +174,7 @@ def month(datetime):
     month_codes = datetime.dt.month - 1
     obs = ~month_codes.isna()
     ans = pd.Series(
-        pd.Categorical([np.NaN] * datetime.shape[0], categories=month_names),
+        pd.Categorical([np.nan] * datetime.shape[0], categories=month_names),
         index=datetime.index
     )
     # The code below works around an issue in numpy / pandas where they fail to
@@ -250,7 +250,7 @@ class NumericSummary(UnivariateSummary):
 
             # Always treat infinite values as missing.
             if np.isinf(X.max()) or np.isinf(X.min()):
-                Z = X.replace([np.inf, -np.inf], np.NaN)
+                Z = X.replace([np.inf, -np.inf], np.nan)
 
                 self._summarize(Z)
                 return
@@ -261,7 +261,7 @@ class NumericSummary(UnivariateSummary):
                 # single missing value code, go ahead and treat the code as
                 # missing data.
                 missing_code = self._potential_missing_value_codes[0]
-                Z = X.replace(missing_code, np.NaN)
+                Z = X.replace(missing_code, np.nan)
                 self._summarize(Z)
                 # The summarize method will obliterate the missing value code.
                 # Put it back.
@@ -598,7 +598,7 @@ class CategoricalSummary(UnivariateSummary):
 
     def levels(self,
                include_missing: bool = False,
-               missing_code=np.NaN,
+               missing_code=np.nan,
                omit_zero_frequency: bool = True):
         """
         Returns the levels for encoding the categorical variable.
@@ -673,7 +673,7 @@ Frequency Distribution:
         """
 
         if self._frequency_distribution.has_missing_data:
-            self._number_missing = self._frequency_distribution[np.NaN]
+            self._number_missing = self._frequency_distribution[np.nan]
         else:
             self._number_missing = 0
         sample_size = np.sum(self._frequency_distribution)

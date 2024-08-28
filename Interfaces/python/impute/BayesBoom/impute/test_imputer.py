@@ -26,8 +26,8 @@ class ImputerTest(unittest.TestCase):
 
     def test_fit_imputation_model(self):
         data = self.data
-        data["X1"][:10] = np.NaN
-        data["X2"][5:15] = np.NaN
+        data["X1"][:10] = np.nan
+        data["X2"][5:15] = np.nan
         self.model.find_atoms(data)
         num_clusters = 5
         niter = 100

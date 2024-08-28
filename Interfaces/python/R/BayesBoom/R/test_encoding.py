@@ -33,7 +33,7 @@ class TestEffectEncoder(unittest.TestCase):
 
     def test_new_level(self):
         encoder = R.EffectEncoder("Color", ["Red", "Blue", "Green"])
-        enc = encoder.encode(["Red", "Blue", "Orange", np.NaN, 17, "Green"])
+        enc = encoder.encode(["Red", "Blue", "Orange", np.nan, 17, "Green"])
         expected = np.array([[1.0, 0.0],
                              [0.0, 1.0],
                              [0.0, 0.0],
@@ -56,7 +56,7 @@ class TestEffectEncoder(unittest.TestCase):
 
     def test_json(self):
         encoder = R.EffectEncoder("Color", ["Red", "Blue", "Green"])
-        data = ["Red", "Blue", "Orange", np.NaN, 17, "Green"]
+        data = ["Red", "Blue", "Orange", np.nan, 17, "Green"]
         enc = encoder.encode(data)
 #         json_encoder = R.MainEffectEncoderJsonEncoder()
         json_string = json.dumps(encoder,
@@ -122,7 +122,7 @@ class TestMissingDummyEncoder(unittest.TestCase):
         encoder = R.MissingDummyEncoder(base)
         self.assertEqual(encoder.variable_name, "Blah")
 
-        x = np.array([1, 2, np.NaN, 3])
+        x = np.array([1, 2, np.nan, 3])
         foo = encoder.encode(x)
         self.assertEqual(foo.shape, (4, 2))
         self.assertTrue(np.allclose(foo[:, 0], np.array([0, 0, 1, 0])))
@@ -137,7 +137,7 @@ class TestMissingDummyEncoder(unittest.TestCase):
     def test_categorical(self):
         base = R.EffectEncoder("Stooges", ["Larry", "Moe", "Curly"])
         encoder = R.MissingDummyEncoder(base)
-        x = np.array(["Larry", "Curly", np.NaN, "Moe"], dtype=object)
+        x = np.array(["Larry", "Curly", np.nan, "Moe"], dtype=object)
         foo = encoder.encode(x)
         self.assertEqual(foo.shape, (4, 3))
         self.assertTrue(np.allclose(

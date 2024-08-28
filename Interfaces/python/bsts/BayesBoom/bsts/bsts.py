@@ -808,7 +808,7 @@ class Bsts:
         actuals = self.original_series if show_actuals is True else None
 
         implied_cutpoints = list(errors.keys())
-        vertical_cuts = [np.NaN] * len(implied_cutpoints)
+        vertical_cuts = [np.nan] * len(implied_cutpoints)
         for i in range(len(vertical_cuts)):
             if implied_cutpoints[i] < len(timestamps):
                 vertical_cuts[i] = timestamps[implied_cutpoints[i]]

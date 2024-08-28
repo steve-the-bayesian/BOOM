@@ -402,7 +402,7 @@ class PdIndexJsonDecoder(json.JSONDecoder):
                 # interpret categories[-1] as "the last category" when it
                 # should translate to NaN.
                 codes = np.array(codes)
-                index_values[codes == -1] = np.NaN
+                index_values[codes == -1] = np.nan
                 index = pd.CategoricalIndex(
                     index_values,
                     categories=categories,

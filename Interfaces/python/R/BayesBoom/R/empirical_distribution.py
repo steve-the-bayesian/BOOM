@@ -46,7 +46,7 @@ class ECDF:
             x = np.array(x)
         missing = np.isnan(x)
         observed = ~missing
-        ans = np.full(len(x), np.NaN)
+        ans = np.full(len(x), np.nan)
 
         pos = np.searchsorted(self._sorted_data, x[observed], side=self._side)
         ans[observed] = pos / self._n
@@ -233,7 +233,7 @@ class NumericEmpiricalDistribution:
         x = np.array(x, dtype=float)
         ans = np.zeros_like(x)
         missing = np.isnan(x)
-        ans[missing] = np.NaN
+        ans[missing] = np.nan
         if np.all(missing):
             return ans
 

@@ -229,7 +229,7 @@ class MixedDataImputer:
         Args:
           data: The data on which to train the model.  Any non-numeric
             variables are treated as categorical.  Missing values are expected
-            to be coded as np.NaN.
+            to be coded as np.nan.
           nclusters: The number of clusters to use for the joint
             distribution of the categorical data.
           niter:  The number of MCMC iterations to use during training.

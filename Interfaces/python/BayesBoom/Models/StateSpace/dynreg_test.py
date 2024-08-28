@@ -193,7 +193,7 @@ class DynregTest(unittest.TestCase):
             unscaled_innovation_sd, self._p00, self._p11)
 
         niter = 1000
-        draws = np.full((niter, model.xdim, model.time_dimension), np.NaN)
+        draws = np.full((niter, model.xdim, model.time_dimension), np.nan)
 
         for i in range(niter):
             model.draw_coefficients_given_inclusion(boom.GlobalRng.rng)
