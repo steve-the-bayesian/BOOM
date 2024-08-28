@@ -156,6 +156,14 @@ namespace {
     EXPECT_EQ(2, small.size());
     EXPECT_EQ(1, small[0]);
     EXPECT_EQ(4, small[1]);
+
+    std::vector<int> expanded = inc.expand(small);
+    EXPECT_EQ(expanded.size(), 5);
+    EXPECT_EQ(expanded[0], big[0]);
+    EXPECT_EQ(expanded[1], 0);
+    EXPECT_EQ(expanded[2], 0);
+    EXPECT_EQ(expanded[3], big[3]);
+    EXPECT_EQ(expanded[4], 0);
   }
 
   TEST_F(SelectorTest, SelectorMatrixTest) {

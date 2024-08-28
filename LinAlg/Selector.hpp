@@ -52,6 +52,7 @@ namespace BOOM {
     explicit Selector(const std::string &zeros_and_ones);
     explicit Selector(const std::vector<bool> &values);
     Selector(const std::vector<uint> &pos, uint n);
+    Selector(const std::vector<int> &pos, int n);
 
     bool operator==(const Selector &rhs) const;
     bool operator!=(const Selector &rhs) const;
@@ -182,6 +183,20 @@ namespace BOOM {
     Vector expand(const VectorView &x) const;
     Vector expand(const ConstVectorView &x) const;
 
+    // Expand a numeric std::vector.  The type T of the vector must be
+    // constructable with literal int 0.
+    //
+    // Args:
+    //   stuff: The vector to be expanded.  The size of the vector must match
+    //     nvars().
+    //
+    // Returns:
+    //   A std::vector<T> of size nvars_possible().  The 'included' elements of
+    //   the return vector are filled with the elements of 'stuff'.  The
+    //   excluded elements are filled with 0 (of type T).
+    template <class T>
+    std::vector<T> expand(const std::vector<T> &stuff) const;
+
     // Fill the missing elements of a vector with specfic values.
     //
     // Args:
@@ -294,6 +309,16 @@ namespace BOOM {
       tmp.add(INDX(rhs.indx(i)));
     }
     return tmp.select(x);
+  }
+
+  template <class T>
+  std::vector<T> Selector::expand(const std::vector<T> &stuff) const {
+    T zero(0);
+    std::vector<T> ans(nvars_possible(), zero);
+    for (size_t i = 0; i < stuff.size(); ++i) {
+      ans[expanded_index(i)] = stuff[i];
+    }
+    return ans;
   }
 
   //===========================================================================
