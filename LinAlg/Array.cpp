@@ -18,6 +18,7 @@
 */
 
 #include "LinAlg/Array.hpp"
+#include "LinAlg/Selector.hpp"
 #include <algorithm>
 #include <cstdarg>
 #include <sstream>
@@ -195,6 +196,15 @@ namespace BOOM {
                                          const std::vector<int> &host_strides) {
       return template_vector_slice_array<VectorView, double *>(
           host_data, index, host_dims, host_strides);
+    }
+
+    template <class ARRAY>
+    double array_sum(const ARRAY &array) {
+      double ans = 0.0;
+      for (auto it = array.begin(); it != array.end(); ++it) {
+        ans += *it;
+      }
+      return ans;
     }
 
   }  // namespace
@@ -576,6 +586,15 @@ namespace BOOM {
     return *this;
   }
 
+  Array ArrayView::sum(const std::vector<int> &sum_over_dims) const {
+    ConstArrayView view(*this);
+    return view.sum(sum_over_dims);
+  }
+
+  double ArrayView::scalar_sum() const {
+    return array_sum<ArrayView>(*this);
+  }
+
   ostream &ArrayView::print(ostream &out) const {
     return print_array(out, *this);
   }
@@ -671,6 +690,27 @@ namespace BOOM {
     ConstArrayIterator ans(this);
     ans.set_to_end();
     return ans;
+  }
+
+  Array ConstArrayView::sum(const std::vector<int> &sum_over_dims) const {
+    // output_dims contains the extent of each dimension in the output array.
+    Selector sum_over(sum_over_dims, ndim());
+    Selector keep = sum_over.complement();
+    std::vector<int> output_dims = keep.select(dim());
+
+    Array ans(output_dims, 0.0);
+    for (auto it = ans.abegin(); it != ans.aend(); ++it) {
+      std::vector<int> index = keep.expand(it.position());
+      for (const auto &d : sum_over_dims) {
+        index[d] = -1;
+      }
+      *it = slice(index).scalar_sum();
+    }
+    return ans;
+  }
+
+  double ConstArrayView::scalar_sum() const {
+    return array_sum<ConstArrayView>(*this);
   }
 
   ostream & ConstArrayView::print(ostream &out) const {
@@ -920,6 +960,15 @@ namespace BOOM {
     ConstArrayIterator it(this);
     it.set_to_end();
     return it;
+  }
+
+  Array Array::sum(const std::vector<int> &sum_over_dims) const {
+    ConstArrayView view(*this);
+    return view.sum(sum_over_dims);
+  }
+
+  double Array::scalar_sum() const {
+    return array_sum<Array>(*this);
   }
 
   ostream &Array::print(ostream &out) const {

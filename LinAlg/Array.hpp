@@ -213,6 +213,21 @@ namespace BOOM {
     ConstArrayIterator begin() const;
     ConstArrayIterator end() const;
 
+    // Args:
+    //   dims: An array of integers over which to compute the sum.  The length
+    //     of dims must be no greater than the number of dimensions of the
+    //     array.  The elements of dims must be unique, non-negative, and less
+    //     than this->ndim().
+    //
+    // Returns:
+    //   The dimensions of the returned array correspond to this->dim() with any
+    //   dimensions in 'dims' removed.
+    Array sum(const std::vector<int> &dims) const;
+
+    // The sum of all elements in the array;
+    double scalar_sum() const;
+    double sum() const {return scalar_sum();}
+
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
 
@@ -293,6 +308,19 @@ namespace BOOM {
     ConstArrayIterator end() const;
     ArrayIterator begin();
     ArrayIterator end();
+
+    // Args:
+    //   dims: An array of integers over which to compute the sum.  The length
+    //     of dims must be no greater than the number of dimensions of the
+    //     array.  The elements of dims must be unique, non-negative, and less
+    //     than this->ndim().
+    //
+    // Returns:
+    //   The dimensions of the returned array correspond to this->dim() with any
+    //   dimensions in 'dims' removed.
+    Array sum(const std::vector<int> &dims) const;
+    double scalar_sum() const;
+    double sum() const {return scalar_sum();}
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
@@ -413,6 +441,19 @@ namespace BOOM {
     ArrayIterator aend();
     ConstArrayIterator abegin() const;
     ConstArrayIterator aend() const;
+
+    // Args:
+    //   dims: An array of integers over which to compute the sum.  The length
+    //     of dims must be no greater than the number of dimensions of the
+    //     array.  The elements of dims must be unique, non-negative, and less
+    //     than this->ndim().
+    //
+    // Returns:
+    //   The dimensions of the returned array correspond to this->dim() with any
+    //   dimensions in 'dims' removed.
+    Array sum(const std::vector<int> &dims) const;
+    double scalar_sum() const;
+    double sum() const {return scalar_sum();}
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
