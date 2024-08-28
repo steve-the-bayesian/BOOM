@@ -18,6 +18,9 @@
 
 #include "Models/Graphical/Node.hpp"
 #include <algorithm>
+#include <sstream>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace Graphical {
@@ -71,6 +74,21 @@ namespace BOOM {
       return is_in(node, parents_) || is_in(node, children_);
     }
 
+    double DirectedNode::numeric_value(
+        const MixedMultivariateData &data_point) const {
+      std::ostringstream err;
+      err << "Node " << name() << " does not model numeric data.";
+      report_error(err.str());
+      return negative_infinity();
+    }
+
+    int DirectedNode::categorical_value(
+        const MixedMultivariateData &data_point) const {
+      std::ostringstream err;
+      err << "Node " << name() << " does not model categorical data.";
+      report_error(err.str());
+      return -1;
+    }
 
   }  // namespace Graphical
 }  // namespace BOOM

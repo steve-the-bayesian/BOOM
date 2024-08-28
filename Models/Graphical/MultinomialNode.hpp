@@ -26,7 +26,10 @@
 namespace BOOM {
   namespace Graphical {
 
-    // Do we need a class for DiscreteNode?
+    // A node in a DirectedGraphicalModel that describes ao categorical variable
+    // using a collection of MultinomialModel objects.
+    //
+    // A MultinomialNode must have parents that are all discrete.
     class MultinomialNode : public DirectedNode {
      public:
       // Build a MultinomialNode by searching a DataTable for a variable with a
@@ -45,17 +48,37 @@ namespace BOOM {
         return NodeType::CATEGORICAL;
       }
 
-      Int output_dim() const override {return categorical_key_->max_levels();}
+      Int dim() const override {return categorical_key_->max_levels();}
 
+      // The conditional distribution of this node's outcome variable given the
+      // node's parents.  Because Gaussian nodes cannot be parents of
+      // categorical nodes, all parents are categorical.
+      //
+      // Returns:
+      //   A K + 1 dimensional array, where K is the number of this node's
+      //   parents.  The order of the dimensions is the same as the order of
+      //   nodes in this->parents().  The final dimension corresponds to levels
+      //   of this node's target variable.
       Array conditional_probability_table() const;
 
-      // Returns t
-      const Vector &probs(const MixedMultivariateData &data_point) const;
+      // Returns the conditional distribution of this node's variable given its
+      // ancestors.
+      double logp(const MixedMultivariateData &dp) const override;
 
       // Returns the output dimension of each parent.  Note that parents of
       // categorical nodes must also be categorical.  If this method finds a
       // non-categorical parent of this object it will throw an exception.
       std::vector<int> parent_dims() const;
+
+      // The value of this node's target variable in 'data_point', or -1 if the
+      // variable is missing.
+      int categorical_value(
+          const MixedMultivariateData &data_point) const override;
+
+      // Syntactic sugar for categorical_value.
+      int value(const MixedMultivariateData &data_point) {
+        return categorical_value(data_point);
+      }
 
      private:
       // The structure of models_ depends on the number of parents this node

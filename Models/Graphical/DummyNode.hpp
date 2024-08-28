@@ -35,7 +35,7 @@ namespace BOOM {
         return NodeType::DUMMY;
       }
 
-      Int output_dim() const override {
+      Int dim() const override {
         return -1;
       }
 

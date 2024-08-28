@@ -20,11 +20,15 @@ namespace {
   };
 
   TEST_F(MultinomialNodeTest, test_stuff) {
+    // Create a fake data table with 3 columns V1, V2, V3, filled with
+    // categorical variables with 3, 2, and 4 levels.
     data_ = fake_data_table(100, 0, {3, 2, 4});
     for (const auto &el : data_.vnames()) {
       std::cout << el << "\n";
     }
 
     NEW(MultinomialNode, v1)(data_, "V1");
+    EXPECT_EQ(v1->node_type(), NodeType::CATEGORICAL);
+    EXPECT_EQ(v1->output_dim(), 3);
   }
 }

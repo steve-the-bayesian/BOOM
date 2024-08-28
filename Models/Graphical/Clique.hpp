@@ -23,9 +23,6 @@
 
 #include "Models/Graphical/Node.hpp"
 #include "Models/Graphical/NodeSet.hpp"
-#include "Models/Graphical/UndirectedGraph.hpp"
-#include "LinAlg/Array.hpp"
-#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace Graphical {
@@ -38,17 +35,7 @@ namespace BOOM {
 
       // Create a Clique from a NodeSet.  All nodes in node_set must be
       // neighbors of one another.  Otherwise an exception is generated.
-      Clique(const NodeSet<MoralNode> &node_set) {
-        for (const auto &el : node_set.elements()) {
-          bool ok = try_add(el);
-          if (!ok) {
-            std::ostringstream err;
-            err << "Could not add " << el->name()
-                << " to the clique " << name();
-            report_error(err.str());
-          }
-        }
-      }
+      Clique(const NodeSet<MoralNode> &node_set);
 
       // const std::string &name() const override {
       //   return NodeSet<MoralNode>::name();
@@ -66,15 +53,7 @@ namespace BOOM {
       //
       // Returns:
       //   A flag indicating whether 'node' was added to this object's elements.
-      bool try_add(const Ptr<MoralNode> &node){
-        for (const auto &el : elements()) {
-          if (!node->is_neighbor(el)) {
-            return false;
-          }
-        }
-        NodeSet<MoralNode>::add(node);
-        return true;
-      }
+      bool try_add(const Ptr<MoralNode> &node);
 
       // Two cliques are equal if their elements_ are equal.
       bool operator==(const Clique &rhs) const {
@@ -91,104 +70,12 @@ namespace BOOM {
       // }
 
       // Return true iff *this and other have at least one element in common.
-      bool shares_node_with(const Ptr<Clique> &other) const {
-        return !elements().disjoint_from(other->elements());
-      }
+      bool shares_node_with(const Ptr<Clique> &other) const;
 
-      bool contains(const Ptr<DirectedNode> &node) const {
-        for (const auto &el : elements()) {
-          if (el->base_node() == node) {
-            return true;
-          }
-        }
-        return false;
-      }
+      // Returns true iff *this contains the specified node.
+      bool contains(const Ptr<DirectedNode> &node) const;
     };
 
-    //===========================================================================
-    class CliqueFinder {
-     public:
-      Ptr<Clique> add_node(const Ptr<MoralNode> &node) {
-        int membership_count = 0;
-        for (auto &clique : cliques_) {
-          membership_count += clique->try_add(node);
-        }
-
-        if (membership_count == 0) {
-          NEW(Clique, clique)();
-          clique->try_add(node);
-          cliques_.add_element(clique);
-          return clique;
-        } else {
-          return nullptr;
-        }
-      }
-
-      void find_cliques(const std::vector<Ptr<MoralNode>> &nodes) {
-        for (size_t i = 0; i < nodes.size(); ++i) {
-          Ptr<Clique> clique = add_node(nodes[i]);
-          if (!!clique) {
-            for (size_t j = 0; j < i; ++j) {
-              const Ptr<MoralNode> &old_node(nodes[j]);
-              clique->try_add(old_node);
-            }
-          }
-        }
-      }
-
-      void establish_links(UndirectedGraph<Ptr<Clique>> &cliques) const {
-        using CIT = UndirectedGraph<Ptr<Clique>>::const_iterator;
-        for (CIT it1 = cliques.begin(); it1 != cliques.end(); ++it1) {
-          const Ptr<Clique> &first(*it1);
-          CIT it2 = it1;
-          ++it2;
-          for (; it2 != cliques.end(); ++it2) {
-            const Ptr<Clique> &second(*it2);
-            if (first->shares_node_with(second)) {
-              cliques.add_neighbor(first, second);
-            }
-          }
-        }
-      }
-
-      const UndirectedGraph<Ptr<Clique>> &cliques() const {
-        return cliques_;
-      }
-
-     private:
-      UndirectedGraph<Ptr<Clique>> cliques_;
-    };
-
-    //==========================================================================
-    // A mix of categorical and conditionally Gaussian distributions.
-    // Some values are marked as known.
-    class CliqueMarginalDistribution : private RefCounted {
-      friend void intrusive_ptr_add_ref(CliqueMarginalDistribution *d) {
-        d->up_count();
-      }
-      friend void intrusive_ptr_release(CliqueMarginalDistribution *d) {
-        d->down_count();
-        if (d->ref_count() == 0) delete d;
-      }
-
-     public:
-      void marginalize();
-
-     private:
-      std::map<Ptr<Node>, int> known_discrete_variables_;
-      std::map<Ptr<Node>, double> known_gaussian_variables_;
-
-      Array unknown_discrete_distribution_;
-      Vector unknown_gaussian_potential_means_;
-      SpdMatrix unknown_gaussian_potential_precisions_;
-    };
-
-    inline UndirectedGraph<Ptr<Clique>> find_cliques(
-        const std::vector<Ptr<MoralNode>> &nodes) {
-      CliqueFinder clique_finder;
-      clique_finder.find_cliques(nodes);
-      return clique_finder.cliques();
-    }
 
   } // namespace Graphical
 }  // namespace BOOM

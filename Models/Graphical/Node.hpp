@@ -55,7 +55,7 @@ namespace BOOM {
       // Args:
       //   id:  An index uniquely identifying the node in the graph.
       //   name:  A string, intended for human consumption.
-      Node(int node_id, const std::string &name = "")
+      explicit Node(int node_id, const std::string &name = "")
           : id_(node_id),
             name_(name)
       {}
@@ -65,6 +65,8 @@ namespace BOOM {
 
       // An optional human-interpretable string indicating the node's relevance.
       virtual const std::string & name() const {return name_;}
+
+      virtual std::ostream &print(std::ostream &out) const = 0;
 
      protected:
       void set_name(const std::string &name) const {
@@ -121,9 +123,10 @@ namespace BOOM {
                          bool throw_on_error = true);
 
       void set_variable_index(int index) { variable_index_ = index; }
+      int variable_index() const {return variable_index_;}
 
       virtual NodeType node_type() const = 0;
-      virtual Int output_dim() const = 0;
+      virtual Int dim() const = 0;
 
       // This node's contribution to the log density of dp.  The conditional
       // distribution of this node's chunk of dp, given its parents.
@@ -132,9 +135,25 @@ namespace BOOM {
       // the relevant bits to its parents for conditioning.
       virtual double logp(const MixedMultivariateData &dp) const = 0;
 
-      bool is_variable_observed(const MixedMultivariateData &data_point) const {
-        return data_point.variable(variable_index_).missing() == Data::observed;
+      bool is_missing(const MixedMultivariateData &data_point) const {
+        return data_point.variable(variable_index_).missing() != Data::observed;
       }
+
+      bool is_observed(const MixedMultivariateData &data_point) const {
+        return !is_missing(data_point);
+      }
+
+      // Return the observed data value for this node's variable.  If the node
+      // does not model numeric data then throw an exception.  If the value is
+      // missing return NaN.
+      virtual double numeric_value(
+          const MixedMultivariateData &data_point) const;
+
+      // Return the observed data value for this node's variable.  If the node
+      // does not model categorical data then throw an exception.  If the value
+      // is missing return -1.
+      virtual int categorical_value(
+          const MixedMultivariateData &data_point) const;
 
       // Args:
       //   parent:  A parent of this this node.
@@ -169,6 +188,14 @@ namespace BOOM {
       bool is_child(const Ptr<DirectedNode> &node) const;
 
       bool is_neighbor(const Ptr<DirectedNode> &node) const;
+
+      std::ostream &print(std::ostream &out) const override {
+        out << id() << ' ' << name() << " |";
+        for (const auto &child : children_) {
+          out << child->id() << ' ' << child->name();
+        }
+        return out;
+      }
 
      private:
       std::vector<Ptr<DirectedNode>> parents_;
@@ -210,11 +237,30 @@ namespace BOOM {
         return neighbors_.count(node);
       }
 
+      std::ostream &print(std::ostream& out) const override {
+        out << id() << ' ' << name() << " |";
+        for (const auto &neighbor : neighbors()) {
+          out << ' ' << neighbor->id() << ' ' << neighbor->name();
+        }
+        return out;
+      }
+
      private:
       Ptr<DirectedNode> base_node_;
-
       std::set<Ptr<MoralNode>> neighbors_;
     };
+
+    inline std::ostream & operator<<(std::ostream &out, const Ptr<Node> &node) {
+      return node->print(out);
+    }
+
+    inline std::ostream & operator<<(std::ostream &out, const Node *node) {
+      return node->print(out);
+    }
+
+    inline std::ostream & operator<<(std::ostream &out, const Node &node) {
+      return node.print(out);
+    }
 
   } // namespace Graphical
 }  // namespace BOOM

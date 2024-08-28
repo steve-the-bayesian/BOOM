@@ -22,6 +22,7 @@
 #include "Models/Graphical/Node.hpp"
 #include "Models/Graphical/NodeSet.hpp"
 #include "Models/Graphical/Clique.hpp"
+#include "Models/Graphical/CliqueMarginalDistribution.hpp"
 #include "Models/Graphical/UndirectedGraph.hpp"
 
 #include <functional>
@@ -55,8 +56,8 @@ namespace BOOM {
     class JunctionTree {
      public:
       using Criterion = std::function<double(const Ptr<MoralNode> &)>;
-      using Evidence = std::map<Ptr<Clique>,
-                                Ptr<CliqueMarginalDistribution>>;
+      using Marginals = std::map<Ptr<Clique>,
+                                 Ptr<CliqueMarginalDistribution>>;
       using CliqueTree = UndirectedGraph<Ptr<Clique>>;
       using EliminationTree = UndirectedGraph<Ptr<NodeSet<MoralNode>>>;
 
@@ -82,18 +83,18 @@ namespace BOOM {
       // joint posterior distribution.
       void impute_missing_values(MixedMultivariateData &data_point, RNG &rng);
 
-      // Fill the "evidence_" structure with marginal distributions describing
+      // Fill the "marginals_" structure with marginal distributions describing
       // the conditional distribution of each clique given any observed data
       // seen by its ancestors.
       //
       // Returns:
       double accumulate_evidence(const MixedMultivariateData &data_point);
 
-      const Evidence & evidence() const {
-        return evidence_;
+      const Marginals & marginals() const {
+        return marginals_;
       }
 
-      // Update the evidence_ structure so that each marginal clique
+      // Update the marginals_ structure so that each marginal clique
       // distribution conditions on all observed data in 'data_point'.
       void distribute_evidence(const Ptr<MixedMultivariateData> &data_point);
 
@@ -207,9 +208,9 @@ namespace BOOM {
       UndirectedGraph<Ptr<Clique>> clique_graph_;
       Ptr<Clique> root_;
 
-      // Evidence is used during calls to "accumulate_evidence" or
+      // Marginals is used during calls to "accumulate_evidence" or
       // "distribute_evidence".
-      Evidence evidence_;
+      Marginals marginals_;
     };
 
   }  // namespace Graphical

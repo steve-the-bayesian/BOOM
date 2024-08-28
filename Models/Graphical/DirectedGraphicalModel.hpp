@@ -75,8 +75,13 @@ namespace BOOM {
 
     // Fill any missing values in data_point with values imputed from their
     // joint posterior distribution.
-    void impute_missing_values(MixedMultivariateData &data_point,
-                               RNG &rng) {
+    //
+    // Args:
+    //   data_point: The observation with some elements of missing data to be
+    //     imputed.
+    //   rng: Then random number generator used as a source of randomness for
+    //     the imputation.
+    void impute_missing_values(MixedMultivariateData &data_point, RNG &rng) {
       ensure_junction_tree();
       junction_tree_.impute_missing_values(data_point, rng);
     }

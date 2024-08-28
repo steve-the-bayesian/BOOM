@@ -44,7 +44,7 @@ namespace BOOM {
       ensure_models();
 
       std::vector<int> dims = parent_dims();
-      dims.push_back(output_dim());
+      dims.push_back(dim());
       Array ans(dims);
 
       for (auto it = models_.begin(); it != models_.end(); ++it) {
@@ -56,11 +56,47 @@ namespace BOOM {
       return ans;
     }
 
+    double MultinomialNode::logp(const MixedMultivariateData &data_point) const {
+      std::vector<Ptr<DirectedNode>> missing_parents;
+      std::vector<Ptr<DirectedNode>> observed_parents;
+      for (const Ptr<DirectedNode> &parent : parents()) {
+        if (parent->is_missing(data_point)) {
+          missing_parents.push_back(parent);
+        } else {
+          observed_parents.push_back(parent);
+        }
+      }
+
+      // If all parents are observed, then just get the parent node data values
+      // and look them up in models_.
+      if (missing_parents.empty()) {
+        std::vector<int> parent_values;
+        for (const Ptr<DirectedNode> &parent : parents()) {
+          parent_values.push_back(parent->categorical_value(data_point));
+        }
+        return models_[parent_values]->logpi()[
+            this->categorical_value(data_point)];
+      } else {
+        // If any parent data are missing then (1) make sure the host model has
+        // run the message passing algorithm. (2) Use the marginal distribution
+        // of the parent nodes to compute the log density.
+        report_error("logp for missing data is not yet implemented.");
+        return 1.0;
+      }
+    }
+
+    int MultinomialNode::categorical_value(
+        const MixedMultivariateData &data_point) const {
+      const LabeledCategoricalData &data(data_point.categorical(
+          variable_index()));
+      return data.missing() == Data::missing_status::observed ? data.value() : -1;
+    }
+
     std::vector<int> MultinomialNode::parent_dims() const {
       std::vector<int> dims;
       for (const auto &parent : parents()) {
         if (parent->node_type() == NodeType::CATEGORICAL) {
-          dims.push_back(parent->output_dim());
+          dims.push_back(parent->dim());
         } else {
           std::ostringstream err;
           err << "A MultinomialNode must have CATEGORICAL parents.";
@@ -72,7 +108,7 @@ namespace BOOM {
 
     void MultinomialNode::ensure_models() const {
       if (!models_current_) {
-        int dim = this->output_dim();
+        int dim = this->dim();
         std::vector<int> parent_dims = this->parent_dims();
         std::vector<Ptr<MultinomialModel>> raw_model_storage;
         if (parent_dims.empty()) {

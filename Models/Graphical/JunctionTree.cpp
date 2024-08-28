@@ -192,18 +192,12 @@ namespace BOOM {
         const Ptr<Clique> &root) {
       double logp = 0;
 
-      Ptr<CliqueMarginalDistribution> marg = evidence_[root];
-
-      // Identify which nodes are known/unknown.
-      for (const Ptr<MoralNode> &moral : root->elements()) {
-        // TODO:  This is just a stub right now.
-        if (!moral->base_node()->is_missing(data_point)) {
-
-        } else {
-
-        }
-
+      Ptr<CliqueMarginalDistribution> marg = marginals_[root];
+      if (!marg) {
+        marg.reset(new CliqueMarginalDistribution(root.get()));
+        marginals_[root] = marg;
       }
+      marg->resize(data_point);
 
       // Identify which nodes have no parents.
       return logp;
@@ -216,6 +210,13 @@ namespace BOOM {
       double logp = 0.0;
       report_error("JunctionTree::collect_additional_evidence is not yet "
                    "implemented.");
+
+      Ptr<CliqueMarginalDistribution> marg = marginals_[target];
+      if (!marg) {
+        marg.reset(new CliqueMarginalDistribution(target.get()));
+        marginals_[target] = marg;
+      }
+
       return logp;
     }
 
