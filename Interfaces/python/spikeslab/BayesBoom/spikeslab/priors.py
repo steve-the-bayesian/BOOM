@@ -211,7 +211,7 @@ class StudentSpikeSlabPrior(RegressionSpikeSlabPrior):
             mean_y=None,
             sdy=None,
             prior_inclusion_probabilities=None,
-            sigma_upper_limit=np.Inf,
+            sigma_upper_limit=np.inf,
             tail_thickness_prior=R.UniformPrior(0.1, 100)
     ):
         """
