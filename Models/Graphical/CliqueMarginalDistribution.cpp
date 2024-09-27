@@ -16,23 +16,33 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/Graphical/CliqueMarginalDistribution.hpp"
+#include "Models/Graphical/NodeSetMarginalDistribution.hpp"
 
 namespace BOOM {
   namespace Graphical {
 
     namespace {
-      using CMD = CliqueMarginalDistribution;
+      using NSMD = NodeSetMarginalDistribution;
+
+
+      inline bool is_in(const Ptr<DirectedNode> &node,
+                        const std::vector<Ptr<DirectedNode>> &nodes) {
+        return std::find(nodes.begin(), nodes.end(), node) != nodes.end();
+      }
     }  // namespace
 
-    CMD::CliqueMarginalDistribution(Clique *clique)
-        : host_(clique)
+    //===========================================================================
+    NSMD::NodeSetMarginalDistribution(NodeSet<MoralNode> *nodes)
+        : host_(nodes)
     {}
 
-    void CMD::resize(const MixedMultivariateData &data_point) {
+    //===========================================================================
+    // Store values for the known nodes.
+    void NSMD::resize(const MixedMultivariateData &data_point) {
       known_discrete_variables_.clear();
       known_gaussian_variables_.clear();
-      unknown_nodes_.clear();
+      unknown_discrete_nodes_.clear();
+      unknown_gaussian_nodes_.clear();
       std::vector<int> unknown_dims;
 
       for (const auto &node : host_->elements()) {
@@ -58,10 +68,10 @@ namespace BOOM {
               report_error("Unexpected case.");
           }
         } else {
-          // Here the node's value is unobserved.  Store the node in
-          // unknown_nodes_, and add its dimension to unknown_dims.
           if (base->node_type() == NodeType::CATEGORICAL) {
-            unknown_nodes_.push_back(base);
+            // Here the node's value is unobserved.  Store the node in
+            // unknown_discrete_nodes_, and add its dimension to unknown_dims.
+            unknown_discrete_nodes_.push_back(base);
             unknown_dims.push_back(base->dim());
           } else {
             report_error("Only categorical variables handled for now.");
@@ -72,8 +82,8 @@ namespace BOOM {
       unknown_discrete_distribution_ = Array(unknown_dims, 0.0);
     }
 
-
-    bool CMD::is_known(const Ptr<DirectedNode> &directed) const {
+    //===========================================================================
+    bool NSMD::is_known(const Ptr<DirectedNode> &directed) const {
       if (directed->node_type() == NodeType::CATEGORICAL) {
         auto it = known_discrete_variables_.find(directed);
         return it != known_discrete_variables_.end();
@@ -89,28 +99,52 @@ namespace BOOM {
       return false;
     }
 
+    // =========================================================================
     // Args:
     //   data_point: The data point containing evidence to be distributed.
     //   parent_distribution: The distribution over the unknown values in the
-    //     parent clique in the junction tree.  If this node is a root of the
+    //     parent node set in the junction tree.  If this node is a root of the
     //     junction tree then parent_distribution is nullptr.
     //
     // Returns:
     //   The "observed data log likelihood" contribution of the new information
-    //   observed in this clique.
-    double CMD::forward_increment(
+    //   observed in this node set.
+    //
+    // Effects:
+    //   The marginal distribution of the unknown variables is populated.  Upon
+    //   exit it contains the conditional distribution of all the unknown
+    //   variables in the node set given all the known variables in this node set
+    //   and node sets in ancestor nodes on the junction tree.
+    double NSMD::forward_increment(
         const MixedMultivariateData &data_point,
-        const CliqueMarginalDistribution *parent_distribution) {
+        const NodeSetMarginalDistribution *parent_distribution) {
       resize(data_point);
 
-      // Get all the parents of all the nodes in the clique.
+      // 1) Find all the nodes in the d-separator.  These have already been
+      //    processed.  Separate them out into knowns vs unknowns, and find the
+      //    marginal distribution of the unknowns.
+      NodeSet<DirectedNode> d_separator;
+      Array prior_margin;
+      if (parent_distribution) {
+        d_separator = to_directed(
+            parent_distribution->host()->intersection(this->host()));
+        prior_margin = parent_distribution->compute_margin(d_separator);
 
-      std::vector<Ptr<DirectedNode>> parent_nodes;
-      std::set<Ptr<DirectedNode>> unique_parent_nodes;
-      std::vector<int> unknown_parent_dims;
-      std::set<Ptr<DirectedNode>> known_parents;
-      std::vector<Ptr<DirectedNode>> unknown_parents;
+        // The prior_margin should really contain information about which nodes
+        // are known vs unknown.
+      }
 
+      // 2) Find all the children of the nodes in the d-separator, as well as
+      //    all the nodes that have no parents.  Process the unknown nodes.
+      //    Update the distribution conditional on the known nodes.
+
+      // 3) Repeat step 2 for all the nodes that have parents in the processed
+      //    set (adding nodes to the processed set as they are processed).  Keep
+      //    repeating until all nodes have been processed.
+
+
+      Array parent_probs = compute_parent_probs(
+          data_point, parent_distribution, known_parents, unknown_parents);
       ////////////////////////////////////////////////////
       ////////////////////////////////////////////////////
       ////////////////////////////////////////////////////
@@ -119,23 +153,7 @@ namespace BOOM {
       ////////////////////////////////////////////////////
       ////////////////////////////////////////////////////
 
-      for (const Ptr<MoralNode> &moral : host_->elements()) {
-        Ptr<DirectedNode> directed = moral->base_node();
-        for (const Ptr<DirectedNode> &parent : directed->parents()) {
-          if (unique_parent_nodes.count(parent) == 0) {
-            if (!parent_distribution->host()->contains(parent)) {
-              report_error("Parent distribution is missing a parent node.");
-            }
-            if (parent_distribution->is_known(parent)) {
-              known_parents.insert(parent);
-            } else {
-              unknown_parents.push_back(parent);
-            }
-            parent_nodes.push_back(parent);
-            unique_parent_nodes.insert(parent);
-          }
-        }
-      }
+
 
       // Get the marginal distribution of the unknown parents.
       Array parent_margin;
@@ -147,15 +165,26 @@ namespace BOOM {
       return 0.0;
     }
 
-    Array CMD::compute_margin(const std::vector<Ptr<DirectedNode>> &subset) const {
+    //===========================================================================
+    Array NSMD::compute_margin(const NodeSet<DirectedNode> &subset) const {
       /////////////////////////////
       /////////////////////////////
       // TODO
       /////////////////////////////
       /////////////////////////////
-      Array ans;
+
+      // The dimensions that need to be summed over.
+      std::vector<int> sum_over_dims;
+
+
+      Array ans = unknown_discrete_distribution_.sum(sum_over_dims);
+
+      // Permute the order of the dimensions to match the order of the nodes in
+      // 'subset'.
+
       return ans;
     }
+
 
   }  // namespace Graphical
 }  // namespace BOOM
