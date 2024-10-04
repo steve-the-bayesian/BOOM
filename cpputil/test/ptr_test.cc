@@ -17,7 +17,7 @@ namespace {
 
     int sample_size = 1000000;
     std::vector<Ptr<RegressionData>> data_vector;
-    
+
     for (int i = 0; i < sample_size; ++i) {
       Vector x(4);
       x.randomize();
@@ -32,6 +32,46 @@ namespace {
     std::vector<Ptr<RegressionData>> moved_data_vector(
         std::move(data_vector));
   }
-  
-}  // namespace
 
+  // Check that Ptr objects of different concrete classes, but which point to
+  // the same object, evaluate to 'true' under the '==' operator.
+  TEST(Ptr, BaseEqualsDerived) {
+    class Base : public RefCounted {
+     public:
+      friend void intrusive_ptr_add_ref(Base *object) {
+        object->up_count();
+      }
+
+      friend void intrusive_ptr_release(Base *object) {
+        object->down_count();
+        if (object->ref_count() == 0) {
+          delete object;
+        }
+      }
+
+      Base(int x)
+          : x_(x)
+      {}
+
+     private:
+      int x_;
+    };
+
+    class Derived : public Base {
+     public:
+      Derived(int x, int y)
+          : Base(x),
+            y_(y)
+      {}
+
+     private:
+      int y_;
+    };
+
+    Ptr<Derived> derived = new Derived(1, 2);
+    Ptr<Base> base = derived;
+
+    EXPECT_TRUE(base == derived);
+  }
+
+}  // namespace

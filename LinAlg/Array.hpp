@@ -235,7 +235,6 @@ namespace BOOM {
     const double *data_;
   };
 
-
   //======================================================================
   class ArrayView : public ArrayBase {
    public:
