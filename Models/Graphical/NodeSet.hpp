@@ -19,6 +19,7 @@
 */
 #include "Models/Graphical/Node.hpp"
 #include "cpputil/SortedVector.hpp"
+#include "cpputil/RefCounted.hpp"
 
 #include <sstream>
 
@@ -29,30 +30,53 @@ namespace BOOM {
     // sets of nodes.  If a NodeSet is complete (all its elements are neighbors
     // of one another) then it can be promoted to a clique.
     template <class NODETYPE>
-    class NodeSet : public Node {
+    class NodeSet : private RefCounted {
      public:
       // The NodeSet starts with an empty value for both its id and name.  The
       // name gets modified when nodes are added to the set.  The id is
       // available to use for different numberings needed by triangulation
       // algorithms.
+
+      friend void intrusive_ptr_add_ref(NodeSet *n) {n->up_count();}
+      friend void intrusive_ptr_release(NodeSet *n) {
+        n->down_count();
+        if (n->ref_count() == 0) {
+          delete n;
+        }
+      }
+
       using iterator = typename SortedVector<Ptr<NODETYPE>>::iterator;
       using const_iterator = typename SortedVector<Ptr<NODETYPE>>::const_iterator;
 
       NodeSet()
-          : Node(-1, "")
+          : id_(-1)
       {}
 
-      // Set the numeric id of the node to a given value.
-      void set_id(int id) {
-        Node::set_id(id);
+      template <class ITERATOR>
+      NodeSet(ITERATOR begin, ITERATOR end)
+          : id_(-1)
+      {
+        for (ITERATOR it = begin; it != end; ++it) {
+          insert(*it);
+        }
       }
 
       explicit NodeSet(const SortedVector<NODETYPE> &elements)
-          : Node(-1, ""),
+          : id_(-1),
             elements_(elements)
       {}
 
-      std::ostream &print(std::ostream &out) const override {
+      // The 'id' of a NodeSet is typically a numbering produced by a
+      // triangulation algorithm when forming a tree of cliques.
+      void set_id(int id) {
+        id_ = id;
+      }
+
+      int id() const {
+        return id_;
+      }
+
+      std::ostream &print(std::ostream &out) const {
         out << "[";
         for (const auto &node : elements_) {
           out << *node << ' ';
@@ -67,7 +91,6 @@ namespace BOOM {
       // Add a node to the set.
       void add(const Ptr<NODETYPE> &node) {
         elements_.insert(node);
-        recompute_name();
       }
 
       // Syntactic sugar for 'add'.
@@ -81,13 +104,19 @@ namespace BOOM {
         return elements_.is_subset(other.elements_);
       }
 
+      bool contains(const Ptr<Node> &node) const {
+        return elements_.contains(node);
+      }
+
       // Absorb the elements of other into *this;
       void absorb(const NodeSet<NODETYPE> &other) {
         elements_.absorb(other.elements_);
       }
 
       NodeSet<NODETYPE> intersection(const NodeSet<NODETYPE> &other) const {
-        return NodeSet(elements_.intersection(other.elements_));
+        SortedVector<Ptr<NODETYPE>> intersection_elements
+            = elements_.intersection(other.elements_);
+        return NodeSet(intersection_elements.begin(), intersection_elements.end());
       }
 
       //-----------------------------------------------------------------------
@@ -98,11 +127,16 @@ namespace BOOM {
       const_iterator end() const { return elements_.end();}
       size_t size() const {return elements_.size();}
 
+      std::string name() const {
+        return compute_name();
+      }
+
      private:
+      int id_;
       SortedVector<Ptr<NODETYPE>> elements_;
 
       // The name of the NodeSet is the name of the
-      void recompute_name() {
+      std::string compute_name() const {
         std::ostringstream name;
         bool start = true;
         for (auto &el : elements_) {
@@ -113,8 +147,9 @@ namespace BOOM {
           }
           name << el->name();
         }
-        set_name(name.str());
+        return name.str();
       }
+
     };
 
 

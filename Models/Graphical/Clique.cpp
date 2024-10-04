@@ -22,7 +22,7 @@
 namespace BOOM {
   namespace Graphical {
 
-    Clique::Clique(const NodeSet<MoralNode> &node_set) {
+    Clique::Clique(const NodeSet<DirectedNode> &node_set) {
         for (const auto &el : node_set.elements()) {
           bool ok = try_add(el);
           if (!ok) {
@@ -34,13 +34,13 @@ namespace BOOM {
         }
       }
 
-    bool Clique::try_add(const Ptr<MoralNode> &node) {
+    bool Clique::try_add(const Ptr<DirectedNode> &node) {
       for (const auto &el : elements()) {
         if (!node->is_neighbor(el)) {
           return false;
         }
       }
-      NodeSet<MoralNode>::add(node);
+      NodeSet<DirectedNode>::add(node);
       return true;
     }
 
@@ -50,7 +50,7 @@ namespace BOOM {
 
     bool Clique::contains(const Ptr<DirectedNode> &node) const {
       for (const auto &el : elements()) {
-        if (el->base_node() == node) {
+        if (el == node) {
           return true;
         }
       }

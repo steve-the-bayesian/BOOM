@@ -41,11 +41,8 @@ namespace BOOM {
       DATETIME = 3,
     };
 
-    class DirectedNode;
-    class MoralNode;
-
     //===========================================================================
-    // A Node is an undirected node in a graph.  In the context of graphical
+    // A Node is a node in a graph.  In the context of graphical
     // models, it may represent a variable (e.g. in a Markov random field) or a
     // Clique in a moral graph of of BayesNet.
     //
@@ -66,9 +63,33 @@ namespace BOOM {
       // An optional human-interpretable string indicating the node's relevance.
       virtual const std::string & name() const {return name_;}
 
-      virtual std::ostream &print(std::ostream &out) const = 0;
+      virtual std::ostream &print(std::ostream& out) const {
+        out << id() << ' ' << name() << " |";
+        for (const auto &neighbor : neighbors()) {
+          out << ' ' << neighbor->id() << ' ' << neighbor->name();
+        }
+        return out;
+      }
 
-     protected:
+      void add_neighbor(const Ptr<Node> &node, bool reciprocate = true) {
+        neighbors_.insert(node);
+        if (reciprocate) {
+          node->add_neighbor(this, false);
+        }
+      }
+
+      std::set<Ptr<Node>> neighbors() const {
+        return neighbors_;
+      }
+
+      void clear_neighbors() {
+        neighbors_.clear();
+      }
+
+      bool is_neighbor(const Ptr<Node> &node) const {
+        return neighbors_.count(node);
+      }
+
       void set_name(const std::string &name) const {
         name_ = name;
       }
@@ -86,6 +107,8 @@ namespace BOOM {
 
       int id_;
       mutable std::string name_;
+
+      std::set<Ptr<Node>> neighbors_;
 
     };
 
@@ -204,50 +227,6 @@ namespace BOOM {
       // The position in a data frame or MixedMultivariateData where this node's
       // variable is found.
       int variable_index_;
-    };
-
-    //===========================================================================
-    // A MoralNode is a node in an undirected graph obtained by taking
-    // DirectedNode's, marrying the parents, and dropping the arrows.
-    class MoralNode : public Node {
-     public:
-      MoralNode(const Ptr<DirectedNode> &base_node)
-          : Node(base_node->id(), base_node->name()),
-            base_node_(base_node)
-      {}
-
-      const Ptr<DirectedNode> &base_node() const {
-        return base_node_;
-      }
-
-      void set_id(int id) { Node::set_id(id); }
-
-      void add_neighbor(const Ptr<MoralNode> &node, bool reciprocate = true) {
-        neighbors_.insert(node);
-        if (reciprocate) {
-          node->add_neighbor(this, false);
-        }
-      }
-
-      std::set<Ptr<MoralNode>> neighbors() const {
-        return neighbors_;
-      }
-
-      bool is_neighbor(const Ptr<MoralNode> &node) const {
-        return neighbors_.count(node);
-      }
-
-      std::ostream &print(std::ostream& out) const override {
-        out << id() << ' ' << name() << " |";
-        for (const auto &neighbor : neighbors()) {
-          out << ' ' << neighbor->id() << ' ' << neighbor->name();
-        }
-        return out;
-      }
-
-     private:
-      Ptr<DirectedNode> base_node_;
-      std::set<Ptr<MoralNode>> neighbors_;
     };
 
     inline std::ostream & operator<<(std::ostream &out, const Ptr<Node> &node) {

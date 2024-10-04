@@ -27,7 +27,7 @@ namespace BOOM {
 
     class CliqueFinder {
      public:
-      Ptr<Clique> add_node(const Ptr<MoralNode> &node) {
+      Ptr<Clique> add_node(const Ptr<Node> &node) {
         int membership_count = 0;
         for (auto &clique : cliques_) {
           membership_count += clique->try_add(node);
@@ -43,12 +43,12 @@ namespace BOOM {
         }
       }
 
-      void find_cliques(const std::vector<Ptr<MoralNode>> &nodes) {
+      void find_cliques(const std::vector<Ptr<Node>> &nodes) {
         for (size_t i = 0; i < nodes.size(); ++i) {
           Ptr<Clique> clique = add_node(nodes[i]);
           if (!!clique) {
             for (size_t j = 0; j < i; ++j) {
-              const Ptr<MoralNode> &old_node(nodes[j]);
+              const Ptr<Node> &old_node(nodes[j]);
               clique->try_add(old_node);
             }
           }
@@ -80,7 +80,7 @@ namespace BOOM {
 
 
     inline UndirectedGraph<Ptr<Clique>> find_cliques(
-        const std::vector<Ptr<MoralNode>> &nodes) {
+        const std::vector<Ptr<Node>> &nodes) {
       CliqueFinder clique_finder;
       clique_finder.find_cliques(nodes);
       return clique_finder.cliques();

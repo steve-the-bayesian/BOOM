@@ -27,18 +27,18 @@
 namespace BOOM {
   namespace Graphical {
 
-    // A clique is NodeSet of MoralNode's that are all neighbors of one another.
-    class Clique : public NodeSet<MoralNode> {
+    // A clique is NodeSet of Node's that are all neighbors of one another.
+    class Clique : public NodeSet<DirectedNode> {
      public:
       // An empty Clique.
       Clique() {}
 
       // Create a Clique from a NodeSet.  All nodes in node_set must be
       // neighbors of one another.  Otherwise an exception is generated.
-      Clique(const NodeSet<MoralNode> &node_set);
+      Clique(const NodeSet<DirectedNode> &node_set);
 
       // const std::string &name() const override {
-      //   return NodeSet<MoralNode>::name();
+      //   return NodeSet<Node>::name();
       // }
 
       // Attempt to add a node, which may or may not belong, to the Clique.
@@ -53,21 +53,12 @@ namespace BOOM {
       //
       // Returns:
       //   A flag indicating whether 'node' was added to this object's elements.
-      bool try_add(const Ptr<MoralNode> &node);
+      bool try_add(const Ptr<DirectedNode> &node);
 
       // Two cliques are equal if their elements_ are equal.
       bool operator==(const Clique &rhs) const {
         return elements() == rhs.elements();
       }
-
-      // The underlying set of elements comprising the Clique.
-      // const SortedVector<Ptr<MoralNode>> &elements() const {
-      //   return NodeSet<MoralNode>::elements();
-      // }
-
-      // size_t size() const {
-      //   return elements().size();
-      // }
 
       // Return true iff *this and other have at least one element in common.
       bool shares_node_with(const Ptr<Clique> &other) const;

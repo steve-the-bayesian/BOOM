@@ -32,9 +32,22 @@ namespace BOOM {
     }  // namespace
 
     //===========================================================================
-    NSMD::NodeSetMarginalDistribution(NodeSet<MoralNode> *nodes)
+    NSMD::NodeSetMarginalDistribution(NodeSet<Node> *nodes, bool assume_ownership)
         : host_(nodes)
-    {}
+    {
+      if (assume_ownership) {
+        owned_host_maybe_null_dont_access_directly_.reset(nodes);
+      }
+    }
+
+    NSMD::NodeSetMarginalDistribution(NodeSet<DirectedNode> *nodes)
+        : owned_host_maybe_null_dont_access_directly_(
+              new NodeSet<Node>(
+                  nodes->begin(),
+                  nodes->end()))
+    {
+      host_ = owned_host_maybe_null_dont_access_directly_.get();
+    }
 
     //===========================================================================
     // Store values for the known nodes.
@@ -46,7 +59,7 @@ namespace BOOM {
       std::vector<int> unknown_dims;
 
       for (const auto &node : host_->elements()) {
-        Ptr<DirectedNode> base = node->base_node();
+        Ptr<DirectedNode> base = node.dcast<DirectedNode>();
         if (base->is_observed(data_point)) {
           // If the node's variable is observed, then store it in the
           // appropriate map.
@@ -124,10 +137,10 @@ namespace BOOM {
       //    processed.  Separate them out into knowns vs unknowns, and find the
       //    marginal distribution of the unknowns.
       NodeSet<DirectedNode> d_separator;
-      Array prior_margin;
+      NodeSetMarginalDistribution prior_margin(&d_separator);
       if (parent_distribution) {
         d_separator = to_directed(
-            parent_distribution->host()->intersection(this->host()));
+            parent_distribution->host()->intersection(*(this->host())));
         prior_margin = parent_distribution->compute_margin(d_separator);
 
         // The prior_margin should really contain information about which nodes
@@ -141,43 +154,28 @@ namespace BOOM {
       // 3) Repeat step 2 for all the nodes that have parents in the processed
       //    set (adding nodes to the processed set as they are processed).  Keep
       //    repeating until all nodes have been processed.
-
-
-      Array parent_probs = compute_parent_probs(
-          data_point, parent_distribution, known_parents, unknown_parents);
-      ////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////
-      // HERE
-      ////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////
-
-
-
-      // Get the marginal distribution of the unknown parents.
-      Array parent_margin;
-      if (parent_distribution) {
-        parent_margin = parent_distribution->compute_margin(
-            unknown_parents);
-      }
-
       return 0.0;
     }
 
     //===========================================================================
-    Array NSMD::compute_margin(const NodeSet<DirectedNode> &subset) const {
-      /////////////////////////////
-      /////////////////////////////
-      // TODO
-      /////////////////////////////
-      /////////////////////////////
+    NSMD NSMD::compute_margin(const NodeSet<DirectedNode> &subset) const {
+
+      NodeSetMarginalDistribution ans(
+          new NodeSet<Node>(subset.begin(), subset.end()),
+          true);
 
       // The dimensions that need to be summed over.
       std::vector<int> sum_over_dims;
+      int i = 0;
+      for (const auto &directed : subset) {
+        if (host_->contains(directed)) {
 
+        } else {
+        }
+        ++i;
+      }
 
-      Array ans = unknown_discrete_distribution_.sum(sum_over_dims);
+      //      Array ans = unknown_discrete_distribution_.sum(sum_over_dims);
 
       // Permute the order of the dimensions to match the order of the nodes in
       // 'subset'.

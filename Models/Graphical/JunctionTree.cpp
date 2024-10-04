@@ -25,7 +25,7 @@ namespace BOOM {
     //---------------------------------------------------------------------------
     // Take a set of directed nodes, marry the parents of each child node, and
     // drop the arrows.  The output of this function is a collection of
-    // MoralNodes, each of which holds a pointer to a directed base node.
+    // Nodes, each of which holds a pointer to a directed base node.
     //
     // Args:
     //   directed_nodes:  Nodes of the directed graph to be moralized.
@@ -33,38 +33,28 @@ namespace BOOM {
     // Returns:
     //   The nodes of a moral graph, obtained by "marrying the parents" of each
     //   node in 'nodes', then dropping the arrows.
-    std::vector<Ptr<MoralNode>> create_moral_graph(
-        const std::vector<Ptr<DirectedNode>> &directed_nodes) {
-
-      std::map<Ptr<DirectedNode>, Ptr<MoralNode>, IdLess> moral_nodes;
-      for (const Ptr<DirectedNode> &base_node : directed_nodes) {
-        NEW(MoralNode, moral_node)(base_node);
-        moral_nodes[base_node] = moral_node;
+    void create_moral_graph(std::vector<Ptr<DirectedNode>> &directed_nodes) {
+      for (auto &el : directed_nodes) {
+        el->clear_neighbors();
       }
 
-      for (const Ptr<DirectedNode> &base_node : directed_nodes) {
-        Ptr<MoralNode> moral_node = moral_nodes[base_node];
+      for (const Ptr<DirectedNode> &node : directed_nodes) {
         // Each node is neighbors with its parents.
-        for (const Ptr<DirectedNode> &node : base_node->parents()) {
-          moral_node->add_neighbor(moral_nodes[node]);
+        for (const Ptr<DirectedNode> &parent : node->parents()) {
+          node->add_neighbor(parent);
           // All of the parents are neighbors with each other.
-          for (const Ptr<DirectedNode> &other_node : base_node->parents()) {
-            if (node != other_node) {
-              moral_nodes[node]->add_neighbor(moral_nodes[other_node]);
+          for (const Ptr<DirectedNode> &other_parent : node->parents()) {
+            if (parent != other_parent) {
+              parent->add_neighbor(other_parent);
             }
           }
         }
 
         // A node is neighbors with its children.
-        for (const Ptr<DirectedNode> &node : base_node->children()) {
-          moral_node->add_neighbor(moral_nodes[node]);
+        for (const Ptr<DirectedNode> &child : node->children()) {
+          node->add_neighbor(child);
         }
       }
-      std::vector<Ptr<MoralNode>> ans;
-      for (const auto &el : moral_nodes) {
-        ans.push_back(el.second);
-      }
-      return ans;
     }
 
 
@@ -72,9 +62,8 @@ namespace BOOM {
       // Returns true iff all parents of each node in the clique are also in the
       // clique.
       bool is_root(const Ptr<Clique> &clique) {
-        for (const auto &el : clique->elements()) {
-          Ptr<DirectedNode> base = el->base_node();
-          for (const auto &parent : base->parents()) {
+        for (const Ptr<DirectedNode> &el : clique->elements()) {
+          for (const auto &parent : el->parents()) {
             if (!clique->contains(parent)) {
               return false;
             }
@@ -84,7 +73,7 @@ namespace BOOM {
       }
     }  // namespace
 
-    std::string print_moral_node(const Ptr<MoralNode> &node) {
+    std::string print_moral_node(const Ptr<DirectedNode> &node) {
       std::ostringstream out;
       out << node->id() << ' ' << node->name() << " |";
       for (const auto &neighbor : node->neighbors()) {
@@ -93,7 +82,7 @@ namespace BOOM {
       return out.str();
     }
 
-    std::string print_moral_nodes(const std::vector<Ptr<MoralNode>> &nodes) {
+    std::string print_moral_nodes(const std::vector<Ptr<DirectedNode>> &nodes) {
       std::ostringstream out;
       out << "---- Moral Nodes: -----\n";
       for (const auto &node : nodes) {
@@ -126,8 +115,8 @@ namespace BOOM {
 
     JunctionTree::JunctionTree()
         : triangulation_heuristic_(
-              [](const Ptr<MoralNode> &node) {
-                return node->base_node()->parents().size();
+              [](const Ptr<DirectedNode> &node) {
+                return node->parents().size();
               })
     {}
 
@@ -148,10 +137,9 @@ namespace BOOM {
     //   The internals of the tree are built (or rebuilt).
     void JunctionTree::build(const std::vector<Ptr<DirectedNode>> &nodes) {
       directed_nodes_ = nodes;
-      std::vector<Ptr<MoralNode>> moral_nodes =
-          create_moral_graph(directed_nodes_);
-      std::vector<Ptr<NodeSet<MoralNode>>> elimination_sets =
-          triangulate_moral_graph(moral_nodes);
+      create_moral_graph(directed_nodes_);
+      std::vector<Ptr<NodeSet<DirectedNode>>> elimination_sets =
+          triangulate_moral_graph(directed_nodes_);
       EliminationTree elimination_tree = make_elimination_tree(elimination_sets);
       prune_elimination_tree(elimination_sets, elimination_tree);
       make_junction_tree(elimination_sets, elimination_tree);
@@ -192,9 +180,9 @@ namespace BOOM {
         const Ptr<Clique> &root) {
       double logp = 0;
 
-      Ptr<CliqueMarginalDistribution> marg = marginals_[root];
+      Ptr<NodeSetMarginalDistribution> marg = marginals_[root];
       if (!marg) {
-        marg.reset(new CliqueMarginalDistribution(root.get()));
+        marg.reset(new NodeSetMarginalDistribution(root.get()));
         marginals_[root] = marg;
       }
       marg->resize(data_point);
@@ -211,9 +199,9 @@ namespace BOOM {
       report_error("JunctionTree::collect_additional_evidence is not yet "
                    "implemented.");
 
-      Ptr<CliqueMarginalDistribution> marg = marginals_[target];
+      Ptr<NodeSetMarginalDistribution> marg = marginals_[target];
       if (!marg) {
-        marg.reset(new CliqueMarginalDistribution(target.get()));
+        marg.reset(new NodeSetMarginalDistribution(target.get()));
         marginals_[target] = marg;
       }
 
@@ -232,7 +220,7 @@ namespace BOOM {
 
     //---------------------------------------------------------------------------
     // Args:
-    //   elimination_sets: A collection of sets of MoralNodes produced by the
+    //   elimination_sets: A collection of sets of Nodes produced by the
     //     triangulation algorithm.
     //
     // Effects:
@@ -243,7 +231,7 @@ namespace BOOM {
     // Cowell et al.
     std::vector<Ptr<Clique>>
     JunctionTree::make_junction_tree(
-        std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+        std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets,
         EliminationTree &neighbors) {
       // Step 1: promote the elimination sets to cliques.
       std::vector<Ptr<Clique>> cliques;
@@ -253,10 +241,10 @@ namespace BOOM {
 
       // Step 2: links between the cliques using Algorithm 4.8 from Cowell et
       // al.
-      SortedVector<Ptr<MoralNode>> running_union;
+      SortedVector<Ptr<DirectedNode>> running_union;
       running_union.absorb(cliques[0]->elements());
       for (int i = 1; i < cliques.size(); ++i) {
-        SortedVector<Ptr<MoralNode>> intersection =
+        SortedVector<Ptr<DirectedNode>> intersection =
             cliques[i]->elements().intersection(running_union);
         for (int j = 0; j < i; ++j) {
           if (!cliques[j]->elements().disjoint_from(intersection)) {
@@ -275,10 +263,10 @@ namespace BOOM {
     // Return the chosen node, and remove it from 'nodes'.
     //
     // Part of the implementation for 'triangulate_moral_graph'.
-    Ptr<MoralNode> JunctionTree::choose_node(
-        SortedVector<Ptr<MoralNode>> &nodes,
+    Ptr<DirectedNode> JunctionTree::choose_node(
+        SortedVector<Ptr<DirectedNode>> &nodes,
         JunctionTree::Criterion &criterion) {
-      Ptr<MoralNode> ans = nullptr;
+      Ptr<DirectedNode> ans = nullptr;
       double value = infinity();
       for (size_t i = 0; i < nodes.size(); ++i) {
         double candidiate_value = criterion(nodes[i]);
@@ -292,7 +280,7 @@ namespace BOOM {
     }
 
     //---------------------------------------------------------------------------
-    // Take an undirected graph of MoralNodes, potentially re-order them, and
+    // Take an undirected graph of Nodes, potentially re-order them, and
     // add edges so that the graph is triangulated.  This is algorithm 4.13 from
     // Cowell et al.
     //
@@ -306,34 +294,35 @@ namespace BOOM {
     //   The "Elimination Sets" from the triangulation algorithm.  See Cowell et
     //   al. (1999) section 4.4.1-4.4.2.  Element i in the return value is the set
     //   C[i] from Cowell et al algorithm 4.13.
-    std::vector<Ptr<NodeSet<MoralNode>>>
-    JunctionTree::triangulate_moral_graph(std::vector<Ptr<MoralNode>> &nodes) {
+    std::vector<Ptr<NodeSet<DirectedNode>>>
+    JunctionTree::triangulate_moral_graph(std::vector<Ptr<DirectedNode>> &nodes) {
       if (nodes.empty()) {
-        return std::vector<Ptr<NodeSet<MoralNode>>>();
+        return std::vector<Ptr<NodeSet<DirectedNode>>>();
       }
 
-      SortedVector<Ptr<MoralNode>> unnumbered_nodes;
+      SortedVector<Ptr<DirectedNode>> unnumbered_nodes;
       for (auto &el : nodes) {
         el->set_id(-1);
         unnumbered_nodes.insert(el);
       }
 
       // The elimination sets each start off empty.
-      std::vector<Ptr<NodeSet<MoralNode>>> elimination_sets;
+      std::vector<Ptr<NodeSet<DirectedNode>>> elimination_sets;
       for (int i = 0; i <nodes.size(); ++i) {
-        elimination_sets.push_back(new NodeSet<MoralNode>);
+        elimination_sets.push_back(new NodeSet<DirectedNode>);
       }
 
       // Note that nodes.size() is at least one, because we bail on entry if nodes
       // is empty.
       for (int i = nodes.size() - 1; i >= 0; --i) {
-        Ptr<MoralNode> node = choose_node(unnumbered_nodes,
+        Ptr<DirectedNode> node = choose_node(unnumbered_nodes,
                                           triangulation_heuristic_);
         node->set_id(i);
         elimination_sets[i]->insert(node);
-        for (const Ptr<MoralNode> &neighbor : node->neighbors()) {
-          if (unnumbered_nodes.contains(neighbor)) {
-            elimination_sets[i]->insert(neighbor);
+        for (const Ptr<Node> &neighbor : node->neighbors()) {
+          Ptr<DirectedNode> directed_neighbor = neighbor.dcast<DirectedNode>();
+          if (unnumbered_nodes.contains(directed_neighbor)) {
+            elimination_sets[i]->insert(directed_neighbor);
           }
         }
         make_dense(elimination_sets[i]);
@@ -352,7 +341,7 @@ namespace BOOM {
     //   The elimination sets are arranged into an (undirected) elimination tree
     //   by adding neighbor links between the sets.
     JunctionTree::EliminationTree JunctionTree::make_elimination_tree(
-        std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets) {
+        std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets) {
 
       EliminationTree tree;
       for (size_t i = 0; i < elimination_sets.size(); ++i) {
@@ -362,7 +351,7 @@ namespace BOOM {
       for (size_t i = 0; i < elimination_sets.size(); ++i) {
         elimination_sets[i]->set_id(i);
         if (elimination_sets[i]->size() > 1) {
-          Ptr<NodeSet<MoralNode>> neighbor = elimination_sets[
+          Ptr<NodeSet<DirectedNode>> neighbor = elimination_sets[
               find_second_largest_index(*elimination_sets[i])];
           tree.add_neighbor(elimination_sets[i], neighbor);
         }
@@ -377,13 +366,13 @@ namespace BOOM {
     //
     // On exit, elimination_sets
     void JunctionTree::prune_elimination_tree(
-        std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+        std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets,
         JunctionTree::EliminationTree &tree,
         int start_from) {
       for (Int i = start_from; i < elimination_sets.size(); ++i) {
         for (Int j = i + 1; j < elimination_sets.size(); ++j) {
           if (elimination_sets[i]->is_subset(*elimination_sets[j])) {
-            Ptr<NodeSet<MoralNode>> redundant = elimination_sets[i];
+            Ptr<NodeSet<DirectedNode>> redundant = elimination_sets[i];
             tree.erase(tree.find(elimination_sets[i]));
             elimination_sets[i] = elimination_sets[j];
             elimination_sets.erase(elimination_sets.begin() + j);
@@ -402,7 +391,7 @@ namespace BOOM {
     //   The index of the second largest node in the set (the largest index is
     //   nodes.id()).
     int JunctionTree::find_second_largest_index(
-        const NodeSet<MoralNode> &nodes) {
+        const NodeSet<DirectedNode> &nodes) {
       int set_index = nodes.id();
       int max_index = -1;
       for (const auto &el : nodes) {
@@ -415,9 +404,9 @@ namespace BOOM {
 
     //---------------------------------------------------------------------------
     // Make every element of 'nodes' a neighbor of every other element.
-    void JunctionTree::make_dense(Ptr<NodeSet<MoralNode>> &nodes) {
+    void JunctionTree::make_dense(Ptr<NodeSet<DirectedNode>> &nodes) {
       for (auto it = nodes->begin(); it != nodes->end(); ++it) {
-        const Ptr<MoralNode> &node = *it;
+        const Ptr<DirectedNode> &node = *it;
         auto other_it = it;
         ++other_it;
         for (; other_it != nodes->end(); ++other_it) {

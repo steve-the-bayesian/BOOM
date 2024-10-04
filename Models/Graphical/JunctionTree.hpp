@@ -22,7 +22,7 @@
 #include "Models/Graphical/Node.hpp"
 #include "Models/Graphical/NodeSet.hpp"
 #include "Models/Graphical/Clique.hpp"
-#include "Models/Graphical/CliqueMarginalDistribution.hpp"
+#include "Models/Graphical/NodeSetMarginalDistribution.hpp"
 #include "Models/Graphical/UndirectedGraph.hpp"
 
 #include <functional>
@@ -38,28 +38,27 @@ namespace BOOM {
     // "cost" of selecting a given node to focus on during triangulation.
     class DefaultTriangulationHeuristic {
      public:
-      DefaultTriangulationHeuristic(const std::vector<Ptr<MoralNode>> &nodes);
-      double operator()(const Ptr<MoralNode> &node);
-      void reset_base_nodes(const std::vector<Ptr<MoralNode>> &nodes);
+      DefaultTriangulationHeuristic(const std::vector<Ptr<DirectedNode>> &nodes);
+      double operator()(const Ptr<DirectedNode> &node);
+      void reset_base_nodes(const std::vector<Ptr<DirectedNode>> &nodes);
 
      private:
-      std::vector<Ptr<MoralNode>> moral_nodes_;
+      std::vector<Ptr<DirectedNode>> moral_nodes_;
     };
 
-    // Produce a collection of MoralNodes by marrying the parents of each
+    // Produce a collection of Nodes by marrying the parents of each
     // directed node, and then dropping the arrows.
-    std::vector<Ptr<MoralNode>> create_moral_graph(
-        const std::vector<Ptr<DirectedNode>> &directed_nodes);
+    void create_moral_graph(std::vector<Ptr<DirectedNode>> &directed_nodes);
 
     //===========================================================================
     // A tree of cliques in the moral, triangulated graph generated from a DAG.
     class JunctionTree {
      public:
-      using Criterion = std::function<double(const Ptr<MoralNode> &)>;
+      using Criterion = std::function<double(const Ptr<DirectedNode> &)>;
       using Marginals = std::map<Ptr<Clique>,
-                                 Ptr<CliqueMarginalDistribution>>;
+                                 Ptr<NodeSetMarginalDistribution>>;
       using CliqueTree = UndirectedGraph<Ptr<Clique>>;
-      using EliminationTree = UndirectedGraph<Ptr<NodeSet<MoralNode>>>;
+      using EliminationTree = UndirectedGraph<Ptr<NodeSet<DirectedNode>>>;
 
       // An empty junction tree.  The tree can be populated by a call to
       // build().
@@ -71,7 +70,7 @@ namespace BOOM {
       // Build the JunctionTree based on the supplied set of nodes.
       void build(const std::vector<Ptr<DirectedNode>> &nodes);
 
-      // The triangulation heuristic is a function (of MoralNodes) that returns
+      // The triangulation heuristic is a function (of Nodes) that returns
       // a real number describing the "cost" of selecting that node.  It is used
       // (as a heuristic) when choosing edges to add during the triangulation
       // algorithm.
@@ -167,38 +166,38 @@ namespace BOOM {
       //========================================================================
       // Utilities used in building the junction tree
 
-      // // Produce a collection of MoralNodes by marrying the parents of each
+      // // Produce a collection of Nodes by marrying the parents of each
       // // directed node, and then dropping the arrows.
-      // std::vector<Ptr<MoralNode>> create_moral_graph(
+      // std::vector<Ptr<DirectedNode>> create_moral_graph(
       //     const std::vector<Ptr<DirectedNode>> & directed_nodes);
 
       // Choose the node from among &nodes that minimizes 'heuristic'.
-      Ptr<MoralNode> choose_node(
-          SortedVector<Ptr<MoralNode>> &nodes,
+      Ptr<DirectedNode> choose_node(
+          SortedVector<Ptr<DirectedNode>> &nodes,
           Criterion &heuristic);
 
-      // Take an undirected graph of MoralNodes, potentially re-order them, and
+      // Take an undirected graph of Nodes, potentially re-order them, and
       // add edges so that the graph is triangulated.  Return the collections of
       // nodes known as Elimination Sets (according to algorithm 4.13 in Cowell
       // et al.).
-      std::vector<Ptr<NodeSet<MoralNode>>> triangulate_moral_graph(
-          std::vector<Ptr<MoralNode>> &nodes);
+      std::vector<Ptr<NodeSet<DirectedNode>>> triangulate_moral_graph(
+          std::vector<Ptr<DirectedNode>> &nodes);
 
       // Impose a tree stucture on the collection of elimination sets.
       EliminationTree make_elimination_tree(
-          std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets);
+          std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets);
 
       void prune_elimination_tree(
-          std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+          std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets,
           EliminationTree &tree,
           int start_from = 0);
 
       std::vector<Ptr<Clique>> make_junction_tree(
-          std::vector<Ptr<NodeSet<MoralNode>>> &elimination_sets,
+          std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets,
           EliminationTree &tree);
 
-      void make_dense(Ptr<NodeSet<MoralNode>> &nodes);
-      int find_second_largest_index(const NodeSet<MoralNode> &nodes);
+      void make_dense(Ptr<NodeSet<DirectedNode>> &nodes);
+      int find_second_largest_index(const NodeSet<DirectedNode> &nodes);
 
       //----------------------------------------------------------------------
       // Data members
