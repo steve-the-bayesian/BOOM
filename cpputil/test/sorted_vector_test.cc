@@ -98,5 +98,21 @@ namespace {
     EXPECT_EQ(7, values[5]);
   }
 
+  TEST(SortedVectorTest, TestPosition) {
+    SortedVector<int> values;
+    values.insert(2);
+    values.insert(3);
+    values.insert(4);
+    values.insert(2);
+    values.insert(2);
+    values.insert(2);
+    values.insert(2);
+
+    EXPECT_EQ(values.position(2), 0);
+    EXPECT_EQ(values.position(3), 1);
+    EXPECT_EQ(values.position(4), 2);
+    EXPECT_EQ(values.position(17), -1);
+    EXPECT_EQ(values.position(-8), -1);
+  }
 
 }  // namespace

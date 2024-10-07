@@ -89,6 +89,15 @@ namespace BOOM {
       return i == end() || cmp(t, *i) ? end() : i;
     }
 
+    int position(const T &element) const {
+      const_iterator it = find(element);
+      if (it == end()) {
+        return -1;
+      } else {
+        return it - begin();
+      }
+    }
+
     bool contains(const T &t) const {
       return find(t) != end();
     }
