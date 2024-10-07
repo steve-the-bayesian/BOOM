@@ -26,25 +26,36 @@ namespace BOOM {
   namespace Graphical {
 
     namespace {
-      bool is_in(const Ptr<DirectedNode> &element,
-                 const std::vector<Ptr<DirectedNode>> &container) {
+      bool is_in(const Ptr<Node> &element,
+                 const std::vector<Ptr<Node>> &container) {
         return std::find(container.begin(),
                          container.end(),
                          element) != container.end();
       }
 
       bool is_in(const Node *element,
-                 const std::vector<Ptr<DirectedNode>> &container) {
+                 const std::vector<Ptr<Node>> &container) {
         return std::find_if(
             container.begin(),
             container.end(),
-            [element](const Ptr<DirectedNode> &candidate) {
+            [element](const Ptr<Node> &candidate) {
               return candidate.get() == element;
             }) != container.end();
       }
     }
 
-    void DirectedNode::add_parent(const Ptr<DirectedNode> &parent, bool reciprocate) {
+    std::set<Ptr<Node>> Node::neighbors() const {
+      std::set<Ptr<Node>> ans(other_neighbors_);
+      for (const Ptr<Node> &parent : parents_) {
+        ans.insert(parent);
+      }
+      for (const Ptr<Node> &child : children_) {
+        ans.insert(child);
+      }
+      return ans;
+    }
+
+    void Node::add_parent(const Ptr<Node> &parent, bool reciprocate) {
       if (!is_in(parent, parents_)) {
         parents_.push_back(parent);
         if (reciprocate) {
@@ -53,11 +64,11 @@ namespace BOOM {
       }
     }
 
-    bool DirectedNode::is_parent(const Ptr<DirectedNode> &node) const {
+    bool Node::is_parent(const Ptr<Node> &node) const {
       return is_in(this, node->parents());
     }
 
-    void DirectedNode::add_child(const Ptr<DirectedNode> &child, bool reciprocate) {
+    void Node::add_child(const Ptr<Node> &child, bool reciprocate) {
       if (!is_in(child, children_)) {
         children_.push_back(child);
         if (reciprocate) {
@@ -66,15 +77,15 @@ namespace BOOM {
       }
     }
 
-    bool DirectedNode::is_child(const Ptr<DirectedNode> &node) const {
+    bool Node::is_child(const Ptr<Node> &node) const {
       return is_in(this, node->children());
     }
 
-    bool DirectedNode::is_neighbor(const Ptr<DirectedNode> &node) const {
+    bool Node::is_neighbor(const Ptr<Node> &node) const {
       return is_in(node, parents_) || is_in(node, children_);
     }
 
-    double DirectedNode::numeric_value(
+    double Node::numeric_value(
         const MixedMultivariateData &data_point) const {
       std::ostringstream err;
       err << "Node " << name() << " does not model numeric data.";
@@ -82,7 +93,7 @@ namespace BOOM {
       return negative_infinity();
     }
 
-    int DirectedNode::categorical_value(
+    int Node::categorical_value(
         const MixedMultivariateData &data_point) const {
       std::ostringstream err;
       err << "Node " << name() << " does not model categorical data.";

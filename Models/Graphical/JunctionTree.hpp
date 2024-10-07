@@ -38,37 +38,37 @@ namespace BOOM {
     // "cost" of selecting a given node to focus on during triangulation.
     class DefaultTriangulationHeuristic {
      public:
-      DefaultTriangulationHeuristic(const std::vector<Ptr<DirectedNode>> &nodes);
-      double operator()(const Ptr<DirectedNode> &node);
-      void reset_base_nodes(const std::vector<Ptr<DirectedNode>> &nodes);
+      DefaultTriangulationHeuristic(const std::vector<Ptr<Node>> &nodes);
+      double operator()(const Ptr<Node> &node);
+      void reset_base_nodes(const std::vector<Ptr<Node>> &nodes);
 
      private:
-      std::vector<Ptr<DirectedNode>> moral_nodes_;
+      std::vector<Ptr<Node>> moral_nodes_;
     };
 
     // Produce a collection of Nodes by marrying the parents of each
     // directed node, and then dropping the arrows.
-    void create_moral_graph(std::vector<Ptr<DirectedNode>> &directed_nodes);
+    void create_moral_graph(std::vector<Ptr<Node>> &directed_nodes);
 
     //===========================================================================
     // A tree of cliques in the moral, triangulated graph generated from a DAG.
     class JunctionTree {
      public:
-      using Criterion = std::function<double(const Ptr<DirectedNode> &)>;
+      using Criterion = std::function<double(const Ptr<Node> &)>;
       using Marginals = std::map<Ptr<Clique>,
                                  Ptr<NodeSetMarginalDistribution>>;
       using CliqueTree = UndirectedGraph<Ptr<Clique>>;
-      using EliminationTree = UndirectedGraph<Ptr<NodeSet<DirectedNode>>>;
+      using EliminationTree = UndirectedGraph<Ptr<NodeSet>>;
 
       // An empty junction tree.  The tree can be populated by a call to
       // build().
       JunctionTree();
 
       // A junction tree created from the set of directed nodes.
-      JunctionTree(const std::vector<Ptr<DirectedNode>> &nodes);
+      JunctionTree(const std::vector<Ptr<Node>> &nodes);
 
       // Build the JunctionTree based on the supplied set of nodes.
-      void build(const std::vector<Ptr<DirectedNode>> &nodes);
+      void build(const std::vector<Ptr<Node>> &nodes);
 
       // The triangulation heuristic is a function (of Nodes) that returns
       // a real number describing the "cost" of selecting that node.  It is used
@@ -168,40 +168,40 @@ namespace BOOM {
 
       // // Produce a collection of Nodes by marrying the parents of each
       // // directed node, and then dropping the arrows.
-      // std::vector<Ptr<DirectedNode>> create_moral_graph(
-      //     const std::vector<Ptr<DirectedNode>> & directed_nodes);
+      // std::vector<Ptr<Node>> create_moral_graph(
+      //     const std::vector<Ptr<Node>> & directed_nodes);
 
       // Choose the node from among &nodes that minimizes 'heuristic'.
-      Ptr<DirectedNode> choose_node(
-          SortedVector<Ptr<DirectedNode>> &nodes,
+      Ptr<Node> choose_node(
+          SortedVector<Ptr<Node>> &nodes,
           Criterion &heuristic);
 
       // Take an undirected graph of Nodes, potentially re-order them, and
       // add edges so that the graph is triangulated.  Return the collections of
       // nodes known as Elimination Sets (according to algorithm 4.13 in Cowell
       // et al.).
-      std::vector<Ptr<NodeSet<DirectedNode>>> triangulate_moral_graph(
-          std::vector<Ptr<DirectedNode>> &nodes);
+      std::vector<Ptr<NodeSet>> triangulate_moral_graph(
+          std::vector<Ptr<Node>> &nodes);
 
       // Impose a tree stucture on the collection of elimination sets.
       EliminationTree make_elimination_tree(
-          std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets);
+          std::vector<Ptr<NodeSet>> &elimination_sets);
 
       void prune_elimination_tree(
-          std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets,
+          std::vector<Ptr<NodeSet>> &elimination_sets,
           EliminationTree &tree,
           int start_from = 0);
 
       std::vector<Ptr<Clique>> make_junction_tree(
-          std::vector<Ptr<NodeSet<DirectedNode>>> &elimination_sets,
+          std::vector<Ptr<NodeSet>> &elimination_sets,
           EliminationTree &tree);
 
-      void make_dense(Ptr<NodeSet<DirectedNode>> &nodes);
-      int find_second_largest_index(const NodeSet<DirectedNode> &nodes);
+      void make_dense(Ptr<NodeSet> &nodes);
+      int find_second_largest_index(const NodeSet &nodes);
 
       //----------------------------------------------------------------------
       // Data members
-      std::vector<Ptr<DirectedNode>> directed_nodes_;
+      std::vector<Ptr<Node>> directed_nodes_;
       Criterion triangulation_heuristic_;
 
       UndirectedGraph<Ptr<Clique>> clique_graph_;

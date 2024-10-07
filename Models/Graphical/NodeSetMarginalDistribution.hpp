@@ -24,6 +24,10 @@
 
 namespace BOOM {
   namespace Graphical {
+    class NodeSetMarginalDistribution;
+    void intrusive_ptr_add_ref(NodeSetMarginalDistribution *d);
+    void intrusive_ptr_release(NodeSetMarginalDistribution *d);
+
     //==========================================================================
     // The marginal distribution for a set of nodes describing a mix of
     // categorical and conditionally Gaussian distributions.  Some values are
@@ -37,19 +41,12 @@ namespace BOOM {
     // distribution is updated to contain the marginal distribution of the
     // node set variables given all available evidence.
     class NodeSetMarginalDistribution : private RefCounted {
-      friend void intrusive_ptr_add_ref(NodeSetMarginalDistribution *d) {
-        d->up_count();
-      }
-      friend void intrusive_ptr_release(NodeSetMarginalDistribution *d) {
-        d->down_count();
-        if (d->ref_count() == 0) delete d;
-      }
+      friend void intrusive_ptr_add_ref(NodeSetMarginalDistribution *d);
+      friend void intrusive_ptr_release(NodeSetMarginalDistribution *d);
 
      public:
-      NodeSetMarginalDistribution(NodeSet<Node> *nodes,
-                                  bool assume_ownership = false);
-
-      NodeSetMarginalDistribution(NodeSet<DirectedNode> *nodes);
+      // The NodeSetMarginalDistribution never owns the NodeSet it describes.
+      NodeSetMarginalDistribution(const NodeSet *nodes);
 
       // Args:
       //   data_point:  The data point containing the evidence to be collected.
@@ -97,31 +94,28 @@ namespace BOOM {
       void marginalize();
 
       // Compute the marginal distribution of the set of (unknown) variables in subset, by
-      NodeSetMarginalDistribution compute_margin(const NodeSet<Node> &subset) const;
-      NodeSetMarginalDistribution compute_margin(const NodeSet<DirectedNode> &subset) const;
+      NodeSetMarginalDistribution compute_margin(const NodeSet &subset) const;
 
       // Returns true iff node is present in either known_gaussian_variables_ or
       // known_discrete_variables_.  These data structures are populated when
       // 'resize()' is called.
-      bool is_known(const Ptr<DirectedNode> &node) const;
+      bool is_known(const Ptr<Node> &node) const;
+
+      // The variable number of this node in the subset.  0, 1, 2, etc.  If the
+      // variable is not in the subset then return -1.
+      int node_set_index(const Ptr<Node> &node) const;
 
       // A pointer to the node set that this marginal distribution describes.
-      const NodeSet<Node> *host() const {
+      const NodeSet *host() const {
         return host_;
       }
 
-      NodeSet<DirectedNode> to_directed(const NodeSet<Node> &moral) const;
-
      private:
-
-      NodeSet<Node> *host_;
-
-      // For use with NodeSet's that own their host.
-      Ptr<NodeSet<Node>> owned_host_maybe_null_dont_access_directly_;
+      const NodeSet *host_;
 
       // The values in 'data_point' associated with their respective nodes.
-      std::map<Ptr<DirectedNode>, int> known_discrete_variables_;
-      std::map<Ptr<DirectedNode>, double> known_gaussian_variables_;
+      std::map<Ptr<Node>, int> known_discrete_variables_;
+      std::map<Ptr<Node>, double> known_gaussian_variables_;
 
       // The set of nodes in the node set for which the given data point contains
       // unknown (missing) values.  The number of discrete nodes in this vector
@@ -130,10 +124,10 @@ namespace BOOM {
       //
       // The use of std::vector here instead of some other data structure
       // (e.g. NodeSet) is purposeful, because the order of the nodes matters.
-      std::vector<Ptr<DirectedNode>>  unknown_discrete_nodes_;
+      std::vector<Ptr<Node>>  unknown_discrete_nodes_;
       Array unknown_discrete_distribution_;
 
-      std::vector<Ptr<DirectedNode>> unknown_gaussian_nodes_;
+      std::vector<Ptr<Node>> unknown_gaussian_nodes_;
       Vector unknown_gaussian_potential_means_;
       SpdMatrix unknown_gaussian_potential_precisions_;
     };

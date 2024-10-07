@@ -28,18 +28,14 @@ namespace BOOM {
   namespace Graphical {
 
     // A clique is NodeSet of Node's that are all neighbors of one another.
-    class Clique : public NodeSet<DirectedNode> {
+    class Clique : public NodeSet {
      public:
       // An empty Clique.
       Clique() {}
 
       // Create a Clique from a NodeSet.  All nodes in node_set must be
       // neighbors of one another.  Otherwise an exception is generated.
-      Clique(const NodeSet<DirectedNode> &node_set);
-
-      // const std::string &name() const override {
-      //   return NodeSet<Node>::name();
-      // }
+      Clique(const NodeSet &node_set);
 
       // Attempt to add a node, which may or may not belong, to the Clique.
       // Return true iff the addition was successful.
@@ -53,7 +49,7 @@ namespace BOOM {
       //
       // Returns:
       //   A flag indicating whether 'node' was added to this object's elements.
-      bool try_add(const Ptr<DirectedNode> &node);
+      bool try_add(const Ptr<Node> &node);
 
       // Two cliques are equal if their elements_ are equal.
       bool operator==(const Clique &rhs) const {
@@ -64,7 +60,7 @@ namespace BOOM {
       bool shares_node_with(const Ptr<Clique> &other) const;
 
       // Returns true iff *this contains the specified node.
-      bool contains(const Ptr<DirectedNode> &node) const;
+      bool contains(const Ptr<Node> &node) const;
     };
 
 

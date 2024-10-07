@@ -56,13 +56,13 @@ namespace BOOM {
         public PriorPolicy
   {
    public:
-    using DirectedNode = ::BOOM::Graphical::DirectedNode;
+    using Node = ::BOOM::Graphical::Node;
 
     DirectedGraphicalModel();
 
     // Add a node to the graph.  The links between this node and its parents and
     // children must be managed separately.
-    void add_node(const Ptr<DirectedNode> &node);
+    void add_node(const Ptr<Node> &node);
 
     // Return the log density of the given data_point.  Some elements of
     // data_point may be missing.
@@ -95,7 +95,15 @@ namespace BOOM {
     //   junction_tree_current_ is set to true.
     void ensure_junction_tree() const;
 
-    SortedVector<Ptr<Graphical::DirectedNode>, Graphical::IdLess> nodes_;
+    // Order nodes by their ID.
+    struct IdLess {
+      bool operator()(const Ptr<::BOOM::Graphical::Node> &n1,
+                      const Ptr<::BOOM::Graphical::Node> &n2) const {
+        return n1->id() < n2->id();
+      }
+    };
+
+    SortedVector<Ptr<Graphical::Node>, IdLess> nodes_;
     mutable bool junction_tree_current_;
     mutable Graphical::JunctionTree junction_tree_;
   };

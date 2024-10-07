@@ -24,11 +24,11 @@
 namespace BOOM {
 
   namespace Graphical {
-    class DummyNode : public DirectedNode {
+    class DummyNode : public Node {
      public:
 
       DummyNode(int id, const std::string &name = "")
-          : DirectedNode(id, name)
+          : Node(id, name)
       {}
 
       NodeType node_type() const override {

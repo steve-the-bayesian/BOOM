@@ -50,90 +50,105 @@ namespace BOOM {
     class Node : private RefCounted {
      public:
       // Args:
-      //   id:  An index uniquely identifying the node in the graph.
-      //   name:  A string, intended for human consumption.
-      explicit Node(int node_id, const std::string &name = "")
+      //   id: An index uniquely identifying the node in the graph.  Categorical
+      //     variables should have smaller numeric id's than numeric variables.
+      //   name: A string, intended for human consumption.  Often the name of
+      //     the variable modeled by the node.
+      //   variable_index: The position (column number) of the variable being
+      //     modeled in the data file.
+      explicit Node(int node_id, const std::string &name = "", int variable_index = -1)
           : id_(node_id),
-            name_(name)
+            name_(name),
+            variable_index_(variable_index)
       {}
 
-      // The node's unique identifier in the graph.
-      int id() const {return id_;}
-
-      // An optional human-interpretable string indicating the node's relevance.
+      // An optional human-interpretable string indicating the node's identity.
       virtual const std::string & name() const {return name_;}
 
-      virtual std::ostream &print(std::ostream& out) const {
+      // Change the node's human readable name.
+      void set_name(const std::string &name) const {
+        name_ = name;
+      }
+
+      // The node's numeric unique identifier in the graph.
+      int id() const {return id_;}
+
+      // Change the node's numeric id.
+      void set_id(int id) {
+        id_ = id;
+      }
+
+      std::ostream &print(std::ostream &out) const {
         out << id() << ' ' << name() << " |";
-        for (const auto &neighbor : neighbors()) {
-          out << ' ' << neighbor->id() << ' ' << neighbor->name();
+        for (const auto &child : children_) {
+          out << child->id() << ' ' << child->name();
         }
         return out;
       }
 
+      //---------------------------------------------------------------------------
+      // Graph relationships.  Parents, children, other neighbors.
+      //---------------------------------------------------------------------------
+
+      // Args:
+      //   parent:  A parent of this this node.
+      //   reciprocate: If true then this node will be added as a child of
+      //     parent (modifying parent).
+      //
+      // Side Effects:
+      //   The parent node is also added as a neighbor.
+      void add_parent(const Ptr<Node> &parent, bool reciprocate = true);
+
+      const std::vector<Ptr<Node>> & parents() const {
+        return parents_;
+      }
+
+      // Returns true iff node is either a parent or child of *this, or in
+      // other_neighhbors_.
+      bool is_neighbor(const Ptr<Node> &node) const;
+
+      // Return true iff this is a parent of 'node'.
+      bool is_parent(const Ptr<Node> &node) const;
+
+      // Args:
+      //   child:  A child of this this node.
+      //   reciprocate: If true then this node will be added as a parent of
+      //     child (modifying child).
+      //
+      // Side Effects:
+      //   The child node is also added as a neighbor.
+      void add_child(const Ptr<Node> &child, bool reciprocate = true);
+
+      const std::vector<Ptr<Node>> & children() const {
+        return children_;
+      }
+
+      // Return true iff 'this' is a child of 'node'.
+      bool is_child(const Ptr<Node> &node) const;
+
+      // Add an undirected neighbor relationship.
+      // Args:
+      //   node:  The node to make a neighbor of 'this' node.
+      //   reciprocate:  If true then also add 'this' as a neighbor of 'node'.
       void add_neighbor(const Ptr<Node> &node, bool reciprocate = true) {
-        neighbors_.insert(node);
+        other_neighbors_.insert(node);
         if (reciprocate) {
           node->add_neighbor(this, false);
         }
       }
 
-      std::set<Ptr<Node>> neighbors() const {
-        return neighbors_;
-      }
+      // Return the set of all neighbors of this node, including all parents,
+      // children, and other neighbors.
+      std::set<Ptr<Node>> neighbors() const;
 
+      // Remove all undirected "other" neighbor relationships.
       void clear_neighbors() {
-        neighbors_.clear();
+        other_neighbors_.clear();
       }
 
-      bool is_neighbor(const Ptr<Node> &node) const {
-        return neighbors_.count(node);
-      }
-
-      void set_name(const std::string &name) const {
-        name_ = name;
-      }
-
-      void set_id(int id) {
-        id_ = id;
-      }
-
-     private:
-      friend void intrusive_ptr_add_ref(Node *d) { d->up_count(); }
-      friend void intrusive_ptr_release(Node *d) {
-        d->down_count();
-        if (d->ref_count() == 0) delete d;
-      }
-
-      int id_;
-      mutable std::string name_;
-
-      std::set<Ptr<Node>> neighbors_;
-
-    };
-
-    // Order nodes by their ID.
-    struct IdLess {
-      bool operator()(const Ptr<::BOOM::Graphical::Node> &n1,
-                      const Ptr<::BOOM::Graphical::Node> &n2) const {
-        return n1->id() < n2->id();
-      }
-    };
-
-    //===========================================================================
-    // A DirectedNode in a GraphicalModel represents a variable (i.e. a column
-    // in a data frame).
-    class DirectedNode : public Node {
-     public:
-      // Args:
-      //   id: The position in a data frame or MixedMultivariateData where this
-      //     node's variable can be found.
-      //   name: The column name in a data frame, or name in a
-      //     MixedMultivariateData, describing the variable to be modeled.
-      DirectedNode(int id, const std::string &name = "")
-          : Node(id, name),
-            variable_index_(id)
-      {}
+      //---------------------------------------------------------------------------
+      // Relationships between the node and the data it models.
+      //---------------------------------------------------------------------------
 
       // Find the position of a variable with name matching the name of this node.
       // If no such variable is found, then the variable's index is set to -1.
@@ -142,13 +157,17 @@ namespace BOOM {
       //   data_point: The data to search for the relevant variable name.
       //   throw_on_error: If true, then an exception is thrown if the variable
       //     name is not found.
-      void find_variable(const MixedMultivariateData &data_point,
-                         bool throw_on_error = true);
+      // void find_variable(const MixedMultivariateData &data_point,
+      //                    bool throw_on_error = true);
 
-      void set_variable_index(int index) { variable_index_ = index; }
+      // The column number in the data table of the variable being modeled by this node.
       int variable_index() const {return variable_index_;}
+      void set_variable_index(int index) { variable_index_ = index; }
 
       virtual NodeType node_type() const = 0;
+
+      // The dimension of the variable being modeled.  For categorical data this
+      // is the number of levels.  For numeric data the dimension is 1.
       virtual Int dim() const = 0;
 
       // This node's contribution to the log density of dp.  The conditional
@@ -178,51 +197,24 @@ namespace BOOM {
       virtual int categorical_value(
           const MixedMultivariateData &data_point) const;
 
-      // Args:
-      //   parent:  A parent of this this node.
-      //   reciprocate: If true then this node will be added as a child of
-      //     parent (modifying parent).
-      //
-      // Side Effects:
-      //   The parent node is also added as a neighbor.
-      void add_parent(const Ptr<DirectedNode> &parent, bool reciprocate = true);
-
-      const std::vector<Ptr<DirectedNode>> & parents() const {
-        return parents_;
-      }
-
-      // Return true iff this is a parent of 'node'.
-      bool is_parent(const Ptr<DirectedNode> &node) const;
-
-      // Args:
-      //   child:  A child of this this node.
-      //   reciprocate: If true then this node will be added as a parent of
-      //     child (modifying child).
-      //
-      // Side Effects:
-      //   The child node is also added as a neighbor.
-      void add_child(const Ptr<DirectedNode> &child, bool reciprocate = true);
-
-      const std::vector<Ptr<DirectedNode>> & children() const {
-        return children_;
-      }
-
-      // Return true iff 'this' is a child of 'node'.
-      bool is_child(const Ptr<DirectedNode> &node) const;
-
-      bool is_neighbor(const Ptr<DirectedNode> &node) const;
-
-      std::ostream &print(std::ostream &out) const override {
-        out << id() << ' ' << name() << " |";
-        for (const auto &child : children_) {
-          out << child->id() << ' ' << child->name();
-        }
-        return out;
-      }
-
      private:
-      std::vector<Ptr<DirectedNode>> parents_;
-      std::vector<Ptr<DirectedNode>> children_;
+      friend void intrusive_ptr_add_ref(Node *d) { d->up_count(); }
+      friend void intrusive_ptr_release(Node *d) {
+        d->down_count();
+        if (d->ref_count() == 0) delete d;
+      }
+
+      int id_;
+      mutable std::string name_;
+
+      std::vector<Ptr<Node>> parents_;
+      std::vector<Ptr<Node>> children_;
+
+      // For directed graphs, all neighboring nodes will either be parents or
+      // children.  For chain graphs there can be undirected links as well.  The
+      // main source of neighboring links is graph moralization or triangulation
+      // when forming the junction tree.
+      std::set<Ptr<Node>> other_neighbors_;
 
       // The position in a data frame or MixedMultivariateData where this node's
       // variable is found.

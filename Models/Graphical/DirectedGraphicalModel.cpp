@@ -31,7 +31,7 @@ namespace BOOM {
       : junction_tree_current_(false)
   {}
 
-  void DirectedGraphicalModel::add_node(const Ptr<DirectedNode> &node) {
+  void DirectedGraphicalModel::add_node(const Ptr<Node> &node) {
     if (nodes_.contains(node)) {
       std::ostringstream err;
       err << "A node with id " << node->id() << " and name "
@@ -58,7 +58,7 @@ namespace BOOM {
   //   junction_tree_current_ is set to true.
   void DirectedGraphicalModel::ensure_junction_tree() const {
     if (!junction_tree_current_) {
-      junction_tree_.build(std::vector<Ptr<DirectedNode>>(
+      junction_tree_.build(std::vector<Ptr<Node>>(
           nodes_.begin(), nodes_.end()));
       junction_tree_current_ = true;
     }

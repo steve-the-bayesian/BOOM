@@ -21,33 +21,29 @@
 namespace BOOM {
   namespace Graphical {
 
+    void intrusive_ptr_add_ref(NodeSetMarginalDistribution *d) {
+      d->up_count();
+    }
+
+    void intrusive_ptr_release(NodeSetMarginalDistribution *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
+
     namespace {
       using NSMD = NodeSetMarginalDistribution;
 
 
-      inline bool is_in(const Ptr<DirectedNode> &node,
-                        const std::vector<Ptr<DirectedNode>> &nodes) {
+      inline bool is_in(const Ptr<Node> &node,
+                        const std::vector<Ptr<Node>> &nodes) {
         return std::find(nodes.begin(), nodes.end(), node) != nodes.end();
       }
     }  // namespace
 
     //===========================================================================
-    NSMD::NodeSetMarginalDistribution(NodeSet<Node> *nodes, bool assume_ownership)
+    NSMD::NodeSetMarginalDistribution(const NodeSet *nodes)
         : host_(nodes)
-    {
-      if (assume_ownership) {
-        owned_host_maybe_null_dont_access_directly_.reset(nodes);
-      }
-    }
-
-    NSMD::NodeSetMarginalDistribution(NodeSet<DirectedNode> *nodes)
-        : owned_host_maybe_null_dont_access_directly_(
-              new NodeSet<Node>(
-                  nodes->begin(),
-                  nodes->end()))
-    {
-      host_ = owned_host_maybe_null_dont_access_directly_.get();
-    }
+    {}
 
     //===========================================================================
     // Store values for the known nodes.
@@ -59,12 +55,12 @@ namespace BOOM {
       std::vector<int> unknown_dims;
 
       for (const auto &node : host_->elements()) {
-        Ptr<DirectedNode> base = node.dcast<DirectedNode>();
+        Ptr<Node> base = node.dcast<Node>();
         if (base->is_observed(data_point)) {
           // If the node's variable is observed, then store it in the
           // appropriate map.
           //
-          // TODO: this code might be clearer if DirectedNode types were
+          // TODO: this code might be clearer if Node types were
           // subclassed in the type system.
           switch (base->node_type()) {
             case NodeType::CATEGORICAL:
@@ -96,7 +92,7 @@ namespace BOOM {
     }
 
     //===========================================================================
-    bool NSMD::is_known(const Ptr<DirectedNode> &directed) const {
+    bool NSMD::is_known(const Ptr<Node> &directed) const {
       if (directed->node_type() == NodeType::CATEGORICAL) {
         auto it = known_discrete_variables_.find(directed);
         return it != known_discrete_variables_.end();
@@ -136,11 +132,10 @@ namespace BOOM {
       // 1) Find all the nodes in the d-separator.  These have already been
       //    processed.  Separate them out into knowns vs unknowns, and find the
       //    marginal distribution of the unknowns.
-      NodeSet<DirectedNode> d_separator;
+      NodeSet d_separator;
       NodeSetMarginalDistribution prior_margin(&d_separator);
       if (parent_distribution) {
-        d_separator = to_directed(
-            parent_distribution->host()->intersection(*(this->host())));
+        d_separator = parent_distribution->host()->intersection(*host_);
         prior_margin = parent_distribution->compute_margin(d_separator);
 
         // The prior_margin should really contain information about which nodes
@@ -158,25 +153,66 @@ namespace BOOM {
     }
 
     //===========================================================================
-    NSMD NSMD::compute_margin(const NodeSet<DirectedNode> &subset) const {
+    NSMD NSMD::compute_margin(const NodeSet &subset) const {
 
-      NodeSetMarginalDistribution ans(
-          new NodeSet<Node>(subset.begin(), subset.end()),
-          true);
+      NodeSetMarginalDistribution ans(&subset);
 
       // The dimensions that need to be summed over.
       std::vector<int> sum_over_dims;
-      int i = 0;
-      for (const auto &directed : subset) {
-        if (host_->contains(directed)) {
+      std::map<Ptr<Node>, int> known_discrete_variables;
+      std::map<Ptr<Node>, double> known_gaussian_variables;
+      std::vector<Ptr<Node>> unknown_discrete_nodes;
 
+      for (const auto &node : subset) {
+        int index = host_->index(node);
+        std::ostringstream err;
+        if (index == -1) {
+          err << "NodeSetMarginalDistribution for " << *host_
+              << " was asked to compute a margin containing "
+              << *node
+              << ", which is not part of the node set.";
+          report_error(err.str());
         } else {
+          switch(node->node_type()) {
+            case NodeType::CATEGORICAL:
+              if (is_known(node)) {
+                known_discrete_variables[node]
+                    = known_discrete_variables_.find(node)->second;
+              } else {
+                unknown_discrete_nodes.push_back(node);
+                sum_over_dims.push_back(index);
+              }
+              break;
+
+            case NodeType::CONTINUOUS:
+              // ===========================================================================
+              // ===========================================================================
+              // ===========================================================================
+              // HERE
+              // ===========================================================================
+              // ===========================================================================
+              // ===========================================================================
+              if (is_known(node)) {
+                known_gaussian_variables[node]
+                    = known_gaussian_variables_.find(node)->second;
+              }
+              break;
+
+            case NodeType::DUMMY:
+              break;
+            case NodeType::ID:
+              break;
+            default:
+              break;
+          }
         }
-        ++i;
       }
 
-      //      Array ans = unknown_discrete_distribution_.sum(sum_over_dims);
-
+      Array margin = unknown_discrete_distribution_.sum(sum_over_dims);
+      ans.unknown_discrete_distribution_ = margin;
+      ans.known_discrete_variables_ = known_discrete_variables;
+      ans.known_gaussian_variables_ = known_gaussian_variables;
+      ans.unknown_discrete_nodes_ = unknown_discrete_nodes;
       // Permute the order of the dimensions to match the order of the nodes in
       // 'subset'.
 

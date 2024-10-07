@@ -30,7 +30,7 @@ namespace BOOM {
     // using a collection of MultinomialModel objects.
     //
     // A MultinomialNode must have parents that are all discrete.
-    class MultinomialNode : public DirectedNode {
+    class MultinomialNode : public Node {
      public:
       // Build a MultinomialNode by searching a DataTable for a variable with a
       // given name.

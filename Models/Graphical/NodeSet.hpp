@@ -29,7 +29,6 @@ namespace BOOM {
     // A NodeSet is a set of nodes, but it is also a node in the "hypergraph" of
     // sets of nodes.  If a NodeSet is complete (all its elements are neighbors
     // of one another) then it can be promoted to a clique.
-    template <class NODETYPE>
     class NodeSet : private RefCounted {
      public:
       // The NodeSet starts with an empty value for both its id and name.  The
@@ -45,8 +44,8 @@ namespace BOOM {
         }
       }
 
-      using iterator = typename SortedVector<Ptr<NODETYPE>>::iterator;
-      using const_iterator = typename SortedVector<Ptr<NODETYPE>>::const_iterator;
+      using iterator = typename SortedVector<Ptr<Node>>::iterator;
+      using const_iterator = typename SortedVector<Ptr<Node>>::const_iterator;
 
       NodeSet()
           : id_(-1)
@@ -61,7 +60,7 @@ namespace BOOM {
         }
       }
 
-      explicit NodeSet(const SortedVector<NODETYPE> &elements)
+      explicit NodeSet(const SortedVector<Ptr<Node>> &elements)
           : id_(-1),
             elements_(elements)
       {}
@@ -85,22 +84,27 @@ namespace BOOM {
         return out;
       }
 
+      int index (const Ptr<Node> &node) const {
+        return elements_.position(node);
+      }
+
       //-----------------------------------------------------------------------
       // Set interface
+      //-----------------------------------------------------------------------
 
       // Add a node to the set.
-      void add(const Ptr<NODETYPE> &node) {
+      void add(const Ptr<Node> &node) {
         elements_.insert(node);
       }
 
       // Syntactic sugar for 'add'.
-      void insert(const Ptr<NODETYPE> &node) { add(node); }
+      void insert(const Ptr<Node> &node) { add(node); }
 
-      const SortedVector<Ptr<NODETYPE>> &elements() const {
+      const SortedVector<Ptr<Node>> &elements() const {
         return elements_;
       }
 
-      bool is_subset(const NodeSet<NODETYPE> &other) const {
+      bool is_subset(const NodeSet &other) const {
         return elements_.is_subset(other.elements_);
       }
 
@@ -109,18 +113,19 @@ namespace BOOM {
       }
 
       // Absorb the elements of other into *this;
-      void absorb(const NodeSet<NODETYPE> &other) {
+      void absorb(const NodeSet &other) {
         elements_.absorb(other.elements_);
       }
 
-      NodeSet<NODETYPE> intersection(const NodeSet<NODETYPE> &other) const {
-        SortedVector<Ptr<NODETYPE>> intersection_elements
+      NodeSet intersection(const NodeSet &other) const {
+        SortedVector<Ptr<Node>> intersection_elements
             = elements_.intersection(other.elements_);
         return NodeSet(intersection_elements.begin(), intersection_elements.end());
       }
 
       //-----------------------------------------------------------------------
       // Container interface
+      //-----------------------------------------------------------------------
       iterator begin() { return elements_.begin();}
       iterator end() { return elements_.end();}
       const_iterator begin() const { return elements_.begin();}
@@ -133,7 +138,7 @@ namespace BOOM {
 
      private:
       int id_;
-      SortedVector<Ptr<NODETYPE>> elements_;
+      SortedVector<Ptr<Node>> elements_;
 
       // The name of the NodeSet is the name of the
       std::string compute_name() const {
@@ -152,6 +157,10 @@ namespace BOOM {
 
     };
 
+    inline std::ostream &operator<<(std::ostream &out,
+                                    const NodeSet &node_set) {
+      return node_set.print(out);
+    }
 
   }  // namespace Graphical
 

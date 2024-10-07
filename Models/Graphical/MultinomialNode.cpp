@@ -26,7 +26,7 @@ namespace BOOM {
 
     MultinomialNode::MultinomialNode(const DataTable &data,
                                      const std::string &variable_name)
-        : DirectedNode(-1, variable_name)
+        : Node(-1, variable_name)
     {
       const std::vector<std::string> &vnames(data.vnames());
       for (size_t i = 0; i < vnames.size(); ++i) {
@@ -57,9 +57,9 @@ namespace BOOM {
     }
 
     double MultinomialNode::logp(const MixedMultivariateData &data_point) const {
-      std::vector<Ptr<DirectedNode>> missing_parents;
-      std::vector<Ptr<DirectedNode>> observed_parents;
-      for (const Ptr<DirectedNode> &parent : parents()) {
+      std::vector<Ptr<Node>> missing_parents;
+      std::vector<Ptr<Node>> observed_parents;
+      for (const Ptr<Node> &parent : parents()) {
         if (parent->is_missing(data_point)) {
           missing_parents.push_back(parent);
         } else {
@@ -71,7 +71,7 @@ namespace BOOM {
       // and look them up in models_.
       if (missing_parents.empty()) {
         std::vector<int> parent_values;
-        for (const Ptr<DirectedNode> &parent : parents()) {
+        for (const Ptr<Node> &parent : parents()) {
           parent_values.push_back(parent->categorical_value(data_point));
         }
         return models_[parent_values]->logpi()[
