@@ -724,6 +724,9 @@ namespace BOOM {
   Array::Array(const std::vector<int> &dims, double initial_value)
       : ArrayBase(dims), data_(ConstArrayBase::size(), initial_value) {}
 
+  Array::Array(const std::initializer_list<int> &dims, double initial_value)
+      : Array(std::vector<int>(dims), initial_value) {}
+
   Array::Array(const std::vector<int> &dims, const std::vector<double> &data)
       : ArrayBase(dims), data_(data) {
     if (data_.size() != size()) {
@@ -837,6 +840,11 @@ namespace BOOM {
     }
     return *this;
   }
+
+  Array &Array::operator+=(double x) { data_ += x; return *this;}
+  Array &Array::operator-=(double x) { data_ -= x; return *this;}
+  Array &Array::operator*=(double x) { data_ *= x; return *this;}
+  Array &Array::operator/=(double x) { data_ /= x; return *this;}
 
   int ConstArrayBase::product(const std::vector<int> &dims) {
     int ans = 1;
@@ -978,5 +986,57 @@ namespace BOOM {
     return array_to_string(*this);
   }
   //======================================================================
+
+  Array operator+(const Array &arr, double x) {
+    Array ans(arr);
+    ans += x;
+    return ans;
+  }
+
+  Array operator+(double x, const Array &arr) {
+    Array ans(arr);
+    ans += x;
+    return ans;
+  }
+
+  Array operator-(const Array &arr, double x) {
+    Array ans(arr);
+    ans -= x;
+    return ans;
+  }
+
+  Array operator-(double x, const Array &arr) {
+    Array ans(arr);
+    ans *= -1;
+    ans += x;
+    return ans;
+  }
+
+  Array operator*(const Array &arr, double x) {
+    Array ans(arr);
+    ans *= x;
+    return ans;
+  }
+
+  Array operator*(double x, const Array &arr) {
+    Array ans(arr);
+    ans *= x;
+    return ans;
+  }
+
+  Array operator/(const Array &arr, double x) {
+    Array ans(arr);
+    ans /= x;
+    return ans;
+  }
+
+  Array operator/(double x, const Array &arr) {
+    Array ans(arr);
+    for (auto &el : ans) {
+      el = x / el;
+    }
+    return ans;
+  }
+
 
 }  // namespace BOOM

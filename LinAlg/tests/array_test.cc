@@ -119,6 +119,48 @@ namespace {
     }
   }
 
+  TEST_F(ArrayTest, InitializerConstruction) {
+    Array a{3, 4, 5};
+
+    EXPECT_EQ(3, a.ndim());
+    EXPECT_EQ(3, a.dim(0));
+    EXPECT_EQ(4, a.dim(1));
+    EXPECT_EQ(5, a.dim(2));
+
+    EXPECT_DOUBLE_EQ(0.0, a(1, 2, 3));
+    EXPECT_DOUBLE_EQ(0.0, a(0, 0, 0));
+    EXPECT_DOUBLE_EQ(0.0, a(2, 3, 4));
+  }
+
+  TEST_F(ArrayTest, ScalarOperations) {
+    Array a{3, 4, 5};
+    a.randomize();
+
+    Array a1 = a + 1;
+    EXPECT_DOUBLE_EQ(a1(1, 2, 3), a(1, 2, 3) + 1.0);
+
+    a1 = 1 + a;
+    EXPECT_DOUBLE_EQ(a1(1, 2, 3), a(1, 2, 3) + 1.0);
+
+    a1 = a - 1;
+    EXPECT_DOUBLE_EQ(a1(1, 2, 3), a(1, 2, 3) - 1.0);
+
+    a1 = 3.7 - a;
+    EXPECT_DOUBLE_EQ(3.7 - a(1, 2, 3), a1(1, 2, 3));
+
+    a1 = 3.7 * a;
+    EXPECT_DOUBLE_EQ(3.7 * a(1, 2, 3), a1(1, 2, 3));
+
+    a1 = a * 3.7;
+    EXPECT_DOUBLE_EQ(3.7 * a(1, 2, 3), a1(1, 2, 3));
+
+    a1 = a / 3.7;
+    EXPECT_DOUBLE_EQ(a(1, 2, 3) / 3.7, a1(1, 2, 3));
+
+    a1 = 3.7 / a;
+    EXPECT_DOUBLE_EQ(3.7 / a(1, 2, 3), a1(1, 2, 3));
+  }
+
   TEST_F(ArrayTest, TestSummation) {
     std::vector<int> dims = {3, 2, 4, 2};
 

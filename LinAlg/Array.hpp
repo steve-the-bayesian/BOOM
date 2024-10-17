@@ -28,6 +28,7 @@
 
 #include <vector>
 #include <sstream>
+#include <initializer_list>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -340,6 +341,9 @@ namespace BOOM {
     Array(const std::vector<int> &dims, const std::vector<double> &data);
     Array(const std::vector<int> &dims, const double *data);
 
+    explicit Array(const std::initializer_list<int> &dims,
+                   double initial_value = 0);
+
     // Convenience constructor for a 3-way array.  The first array dimension is
     // the index of the vector.  The second and third dimensions are the rows
     // and columns of the elements of 'matrices.'  If 'matrices' is empty then
@@ -364,7 +368,10 @@ namespace BOOM {
 
     Array &operator+=(const Array &rhs);
     Array &operator+=(const ConstArrayView &rhs);
-
+    Array &operator+=(double x);
+    Array &operator-=(double x);
+    Array &operator*=(double x);
+    Array &operator/=(double x);
 
     template <class FwdIt>
     Array &assign(FwdIt begin, FwdIt end) {
@@ -460,6 +467,17 @@ namespace BOOM {
    private:
     Vector data_;
   };
+
+  Array operator+(const Array &arr, double x);
+  Array operator-(const Array &arr, double x);
+  Array operator*(const Array &arr, double x);
+  Array operator/(const Array &arr, double x);
+
+  Array operator+(double x, const Array &arr);
+  Array operator-(double x, const Array &arr);
+  Array operator*(double x, const Array &arr);
+  Array operator/(double x, const Array &arr);
+
 
   // A mapping from a multivariate index to a column-major array storage format.
   //
