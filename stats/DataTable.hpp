@@ -177,9 +177,19 @@ namespace BOOM {
     // Return the entry in cell i if it is of the requested type.  If it is
     // not then raise an error.
     const DoubleData &numeric(int i) const;
+    const DoubleData &numeric(const std::string &name) const;
+
     Ptr<DoubleData> mutable_numeric(int i);
+    Ptr<DoubleData> mutable_numeric(const std::string &name);
+
     const LabeledCategoricalData &categorical(int i) const;
+    const LabeledCategoricalData &categorical(
+        const std::string &name) const;
+
     Ptr<LabeledCategoricalData> mutable_categorical(int i) const;
+    Ptr<LabeledCategoricalData> mutable_categorical(
+        const std::string &name) const;
+
 
     // Collapse all the numeric data into a vector.
     Vector numeric_data() const;
@@ -196,6 +206,10 @@ namespace BOOM {
     Ptr<DataTypeIndex> type_index_;
     std::vector<Ptr<DoubleData>> numeric_data_;
     std::vector<Ptr<LabeledCategoricalData>> categorical_data_;
+
+    // Returns the position number of the variable named 'name'.  If 'name' is
+    // not the name of a variable then -1 gets returned.
+    int get_position(const std::string &name) const;
   };
 
   //===========================================================================

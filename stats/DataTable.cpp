@@ -222,6 +222,11 @@ namespace BOOM {
     return *numeric_data_[pos];
   }
 
+  const DoubleData &MixedMultivariateData::numeric(
+      const std::string &name) const {
+    return numeric(get_position(name));
+  }
+
   Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
     VariableType type;
     int pos;
@@ -234,6 +239,11 @@ namespace BOOM {
     return numeric_data_[pos];
   }
 
+  Ptr<DoubleData> MixedMultivariateData::mutable_numeric(
+      const std::string &name) {
+    return mutable_numeric(get_position(name));
+  }
+
   const LabeledCategoricalData &MixedMultivariateData::categorical(int i) const {
     VariableType type;
     int pos;
@@ -244,6 +254,11 @@ namespace BOOM {
       report_error(err.str());
     }
     return *categorical_data_[pos];
+  }
+
+  const LabeledCategoricalData &MixedMultivariateData::categorical(
+      const std::string &name) const {
+    return categorical(get_position(name));
   }
 
   Ptr<LabeledCategoricalData>
@@ -259,12 +274,28 @@ namespace BOOM {
     return categorical_data_[pos];
   }
 
+  Ptr<LabeledCategoricalData> MixedMultivariateData::mutable_categorical(
+      const std::string &name) const {
+    return mutable_categorical(get_position(name));
+  }
+
   Vector MixedMultivariateData::numeric_data() const {
     Vector ans(numeric_data_.size());
     for (int i = 0; i < numeric_data_.size(); ++i) {
       ans[i] = numeric_data_[i]->value();
     }
     return ans;
+  }
+
+  int MixedMultivariateData::get_position(const std::string &name) const {
+    int position = type_index_->position(name);
+    if (position < 0) {
+      std::ostringstream err;
+      err << "MixedMultivariateData contains no variable named " << name
+          << ".";
+      report_error(err.str());
+    }
+    return position;
   }
 
   //===========================================================================
