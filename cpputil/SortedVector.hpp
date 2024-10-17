@@ -84,6 +84,8 @@ namespace BOOM {
       return i;
     }
 
+    void clear() {elements_.clear();}
+
     const_iterator find(const T& t) const {
       const_iterator i = std::lower_bound(begin(), end(), t, cmp);
       return i == end() || cmp(t, *i) ? end() : i;
