@@ -40,6 +40,14 @@ namespace BOOM {
       report_error("");
     }
 
+    MultinomialNode::MultinomialNode(int node_id,
+                                     const std::string &name,
+                                     int variable_index,
+                                     const Ptr<CatKey> &key)
+        : Node(node_id, name, variable_index),
+          categorical_key_(key)
+    {}
+
     Array MultinomialNode::conditional_probability_table() const {
       ensure_models();
 

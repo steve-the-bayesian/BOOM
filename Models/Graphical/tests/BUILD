@@ -41,3 +41,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "node_set_marginal_distribution_test",
+    size = "small",
+    srcs = ["node_set_marginal_distribution_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)

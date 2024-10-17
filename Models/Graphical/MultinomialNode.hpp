@@ -44,6 +44,9 @@ namespace BOOM {
       //   CategoricalVariable.
       MultinomialNode(const DataTable &table, const std::string &variable_name);
 
+      MultinomialNode(int node_id, const std::string &name, int variable_index,
+                      const Ptr<CatKey> &key);
+
       NodeType node_type() const override {
         return NodeType::CATEGORICAL;
       }

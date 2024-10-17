@@ -55,21 +55,20 @@ namespace BOOM {
       std::vector<int> unknown_dims;
 
       for (const auto &node : host_->elements()) {
-        Ptr<Node> base = node.dcast<Node>();
-        if (base->is_observed(data_point)) {
+        if (node->is_observed(data_point)) {
           // If the node's variable is observed, then store it in the
           // appropriate map.
           //
           // TODO: this code might be clearer if Node types were
           // subclassed in the type system.
-          switch (base->node_type()) {
+          switch (node->node_type()) {
             case NodeType::CATEGORICAL:
-              known_discrete_variables_[base] = base->categorical_value(
+              known_discrete_variables_[node] = node->categorical_value(
                   data_point);
               break;
 
             case NodeType::CONTINUOUS:
-              known_gaussian_variables_[base] = base->numeric_value(
+              known_gaussian_variables_[node] = node->numeric_value(
                   data_point);
               break;
 
@@ -77,11 +76,11 @@ namespace BOOM {
               report_error("Unexpected case.");
           }
         } else {
-          if (base->node_type() == NodeType::CATEGORICAL) {
+          if (node->node_type() == NodeType::CATEGORICAL) {
             // Here the node's value is unobserved.  Store the node in
             // unknown_discrete_nodes_, and add its dimension to unknown_dims.
-            unknown_discrete_nodes_.push_back(base);
-            unknown_dims.push_back(base->dim());
+            unknown_discrete_nodes_.insert(node);
+            unknown_dims.push_back(node->dim());
           } else {
             report_error("Only categorical variables handled for now.");
           }
@@ -137,10 +136,11 @@ namespace BOOM {
       if (parent_distribution) {
         d_separator = parent_distribution->host()->intersection(*host_);
         prior_margin = parent_distribution->compute_margin(d_separator);
-
-        // The prior_margin should really contain information about which nodes
-        // are known vs unknown.
+      } else {
+        // Is there anything to do here?
       }
+
+
 
       // 2) Find all the children of the nodes in the d-separator, as well as
       //    all the nodes that have no parents.  Process the unknown nodes.
@@ -153,20 +153,19 @@ namespace BOOM {
     }
 
     //===========================================================================
+
+    // Compute the marginal distribution for the nodes in the subset.
+    //
+    // The known variables in the subset are copied.  The unknown variables NOT
+    // in the subset are summed over.
     NSMD NSMD::compute_margin(const NodeSet &subset) const {
 
       NodeSetMarginalDistribution ans(&subset);
-
-      // The dimensions that need to be summed over.
-      std::vector<int> sum_over_dims;
-      std::map<Ptr<Node>, int> known_discrete_variables;
-      std::map<Ptr<Node>, double> known_gaussian_variables;
-      std::vector<Ptr<Node>> unknown_discrete_nodes;
+      NodeSet sum_over_nodes(unknown_discrete_nodes_);
 
       for (const auto &node : subset) {
-        int index = host_->index(node);
-        std::ostringstream err;
-        if (index == -1) {
+        if (!host_->contains(node)) {
+          std::ostringstream err;
           err << "NodeSetMarginalDistribution for " << *host_
               << " was asked to compute a margin containing "
               << *node
@@ -176,45 +175,63 @@ namespace BOOM {
           switch(node->node_type()) {
             case NodeType::CATEGORICAL:
               if (is_known(node)) {
-                known_discrete_variables[node]
-                    = known_discrete_variables_.find(node)->second;
+                ans.known_discrete_variables_[node]
+                    = this->known_discrete_variables_.find(node)->second;
               } else {
-                unknown_discrete_nodes.push_back(node);
-                sum_over_dims.push_back(index);
+                sum_over_nodes.remove(node);
+                ans.unknown_discrete_nodes_.add(node);
               }
               break;
 
             case NodeType::CONTINUOUS:
-              // ===========================================================================
-              // ===========================================================================
-              // ===========================================================================
-              // HERE
-              // ===========================================================================
-              // ===========================================================================
-              // ===========================================================================
               if (is_known(node)) {
-                known_gaussian_variables[node]
+                ans.known_gaussian_variables_[node]
                     = known_gaussian_variables_.find(node)->second;
+              } else {
+                std::ostringstream err;
+                err << node->name() << " is an unknown Gaussian node.  Support"
+                    << " for unknown Gaussian nodes has not yet been "
+                    << "implemented.";
+                report_error(err.str());
               }
               break;
 
             case NodeType::DUMMY:
-              break;
+              {
+                std::ostringstream err;
+                err << "Dummy node encountered:"  << node->name();
+                report_warning(err.str());
+                break;
+              }
+
             case NodeType::ID:
-              break;
+              {
+                std::ostringstream err;
+                err << "ID node encountered.  ID nodes are not yet supported.";
+                report_error(err.str());
+                break;
+              }
             default:
               break;
           }
         }
       }
 
-      Array margin = unknown_discrete_distribution_.sum(sum_over_dims);
-      ans.unknown_discrete_distribution_ = margin;
-      ans.known_discrete_variables_ = known_discrete_variables;
-      ans.known_gaussian_variables_ = known_gaussian_variables;
-      ans.unknown_discrete_nodes_ = unknown_discrete_nodes;
-      // Permute the order of the dimensions to match the order of the nodes in
-      // 'subset'.
+      std::vector<int> sum_over_dims;
+      for (const auto &node : sum_over_nodes) {
+        // Need the dimension in the array corresponding to this node.
+        int index = unknown_discrete_nodes_.index(node);
+        if (index < 0) {
+          std::ostringstream err;
+          err << "Node " << node->name() << " is to be marginalized over, "
+              "but is not present in unknown_discrete_nodes_.";
+          report_error(err.str());
+        }
+        sum_over_dims.push_back(unknown_discrete_nodes_.index(node));
+      }
+
+      ans.unknown_discrete_distribution_
+          = unknown_discrete_distribution_.sum(sum_over_dims);
 
       return ans;
     }

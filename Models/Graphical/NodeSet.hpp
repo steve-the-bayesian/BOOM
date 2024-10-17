@@ -22,6 +22,7 @@
 #include "cpputil/RefCounted.hpp"
 
 #include <sstream>
+#include <initializer_list>
 
 namespace BOOM {
 
@@ -50,6 +51,14 @@ namespace BOOM {
       NodeSet()
           : id_(-1)
       {}
+
+      NodeSet(const std::initializer_list<Ptr<Node>> &list)
+          : id_(-1)
+      {
+        for(auto el : list) {
+          add(el);
+        }
+      }
 
       template <class ITERATOR>
       NodeSet(ITERATOR begin, ITERATOR end)
@@ -131,9 +140,27 @@ namespace BOOM {
       const_iterator begin() const { return elements_.begin();}
       const_iterator end() const { return elements_.end();}
       size_t size() const {return elements_.size();}
+      void clear() {elements_.clear();}
+
+      NodeSet::const_iterator remove(const Ptr<Node> &element) {
+        return elements_.remove(element);
+      }
 
       std::string name() const {
         return compute_name();
+      }
+
+      bool operator==(const NodeSet &rhs) const {
+        if (elements_.size() != rhs.elements_.size()) {
+          return false;
+        }
+
+        for (int i = 0; i < elements_.size(); ++i) {
+          if (elements_[i] != rhs.elements_[i]) {
+            return false;
+          }
+        }
+        return true;
       }
 
      private:

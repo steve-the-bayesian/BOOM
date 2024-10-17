@@ -90,10 +90,15 @@ namespace BOOM {
       double forward_increment(const MixedMultivariateData &data_point,
                                const NodeSetMarginalDistribution *parent);
 
-      // Need a list of names to marginalize over.
-      void marginalize();
-
-      // Compute the marginal distribution of the set of (unknown) variables in subset, by
+      // Compute the marginal distribution of the variables in 'subset.'
+      //
+      // Args:
+      //   subset: A set of variables for which a marginal distribution is
+      //     desired.  An exception is thrown if any variables in the subset are
+      //     not covered by the current object.
+      //
+      // Returns:
+      //   A distribution describing the requested subset.
       NodeSetMarginalDistribution compute_margin(const NodeSet &subset) const;
 
       // Returns true iff node is present in either known_gaussian_variables_ or
@@ -110,6 +115,22 @@ namespace BOOM {
         return host_;
       }
 
+      const Array &unknown_discrete_distribution() const {
+        return unknown_discrete_distribution_;
+      }
+
+      void set_unknown_discrete_distribution(const Array &dist) {
+        unknown_discrete_distribution_ = dist;
+      }
+
+      const NodeSet &unknown_discrete_nodes() const {
+        return unknown_discrete_nodes_;
+      }
+
+      const std::map<Ptr<Node>, int> &known_discrete_variables() const {
+        return known_discrete_variables_;
+      }
+
      private:
       const NodeSet *host_;
 
@@ -121,10 +142,7 @@ namespace BOOM {
       // unknown (missing) values.  The number of discrete nodes in this vector
       // determines the number of dimensions in unknown_discrete_distribution_,
       // and their order corresponds to the dimensions of that array.
-      //
-      // The use of std::vector here instead of some other data structure
-      // (e.g. NodeSet) is purposeful, because the order of the nodes matters.
-      std::vector<Ptr<Node>>  unknown_discrete_nodes_;
+      NodeSet  unknown_discrete_nodes_;
       Array unknown_discrete_distribution_;
 
       std::vector<Ptr<Node>> unknown_gaussian_nodes_;
