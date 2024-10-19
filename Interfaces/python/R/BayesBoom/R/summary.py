@@ -125,7 +125,7 @@ def is_all_nines(x):
     Return:
         True if x is "all nines".  False otherwise.
     """
-    # If x is infinite, NaN, or has a fractional part then we don't consider it
+    # If x is infinite, nan, or has a fractional part then we don't consider it
     # "all 9's".
     if not np.isfinite(x) or (x != int(x)):
         return False
@@ -567,7 +567,7 @@ class CategoricalSummary(UnivariateSummary):
     def is_binary(self):
         """
         A variable is binary if it has 2 categories.  If missing values are
-        present they are counted as a category, so [1, 0, NaN] is not binary.
+        present they are counted as a category, so [1, 0, nan] is not binary.
         """
         return len(self._frequency_distribution) == 2
 

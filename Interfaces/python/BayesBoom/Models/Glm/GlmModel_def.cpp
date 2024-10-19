@@ -604,7 +604,7 @@ namespace BayesBoom {
              "Args: \n"
              "  integer_codes:  A Matrix containing codes for the data to \n"
              "    be modeled.  Each variable is coded from 0 to nlevels - 1.\n"
-             "    A value less than 0, or a NaN is interpreted as missing. \n")
+             "    A value less than 0, or a nan is interpreted as missing. \n")
         .def_property_readonly(
             "nvars", &LoglinearModel::nvars,
             "The number of variables being modeled.")

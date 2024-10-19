@@ -806,7 +806,7 @@ def compare_dynamic_distributions(
       vertical.cuts: If not None then this must be a vector of the same type as
         'timestamps' with length matching the number of plots.  A vertical line
         will be drawn at this location for each plot.  Entries with the value
-        NaN or NaT signal that no vertical line should be drawn for that entry.
+        nan or NaT signal that no vertical line should be drawn for that entry.
       kwargs: Extra arguments passed to PlotDynamicDistribution or
        TimeSeriesBoxplot.
     """

@@ -119,7 +119,7 @@ class PdSeriesJsonEncoder(json.JSONEncoder):
         if obj.hasnans:
             na_locations = np.arange(len(obj))[obj.isna()]
             for i in na_locations:
-                values[i] = "NaN"
+                values[i] = "nan"
         return values
 
     def encode_categorical(self, obj):
@@ -397,10 +397,10 @@ class PdIndexJsonDecoder(json.JSONDecoder):
             else:
                 index_values = pd.Categorical(categories[codes],
                                               categories=categories)
-                # pd.Categorical uses -1 to encode a NaN.  A code is -1, we
-                # need to translate manually back to NaN, otherwise Python will
+                # pd.Categorical uses -1 to encode a nan.  A code is -1, we
+                # need to translate manually back to nan, otherwise Python will
                 # interpret categories[-1] as "the last category" when it
-                # should translate to NaN.
+                # should translate to nan.
                 codes = np.array(codes)
                 index_values[codes == -1] = np.nan
                 index = pd.CategoricalIndex(

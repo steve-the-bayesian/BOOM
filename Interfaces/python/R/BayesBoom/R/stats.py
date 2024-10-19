@@ -59,7 +59,7 @@ def sd(x, axis=None, na_rm=True):
       x:  The object whose standard deviation is desired.
       axis: The dimension over which to measure the standard deviation.  If x is
         one-dimensional or if x is a pd.DataFrame then this argument is ignored.
-      na_rm: Should NaN's be omitted from the calculation?  This argument is
+      na_rm: Should nan's be omitted from the calculation?  This argument is
         ignored if x is a sparse matrix.
 
     Returns:
