@@ -115,4 +115,13 @@ namespace {
     EXPECT_EQ(values.position(-8), -1);
   }
 
+  // Test that it is safe to call 'remove' on an element that is not part of the
+  // SortedVector.
+  TEST(SortedVectorTest, TestRemove) {
+    SortedVector<int> values;
+    values.insert(1);
+    auto it = values.remove(3);
+    EXPECT_EQ(it, values.end());
+  }
+
 }  // namespace
