@@ -131,15 +131,34 @@ namespace BOOM {
       // 1) Find all the nodes in the d-separator.  These have already been
       //    processed.  Separate them out into knowns vs unknowns, and find the
       //    marginal distribution of the unknowns.
-      NodeSet d_separator;
-      NodeSetMarginalDistribution prior_margin(&d_separator);
+      NodeSet separator;
+      NodeSetMarginalDistribution prior_margin(&separator);
       if (parent_distribution) {
-        d_separator = parent_distribution->host()->intersection(*host_);
-        prior_margin = parent_distribution->compute_margin(d_separator);
-      } else {
-        // Is there anything to do here?
+        separator = parent_distribution->host()->intersection(*host_);
+        prior_margin = parent_distribution->compute_margin(separator);
       }
 
+      NodeSet nodes_to_process(host()->elements());
+      for (Ptr<Node> &node : separator) {
+        nodes_to_process.remove(node);
+      }
+
+      bool done = false;
+      while (!done) {
+        NodeSet remaining_nodes;
+        for (const Ptr<Node> &node : nodes_to_process) {
+          if (all_parents_exist(node, separator)) {
+
+          } else {
+            remaining_nodes.insert(node);
+          }
+        }
+        if (remaining_nodes.empty()) {
+          done = true;
+        } else {
+          nodes_to_process = remaining_nodes;
+        }
+      }
 
 
       // 2) Find all the children of the nodes in the d-separator, as well as
