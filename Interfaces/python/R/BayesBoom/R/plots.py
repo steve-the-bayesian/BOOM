@@ -388,6 +388,9 @@ def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
         else:
             vnames = ["V" + str(1 + pos) for pos in range(x.shape[1])]
 
+    if isinstance(truth, Number):
+        truth = np.array([truth] * x.shape[1])
+
     if center:
         x = x.copy()
         x -= truth
