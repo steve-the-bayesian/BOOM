@@ -707,6 +707,26 @@ namespace BOOM {
     return array_to_string(*this);
   }
 
+  Array ConstArrayView::apply_scalar_function(
+      const std::vector<int> &apply_over_dims,
+      const std::function<double(const ConstArrayView &)> &functor) const {
+
+    Selector apply_over(apply_over_dims, ndim());
+    Selector keep = apply_over.complement();
+    std::vector<int> output_dims = keep.select(dim());
+
+    Array ans(output_dims, 0.0);
+
+    for (auto it = ans.abegin(); it != ans.aend(); ++it) {
+      std::vector<int> index = keep.expand(it.position());
+      for (const auto &d : apply_over_dims) {
+        index[d] = -1;
+      }
+      *it = functor(slice(index));
+    }
+    return ans;
+  }
+
   //======================================================================
   Array::Array(const std::vector<int> &dims, double initial_value)
       : ArrayBase(dims), data_(ConstArrayBase::size(), initial_value) {}
@@ -956,5 +976,56 @@ namespace BOOM {
     return array_to_string(*this);
   }
   //======================================================================
+
+  double max(const ConstArrayView &view) {
+    double max_val = negative_infinity();
+    for (const auto &el : view) {
+      if (el > max_val) max_val = el;
+    }
+    return max_val;
+  }
+
+  double min(const ConstArrayView &view) {
+    double min_val = infinity();
+    for (const auto &el : view) {
+      if (el < min_val) min_val = el;
+    }
+    return min_val;
+  }
+
+  ArrayArgMax::ArrayArgMax(RNG &rng)
+      : rng_(rng)
+  {}
+
+  double ArrayArgMax::operator()(const ConstArrayView &view) const {
+    if (view.empty()) {
+      report_error("Empty array passed to ArrayArgMax.");
+    }
+    candidates_.clear();
+    if (view.ndim() > 1) {
+      std::ostringstream err;
+      err << "ArrayArgMax::operator() only works on one-dimensional arrays.  "
+          << "";
+    }
+    int i = 0;
+    double max_value = negative_infinity();
+    for (double el : view) {
+      if (el > max_value) {
+        candidates_.clear();
+        max_value = el;
+        candidates_.push_back(i);
+      } else if (el == max_value) {
+        candidates_.push_back(i);
+      }
+      ++i;
+    }
+
+    if (candidates_.size() == 1) {
+      return candidates_[0];
+    } else {
+      uint index = rmulti_mt(rng_, 0, candidates_.size() - 1);
+      return candidates_[index];
+    }
+  }
 
 }  // namespace BOOM

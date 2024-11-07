@@ -215,6 +215,23 @@ namespace BOOM {
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
 
+    // Args:
+    //   apply_over_dims: The dimensions of the array over which to apply the
+    //     function.
+    //   functor:  The function to apply.
+    //
+    // Returns:
+    //   The array formed by applying the scalar valued function over the
+    //   requested dimensions.
+    //
+    // Example: If the array has 3 dimensions (8, 6, 7) and apply_over_dims =
+    //   {0, 2} then the return value will be an array of a single dimension of
+    //   size 6.  Entry i in the returned array is the result of 'functor'
+    //   applied to the sub-array(this->slice(-1, i, -1)).
+    Array apply_scalar_function(
+        const std::vector<int> &apply_over_dims,
+        const std::function<double(const ConstArrayView &)> &functor) const;
+
    private:
     const double *data_;
   };
@@ -399,6 +416,13 @@ namespace BOOM {
     VectorView vector_slice(int x1, int x2, int x3, int x4, int x5);
     VectorView vector_slice(int x1, int x2, int x3, int x4, int x5, int x6);
 
+    Array apply_scalar_function(
+        const std::vector<int> &apply_over_dims,
+        const std::function<double(const ConstArrayView &view)> &functor) const {
+      return ConstArrayView(*this).apply_scalar_function(
+          apply_over_dims, functor);
+    }
+
     // The easiest way to iterate over all the array elements is to iterate over
     // data_.
     iterator begin() { return data_.begin(); }
@@ -416,8 +440,44 @@ namespace BOOM {
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
 
+    using ArrayBase::operator[];
+
+    // Return the i'th element of the Array.  This is storage order dependent,
+    // but for single dimension arrays it allows access to the underlying data
+    // vector.
+    double operator[](int i) const { return data_[i]; }
+    double &operator[](int i) { return data_[i]; }
+
    private:
     Vector data_;
+  };
+
+  //===========================================================================
+  // Free functions
+  //===========================================================================
+
+  double max(const ConstArrayView &view);
+  inline double max(const Array &array) {
+    return max(ConstArrayView(array));
+  }
+
+  double min(const ConstArrayView &view);
+  inline double min(const Array &array) {
+    return min(ConstArrayView(array));
+  }
+
+  // A functor for finding the index of the maximal value in a 1-D array.  If
+  // there are multiple copies of the same max value, then ties are broken
+  // uniformly at random.
+  class ArrayArgMax {
+   public:
+    ArrayArgMax(RNG &rng = ::BOOM::GlobalRng::rng);
+
+    double operator()(const ConstArrayView &view) const;
+
+   private:
+    mutable RNG rng_;
+    mutable std::vector<int> candidates_;
   };
 
 }  // namespace BOOM
