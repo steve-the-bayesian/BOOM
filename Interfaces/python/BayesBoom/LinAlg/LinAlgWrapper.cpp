@@ -5,6 +5,7 @@
 #include <pybind11/numpy.h>
 #include <memory>
 #include <cpputil/report_error.hpp>
+#include "LinAlg/Array.hpp"
 #include "LinAlg/Cholesky.hpp"
 #include "LinAlg/EigenMap.hpp"
 #include "LinAlg/Matrix.hpp"
@@ -22,19 +23,25 @@ namespace BayesBoom {
   void LinAlg_def(py::module &boom) {
 
     py::class_<Vector, std::unique_ptr<Vector>>(boom, "Vector")
-        .def(py::init( [] (Eigen::Ref<Eigen::VectorXd> numpy_array) {
+        .def(py::init(
+            [](Eigen::Ref<Eigen::VectorXd> numpy_array) {
               VectorView view(numpy_array.data(), numpy_array.size(), 1);
               return std::unique_ptr<Vector>(new Vector(view));
             }),
-          "Create a Vector from a numpy array.  Be sure the dtype is float!")
+             py::arg("array"),
+             "Create a Vector from a numpy array of floats.")
         .def(py::init(
             [](const std::vector<int> &inputs) {
               return new Vector(inputs.begin(), inputs.end());
-            }))
+            }),
+             py::arg("inputs"),
+             "Create a Vector from a sequence of int's")
         .def(py::init(
             [](const std::vector<long> &inputs) {
               return new Vector(inputs.begin(), inputs.end());
-            }))
+            }),
+             "Create a Vector from a "
+             )
         .def("all_finite", &Vector::all_finite,
              "Returns true iff all elements are finite.")
         .def_property_readonly("randomize", &Vector::randomize,
@@ -230,7 +237,7 @@ namespace BayesBoom {
               return m.col_names();
             })
         ;
-    
+
     // ===========================================================================
     py::class_<SpdMatrix, Matrix>(boom, "SpdMatrix")
         .def(py::init<int, double>(),
@@ -391,6 +398,67 @@ namespace BayesBoom {
                return out.str();
              })
         ;
+
+    py::class_<Array>(boom, "Array")
+        .def(py::init(
+            [](const std::vector<int> &dims, double initial_value) {
+              return new Array(dims, initial_value);
+            }),
+             py::arg("dims"),
+             py::arg("initial_value") = 0.0,
+             "Create a BOOM Array:\n\n"
+             "Args:\n\n"
+             "  dims:  A vector of ints giving the size of each dimension of "
+             "the array.\n"
+             "  initial_value: All entries in the Array are initialized to "
+             "this scalar value.\n")
+        .def(py::init(
+            [](const std::vector<int> &dims,
+               const Vector &data) {
+              return new Array(dims, data);
+            }),
+             py::arg("dims"),
+             py::arg("data"),
+             "Create a BOOM Array\n\n"
+             "Args:\n\n"
+             "  dims:  A vector of ints giving the size of each dimension of "
+             "the array.\n"
+             "  data:  A Vector containing the data in the body of the array. "
+             " The length of the vector must match the product of 'dims'.\n")
+        .def("__getitem__",
+             [](const Array &arr, const std::vector<int> &index) {
+          return arr[index];
+        })
+        .def("__setitem__",
+             [](Array &arr, const std::vector<int> &index, double value) {
+               arr[index] = value;
+             })
+        .def("__repr__",
+             [](const Array &arr) {
+               std::ostringstream out;
+               out << arr;
+               return out.str();
+             })
+        ;
+
+    boom.def("argmax_random_tie",
+             [](const Array &arr,
+                const std::vector<int> &apply_over,
+                RNG &rng) {
+               ArrayArgMax f(rng);
+               Array pos = arr.apply_scalar_function(apply_over, f);
+               return pos;
+             },
+             py::arg("arr"),
+             py::arg("apply_over"),
+             py::arg("rng") = ::BOOM::GlobalRng::rng,
+             "Return the index of the largest value in the specified array "
+             "dimensions, breaking ties at random.\n\n"
+             "Args:\n\n"
+             "  arr:  The array to search.\n"
+             "  apply_over: A collection of dimensions over which to search.\n"
+             "  rng:  The random number generator to use when breaking ties.\n"
+             );
 
   }  // ends the LinAlg_def function.
 

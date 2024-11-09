@@ -96,6 +96,19 @@ def to_boom_spd(m):
 
     return boom.SpdMatrix(np.array(m, dtype="float"))
 
+def to_boom_array(arr):
+    """
+    Convert a multi-way numpy array to a boom.Array object.  By default numpy
+    stores array in C-style "row major" order, while BOOM expects arrays in
+    "column major" order.
+    """
+    if (
+            not isinstance(arr, np.ndarray)
+            or arr.dtype != "float"
+    ):
+        arr = np.array(arr, dtype="float", order="F")
+
+    return boom.Array(arr.shape, arr.reshape(-1, order="F"))
 
 def to_numpy(x):
     """

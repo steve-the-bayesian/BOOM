@@ -138,6 +138,7 @@ from .test_utilities import delete_if_present
 from .boom_py_utils import (
     is_all_numeric,
     is_iterable,
+    to_boom_array,
     to_boom_date,
     to_boom_vector,
     to_boom_matrix,
