@@ -108,7 +108,8 @@ def to_boom_array(arr):
     ):
         arr = np.array(arr, dtype="float", order="F")
 
-    return boom.Array(arr.shape, arr.reshape(-1, order="F"))
+    return boom.Array(arr.shape,
+                      to_boom_vector(arr.reshape(-1, order="F")))
 
 def to_numpy(x):
     """
@@ -118,7 +119,7 @@ def to_numpy(x):
         return x
     elif isinstance(x, (pd.Series, pd.DataFrame)):
         return x.values
-    elif isinstance(x, (boom.Vector, boom.Matrix, boom.SpdMatrix)):
+    elif isinstance(x, (boom.Vector, boom.Matrix, boom.SpdMatrix, boom.Array)):
         return x.to_numpy()
     else:
         return np.array(x)

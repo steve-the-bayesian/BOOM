@@ -2,9 +2,13 @@
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
+
 #include <pybind11/numpy.h>
+#include <pybind11/buffer_info.h>
+
 #include <memory>
-#include <cpputil/report_error.hpp>
+
+#include "cpputil/report_error.hpp"
 #include "LinAlg/Array.hpp"
 #include "LinAlg/Cholesky.hpp"
 #include "LinAlg/EigenMap.hpp"
@@ -429,6 +433,44 @@ namespace BayesBoom {
              [](const Array &arr, const std::vector<int> &index) {
           return arr[index];
         })
+        .def_property_readonly(
+            "ndim",
+            [](Array &arr) {
+              return arr.ndim();
+            },
+            "The number of dimensions in the array.")
+        .def("dim",
+             [](const Array &arr, int i) {
+               return arr.dim(i);
+             },
+             py::arg("i"),
+             "Args:\n\n"
+             "  i:  The requested dimension (0, 1, 2, ...).\n\n"
+             "Returns:\n\n"
+             "  The size (extent) of the requested dimension.\n")
+        .def_property_readonly(
+            "dims",
+            [](const Array &arr) {
+              return arr.dim();
+            },
+            "The dimensions of the array.\n")
+        .def("to_numpy",
+             [](Array &arr) {
+               // Create the empty space for the python array.
+               py::array_t<double> ans(arr.dim(), arr.strides(), arr.data());
+               double *d = (double *)ans.mutable_data();
+               std::vector<int> dims = arr.dim();
+               std::vector<int> c_strides;
+               ConstArrayBase::compute_strides(arr.dim(), c_strides, false);
+
+               for (auto it = arr.abegin(); it != arr.aend(); ++it) {
+                 size_t index = ConstArrayBase::array_index(
+                     it.position(), dims, c_strides);
+                 d[index] = *it;
+               }
+               return ans;
+             },
+             "Return the array as a numpy.ndarray.")
         .def("__setitem__",
              [](Array &arr, const std::vector<int> &index, double value) {
                arr[index] = value;
@@ -458,6 +500,8 @@ namespace BayesBoom {
              "  arr:  The array to search.\n"
              "  apply_over: A collection of dimensions over which to search.\n"
              "  rng:  The random number generator to use when breaking ties.\n"
+             "\n"
+             "Note the returned object "
              );
 
   }  // ends the LinAlg_def function.

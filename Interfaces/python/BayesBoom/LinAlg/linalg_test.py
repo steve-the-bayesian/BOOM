@@ -1,7 +1,7 @@
 import unittest
 import BayesBoom.boom as boom
+import BayesBoom.R as R
 import numpy as np
-
 
 class LinAlgTest(unittest.TestCase):
 
@@ -85,6 +85,51 @@ class LinAlgTest(unittest.TestCase):
         self.assertEqual(col_names, m3.col_names)
         self.assertTrue(np.allclose(raw_data, m3.to_numpy()))
 
+    def test_array(self):
+        # x = np.random.randn(2,3,4)
+        x = np.array(
+            [[[ 0.33726119, -1.16232657, -0.32731355,  0.21659849],
+              [-0.48883675, -0.58757439,  0.18716781, -0.12464536],
+              [-0.53821583,  0.58069231,  0.19968848,  0.6311756 ]],
+             [[ 0.88622023, -0.6579181 ,  1.01357032,  0.64801707],
+              [ 1.58231319,  0.29383011,  0.58968301, -0.36975214],
+              [ 1.38582045,  1.75563478,  0.57981513, -0.47530515]]])
+
+        XX = R.to_boom_array(x)
+
+        # Check the mapping from numpy to BOOM.
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertAlmostEqual(x[i, j, k], XX[i, j, k])
+
+        # Check the reverse mapping from BOOM to numppy.
+        xxx = XX.to_numpy()
+        self.assertTrue(np.allclose(x, xxx))
+
+        # for i in range(2):
+        #     for j in range(3):
+        #         for k in range(4):
+        #             self.assertAlmostEqual(x[i, j, k], xxx[i, j, k])
+
+        ind = boom.argmax_random_tie(XX, apply_over=[2]);
+        self.assertEqual(ind.ndim, 2)
+        self.assertEqual(ind.dim(0), 2)
+        self.assertEqual(ind.dim(1), 3)
+
+        correct_argmax = np.array(
+            [[0, 2, 3],
+             [2, 0, 1]], dtype=int)
+
+        python_ind = ind.to_numpy()
+        python_ind_int = python_ind.astype(int)
+        for i in range(2):
+            for j in range(3):
+                self.assertAlmostEqual(ind[i, j], correct_argmax[i, j])
+                self.assertAlmostEqual(python_ind[i, j], correct_argmax[i, j]);
+                self.assertAlmostEqual(python_ind_int[i, j], correct_argmax[i, j]);
+
+
 
 _debug_mode = False
 
@@ -92,8 +137,7 @@ if _debug_mode:
     import pdb
     rig = LinAlgTest()
     rig.setUp()
-    pdb.set_trace()
-    rig.test_implicit_conversion()
+    rig.test_array()
 
 elif __name__ == "__main__":
     unittest.main()
