@@ -5,15 +5,18 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Array.hpp"
 
-#include "stats/Spline.hpp"
 #include "stats/Bspline.hpp"
-#include "stats/moments.hpp"
 #include "stats/DataTable.hpp"
-#include "stats/IQagent.hpp"
 #include "stats/Encoders.hpp"
-#include "stats/hexbin.hpp"
+#include "stats/IQagent.hpp"
+#include "stats/Spline.hpp"
+
 #include "stats/acf.hpp"
+#include "stats/hexbin.hpp"
+#include "stats/moments.hpp"
+#include "stats/optimal_arm_probabilities.hpp"
 
 #include "Models/DataTypes.hpp"
 #include "cpputil/Ptr.hpp"
@@ -51,6 +54,32 @@ namespace BayesBoom {
       "  lags:  The number of lags to compute.\n"
       "  correlation:  If true the autocorrelation function is returned.  "
       "If false the autocovariance function is returned.\n");
+
+    boom.def("compute_optimal_arm_probabilities",
+             [](Matrix &values) {
+               return compute_optimal_arm_probabilities(values);
+             },
+             py::arg("values"),
+             "Args:\n\n"
+             "  values:  A boom.Matrix with element (i, j) giving the "
+             "expected reward value for iteration i, arm j.\n\n"
+             "Returns:\n"
+             "  A boom.Vector containing the optimal arm probability "
+             "for each arm.\n");
+
+    boom.def("compute_user_specific_optimal_arm_probabilities",
+             [](Array &values) {
+               return compute_user_specific_optimal_arm_probabilities(values);
+             },
+             py::arg("values"),
+             "Args:\n\n"
+             "  values:  A boom.Array with three dimensions.  "
+             "Element (i, j, a) contains the expected reward value for "
+             "subject i, iteration j, arm a.\n\n"
+             "Returns:\n"
+             "  A boom.Vector containing the optimal arm probability "
+             "for each arm.\n");
+
 
     //===========================================================================
     py::class_<SplineBase> (boom, "SplineBase")
