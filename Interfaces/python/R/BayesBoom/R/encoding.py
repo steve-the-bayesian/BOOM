@@ -554,6 +554,7 @@ class InteractionEncoder(Encoder):
     def dim(self):
         return self._encoder1.dim * self._encoder2.dim
 
+    @property
     def encoded_variable_names(self):
         names1 = self._encoder1.encoded_variable_names
         names2 = self._encoder2.encoded_variable_names
