@@ -14,4 +14,5 @@ pytz==2022.1
 scipy==1.14.1
 seaborn==0.13.2
 six==1.16.0
+wheel
 tzdata==2024.2
