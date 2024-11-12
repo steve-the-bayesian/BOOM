@@ -29,6 +29,10 @@ def register_encoding_json_encoder(statistical_encoder_name,
 
 
 def _unique_levels(levels):
+    """
+    Return a list of the unqiue values in 'levels'.  'levels' can be any
+    sequence container.  The return value is a list.
+    """
     ans = []
     used = set()
     for level in levels:
@@ -89,6 +93,13 @@ class Encoder(ABC):
         otherwise.
         """
 
+    @abstractmethod
+    def extract_main_effects(self):
+        """
+        Returns a dictionary keyed by variable names, containing the
+        MainEffectEncoder that encodes that variable.
+        """
+
 
 # ===========================================================================
 class MainEffectEncoder:
@@ -126,6 +137,17 @@ class MainEffectEncoder:
 
     def encodes(self, vname):
         return vname == self.variable_name
+
+    def extract_main_effects(self):
+        return {self.variable_name: self}
+
+    @abstractmethod
+    def simulate(self, sample_size):
+        """
+        Simulate 'sample_size' random observations independently from the encoder.
+
+        This is primarily a tool for unit testing.
+        """
 
     def __repr__(self):
         return str(self.__class__.__name__) + " for " + self.variable_name
@@ -246,6 +268,10 @@ class EffectEncoder(MainEffectEncoder):
         ans[baseline, :] = -1
         return ans
 
+    def simulate(self, sample_size):
+        rng = np.random.default_rng()
+        return rng.choice(self._levels + [self._baseline], size=sample_size)
+
     @property
     def encoded_variable_names(self):
         return [self.variable_name + "." + str(x) for x in self._levels]
@@ -311,6 +337,10 @@ class OneHotEncoder(MainEffectEncoder):
 
         return ans
 
+    def simulate(self, sample_size):
+        rng = np.random.default_rng()
+        return rng.choice(self._levels, size=sample_size)
+
     @property
     def encoded_variable_names(self):
         return [self.variable_name + "." + str(x)
@@ -364,6 +394,9 @@ class IdentityEncoder(MainEffectEncoder):
     def encoded_variable_names(self):
         return [self.variable_name]
 
+    def simulate(self, sample_size):
+        rng = np.random.default_rng()
+        return rng.standard_normal(sample_size)
 
 class IdentityEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -412,6 +445,9 @@ class MissingDummyEncoder(MainEffectEncoder):
 
     def encodes(self, vname):
         return self._base.encodes(vname)
+
+    def simulate(self, sample_size):
+        return self._base.simulate(sample_size)
 
     @property
     def encoded_variable_names(self):
@@ -470,6 +506,10 @@ class SuccessEncoder(MainEffectEncoder):
     @property
     def encoded_variable_names(self):
         return ["Success({self.variable_name})"]
+
+    def simulate(self, sample_size):
+        rng = np.random.default_rng()
+        return rng.choice([0, 1], size=sample_size)
 
 
 class SuccessEncoderJsonEncoder(json.JSONEncoder):
@@ -563,6 +603,11 @@ class InteractionEncoder(Encoder):
 
     def encodes(self, vname):
         return self._encoder1.encodes(vname) or self._encoder2.encodes(vname)
+
+    def extract_main_effects(self):
+        ans = self._encoder1.extract_main_effects()
+        ans.update(self._encoder2.extract_main_effects())
+        return ans;
 
     def __repr__(self):
         return f"Interaction between {self._encoder1} and {self._encoder2}."
@@ -664,6 +709,19 @@ class DatasetEncoder(Encoder):
             if enc.encodes(vname):
                 return True
         return False
+
+    def simulate(self, sample_size):
+        data = {}
+        main_effects = self.extract_main_effects()
+        for vname, enc in main_effects.items():
+            data[vname] = enc.simulate(sample_size)
+        return pd.DataFrame(data)
+
+    def extract_main_effects(self):
+        ans = {}
+        for enc in self._encoders:
+            ans.update(enc.extract_main_effects())
+        return ans
 
     def _create_variable_map(self):
         vnames = self.required_variables

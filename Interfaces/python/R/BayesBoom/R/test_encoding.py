@@ -203,6 +203,32 @@ class TestDatasetEncoder(unittest.TestCase):
         encoder2 = json.loads(json_string, cls=R.DatasetEncoderJsonDecoder)
         self.assertTrue(np.allclose(enc, encoder2.encode_dataset(data)))
 
+    def test_simulation(self):
+        sample_size = 100
+        colors = ["Red", "Green", "Blue"]
+        color_encoder = R.EffectEncoder("Color", colors)
+        shapes = ["Circle", "Triangle", "Pentagon", "Octogon"]
+        shape_encoder = R.OneHotEncoder("Shape", shapes, baseline_level="Circle")
+
+        height_encoder = R.IdentityEncoder("Height")
+
+        enc = R.DatasetEncoder([color_encoder, shape_encoder, height_encoder])
+        data = enc.simulate(sample_size)
+        self.assertIsInstance(data, pd.DataFrame)
+        self.assertEqual(data.shape[0], sample_size)
+        self.assertEqual(data.shape[1], 3)
+        self.assertEqual(data.columns[0], "Color")
+        self.assertEqual(data.columns[1], "Shape")
+        self.assertEqual(data.columns[2], "Height")
+
+        color_table = R.table(data["Color"])
+        self.assertEqual(len(color_table), len(colors))
+
+        shape_table = R.table(data["Shape"])
+        self.assertEqual(len(shape_table), len(shapes))
+
+        self.assertEqual(data["Height"].dtype, "float64")
+
 
 _debug_mode = False
 
@@ -223,7 +249,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_encoding()
+    rig.test_simulation()
 
     print("Goodbye, cruel world!")
 
