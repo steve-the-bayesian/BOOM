@@ -106,6 +106,36 @@ namespace BOOM {
     virtual ostream & print(ostream &out) const = 0;
     virtual std::string to_string() const = 0;
 
+    // Return the position in the underlying data array of the object at
+    // position [i, j, k, ...].
+    //
+    // Args:
+    //   index:  The vector of indicies to be mapped to a memory position.
+    //   dims:  The dimensions (extents) of an array.
+    //   strides:  The strides between dimensions for an array.
+    //
+    // Returns:
+    //   The array offset of the data at index [i, j, k, ...].
+    static size_t array_index(const std::vector<int> &index,
+                              const std::vector<int> &dims,
+                              const std::vector<int> &strides);
+
+    // Compute the vector of strides needed to store an array with the given set
+    // of dimensions.  Views into an array may use different strides.  These are
+    // for a dense, packed array.
+    //
+    // Args:
+    //   dims: The dimensions of the array.
+    //   strides: The vector that will receive the computed strides.  On output
+    //     it will be the same size as 'dims'.
+    //   fortran_order: If true then the strides will be computed according to
+    //     'column major order' where the lowest indicies change the fastest.
+    //     If false then strides will be computed for 'row major order' where
+    //     the highest indices change the fastest.
+    static void compute_strides(const std::vector<int> &dims,
+                                std::vector<int> &strides,
+                                bool fortran_order = true);
+
    private:
     std::vector<int> dims_;
     std::vector<int> strides_;

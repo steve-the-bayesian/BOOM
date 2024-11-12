@@ -39,11 +39,24 @@ namespace BOOM {
       : dims_(dims), strides_(strides) {}
 
   void ConstArrayBase::compute_strides() {
-    strides_.resize(dims_.size());
+    compute_strides(dims_, strides_, true);
+  }
+
+  void ConstArrayBase::compute_strides(const std::vector<int> &dims,
+                                       std::vector<int> &strides,
+                                       bool fortran_order) {
+    strides.resize(dims.size());
     int last_stride = 1;
-    for (int i = 0; i < dims_.size(); ++i) {
-      strides_[i] = last_stride;
-      last_stride *= dims_[i];
+    if (fortran_order) {
+      for (int i = 0; i < dims.size(); ++i) {
+        strides[i] = last_stride;
+        last_stride *= dims[i];
+      }
+    } else {
+      for (int i = dims.size() - 1; i >= 0; --i) {
+        strides[i] = last_stride;
+        last_stride *= dims[i];
+      }
     }
   }
 
@@ -67,34 +80,6 @@ namespace BOOM {
       }
       va_end(ap);
       return (ans);
-    }
-
-    // Returns the position in the column-major array
-    inline int array_index(const std::vector<int> &index,
-                           const std::vector<int> &dim,
-                           const std::vector<int> &strides) {
-      if (index.size() != dim.size()) {
-        std::ostringstream err;
-        err << "Wrong number of dimensions passed to "
-            << "ConstArrayBase::operator[]."
-            << "  Expected " << dim.size() << " got " << index.size() << "."
-            << endl;
-        report_error(err.str());
-      }
-      int pos = 0;
-      for (int i = 0; i < dim.size(); ++i) {
-        int ind = index[i];
-        if (ind < 0 || ind >= dim[i]) {
-          std::ostringstream err;
-          err << "Index " << i
-              << " out of bounds in ConstArrayBase::operator[]."
-              << " Value passed = " << ind << " legal range: [0, " << dim[i] - 1
-              << "]." << endl;
-          report_error(err.str());
-        }
-        pos += index[i] * strides[i];
-      }
-      return pos;
     }
 
     template <class V>
@@ -143,7 +128,7 @@ namespace BOOM {
       }
       INPUT_TYPE view_data =
           host_data +
-          array_index(view_initial_position, host_dims, host_strides);
+          ConstArrayBase::array_index(view_initial_position, host_dims, host_strides);
       return RETURN_TYPE(view_data, view_dims, view_strides);
     }
 
@@ -199,7 +184,8 @@ namespace BOOM {
           initial_position[i] = 0;
         }
       }
-      int pos = array_index(initial_position, host_dims, host_strides);
+      size_t pos = ConstArrayBase::array_index(
+          initial_position, host_dims, host_strides);
       RETURN_TYPE ans(
           host_data + pos, host_dims[which_slice], host_strides[which_slice]);
       return ans;
@@ -226,6 +212,34 @@ namespace BOOM {
     }
 
   }  // namespace
+
+    // Returns the position in the column-major array
+  size_t ConstArrayBase::array_index(const std::vector<int> &index,
+                                     const std::vector<int> &dim,
+                                     const std::vector<int> &strides) {
+    if (index.size() != dim.size()) {
+      std::ostringstream err;
+      err << "Wrong number of dimensions passed to "
+          << "ConstArrayBase::operator[]."
+          << "  Expected " << dim.size() << " got " << index.size() << "."
+          << endl;
+      report_error(err.str());
+    }
+    size_t pos = 0;
+    for (int i = 0; i < dim.size(); ++i) {
+      int ind = index[i];
+      if (ind < 0 || ind >= dim[i]) {
+        std::ostringstream err;
+        err << "Index " << i
+            << " out of bounds in ConstArrayBase::operator[]."
+            << " Value passed = " << ind << " legal range: [0, " << dim[i] - 1
+            << "]." << endl;
+        report_error(err.str());
+      }
+      pos += index[i] * strides[i];
+    }
+    return pos;
+  }
 
   double ConstArrayBase::operator[](const std::vector<int> &index) const {
     int pos = array_index(index, dims_, strides_);

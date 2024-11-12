@@ -59,6 +59,7 @@ namespace BOOM {
     ArrayIterator(ArrayBase *host, const std::vector<int> &starting_position);
     explicit ArrayIterator(ArrayBase *host);
 
+    // Standard iterator operations.
     double &operator*();
 
     bool operator==(const ArrayIterator &rhs) const {
@@ -72,12 +73,20 @@ namespace BOOM {
       return *this;
     }
 
+    // Array-specific stuff.
+
+    // The vector-valued set of indices being pointed to.
     const std::vector<int> &position() const { return position_.position(); }
 
+    // The (scalar valued) array offset in the block of memory being pointed to.
+    size_t scalar_position() const;
+
+    // Point the iterator at a given position given by array indices [i, j, k].
     void set_position(const std::vector<int> &position) {
       position_.set_position(position);
     }
 
+    // Set the iterator to "one-past-the-end" of the memory block.
     ArrayIterator &set_to_end() {
       position_.set_to_end();
       return *this;
@@ -98,6 +107,7 @@ namespace BOOM {
     ConstArrayIterator(const ConstArrayBase *host,
                        const std::vector<int> &starting_position);
 
+    // Standard iterator operations.
     double operator*() const;
 
     bool operator==(const ConstArrayIterator &rhs) const {
@@ -113,12 +123,20 @@ namespace BOOM {
       return *this;
     }
 
+    // Array-specific stuff.
+
+    // The vector-valued set of indices being pointed to.
     const std::vector<int> &position() const { return position_.position(); }
 
+    // The (scalar valued) array offset in the block of memory being pointed to.
+    size_t scalar_position() const;
+
+    // Point the iterator at a given position given by array indices [i, j, k].
     void set_position(const std::vector<int> &position) {
       position_.set_position(position);
     }
 
+    // Set the iterator to "one-past-the-end" of the memory block.
     ConstArrayIterator &set_to_end() {
       position_.set_to_end();
       return *this;
