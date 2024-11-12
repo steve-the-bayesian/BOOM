@@ -503,7 +503,7 @@ namespace BOOM {
    public:
     ArrayArgMax(RNG &rng = ::BOOM::GlobalRng::rng);
 
-    double operator()(const ConstArrayView &view) const;
+    size_t operator()(const ConstArrayView &view) const;
 
    private:
     mutable RNG rng_;

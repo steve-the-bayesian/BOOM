@@ -24,7 +24,7 @@
 #include "cpputil/report_error.hpp"
 #include "cpputil/ToString.hpp"
 #include "distributions.hpp"
-
+#include "stats/optimal_arm_probabilities.hpp"
 
 namespace BOOM {
 
@@ -1011,35 +1011,12 @@ namespace BOOM {
       : rng_(rng)
   {}
 
-  double ArrayArgMax::operator()(const ConstArrayView &view) const {
-    if (view.empty()) {
-      report_error("Empty array passed to ArrayArgMax.");
-    }
-    candidates_.clear();
+  size_t ArrayArgMax::operator()(const ConstArrayView &view) const {
     if (view.ndim() > 1) {
-      std::ostringstream err;
-      err << "ArrayArgMax::operator() only works on one-dimensional arrays.  "
-          << "";
+      report_error("ArrayArgMax::operator() only works on one-dimensional "
+                   "arrays.");
     }
-    int i = 0;
-    double max_value = negative_infinity();
-    for (double el : view) {
-      if (el > max_value) {
-        candidates_.clear();
-        max_value = el;
-        candidates_.push_back(i);
-      } else if (el == max_value) {
-        candidates_.push_back(i);
-      }
-      ++i;
-    }
-
-    if (candidates_.size() == 1) {
-      return candidates_[0];
-    } else {
-      uint index = rmulti_mt(rng_, 0, candidates_.size() - 1);
-      return candidates_[index];
-    }
+    return argmax_random_ties(view.vector_slice(-1), candidates_, rng_);
   }
 
 }  // namespace BOOM
