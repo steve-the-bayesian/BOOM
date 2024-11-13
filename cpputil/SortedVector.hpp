@@ -124,6 +124,10 @@ namespace BOOM {
       return elements_.size();
     }
 
+    bool empty() const {
+      return elements_.empty();
+    }
+
     bool operator==(const SortedVector &rhs) const {
       return elements_ == rhs.elements_;
     }

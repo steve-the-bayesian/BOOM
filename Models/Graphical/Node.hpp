@@ -36,7 +36,7 @@ namespace BOOM {
     enum class NodeType{
       DUMMY = -1,
       CATEGORICAL = 0,
-      CONTINUOUS = 1,
+      NUMERIC = 1,
       ID = 2,
       DATETIME = 3,
     };

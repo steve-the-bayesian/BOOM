@@ -356,6 +356,8 @@ namespace BOOM {
     Array &operator=(const Array &rhs) = default;
     Array &operator=(Array &&rhs) = default;
 
+    Array &resize(const std::vector<int> &dims);
+
     // The following assignment opertors expect the array to have the same size
     // as the RHS, and will produce errors if the dimensions differ.
     Array &operator=(const ArrayView &a);

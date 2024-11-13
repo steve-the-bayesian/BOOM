@@ -67,7 +67,7 @@ namespace BOOM {
                   data_point);
               break;
 
-            case NodeType::CONTINUOUS:
+            case NodeType::NUMERIC:
               known_gaussian_variables_[node] = node->numeric_value(
                   data_point);
               break;
@@ -95,7 +95,7 @@ namespace BOOM {
       if (directed->node_type() == NodeType::CATEGORICAL) {
         auto it = known_discrete_variables_.find(directed);
         return it != known_discrete_variables_.end();
-      } else if (directed->node_type() == NodeType::CONTINUOUS) {
+      } else if (directed->node_type() == NodeType::NUMERIC) {
         auto it = known_gaussian_variables_.find(directed);
         return it != known_gaussian_variables_.end();
       } else {
@@ -108,6 +108,8 @@ namespace BOOM {
     }
 
     // =========================================================================
+    // Performs one step of the forward message passing algorithm.
+    //
     // Args:
     //   data_point: The data point containing evidence to be distributed.
     //   parent_distribution: The distribution over the unknown values in the
@@ -130,7 +132,8 @@ namespace BOOM {
 
       // 1) Find all the nodes in the d-separator.  These have already been
       //    processed.  Separate them out into knowns vs unknowns, and find the
-      //    marginal distribution of the unknowns.
+      //    marginal distribution of the unknowns.  If none of the nodes have
+      //    parents in the parent clique the separator may be empty.
       NodeSet separator;
       NodeSetMarginalDistribution prior_margin(&separator);
       if (parent_distribution) {
@@ -138,37 +141,46 @@ namespace BOOM {
         prior_margin = parent_distribution->compute_margin(separator);
       }
 
-      NodeSet nodes_to_process(host()->elements());
-      for (Ptr<Node> &node : separator) {
-        nodes_to_process.remove(node);
+      // This code can probably be sped up.  But the goal is to get it right
+      // first.
+      //
+      // unknown_discrete_distribution_ needs to be set to p(unknowns | knowns)
+      // = K * p(knowns | unknowns) * p(unknowns)
+      //
+      // 1) Set it to the prior... compute p(unknowns)
+      double total_prob = 0.0;
+      for (auto it = unknown_discrete_distribution_.begin();
+           it != unknown_discrete_distribution_.end();
+           ++it) {
+        const std::vector<int> &index(it.position());
+        double prior = compute_prior_probability(index, prior_margin);
+        double likelihood = compute_likelihood(index, data_point);
+        double product = prior * likelihood;
+        total_prob += product;
       }
 
-      bool done = false;
-      while (!done) {
-        NodeSet remaining_nodes;
-        for (const Ptr<Node> &node : nodes_to_process) {
-          if (all_parents_exist(node, separator)) {
+      unknown_discrete_distribution_ /= total_prob;
+      return total_prob;
+    }
 
-          } else {
-            remaining_nodes.insert(node);
-          }
-        }
-        if (remaining_nodes.empty()) {
-          done = true;
-        } else {
-          nodes_to_process = remaining_nodes;
+    double NSMD::compute_prior_probability(
+        const std::vector<int> &index,
+        const NodeSetMarginalDistribution &separator_margin,
+        MixedMultivariateData &scratch_data_point) const {
+      double logp = 0.0;
+
+      std::vector<int> margin_index;
+      for (int i = 0; const Ptr<Node> &node : unknown_discrete_nodes_) {
+        if (separator_margin.host()->contains(node)) {
+          margin_index
         }
       }
 
+    }
 
-      // 2) Find all the children of the nodes in the d-separator, as well as
-      //    all the nodes that have no parents.  Process the unknown nodes.
-      //    Update the distribution conditional on the known nodes.
-
-      // 3) Repeat step 2 for all the nodes that have parents in the processed
-      //    set (adding nodes to the processed set as they are processed).  Keep
-      //    repeating until all nodes have been processed.
-      return 0.0;
+    double NSMD::compute_likelihood(
+        const std::vector<int> &index,
+        const MixedMultivariateData &data_point) const {
     }
 
     //===========================================================================
@@ -202,7 +214,7 @@ namespace BOOM {
               }
               break;
 
-            case NodeType::CONTINUOUS:
+            case NodeType::NUMERIC:
               if (is_known(node)) {
                 ans.known_gaussian_variables_[node]
                     = known_gaussian_variables_.find(node)->second;

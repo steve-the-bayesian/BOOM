@@ -110,6 +110,13 @@ namespace BOOM {
       // variable is not in the subset then return -1.
       int node_set_index(const Ptr<Node> &node) const;
 
+      // Return the index of the supplied node in the
+      // unknown_discrete_distribution_ array.  If 'node' is not an unknown
+      // discrete variable then -1 is returned.
+      int unknown_discrete_index(const Ptr<Node> &node) const {
+        return unknown_discrete_nodes_.index(node);
+      }
+
       // A pointer to the node set that this marginal distribution describes.
       const NodeSet *host() const {
         return host_;
@@ -130,6 +137,12 @@ namespace BOOM {
       const std::map<Ptr<Node>, int> &known_discrete_variables() const {
         return known_discrete_variables_;
       }
+
+      // Compute the prior probability that the vector of
+      // unknown_discrete_nodes_ is in the specified configuration.
+      double compute_prior_probability(
+          const std::vector<int> &index,
+          const NodeSetMarginalDistribution &separator_margin) const;
 
      private:
       const NodeSet *host_;

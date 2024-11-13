@@ -141,6 +141,7 @@ namespace BOOM {
       const_iterator end() const { return elements_.end();}
       size_t size() const {return elements_.size();}
       void clear() {elements_.clear();}
+      bool empty() const {return elements_.empty();}
 
       NodeSet::const_iterator remove(const Ptr<Node> &element) {
         return elements_.remove(element);
@@ -148,6 +149,14 @@ namespace BOOM {
 
       std::string name() const {
         return compute_name();
+      }
+
+      Ptr<Node> & operator[](size_t i) {
+        return elements_[i];
+      }
+
+      const Ptr<Node> & operator[](size_t i) const {
+        return elements_[i];
       }
 
       bool operator==(const NodeSet &rhs) const {

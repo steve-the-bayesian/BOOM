@@ -77,6 +77,11 @@ namespace {
     EXPECT_EQ(array.slice(-1, -1, 0).ndim(), 2);
   }
 
+  TEST_F(ArrayTest, TestResize) {
+
+
+  }
+
   // TODO
   TEST_F(ArrayTest, ConstArrayViewTest) { }
 

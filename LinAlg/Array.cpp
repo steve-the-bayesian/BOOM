@@ -781,6 +781,13 @@ namespace BOOM {
     }
   }
 
+  Array &Array::resize(const std::vector<int> &dims) {
+    data_.resize(product(dims));
+    reset_dims(dims);
+    compute_strides();
+    return *this;
+  }
+
   Array &Array::operator=(const ArrayView &a) {
     ArrayView(*this) = a;
     return *this;
