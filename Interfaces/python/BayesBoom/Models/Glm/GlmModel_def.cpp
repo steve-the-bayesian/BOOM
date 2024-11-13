@@ -946,7 +946,7 @@ namespace BayesBoom {
              "Set all prior inclusion probabilities to the same value.\n\n"
              "Args:\n\n"
              "  prob:  The new value for all the prior inclusion probabilities."
-             "  This parameter must satisfy 0 \le prob \le 1. \n")
+             "  This parameter must satisfy 0 <= prob <= 1. \n")
         ;
 
     py::class_<PoissonRegressionSpikeSlabSampler,
