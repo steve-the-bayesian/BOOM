@@ -417,7 +417,7 @@ class NumericEmpiricalDistribution:
     def _interp(self, x, x0, x1, p0, p1):
         """
         Linearly interpolate between the points (x0, p0) and (x1, p1).
-        None of the values are allowed to be NaN.
+        None of the values are allowed to be nan.
         """
         x = self._to_numpy(x)
         x0 = self._to_numpy(x0)

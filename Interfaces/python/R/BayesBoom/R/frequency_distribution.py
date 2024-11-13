@@ -43,9 +43,9 @@ class FrequencyDistribution:
           non_nan_counts:
             A pd.Series containing counts of the non_nan category values.
 
-          nan_count: The number of observations in the NaN category.  If 0 is
-            entered then NaN will be present with a count of zero.  If None is
-            entered then NaN will not be a category.
+          nan_count: The number of observations in the nan category.  If 0 is
+            entered then nan will be present with a count of zero.  If None is
+            entered then nan will not be a category.
 
           categories: Array-like list of category labels, with the same length
             as 'non_nan'.  If 'None' then the index of non_nan will be used,
@@ -76,5 +76,5 @@ class FrequencyDistribution:
     def __repr__(self):
         ans = str(self._non_nan)
         if ans._nan_counts > 0:
-            ans += f"NaN: {self._nan_counts}"
+            ans += f"nan: {self._nan_counts}"
         return ans
