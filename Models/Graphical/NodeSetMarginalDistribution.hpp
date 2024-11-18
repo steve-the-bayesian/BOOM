@@ -140,9 +140,27 @@ namespace BOOM {
 
       // Compute the prior probability that the vector of
       // unknown_discrete_nodes_ is in the specified configuration.
+      //
+      // Args:
+      //   index: The subset of variables for which the prior probability should
+      //     be computed.
+      //   separator_margin: A marginal distribution containing the distribution
+      //     of any unknown parents in index.
+      //   scratch_data_point: A workspace the prior can use when computing
+      //     averages.
       double compute_prior_probability(
           const std::vector<int> &index,
-          const NodeSetMarginalDistribution &separator_margin) const;
+          const NodeSetMarginalDistribution &separator_margin,
+          MixedMultivariateData &scratch_data_point) const;
+
+      // TODO: verify
+      //
+      // Computes the conditional likelihood of the given elements of the
+      // supplied data_point.  The likelihood conditions on any parents in the
+      // directed graph, and averages over any missing values.
+      double compute_likelihood(
+          const std::vector<int> &index,
+          const MixedMultivariateData &data_point) const;
 
      private:
       const NodeSet *host_;
