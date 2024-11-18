@@ -75,6 +75,22 @@ namespace BOOM {
   Matrix compute_user_specific_optimal_arm_probabilities(
       const Array &value, RNG &rng = GlobalRng::rng);
 
+
+  // Compute the optimal arm probabilities for a multi-armed bandit problem when
+  // the optimal arm probabilities vary across users.
+  //
+  // Args:
+
+  //   coefficient_draws: Monte carlo draws of regression coefficients.  Each
+  //     row is a draw.  Each column corresponds to an output variable from
+  //     'encoder.'
+  //   arm_definitions:
+  Matrix compute_user_specific_optimal_arm_probabilities_linear_bandit(
+      const Matrix &coefficient_draws,
+      const DataTable &arm_definitions,
+      const DataTable &context,
+      const DatasetEncoder &encoder);
+
 }  // namespace BOOM
 
 

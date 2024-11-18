@@ -3,8 +3,13 @@
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import (
+    is_numeric_dtype
+)
+
 import BayesBoom.boom as boom
 from numbers import Number
+
 
 
 def is_all_numeric(data_frame):
@@ -152,7 +157,7 @@ def to_pd_timestamp(boom_date):
 
 def to_pd_dataframe(boom_labelled_matrix):
     """
-    Convert a boom.LablledMatrix to a pandas DataFrame.
+    Convert a boom.LabelledMatrix to a pandas DataFrame.
     """
 
     idx = boom_labelled_matrix.row_names
@@ -166,3 +171,19 @@ def to_pd_dataframe(boom_labelled_matrix):
         cols = np.arange(values.shape[1])
 
     return pd.DataFrame(values, idx, cols)
+
+
+def to_boom_data_table(pandas_df):
+    """
+    Convert a pandas data frame to a boom.DataTable.
+    """
+    ans = boom.DataTable()
+    for column_name in pandas_df.columns:
+        colname = str(column_name)
+        y = pandas_df.loc[:, column_name]
+        if is_numeric_dtype(y):
+            ans.add_numeric(to_boom_vector(y), colname)
+        elif is_object_dtype(y):
+            ans.add_categorical_from_labels(y, colname)
+        elif is_categorical_dtype(y):
+            ans.add_categorical(y, colname)
