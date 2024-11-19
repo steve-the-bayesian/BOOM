@@ -37,16 +37,49 @@ namespace BOOM {
 
   enum class VariableType {unknown = -1, numeric, categorical, datetime};
 
+  using DateTimeData = UnivData<DateTime>;
+
   //===========================================================================
-  // Tracks the data types in a mixed data settting.
+  // Tracks the data types in a mixed data settting.  A DataTable stores its
+  // columns using vectors of homogeneous type.  If the first and third
+  // variables in a three column table are numeric, and the second is
+  // categorical, then the DataTable will have a vector of 2 numeric variables
+  // and another vector containing one CategoricalVariable.
+  //
+  // This class helps keep these vectors of vectors lined up as the 'columns' of
+  // the table.
   class DataTypeIndex : public RefCounted {
    public:
+
     DataTypeIndex();
+
+    // Make the index aware that the DataTable it supports has added a variable
+    // of the gien type with the given name.
     void add_variable(VariableType type, const std::string &name);
+
+    // Return the type of variable in column i of the data table, and its
+    // position in the data store for variables of that type.
+    //
+    // Example, in a 3-column data frame with column types numeric,
+    // categorical, numeric, here are the return values:
+    //
+    // type_map(0): numeric, 0
+    // type_map(1): categorical, 0
+    // type_map(2): numeric, 1
     std::pair<VariableType, int> type_map(int i) const;
 
     // Fill the type_map_ mapping according to whether each element of 'fields'
     // can be converted to a numeric value.
+    //
+    // Args:
+    //   fields: Each element is a string version of a field in a data table.
+    //
+    // Effects:
+    //   The internal data structures of this object are inferred from the
+    //   fields.  If a field is a numeric value, the corresponding column will
+    //   be labelled as numeric.  Otherwise a field will be labelled as
+    //   categorical. There is no (as of late 2024) check for whether a field is
+    //   datetime.
     void diagnose_types(const std::vector<std::string> &fields);
 
     void set_names(const std::vector<std::string> &variable_names);
@@ -55,13 +88,21 @@ namespace BOOM {
       return type_map_.find(col)->second.first;
     }
 
+    // Return true iff the string 's' appears convertible to the type stored in
+    // the data frame's column i.  The check only looks for numeric data.
+    //
+    // TODO: add a check for datetime.
     bool check_type(int i, const std::string &s) const;
 
     int number_of_numeric_fields() const {return numeric_count_;}
     int number_of_categorical_fields() const {return categorical_count_;}
+    int number_of_datetime_fields() const {return datetime_count_;}
     int number_of_unknown_fields() const {return unknown_count_;}
     int total_number_of_fields() const {
-      return numeric_count_ + categorical_count_ + unknown_count_;
+      return numeric_count_
+          + categorical_count_
+          + datetime_count_
+          + unknown_count_;
     }
 
     bool operator==(const DataTypeIndex &rhs) const;
@@ -82,6 +123,7 @@ namespace BOOM {
    private:
     int numeric_count_;
     int categorical_count_;
+    int datetime_count_;
     int unknown_count_;
 
     // To find the variable in slot i, get its type and its index in private
@@ -137,6 +179,13 @@ namespace BOOM {
                      const std::string &name = "");
     void add_categorical(const Ptr<LabeledCategoricalData> &categorical,
                          const std::string &name = "");
+    void add_datetime(const Ptr<DateTimeData> &dt,
+                      const std::string &name = "");
+
+    // Variable names.
+    const std::vector<std::string> &vnames() const {
+      return type_index_->variable_names();
+    }
 
     // The number of numeric variables.
     int numeric_dim() const {
@@ -152,6 +201,11 @@ namespace BOOM {
     // The total number of variables.
     int dim() const {return type_index_->total_number_of_fields();}
 
+    // Similarly named size functions in DataTable.
+    int nvars() const {return dim();}
+    int nrow() const {return 1;}
+    int nobs() const {return 1;}
+
     // The type of variable in cell i.
     VariableType variable_type(int i) const {
       return type_index_->variable_type(i);
@@ -163,8 +217,12 @@ namespace BOOM {
     // not then raise an error.
     const DoubleData &numeric(int i) const;
     Ptr<DoubleData> mutable_numeric(int i);
+
     const LabeledCategoricalData &categorical(int i) const;
     Ptr<LabeledCategoricalData> mutable_categorical(int i) const;
+
+    const DateTimeData &datetime(int i) const;
+    Ptr<DateTimeData> mutable_datetime(int i);
 
     // Collapse all the numeric data into a vector.
     Vector numeric_data() const;
@@ -181,6 +239,7 @@ namespace BOOM {
     Ptr<DataTypeIndex> type_index_;
     std::vector<Ptr<DoubleData>> numeric_data_;
     std::vector<Ptr<LabeledCategoricalData>> categorical_data_;
+    std::vector<Ptr<DateTimeData>> datetime_data_;
   };
 
   //===========================================================================
@@ -233,6 +292,12 @@ namespace BOOM {
   // "categorical" data.
   class DateTimeVariable {
    public:
+    DateTimeVariable(const std::vector<DateTime> &dt)
+        : data_(dt)
+    {}
+
+    int size() const {return data_.size();}
+
    private:
     std::vector<DateTime> data_;
   };
@@ -263,7 +328,7 @@ namespace BOOM {
     // Creates an empty data table.
     DataTable();
 
-    // Creates a data table from a file
+    // Create a data table from a file.
     // Args:
     //   fname:  The name of the file to read in.
     //   header: If 'true' then the first line of the file contains
@@ -276,19 +341,26 @@ namespace BOOM {
                        const std::string &sep = "");
 
     DataTable *clone() const override;
+
+    // Print a data table to a stream.
     std::ostream &display(std::ostream &out) const override;
 
+    // Clear the contenst of a data table, and repopulate all data members by
+    // reading the given file.
     void read_file(const std::string &filename,
                    bool header = false,
                    const std::string &sep = "");
 
-    //--- build a DataTable by appending variables ---
+    //--- build a DataTable by appending variables/columns ---
     //
     // If the data table is empty, appending the first variable determines the
     // number of rows.
-    virtual void append_variable(const Vector &v, const std::string &name);
-    virtual void append_variable(const CategoricalVariable &cv,
-                                 const std::string &name);
+    void append_variable(const Vector &numeric,
+                         const std::string &name);
+    void append_variable(const CategoricalVariable &cv,
+                         const std::string &name);
+    void append_variable(const DateTimeVariable &dt,
+                         const std::string &name);
 
     // If the data table is empty, appending the first row determines the number
     // and type of columns.
@@ -300,14 +372,15 @@ namespace BOOM {
     uint ncol() const {return nvars();}
     int numeric_dim() const;      // number of numeric variables.
     int categorical_dim() const;  // number of categorical variables.
+    int datetime_dim() const;     // number of datetime variables.
 
     // Number of rows.
     int nrow() const;            // number of rows
     int nobs() const {return nrow();}  // syntactic sugar.
 
-    // The number of levels for variable i.  If the variable is numeric then the
-    // answer is 1.  Otherwise the number of levels is returned for categorical
-    // variables.
+    // The number of levels for variable i.  If the variable is numeric or
+    // datetime then the answer is 1.  Otherwise the number of levels is
+    // returned for categorical variables.
     uint nlevels(uint i) const;
 
     //--- look inside ---
@@ -328,10 +401,17 @@ namespace BOOM {
     VariableType variable_type(uint which_column) const {
       return type_index_->variable_type(which_column);
     }
+
+    // For numeric data
     Vector getvar(uint which_column) const;
     Vector get_numeric(const std::string &vname) const;
-
+    Vector get_numeric(uint which_column) const {
+      return getvar(which_column);
+    }
     double getvar(int which_row, int which_column) const;
+    void set_numeric_value(int row, int column, double value);
+
+    // For categorical data
     CategoricalVariable get_nominal(uint which_column) const;
     CategoricalVariable get_nominal(const std::string &vname) const;
 
@@ -340,8 +420,11 @@ namespace BOOM {
     //    OrdinalVariable get_ordinal(uint which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column,
     //           const std::vector<std::string> &ord) const;
-    void set_numeric_value(int row, int column, double value);
     void set_nominal_value(int row, int column, int value);
+
+    // For datetiem data
+    DateTimeVariable get_datetime(uint which_column) const;
+    DateTimeVariable get_datetime(const std::string &vname) const;
 
     // Accessing a row of data involves memory allocations and copies.  If you
     // plan to repeatedly iterate through the rows consider saving a std::vector
@@ -349,6 +432,11 @@ namespace BOOM {
     Ptr<MixedMultivariateData> row(uint row_index) const;
 
     //--- Compute a design matrix ---
+    //
+    // ***DEPRECATED***
+    //
+    // To create a design matrix from a DataTable, use the methods in
+    // .../stats/Encoders.hpp.
     LabeledMatrix design(bool add_icpt = false) const;
     LabeledMatrix design(const Selector &include, bool add_icpt = false) const;
 
@@ -358,6 +446,10 @@ namespace BOOM {
     // returned.
     DataTable &rbind(const DataTable &rhs);
 
+    // Add the columns of rhs to *this, and return *this.
+    DataTable &cbind(const DataTable &rhs);
+
+    // Return the dictionary
     const DataTypeIndex &type_index() const {
       return *type_index_;
     }
@@ -368,10 +460,20 @@ namespace BOOM {
     // is stored.
     std::vector<Vector> numeric_variables_;
     std::vector<CategoricalVariable> categorical_variables_;
+    std::vector<DateTimeVariable> datetime_variables_;
     Ptr<DataTypeIndex> type_index_;
   };
 
   std::ostream &operator<<(std::ostream &out, const DataTable &dt);
+
+  // Create a DataTable by repeating a single row a fixed number of times.
+  DataTable repeat(const MixedMultivariateData &row, int num_times);
+
+  inline DataTable cbind(const DataTable &lhs, const DataTable &rhs) {
+    DataTable ans(lhs);
+    ans.cbind(rhs);
+    return ans;
+  }
 
 }  // namespace BOOM
 #endif  // BOOM_DATA_TABLE_HPP

@@ -23,6 +23,15 @@ cc_test(
     deps = DEPS,
 )
 
+cc_test(
+    name = "mixed_multivariate_data_test",
+    size = "small",
+    srcs = ["mixed_multivariate_data_test.cc"],
+    copts = COPTS,
+    data = [":test_data"],
+    deps = DEPS,
+)
+
 filegroup(
     name = "test_data",
     srcs = [

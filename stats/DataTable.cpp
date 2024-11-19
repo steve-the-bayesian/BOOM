@@ -46,6 +46,7 @@ namespace BOOM {
   DataTypeIndex::DataTypeIndex()
       : numeric_count_(0),
         categorical_count_(0),
+        datetime_count_(0),
         unknown_count_(0),
         vnames_(0)
   {}
@@ -61,6 +62,8 @@ namespace BOOM {
       type_map_[index] = std::make_pair(type, numeric_count_++);
     } else if (type == VariableType::categorical) {
       type_map_[index] = std::make_pair(type, categorical_count_++);
+    } else if (type == VariableType::datetime) {
+      type_map_[index] = std::make_pair(type, datetime_count_++);
     } else {
       ++unknown_count_;
       report_error("Numeric and categorical the the only currently supported"
@@ -112,6 +115,7 @@ namespace BOOM {
   bool DataTypeIndex::operator==(const DataTypeIndex &rhs) const {
     return numeric_count_ == rhs.numeric_count_
         && categorical_count_ == rhs.categorical_count_
+        && datetime_count_ == rhs.datetime_count_
         && unknown_count_ == rhs.unknown_count_
         && type_map_ == rhs.type_map_;
   }
@@ -148,6 +152,9 @@ namespace BOOM {
     for (int i = 0; i < rhs.categorical_data_.size(); ++i) {
       categorical_data_.push_back(rhs.categorical_data_[i]->clone());
     }
+    for (int i = 0; i < rhs.datetime_data_.size(); ++i) {
+      datetime_data_.push_back(rhs.datetime_data_[i]->clone());
+    }
   }
 
   MixedMultivariateData &MixedMultivariateData::operator=(
@@ -162,6 +169,11 @@ namespace BOOM {
       categorical_data_.clear();
       for (int i = 0; i < rhs.categorical_data_.size(); ++i) {
         categorical_data_.push_back(rhs.categorical_data_[i]->clone());
+      }
+
+      datetime_data_.clear();
+      for (int i = 0; i < rhs.datetime_data_.size(); ++i) {
+        datetime_data_.push_back(rhs.datetime_data_[i]->clone());
       }
     }
     return *this;
@@ -193,6 +205,13 @@ namespace BOOM {
     categorical_data_.push_back(categorical);
   }
 
+  void MixedMultivariateData::add_datetime(
+      const Ptr<DateTimeData> &dt,
+      const std::string &name) {
+    type_index_->add_variable(VariableType::datetime, name);
+    datetime_data_.push_back(dt);
+  }
+
   const Data &MixedMultivariateData::variable(int i) const {
     VariableType type;
     int pos;
@@ -201,6 +220,8 @@ namespace BOOM {
       return *numeric_data_[pos];
     } else if (type == VariableType::categorical) {
       return *categorical_data_[pos];
+    } else if (type == VariableType::datetime) {
+      return *datetime_data_[pos];
     } else {
       std::ostringstream err;
       err << "Variable in position " << i << " is neither categorical "
@@ -259,6 +280,30 @@ namespace BOOM {
     return categorical_data_[pos];
   }
 
+  const DateTimeData &MixedMultivariateData::datetime(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = type_index_->type_map(i);
+    if (type != VariableType::datetime) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not datetime.";
+      report_error(err.str());
+    }
+    return *datetime_data_[pos];
+  }
+
+  Ptr<DateTimeData> MixedMultivariateData::mutable_datetime(int i) {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = type_index_->type_map(i);
+    if (type != VariableType::datetime) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not datetime.";
+      report_error(err.str());
+    }
+    return datetime_data_[pos];
+  }
+
   Vector MixedMultivariateData::numeric_data() const {
     Vector ans(numeric_data_.size());
     for (int i = 0; i < numeric_data_.size(); ++i) {
@@ -272,7 +317,8 @@ namespace BOOM {
       const std::vector<std::string> &raw_data)
       : key_(make_catkey(raw_data)) {
     for (int i = 0; i < raw_data.size(); ++i) {
-      Ptr<LabeledCategoricalData> dp(new LabeledCategoricalData(raw_data[i], key_));
+      Ptr<LabeledCategoricalData> dp(
+          new LabeledCategoricalData(raw_data[i], key_));
       data_.push_back(dp);
     }
   }
@@ -327,7 +373,9 @@ namespace BOOM {
     read_file(fname, header, sep);
   }
 
-  void DataTable::read_file(const std::string &fname, bool header, const std::string &sep) {
+  void DataTable::read_file(const std::string &fname,
+                            bool header,
+                            const std::string &sep) {
     ifstream in(fname.c_str());
     if (!in) {
       std::ostringstream err;
@@ -458,6 +506,19 @@ namespace BOOM {
         type_index_->add_variable(VariableType::categorical, name);
       }
     }
+  }
+
+  void DataTable::append_variable(const DateTimeVariable &dt,
+                                  const std::string &name) {
+    if (nobs() > 0  && nobs() != dt.size()) {
+        std::ostringstream err;
+        err << "A DateTime variable with " << dt.size()
+            << " observations cannot be added to a DataTable "
+            << "with " << nobs() << " rows.";
+        report_error(err.str());
+    }
+    datetime_variables_.push_back(dt);
+    type_index_->add_variable(VariableType::datetime, name);
   }
 
   void DataTable::append_row(const MixedMultivariateData &row) {
@@ -635,13 +696,46 @@ namespace BOOM {
     return *this;
   }
 
+  DataTable &DataTable::cbind(const DataTable &rhs) {
+    for (uint i = 0; i < rhs.ncol(); ++i) {
+      const std::string &vname(rhs.vnames()[i]);
+
+      switch(rhs.variable_type(i)) {
+        case (VariableType::numeric): {
+          append_variable(rhs.get_numeric(i), vname);
+        }
+          break;
+
+        case (VariableType::categorical) : {
+          append_variable(rhs.get_nominal(i), vname);
+        }
+          break;
+
+        case (VariableType::datetime) : {
+          append_variable(rhs.get_datetime(i), vname);
+        }
+          break;
+
+        default: {
+        }
+
+      }
+    }
+    return *this;
+  }
+
   //======================================================================
   uint DataTable::nlevels(uint i) const {
     VariableType type;
     int index;
     std::tie(type, index) = type_index_->type_map(i);
-    if (type == VariableType::numeric) return 1;
-    return categorical_variables_[index][0]->nlevels();
+    if (type == VariableType::unknown) {
+      return 0;
+    } else if (type != VariableType::categorical) {
+      return 1;
+    } else {
+      return categorical_variables_[index][0]->nlevels();
+    }
   }
 
   int DataTable::numeric_dim() const {
@@ -650,6 +744,10 @@ namespace BOOM {
 
   int DataTable::categorical_dim() const {
     return type_index_->number_of_categorical_fields();
+  }
+
+  int DataTable::datetime_dim() const {
+    return type_index_->number_of_datetime_fields();
   }
 
   int DataTable::nrow() const {
@@ -766,6 +864,26 @@ namespace BOOM {
   //   return ans;
   // }
 
+  DateTimeVariable DataTable::get_datetime(uint which_column) const {
+    VariableType type;
+    int index;
+    std::tie(type, index) = type_index_->type_map(which_column);
+    if (type != VariableType::datetime) {
+      wrong_type_error(1, which_column);
+    }
+    return datetime_variables_[index];
+  }
+
+  DateTimeVariable DataTable::get_datetime(const std::string &vname) const {
+    int position = type_index_->position(vname);
+    if (position < 0) {
+      std::ostringstream err;
+      err << "'" << vname << "' was not found among the column names.";
+      report_error(err.str());
+    }
+    return get_datetime(position);
+  }
+
   Ptr<MixedMultivariateData> DataTable::row(uint row_index) const {
     std::vector<Ptr<DoubleData>> numerics;
     for (int i = 0; i < numeric_variables_.size(); ++i) {
@@ -826,6 +944,48 @@ namespace BOOM {
   std::ostream &operator<<(std::ostream &out, const DataTable &dt) {
     dt.print(out, 0, dt.nobs());
     return out;
+  }
+
+  DataTable repeat(const MixedMultivariateData &dp, int ntimes) {
+    DataTable ans;
+    if (ntimes <= 0) {
+      return ans;
+    }
+
+    for (int i = 0; i < dp.nvars(); ++i) {
+      const std::string &vname(dp.vnames()[i]);
+      switch (dp.variable_type(i)) {
+        case VariableType::numeric: {
+          double value = dp.numeric(i).value();
+          ans.append_variable(Vector(ntimes, value), vname);
+        }
+          break;
+
+        case VariableType::categorical: {
+          const LabeledCategoricalData &data_point(
+              dp.categorical(i));
+          ans.append_variable(
+              CategoricalVariable(
+                  std::vector<int>(ntimes, data_point.value()),
+                  data_point.catkey()),
+              vname);
+        }
+          break;
+
+        case VariableType::datetime: {
+          DateTime dt = dp.datetime(i).value();
+          ans.append_variable(
+              DateTimeVariable(std::vector<DateTime>(ntimes, dt)),
+              vname);
+        }
+          break;
+
+        default: {
+          report_error("Unknown variable type encountered in repeat().");
+        }
+      }
+    }
+    return ans;
   }
 
 }  // namespace BOOM
