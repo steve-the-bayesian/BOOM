@@ -173,6 +173,36 @@ def to_pd_dataframe(boom_labelled_matrix):
     return pd.DataFrame(values, idx, cols)
 
 
+def to_boom_datetime_vector(series):
+    series = pd.to_datetime(series)
+
+    # convert dates to lists of years, months, and days (integers).
+    year = series.dt.year.tolist()
+    month = series.dt.month.tolist()
+    day = series.dt.day.tolist()
+
+    # If we measure the world in nanoseconds, then
+    MICRO = 1000.0
+    SECOND = MICRO * 1000.0 * 1000.0
+    MINUTE = 60.0 * SECOND
+    HOUR = 60.0 * MINUTE
+    DAY = HOUR * 24.0
+
+    day_fraction = (
+        series.dt.hour * HOUR
+        + series.dt.minute * MINUTE
+        + series.dt.second * SECOND
+        + series.dt.microsecond * MICRO
+        + series.dt.nanosecond
+    ) / DAY
+
+    return boom.to_boom_datetime_vector(
+        year,
+        month,
+        day,
+        to_boom_vector(day_fraction))
+
+
 def to_boom_data_table(pandas_df):
     """
     Convert a pandas data frame to a boom.DataTable.
@@ -185,5 +215,15 @@ def to_boom_data_table(pandas_df):
             ans.add_numeric(to_boom_vector(y), colname)
         elif is_object_dtype(y):
             ans.add_categorical_from_labels(y, colname)
-        elif is_categorical_dtype(y):
-            ans.add_categorical(y, colname)
+        elif isinstance(y.dtype, pd.CategoricalDtype):
+            # Note the pandas function is_categorical_dtype is deprecated in
+            # favor of the isinstance call above.
+            levels = y.cat.categories.tolist()
+            values = y.cat.codes.tolist()
+            ans.add_categorical(values, levels, colname)
+        elif is_datetime64_any_dtype(y.dtype):
+            ans.add_datetime(
+                R.to_boom_datetime_vector(y),
+                colname)
+        else:
+            raise Exception(f"unspported dtype in column {colname}.")

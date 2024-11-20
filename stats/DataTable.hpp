@@ -290,6 +290,7 @@ namespace BOOM {
   //===========================================================================
   // Timestamps are an important data type that are distinct from "numeric" or
   // "categorical" data.
+
   class DateTimeVariable {
    public:
     DateTimeVariable(const std::vector<DateTime> &dt)

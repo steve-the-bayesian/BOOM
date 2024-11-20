@@ -140,6 +140,7 @@ from .boom_py_utils import (
     is_iterable,
     to_boom_array,
     to_boom_date,
+    to_boom_datetime_vector,
     to_boom_vector,
     to_boom_matrix,
     to_boom_labelled_matrix,

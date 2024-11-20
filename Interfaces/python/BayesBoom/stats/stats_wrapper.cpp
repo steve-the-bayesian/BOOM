@@ -201,7 +201,7 @@ namespace BayesBoom {
         ;
 
 
-    //===========================================================================
+    //==========================================================================
     py::class_<DataTable,
                Data,
                Ptr<DataTable>>(boom, "DataTable")
@@ -246,6 +246,18 @@ namespace BayesBoom {
              "Args:\n"
              "  values:  The values (as strings) of the variable to be added.\n"
              "  name:  The name of the categorical variable.")
+        .def("add_datetime",
+             [](DataTable &table,
+                const std::vector<DateTime> &dt,
+                const std::string &name) {
+               table.append_variable(DateTimeVariable(dt), name);
+             },
+             py::arg("dt"),
+             py::arg("name"),
+             "Args:\n\n"
+             "  dt: A list of boom.DateTime objects.  \n"
+             "      See to_boom_datetime_vector.\n"
+             "  name:  The name of the new datetime variable.\n")
         .def_property_readonly(
             "nrow", &DataTable::nobs,
             "Number of rows (observations) in the table.")
@@ -398,6 +410,36 @@ namespace BayesBoom {
             "A 3 column matrix containing the x and y coordinates of the hexagon centers \n"
             "(first two columns) and the hexagon counts (frequency, third column).\n")
         ;
+
+    boom.def("to_boom_datetime_vector",
+             [](const std::vector<int> &year,
+                const std::vector<int> &month,
+                const std::vector<int> &day,
+                const Vector &day_fraction) {
+               if (year.size() != month.size()
+                   || year.size() != day.size()
+                   || year.size() != day_fraction.size()) {
+                 report_error("All arguments to add_datetime must have "
+                              "the same length.");
+               }
+               size_t n = year.size();
+               std::vector<DateTime> ans;
+               for (size_t i = 0; i < n; ++i) {
+                 Date date(month[i], day[i], year[i]);
+                 ans.push_back(DateTime(date, day_fraction[i]));
+               }
+               return ans;
+             },
+             py::arg("year"),
+             py::arg("month"),
+             py::arg("day"),
+             py::arg("day_fraction"),
+             "Args:\n\n"
+             "  year:  Four digit year (list of ints).\n"
+             "  month: Month number 1-12 (list of ints).\n"
+             "  day:  Day of month 1-31 (list of ints).\n"
+             "  day_fraction:  Vector of numers [0-1) giving the time of "
+             "day as a fraction of 24 hours.\n");
 
   }  // stats_def
 

@@ -6,6 +6,7 @@
 #include <memory>
 #include <cpputil/report_error.hpp>
 #include <cpputil/Date.hpp>
+#include <cpputil/DateTime.hpp>
 #include <cpputil/find.hpp>
 
 namespace py = pybind11;
@@ -50,6 +51,45 @@ namespace BayesBoom {
             })
         ;
 
+    py::class_<DateTime>(boom, "DateTime")
+        .def(py::init(
+            [](int month, int day, int year, double day_fraction) {
+              Date date(MonthNames(month), day, year);
+              return new DateTime(date, day_fraction);
+            }),
+             py::arg("month"),
+             py::arg("day"),
+             py::arg("year"),
+             py::arg("day_fraction"),
+             "Args:\n\n"
+             "  month: Month of year 1-12.\n"
+             "  day:  Day of month 1-31.\n"
+             "  year: Four digit year.\n"
+             "  day_fraction: The time of day, expressed as a real number "
+             "in [0, 1) giving the fraction of the 24 hour day.\n")
+        .def_property_readonly(
+            "year",
+            [](const DateTime &dt) {
+              return dt.date().year();
+            })
+        .def_property_readonly(
+            "month",
+            [](const DateTime &dt) {
+              return static_cast<int>(dt.date().month());
+            })
+        .def_property_readonly(
+            "day",
+            [](const DateTime &dt) {
+              return dt.date().day();
+            })
+        .def("__repr__",
+             [] (const DateTime &dt) {
+               std::ostringstream out;
+               out << dt;
+               return out.str();
+             })
+        ;
+
     boom.def("fast_find",
              [](const std::vector<std::string> &input,
                 const std::vector<std::string> &target) {
@@ -64,7 +104,7 @@ namespace BayesBoom {
              "Returns:  A vector of indices ans of the same length as 'input'"
              "  where ans[i] is the position in 'target' where input[i] is "
              "found.\n");
-             
+
 
   }  // ends the cpputil_def function.
 
