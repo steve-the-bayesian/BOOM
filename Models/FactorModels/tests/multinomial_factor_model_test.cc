@@ -33,15 +33,20 @@ namespace {
     //   A data set containing visits to sites.
     std::vector<Ptr<MultinomialFactorData>> simulate_data(
         const Matrix &site_probs,
-        std::vector<int> class_indicators) {
+        std::vector<int> class_indicators,
+        const std::string &default_site_name = "Other") {
       std::vector<Ptr<MultinomialFactorData>> ans;
       for (int i = 0; i < class_indicators.size(); ++i) {
         int Ntrials = rpois(8);
         for (int m = 0; m < Ntrials; ++m) {
           int which_site = rmulti(site_probs.col(class_indicators[i]));
+          std::string site_name = std::to_string(which_site);
+          if (which_site == site_probs.nrow() - 1) {
+            site_name = "Other";
+          }
           NEW(MultinomialFactorData, data_point)(
               std::to_string(i),
-              std::to_string(which_site),
+              site_name,
               1);
           ans.push_back(data_point);
         }

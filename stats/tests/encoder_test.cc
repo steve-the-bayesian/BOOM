@@ -24,7 +24,7 @@ namespace {
   };
 
   TEST_F(EncoderTest, EffectsEncoderTest) {
-    EffectsEncoder encoder(0, colors_);
+    EffectsEncoder encoder("Color", colors_);
     CategoricalData red("red", colors_);
     Vector enc = encoder.encode(red);
     EXPECT_TRUE(VectorEquals(enc, Vector{1, 0}));

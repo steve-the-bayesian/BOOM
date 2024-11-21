@@ -217,12 +217,20 @@ namespace BOOM {
     // not then raise an error.
     const DoubleData &numeric(int i) const;
     Ptr<DoubleData> mutable_numeric(int i);
+    const DoubleData &numeric(const std::string &variable_name) const;
+    Ptr<DoubleData> mutable_numeric(const std::string &variable_name);
 
     const LabeledCategoricalData &categorical(int i) const;
     Ptr<LabeledCategoricalData> mutable_categorical(int i) const;
+    const LabeledCategoricalData &categorical(
+        const std::string &variable_name) const;
+    Ptr<LabeledCategoricalData> mutable_categorical(
+        const std::string &variable_name);
 
     const DateTimeData &datetime(int i) const;
     Ptr<DateTimeData> mutable_datetime(int i);
+    const DateTimeData &datetime(const std::string &variable_name) const;
+    Ptr<DateTimeData> mutable_datetime(const std::string &variable_name);
 
     // Collapse all the numeric data into a vector.
     Vector numeric_data() const;

@@ -243,6 +243,16 @@ namespace BOOM {
     return *numeric_data_[pos];
   }
 
+  const DoubleData &MixedMultivariateData::numeric(
+      const std::string &variable_name) const {
+    return numeric(type_index_->position(variable_name));
+  }
+
+  Ptr<DoubleData> MixedMultivariateData::mutable_numeric(
+      const std::string &variable_name) {
+    return mutable_numeric(type_index_->position(variable_name));
+  }
+
   Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
     VariableType type;
     int pos;
@@ -267,6 +277,11 @@ namespace BOOM {
     return *categorical_data_[pos];
   }
 
+  const LabeledCategoricalData &MixedMultivariateData::categorical(
+      const std::string &variable_name) const {
+    return categorical(type_index_->position(variable_name));
+  }
+
   Ptr<LabeledCategoricalData>
   MixedMultivariateData::mutable_categorical(int i) const {
     VariableType type;
@@ -278,6 +293,11 @@ namespace BOOM {
       report_error(err.str());
     }
     return categorical_data_[pos];
+  }
+
+  Ptr<LabeledCategoricalData> MixedMultivariateData::mutable_categorical(
+      const std::string &variable_name) {
+    return mutable_categorical(type_index_->position(variable_name));
   }
 
   const DateTimeData &MixedMultivariateData::datetime(int i) const {
@@ -292,6 +312,11 @@ namespace BOOM {
     return *datetime_data_[pos];
   }
 
+  const DateTimeData &MixedMultivariateData::datetime(
+      const std::string &variable_name) const {
+    return datetime(type_index_->position(variable_name));
+  }
+
   Ptr<DateTimeData> MixedMultivariateData::mutable_datetime(int i) {
     VariableType type;
     int pos;
@@ -302,6 +327,11 @@ namespace BOOM {
       report_error(err.str());
     }
     return datetime_data_[pos];
+  }
+
+  Ptr<DateTimeData> MixedMultivariateData::mutable_datetime(
+      const std::string &variable_name) {
+    return mutable_datetime(type_index_->position(variable_name));
   }
 
   Vector MixedMultivariateData::numeric_data() const {

@@ -36,7 +36,7 @@ namespace BOOM {
     virtual Matrix encode_dataset(const DataTable &data) const = 0;
     virtual Vector encode_row(const MixedMultivariateData &data) const = 0;
     virtual void encode_row(
-        const MixedMultivariateData &data, VectorView v) const = 0;
+        const MixedMultivariateData &data, VectorView view) const = 0;
 
    private:
     friend void intrusive_ptr_add_ref(DataEncoder *d) {d->up_count();}
@@ -50,23 +50,25 @@ namespace BOOM {
 
   //===========================================================================
   // An encoder that depends on at most 1 variable.
-  class MainEffectsEncoder : public DataEncoder {
+  class MainEffectEncoder : public DataEncoder {
    public:
-    explicit MainEffectsEncoder(int which_variable):
-        which_variable_(which_variable)
+    explicit MainEffectEncoder(const std::string &variable_name):
+        variable_name_(variable_name)
     {}
-    virtual MainEffectsEncoder * clone() const = 0;
-    int which_variable() const {return which_variable_;}
+
+    virtual MainEffectEncoder * clone() const = 0;
+
+    const std::string & variable_name() const {return variable_name_;}
 
    private:
-    int which_variable_;
+    std::string variable_name_;
   };
 
   //===========================================================================
-  class EffectsEncoder : public MainEffectsEncoder {
+  class EffectsEncoder : public MainEffectEncoder {
    public:
     // The reference level is the last listed level in key.
-    explicit EffectsEncoder(int which_variable, const Ptr<CatKeyBase> &key);
+    explicit EffectsEncoder(const std::string &variable_name, const Ptr<CatKeyBase> &key);
     EffectsEncoder(const EffectsEncoder &rhs);
     EffectsEncoder &operator=(const EffectsEncoder &rhs);
     EffectsEncoder(EffectsEncoder &&rhs) = default;
@@ -85,10 +87,25 @@ namespace BOOM {
 
     Matrix encode_dataset(const DataTable &data) const override;
     Vector encode_row(const MixedMultivariateData &row) const override;
-    void encode_row(const MixedMultivariateData &row, VectorView view) const override;
+    void encode_row(const MixedMultivariateData &row,
+                    VectorView view) const override;
 
    private:
     Ptr<CatKeyBase> key_;
+  };
+
+  //===========================================================================
+  class IdentityEncoder : public MainEffectEncoder {
+   public:
+    IdentityEncoder(const std::string &variable_name);
+    IdentityEncoder * clone() const override;
+
+    Matrix encode_dataset(const DataTable &data) const override;
+    Vector encode_row(const MixedMultivariateData &data) const override;
+    void encode_row(const MixedMultivariateData &data,
+                    VectorView view) const override;
+
+    int dim() const override { return 1; }
   };
 
   //===========================================================================

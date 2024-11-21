@@ -80,16 +80,16 @@ namespace BOOM {
   //===========================================================================
   CategoricalMainEffect::CategoricalMainEffect(
       int which_variable, const Ptr<CatKeyBase> &key)
-      : encoder_(which_variable, key),
+      : encoder_("X", key),
         which_variables_(1, which_variable),
         nlevels_(1, encoder_.dim() + 1)
   {}
 
   Vector CategoricalMainEffect::encode(const MCD &data) const {
-    return encoder_.encode(data[encoder_.which_variable()]);
+    return encoder_.encode(data[which_variables_[0]]);
   }
   Vector CategoricalMainEffect::encode(const std::vector<int> &data) const {
-    return encoder_.encode(data[encoder_.which_variable()]);
+    return encoder_.encode(data[which_variables_[0]]);
   }
 
   //===========================================================================

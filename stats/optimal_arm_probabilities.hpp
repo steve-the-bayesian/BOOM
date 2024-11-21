@@ -22,6 +22,8 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "distributions/rng.hpp"
+#include "stats/DataTable.hpp"
+#include "stats/Encoders.hpp"
 
 namespace BOOM {
 
@@ -80,7 +82,6 @@ namespace BOOM {
   // the optimal arm probabilities vary across users.
   //
   // Args:
-
   //   coefficient_draws: Monte carlo draws of regression coefficients.  Each
   //     row is a draw.  Each column corresponds to an output variable from
   //     'encoder.'
@@ -89,7 +90,8 @@ namespace BOOM {
       const Matrix &coefficient_draws,
       const DataTable &arm_definitions,
       const DataTable &context,
-      const DatasetEncoder &encoder);
+      const DatasetEncoder &encoder,
+      RNG &rng = GlobalRng::rng);
 
 }  // namespace BOOM
 

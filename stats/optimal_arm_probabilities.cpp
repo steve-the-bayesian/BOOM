@@ -91,18 +91,19 @@ namespace BOOM {
       const Matrix &coefficient_draws,
       const DataTable &arm_definitions,
       const DataTable &context,
-      const DatasetEncoder &encoder) {
+      const DatasetEncoder &encoder,
+      RNG &rng) {
 
     size_t num_users = context.nrow();
     size_t num_arms = arm_definitions.nrow();
     Matrix ans(num_users, num_arms);
 
     for (size_t i = 0; i < num_users; ++i) {
-      const MixedMultivariateData &context_row(context.row(i));
+      Ptr<MixedMultivariateData> context_row = context.row(i);
 
       //
       DataTable user_data = cbind(arm_definitions,
-                                  repeat(context_row, num_arms));
+                                  repeat(*context_row, num_arms));
 
       Matrix predictors = encoder.encode_dataset(user_data);
       Matrix values = coefficient_draws.multT(predictors);

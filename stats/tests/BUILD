@@ -73,6 +73,14 @@ cc_test(
 )
 
 cc_test(
+    name = "optimal_arm_probabilities_test",
+    size = "small",
+    srcs = ["optimal_arm_probabilities_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
     name = "quantile_test",
     size = "small",
     srcs = ["quantile_test.cc"],

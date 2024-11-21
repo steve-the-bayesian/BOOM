@@ -98,7 +98,7 @@ filegroup(
 
 cc_test(
     name = "mlogit_test",
-    size = "small",
+    size = "large",
     srcs = ["mlogit_test.cc"],
     copts = COPTS + ["-lprofiler"],
     data = [":test_data"],

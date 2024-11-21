@@ -21,8 +21,8 @@
 
 namespace BOOM {
 
-  EffectsEncoder::EffectsEncoder(int which_variable, const Ptr<CatKeyBase> &key)
-      : MainEffectsEncoder(which_variable),
+  EffectsEncoder::EffectsEncoder(const std::string &variable_name, const Ptr<CatKeyBase> &key)
+      : MainEffectEncoder(variable_name),
         key_(key)
   {
     if (key_->max_levels() <= 0) {
@@ -32,9 +32,17 @@ namespace BOOM {
   }
 
   EffectsEncoder::EffectsEncoder(const EffectsEncoder &rhs)
-      : MainEffectsEncoder(rhs),
+      : MainEffectEncoder(rhs),
         key_(rhs.key_->clone())
   {}
+
+  EffectsEncoder & EffectsEncoder::operator=(const EffectsEncoder &rhs) {
+    if (&rhs != this) {
+      MainEffectEncoder::operator=(rhs);
+      key_.reset(rhs.key_->clone());
+    }
+    return *this;
+  }
 
   EffectsEncoder *EffectsEncoder::clone() const {
     return new EffectsEncoder(*this);
@@ -76,16 +84,40 @@ namespace BOOM {
   }
 
   Matrix EffectsEncoder::encode_dataset(const DataTable &table) const {
-    return encode(table.get_nominal(which_variable()));
+    return encode(table.get_nominal(variable_name()));
   }
 
   Vector EffectsEncoder::encode_row(const MixedMultivariateData &row) const {
-    return encode(row.categorical(which_variable()));
+    return encode(row.categorical(variable_name()));
   }
 
   void EffectsEncoder::encode_row(
       const MixedMultivariateData &row, VectorView view) const {
-    encode(row.categorical(which_variable()), view);
+    encode(row.categorical(variable_name()), view);
+  }
+
+  //===========================================================================
+
+  IdentityEncoder::IdentityEncoder(const std::string &variable_name)
+      : MainEffectEncoder(variable_name)
+  {}
+
+  IdentityEncoder * IdentityEncoder::clone() const {
+    return new IdentityEncoder(*this);
+  }
+
+  Matrix IdentityEncoder::encode_dataset(const DataTable &data) const {
+    return Matrix(data.nrow(), 1, data.get_numeric(variable_name()));
+  }
+
+  Vector IdentityEncoder::encode_row(const MixedMultivariateData &data) const {
+    double value = data.numeric(variable_name()).value();
+    return Vector(1, value);
+  }
+
+  void IdentityEncoder::encode_row(const MixedMultivariateData &data,
+                                   VectorView view) const {
+    view[0] = data.numeric(variable_name()).value();
   }
 
   //===========================================================================
