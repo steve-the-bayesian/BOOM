@@ -337,24 +337,36 @@ namespace BayesBoom {
              "  data:  The boom.DataTable object to be encoded.\n")
         ;
 
-    //===========================================================================
-    py::class_<MainEffectsEncoder, DataEncoder, Ptr<MainEffectsEncoder>>(
-        boom, "MainEffectsEncoder")
+    //=========================================================================
+    py::class_<MainEffectEncoder, DataEncoder, Ptr<MainEffectEncoder>>(
+        boom, "MainEffectEncoder")
         ;
 
-    //===========================================================================
-    py::class_<EffectsEncoder, MainEffectsEncoder, Ptr<EffectsEncoder>>(
+    //=========================================================================
+    py::class_<IdentityEncoder, MainEffectEncoder, Ptr<IdentityEncoder>>(
+        boom, "IdentityEncoder")
+        .def(py::init(
+            [](const std::string &variable_name) {
+              return new IdentityEncoder(variable_name);
+            }),
+             py::arg("variable_name"),
+             "Args:\n"
+             "  variable_name: The name of the variable to be encoded.\n")
+        ;
+
+    //=========================================================================
+    py::class_<EffectsEncoder, MainEffectEncoder, Ptr<EffectsEncoder>>(
         boom, "EffectsEncoder")
         .def(py::init(
-            [](int which_variable, const std::vector<std::string> &levels) {
+            [](const std::string &variable_name,
+               const std::vector<std::string> &levels) {
               NEW(CatKey, key)(levels);
-              return new EffectsEncoder(which_variable, key);
+              return new EffectsEncoder(variable_name, key);
             }),
-             py::arg("which_variable"),
+             py::arg("variable_name"),
              py::arg("levels"),
              "Args:\n"
-             "  which_variable: The position of the input variable in the "
-             "data table.\n"
+             "  variable_name: The name of the variable to be encoded.\n"
              "  levels: The set of levels (as strings) to be encoded.  The \n"
              "    last level listed will be the reference level.\n")
         .def("encode", [](const EffectsEncoder &encoder, int level) {
@@ -363,7 +375,7 @@ namespace BayesBoom {
           "Encode a categorical value by its integer code.")
         ;
 
-    //===========================================================================
+    //=========================================================================
     py::class_<DatasetEncoder, DataEncoder, Ptr<DatasetEncoder>>(
         boom, "DatasetEncoder")
         .def(py::init(
