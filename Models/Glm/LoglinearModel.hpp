@@ -147,7 +147,7 @@ namespace BOOM {
     const std::vector<int> &nlevels() const override {return nlevels_;}
 
    private:
-    EffectsEncoder encoder_;
+    IntEffectsEncoder encoder_;
 
     // Identifies the index of the relevant variable.
     std::vector<int> which_variables_;

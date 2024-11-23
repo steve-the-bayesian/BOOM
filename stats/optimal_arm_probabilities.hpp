@@ -85,7 +85,17 @@ namespace BOOM {
   //   coefficient_draws: Monte carlo draws of regression coefficients.  Each
   //     row is a draw.  Each column corresponds to an output variable from
   //     'encoder.'
-  //   arm_definitions:
+  //   arm_definitions: Each row is an arm.  The table entries describe the
+  //     values of each variable for that arm.
+  //   context: Each row is a subject.  Table entries are the context values for
+  //     that subject.
+  //   encoder: Takes values from a DataTable containing the context and arm
+  //     variables.  Produces a predictor matrix that can multiply
+  //     coefficient_draws.
+  //
+  // Returns:
+  //   A (num_users x num_arms) matrix.  Row i gives the discrete probability
+  //   distribution for the optimal arm for user i.
   Matrix compute_user_specific_optimal_arm_probabilities_linear_bandit(
       const Matrix &coefficient_draws,
       const DataTable &arm_definitions,

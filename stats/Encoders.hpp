@@ -38,6 +38,9 @@ namespace BOOM {
     virtual void encode_row(
         const MixedMultivariateData &data, VectorView view) const = 0;
 
+    // The column names of the matrix produced by calling encode_dataset().
+    virtual std::vector<std::string> encoded_variable_names() const = 0;
+
    private:
     friend void intrusive_ptr_add_ref(DataEncoder *d) {d->up_count();}
     friend void intrusive_ptr_release(DataEncoder *d) {
@@ -65,16 +68,19 @@ namespace BOOM {
   };
 
   //===========================================================================
-  class EffectsEncoder : public MainEffectEncoder {
-   public:
-    // The reference level is the last listed level in key.
-    explicit EffectsEncoder(const std::string &variable_name, const Ptr<CatKeyBase> &key);
-    EffectsEncoder(const EffectsEncoder &rhs);
-    EffectsEncoder &operator=(const EffectsEncoder &rhs);
-    EffectsEncoder(EffectsEncoder &&rhs) = default;
-    EffectsEncoder & operator=(EffectsEncoder &&rhs) = default;
 
-    EffectsEncoder * clone() const override;
+
+
+  // There are 2 cases to consider here -- with and without names.
+  // Should have a base class and two concrete classes.
+
+  class EffectsEncoderBase : public MainEffectEncoder{
+   public:
+    EffectsEncoderBase(const std::string &variable_name)
+        : MainEffectEncoder(variable_name)
+    {}
+
+    virtual const CatKeyBase &key() const = 0;
 
     int dim() const override;
     Vector encode(const CategoricalData &data) const;
@@ -90,8 +96,49 @@ namespace BOOM {
     void encode_row(const MixedMultivariateData &row,
                     VectorView view) const override;
 
+  };
+
+  class IntEffectsEncoder : public EffectsEncoderBase {
+   public:
+    IntEffectsEncoder(const std::string &variable_name,
+                      const Ptr<CatKeyBase> &key)
+        : EffectsEncoderBase(variable_name),
+          key_(key)
+    {}
+
+    IntEffectsEncoder(const IntEffectsEncoder &rhs);
+    IntEffectsEncoder &operator=(const IntEffectsEncoder &rhs);
+    IntEffectsEncoder(IntEffectsEncoder &&rhs) = default;
+    IntEffectsEncoder & operator=(IntEffectsEncoder &&rhs) = default;
+
+    IntEffectsEncoder * clone() const;
+
+    CatKeyBase &key() const {return *key_;}
+
+    std::vector<std::string> encoded_variable_names() const override;
+
    private:
     Ptr<CatKeyBase> key_;
+  };
+
+  class EffectsEncoder : public EffectsEncoderBase {
+   public:
+    // The reference level is the last listed level in key.
+    explicit EffectsEncoder(const std::string &variable_name,
+                            const Ptr<CatKey> &key);
+    EffectsEncoder(const EffectsEncoder &rhs);
+    EffectsEncoder &operator=(const EffectsEncoder &rhs);
+    EffectsEncoder(EffectsEncoder &&rhs) = default;
+    EffectsEncoder & operator=(EffectsEncoder &&rhs) = default;
+
+    EffectsEncoder * clone() const override;
+
+    const CatKey &key() const {return *key_;}
+
+    std::vector<std::string> encoded_variable_names() const override;
+
+   private:
+    Ptr<CatKey> key_;
   };
 
   //===========================================================================
@@ -106,6 +153,7 @@ namespace BOOM {
                     VectorView view) const override;
 
     int dim() const override { return 1; }
+    std::vector<std::string> encoded_variable_names() const override;
   };
 
   //===========================================================================
@@ -150,6 +198,8 @@ namespace BOOM {
       return ans;
     }
 
+    std::vector<std::string> encoded_variable_names() const override;
+
    private:
     Ptr<DataEncoder> encoder1_;
     Ptr<DataEncoder> encoder2_;
@@ -178,6 +228,8 @@ namespace BOOM {
         const MixedMultivariateData &row, VectorView ans) const override;
 
     const std::vector<Ptr<DataEncoder>> &encoders() const {return encoders_;}
+
+    std::vector<std::string> encoded_variable_names() const override;
 
    private:
     int dim_;
