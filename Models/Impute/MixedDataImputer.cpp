@@ -470,14 +470,14 @@ namespace BOOM {
           Vector imputation_distribution = categorical_models_[i]->log_probs();
 
           for (int level = 0; level < imputation_distribution.size(); ++level) {
-            encoders[i]->encode(level, view);
+            encoders[i]->encode_level(level, view);
             Vector yhat = numeric_model->predict(predictors);
             imputation_distribution[level] -=
                 0.5 * numeric_model->Siginv().Mdist(y_numeric - yhat);
           }
           imputation_distribution.normalize_logprob();
           imputed_categorical_data[i] = rmulti_mt(rng, imputation_distribution);
-          encoders[i]->encode(imputed_categorical_data[i], view);
+          encoders[i]->encode_level(imputed_categorical_data[i], view);
 
         }
         if (update_complete_data_suf) {

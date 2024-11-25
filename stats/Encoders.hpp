@@ -80,22 +80,21 @@ namespace BOOM {
         : MainEffectEncoder(variable_name)
     {}
 
+    // The key defining the levels of the categorical variable.  The key
+    // includes the baseline level.
     virtual const CatKeyBase &key() const = 0;
 
     int dim() const override;
-    Vector encode(const CategoricalData &data) const;
-    void encode(const CategoricalData &data, VectorView view) const;
 
-    Vector encode(int level) const;
-    void encode(int level, VectorView view) const;
+    Matrix encode_dataset(const DataTable &table) const override;
+    virtual Matrix encode(const CategoricalVariable &variable) const = 0;
 
-    Matrix encode(const CategoricalVariable &variable) const;
+    // Encode a categorical variable based on its iteger level.
+    Vector encode_level(int level) const;
+    void encode_level(int level, VectorView view) const;
 
-    Matrix encode_dataset(const DataTable &data) const override;
-    Vector encode_row(const MixedMultivariateData &row) const override;
-    void encode_row(const MixedMultivariateData &row,
-                    VectorView view) const override;
-
+    // The (integer-valued) baseline level of the categorical variable.
+    virtual int baseline_level() const = 0;
   };
 
   class IntEffectsEncoder : public EffectsEncoderBase {
@@ -117,15 +116,43 @@ namespace BOOM {
 
     std::vector<std::string> encoded_variable_names() const override;
 
+    int baseline_level() const override;
+
+    Matrix encode(const CategoricalVariable &variable) const override;
+    Vector encode(const CategoricalData &data_point) const;
+    void encode(const CategoricalData &data_point, VectorView view) const;
+
+    Vector encode_row(const MixedMultivariateData &data_point) const override;
+    void encode_row(const MixedMultivariateData &data_point, VectorView) const override;
+
    private:
     Ptr<CatKeyBase> key_;
   };
 
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  // One problem here is that the key for the EffectsEncoder might not have the
+  // variables in the same order as the key for the DategoricalData.
+  ///////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+
   class EffectsEncoder : public EffectsEncoderBase {
    public:
-    // The reference level is the last listed level in key.
+    // Args:
+
+    //   variable_name: The name of the variable to be encoded.  This is
+    //     frequently a column heading in a DataTable.
+    //   key: Lists all the levels of the variable to be encoded, including the
+    //     baseline level.
+    //   baseline_level: The level to be used as a baseline.  If the empty
+    //     string, then the final level in 'key' will be used as the baseline.
     explicit EffectsEncoder(const std::string &variable_name,
-                            const Ptr<CatKey> &key);
+                            const Ptr<CatKey> &key,
+                            const std::string &baseline_level = "");
     EffectsEncoder(const EffectsEncoder &rhs);
     EffectsEncoder &operator=(const EffectsEncoder &rhs);
     EffectsEncoder(EffectsEncoder &&rhs) = default;
@@ -135,10 +162,20 @@ namespace BOOM {
 
     const CatKey &key() const {return *key_;}
 
+    Matrix encode(const CategoricalVariable &variable) const override;
+    Vector encode_row(const MixedMultivariateData &data) const override;
+    void encode_row(const MixedMultivariateData &data,
+                    VectorView view) const override;
+    Vector encode(const LabeledCategoricalData &data_point) const;
+    void encode(const LabeledCategoricalData &data_point, VectorView view) const;
+
     std::vector<std::string> encoded_variable_names() const override;
 
+    int baseline_level() const override {return baseline_level_index_;}
    private:
     Ptr<CatKey> key_;
+    std::string baseline_level_;
+    int baseline_level_index_;
   };
 
   //===========================================================================

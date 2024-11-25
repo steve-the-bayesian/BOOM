@@ -64,7 +64,7 @@ namespace {
     Vector true_coefficients = {1.8, .5, 1.0, -.5, 5.3};
     Matrix draws(niter, true_coefficients.size());
     for (int i = 0; i < true_coefficients.size(); ++i) {
-      draws.col(i) = rnorm_vector(sample_size, true_coefficients[i], .1);
+      draws.col(i) = rnorm_vector(niter, true_coefficients[i], .1);
     }
 
     DataTable arm_definitions_table;
@@ -75,11 +75,6 @@ namespace {
         arm_definitions_table,
         context_table,
         encoder);
-
-
-
-
-
   }
 
 }  // namespace

@@ -86,10 +86,10 @@ namespace BOOM {
   {}
 
   Vector CategoricalMainEffect::encode(const MCD &data) const {
-    return encoder_.encode(data[which_variables_[0]]);
+    return encoder_.encode_level(data[which_variables_[0]].value());
   }
   Vector CategoricalMainEffect::encode(const std::vector<int> &data) const {
-    return encoder_.encode(data[which_variables_[0]]);
+    return encoder_.encode_level(data[which_variables_[0]]);
   }
 
   //===========================================================================

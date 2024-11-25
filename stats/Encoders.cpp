@@ -47,14 +47,34 @@ namespace BOOM {
     return ans;
   }
 
-  EffectsEncoder::EffectsEncoder(const std::string &variable_name, const Ptr<CatKey> &key)
+  int IntEffectsEncoder::baseline_level() const {
+    return key_->max_levels() - 1;
+  }
+
+  EffectsEncoder::EffectsEncoder(const std::string &variable_name,
+                                 const Ptr<CatKey> &key,
+                                 const std::string &baseline_level)
       : EffectsEncoderBase(variable_name),
-        key_(key)
+        key_(key),
+        baseline_level_(baseline_level)
   {
     if (key_->max_levels() <= 0) {
       report_error("A categorical data key used to create an EffectsEncoder "
                    "must have a defined maximum number of levels. ");
     }
+
+    if (baseline_level_.empty()) {
+      baseline_level_ = key_->labels().back();
+    }
+
+    // Find the baseline level
+    baseline_level_index_ = key_->findstr_or_neg(baseline_level_);
+    if (baseline_level_index_ <= 0) {
+      key_ = key_->clone();
+      key_->add_label(baseline_level);
+      baseline_level_index_ = key_->max_levels() - 1;
+    }
+
   }
 
   EffectsEncoder::EffectsEncoder(const EffectsEncoder &rhs)
@@ -78,48 +98,85 @@ namespace BOOM {
     return key().max_levels() - 1;
   }
 
-  Vector EffectsEncoderBase::encode(const CategoricalData &data) const {
-    return encode(data.value());
-  }
-
-  void EffectsEncoderBase::encode(const CategoricalData &data, VectorView view) const {
-    return encode(data.value(), view);
-  }
-
-  Vector EffectsEncoderBase::encode(int level) const {
+  Vector EffectsEncoderBase::encode_level(int level) const {
     Vector ans(dim());
-    encode(level, VectorView(ans));
+    encode_level(level, VectorView(ans));
     return ans;
   }
 
-  void EffectsEncoderBase::encode(int level, VectorView view) const {
-    if (level == dim()) {
+  void EffectsEncoderBase::encode_level(int level, VectorView view) const {
+    if (level == baseline_level()) {
       view = -1;
     } else {
-      view = 0.0;
-      view[level] = 1.0;
+        view = 0.0;
+      if (level < baseline_level()) {
+        view[level] = 1.0;
+      } else {
+        view[level - 1] = 1.0;
+      }
     }
   }
 
-  Matrix EffectsEncoderBase::encode(const CategoricalVariable &variable) const {
-    Matrix ans(variable.size(), dim());
-    for (size_t i = 0; i < variable.size(); ++i) {
-      ans.row(i) = encode(*variable[i]);
-    }
-    return ans;
-  }
 
   Matrix EffectsEncoderBase::encode_dataset(const DataTable &table) const {
     return encode(table.get_nominal(variable_name()));
   }
 
-  Vector EffectsEncoderBase::encode_row(const MixedMultivariateData &row) const {
-    return encode(row.categorical(variable_name()));
+  //---------------------------------------------------------------------------
+  Matrix IntEffectsEncoder::encode(const CategoricalVariable &variable) const {
+    Matrix ans(variable.size(), dim());
+    for (size_t i = 0; i < variable.size(); ++i) {
+      encode_level(variable[i]->value(), ans.row(i));
+    }
+    return ans;
   }
 
-  void EffectsEncoderBase::encode_row(
+  Vector IntEffectsEncoder::encode_row(const MixedMultivariateData &row) const {
+    return encode_level(row.categorical(variable_name()).value());
+  }
+
+  void IntEffectsEncoder::encode_row(
       const MixedMultivariateData &row, VectorView view) const {
-    encode(row.categorical(variable_name()), view);
+    encode_level(row.categorical(variable_name()).value(), view);
+  }
+
+  Vector IntEffectsEncoder::encode(const CategoricalData &data) const {
+    return encode_level(data.value());
+  }
+
+  void IntEffectsEncoder::encode(const CategoricalData &data,
+                                 VectorView view) const {
+    return encode_level(data.value(), view);
+  }
+
+  Vector EffectsEncoder::encode(const LabeledCategoricalData &data) const {
+    return encode_level(key_->findstr(data.label()));
+  }
+
+  void EffectsEncoder::encode(const LabeledCategoricalData &data,
+                              VectorView view) const {
+    return encode_level(key_->findstr(data.label()), view);
+  }
+
+  //---------------------------------------------------------------------------
+  Matrix EffectsEncoder::encode(const CategoricalVariable &variable) const {
+    Matrix ans(variable.size(), dim());
+    for (size_t i = 0; i < variable.size(); ++i) {
+      const std::string &label(variable[i]->label());
+      encode_level(key_->findstr(label), ans.row(i));
+    }
+    return ans;
+  }
+
+  Vector EffectsEncoder::encode_row(const MixedMultivariateData &row) const {
+    const LabeledCategoricalData &data_point(row.categorical(variable_name()));
+    return encode_level(key_->findstr(data_point.label()));
+  }
+
+  void EffectsEncoder::encode_row(
+      const MixedMultivariateData &row, VectorView view) const {
+    const LabeledCategoricalData &data_point(row.categorical(variable_name()));
+    encode_level(key_->findstr(data_point.label()), view);
   }
 
   std::vector<std::string> EffectsEncoder::encoded_variable_names() const {
@@ -217,6 +274,10 @@ namespace BOOM {
 
   std::vector<std::string> DatasetEncoder::encoded_variable_names() const {
     std::vector<std::string> ans;
+    if (add_intercept_) {
+      ans.push_back("(Intercept)");
+    }
+
     for (const auto &enc : encoders_) {
       std::vector<std::string> names = enc->encoded_variable_names();
       ans.insert(ans.end(), names.begin(), names.end());

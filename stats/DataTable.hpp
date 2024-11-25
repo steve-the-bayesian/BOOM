@@ -265,7 +265,7 @@ namespace BOOM {
         : key_(data[0]->catkey()), data_(data) {}
 
     Ptr<LabeledCategoricalData> operator[](uint i) { return data_[i]; }
-    const Ptr<LabeledCategoricalData> operator[](uint i) const {
+    const Ptr<LabeledCategoricalData> &operator[](uint i) const {
       return data_[i];
     }
     const std::vector<std::string> &labels() const { return key_->labels(); }

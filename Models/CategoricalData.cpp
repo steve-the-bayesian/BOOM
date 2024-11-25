@@ -136,6 +136,12 @@ namespace BOOM {
     return ans;
   }
 
+  int CatKey::findstr_or_neg(const std::string &lab) const {
+    bool found = true;
+    int position = findstr_safe(lab, found);
+    return found ? position : -1;
+  }
+
   void CatKey::add_label(const std::string &lab) { labs_.push_back(lab); }
 
   void CatKey::reorder(const std::vector<std::string> &new_ordering) {
