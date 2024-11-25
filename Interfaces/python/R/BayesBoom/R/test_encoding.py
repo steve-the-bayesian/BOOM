@@ -54,6 +54,24 @@ class TestEffectEncoder(unittest.TestCase):
             [-1.0, -1.0]])
         self.assertTrue(np.allclose(enc, expected))
 
+    def test_boom_equivalence(self):
+        data = pd.DataFrame(np.random.randn(3, 2),
+                            columns=["X1", "X2"])
+        data["Color"] = ["Red", "Blue", "Green"]
+        encoder = R.EffectEncoder("Color", ["Red", "Blue", "Green"])
+        enc = encoder.encode_dataset(data)
+        expected = np.array([
+            [1.0, 0.0],
+            [0.0, 1.0],
+            [-1.0, -1.0]])
+        self.assertTrue(np.allclose(enc, expected))
+
+        boom_enc = encoder.boom()
+        boom_data = R.to_boom_data_table(data)
+        boom_predictors = boom_enc.encode_dataset(boom_data)
+        self.assertTrue(np.allclose(boom_predictors.to_numpy(),
+                                    expected))
+
     def test_json(self):
         encoder = R.EffectEncoder("Color", ["Red", "Blue", "Green"])
         data = ["Red", "Blue", "Orange", np.nan, 17, "Green"]
@@ -229,6 +247,36 @@ class TestDatasetEncoder(unittest.TestCase):
 
         self.assertEqual(data["Height"].dtype, "float64")
 
+    def test_boom_encoder_creation(self):
+        sample_size = 100
+        colors = ["Red", "Green", "Blue"]
+        color_encoder = R.EffectEncoder("Color", colors)
+        shapes = ["Circle", "Triangle", "Pentagon", "Octogon"]
+        # shape_encoder = R.OneHotEncoder("Shape", shapes, baseline_level="Circle")
+        shape_encoder = R.EffectEncoder("Shape", shapes, baseline_level="Circle")
+
+        height_encoder = R.IdentityEncoder("Height")
+
+        enc = R.DatasetEncoder([color_encoder, shape_encoder, height_encoder])
+        data = enc.simulate(sample_size)
+        predictors = enc.encode_dataset(data)
+
+        boom_data = R.to_boom_data_table(data)
+        boom_enc = enc.boom()
+        boom_predictors = boom_enc.encode_dataset(boom_data)
+
+        boom_names = boom_enc.encoded_variable_names
+        py_names = [x.replace(".", ":") for x in enc.encoded_variable_names]
+        for i in range(len(boom_names)):
+            self.assertEqual(py_names[i], boom_names[i])
+
+        print(boom_enc.encoded_variable_names)
+        print(enc.encoded_variable_names)
+
+        self.assertEqual(data.shape[0], boom_data.nrow)
+        self.assertEqual(data.shape[1], boom_data.ncol)
+        self.assertTrue(np.allclose(boom_predictors.to_numpy(), predictors))
+
 
 _debug_mode = False
 
@@ -243,13 +291,14 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = TestDatasetEncoder()
+#    rig = TestDatasetEncoder()
+    rig = TestEffectEncoder()
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_simulation()
+    rig.test_boom_equivalence()
 
     print("Goodbye, cruel world!")
 

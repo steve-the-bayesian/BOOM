@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
 import json
+import BayesBoom.boom as boom
 
 # JSON_ENCODER_REGISTRY associates the name of the (statistical Encoder class
 # with the class object of its JSONEncoder.  This allows an encoder to be
@@ -100,9 +101,30 @@ class Encoder(ABC):
         MainEffectEncoder that encodes that variable.
         """
 
+    @abstractmethod
+    def _create_boom_encoder(self):
+        """
+        Set self._boom_encoder to the boom Encoder object equivalent to this
+        python Encoder object.
+
+        Note that this is more than just a memory/speed optimization.  Many
+        encoders work by holding other subordinate encoders.  Keeping a
+        specific boom object tied to a specific python object makes it much
+        easier to keep complex python encoders in sync with their boom
+        counterparts.
+        """
+
+    def boom(self):
+        """
+        Returns the equivalent boom.Encoder object.
+        """
+        if getattr(self, "_boom_encoder", None) is None:
+            self._create_boom_encoder()
+        return self._boom_encoder
+
 
 # ===========================================================================
-class MainEffectEncoder:
+class MainEffectEncoder(Encoder):
     """
     A "Main Effect" is a variable in a model that is a function of a single
     column in the input data frame.
@@ -110,6 +132,7 @@ class MainEffectEncoder:
 
     def __init__(self, variable_name: str):
         self._vname = variable_name
+        self._boom_encoder = None
 
     @abstractmethod
     def encode(self, x):
@@ -241,6 +264,9 @@ class EffectEncoder(MainEffectEncoder):
             levels[-1] as the baseline.
         """
         super().__init__(variable_name)
+
+        # Note that _unique_levels returns a list, regardless of the type of
+        # the levels argument.
         self._levels = _unique_levels(levels)
         if not isinstance(self._levels, list):
             raise Exception("self._levels should be a list")
@@ -275,6 +301,13 @@ class EffectEncoder(MainEffectEncoder):
     @property
     def encoded_variable_names(self):
         return [self.variable_name + "." + str(x) for x in self._levels]
+
+    def _create_boom_encoder(self):
+        levels = self._levels + [self._baseline]
+        self._boom_encoder = boom.EffectsEncoder(
+            self.variable_name,
+            self._levels + [self._baseline]
+        )
 
 
 class EffectEncoderJsonEncoder(json.JSONEncoder):
@@ -346,6 +379,10 @@ class OneHotEncoder(MainEffectEncoder):
         return [self.variable_name + "." + str(x)
                 for x in self._levels if x != self._baseline]
 
+    def _create_boom_encoder(self):
+        raise Exception("boom has no OneHotEncoder equivalent")
+        return None
+
 
 class OneHotEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -397,6 +434,10 @@ class IdentityEncoder(MainEffectEncoder):
     def simulate(self, sample_size):
         rng = np.random.default_rng()
         return rng.standard_normal(sample_size)
+
+    def _create_boom_encoder(self):
+        self._boom_encoder = boom.IdentityEncoder(self.variable_name)
+
 
 class IdentityEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -454,6 +495,9 @@ class MissingDummyEncoder(MainEffectEncoder):
         return ["Missing Dummy for " +
                 self.variable_name] + self._base.encoded_variable_names
 
+    def _create_boom_encoder(self):
+        raise Exception("MissingDummyEncoder has no boom equivalent.")
+
 
 class MissingDummyEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -510,6 +554,9 @@ class SuccessEncoder(MainEffectEncoder):
     def simulate(self, sample_size):
         rng = np.random.default_rng()
         return rng.choice([0, 1], size=sample_size)
+
+    def _create_boom_encoder(self):
+        raise Exception("SuccessEncoder has no boom equivalent.")
 
 
 class SuccessEncoderJsonEncoder(json.JSONEncoder):
@@ -612,6 +659,11 @@ class InteractionEncoder(Encoder):
 
     def __repr__(self):
         return f"Interaction between {self._encoder1} and {self._encoder2}."
+
+    def _create_boom_encoder(self):
+        self._boom_encoder = boom.InteractionEncoder(
+            self._encoder1.boom(),
+            self._encoder2.boom())
 
 
 class InteractionEncoderJsonEncoder(json.JSONEncoder):
@@ -723,6 +775,11 @@ class DatasetEncoder(Encoder):
         for enc in self._encoders:
             ans.update(enc.extract_main_effects())
         return ans
+
+    def _create_boom_encoder(self):
+        self._boom_encoder = boom.DatasetEncoder([], self._force_intercept)
+        for enc in self._encoders:
+            self._boom_encoder.add_encoder(enc.boom())
 
     def _create_variable_map(self):
         vnames = self.required_variables

@@ -139,6 +139,7 @@ from .boom_py_utils import (
     is_all_numeric,
     is_iterable,
     to_boom_array,
+    to_boom_data_table,
     to_boom_date,
     to_boom_datetime_vector,
     to_boom_vector,

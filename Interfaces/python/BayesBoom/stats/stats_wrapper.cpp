@@ -80,6 +80,39 @@ namespace BayesBoom {
              "  A boom.Vector containing the optimal arm probability "
              "for each arm.\n");
 
+    boom.def("compute_user_specific_optimal_arm_probabilities_linear_bandit",
+             [](Matrix &coefficient_draws,
+                const DataTable &arm_definitions,
+                const DataTable &context,
+                const DatasetEncoder &encoder,
+                RNG &rng) {
+               return compute_user_specific_optimal_arm_probabilities_linear_bandit(
+                   coefficient_draws,
+                   arm_definitions,
+                   context,
+                   encoder,
+                   rng);
+             },
+             py::arg("coefficient_draws"),
+             py::arg("arm_definitions"),
+             py::arg("context"),
+             py::arg("encoder"),
+             py::arg("rng"),
+             "Args:\n\n"
+             "  coefficient_draws:  A boom.Matrix of Monte Carlo draws of "
+             "the model coefficients from their posterior distribution.  "
+             "Each row is a draw.\n"
+             "  arm_definitions:  A boom.DataTable describing the arms.  Each "
+             "row is an arm.  The columns describe the different "
+             "configurations of action variables for that arm.\n"
+             "  context:  A boom.DataTable with one row per subject, giving "
+             "the context variables for that subject.\n"
+             "  encoder:  A boom.DatasetEncoder that produces the matrix of "
+             "predictors from the combination of  action and context "
+             "variables.\n"
+             );
+
+
 
     //===========================================================================
     py::class_<SplineBase> (boom, "SplineBase")
@@ -335,6 +368,11 @@ namespace BayesBoom {
              "matrix.\n\n"
              "Args:\n"
              "  data:  The boom.DataTable object to be encoded.\n")
+        .def_property_readonly(
+            "encoded_variable_names",
+            [](const DataEncoder &enc) {
+              return enc.encoded_variable_names();
+            })
         ;
 
     //=========================================================================
@@ -370,7 +408,7 @@ namespace BayesBoom {
              "  levels: The set of levels (as strings) to be encoded.  The \n"
              "    last level listed will be the reference level.\n")
         .def("encode", [](const EffectsEncoder &encoder, int level) {
-            return encoder.encode(level);
+            return encoder.encode_level(level);
           },
           "Encode a categorical value by its integer code.")
         ;
@@ -393,6 +431,14 @@ namespace BayesBoom {
              "  encoders:  The encoders that produce individual effects.\n"
              "  add_intercept: If True then a column of 1's is prepended \n"
              "    to the beginning of the output matrix.\n")
+        .def("add_encoder",
+             [](DatasetEncoder &encoder,
+                DataEncoder *enc) {
+               encoder.add_encoder(Ptr<DataEncoder>(enc));
+             },
+             py::arg("enc"),
+             "Args:\n\n"
+             "  enc:  An encoder to add to the dataset encoder.")
         ;
 
     //===========================================================================

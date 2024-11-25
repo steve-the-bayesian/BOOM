@@ -4,7 +4,8 @@
 import numpy as np
 import pandas as pd
 from pandas.api.types import (
-    is_numeric_dtype
+    is_numeric_dtype,
+    is_object_dtype,
 )
 
 import BayesBoom.boom as boom
@@ -227,3 +228,5 @@ def to_boom_data_table(pandas_df):
                 colname)
         else:
             raise Exception(f"unspported dtype in column {colname}.")
+
+    return ans
