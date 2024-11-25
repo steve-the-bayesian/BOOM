@@ -64,7 +64,7 @@ namespace BOOM {
 
     // size() is the number of elements stored in the array.  It is
     // the product of dims_;
-    int size() const;
+    size_t size() const;
 
     // If an Array is the same size and shape as another Array-like
     // thing then they can be compared with operator==

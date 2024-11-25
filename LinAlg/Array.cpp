@@ -254,8 +254,8 @@ namespace BOOM {
     return false;
   }
 
-  int ConstArrayBase::size() const {
-    int ans = 1;
+  size_t ConstArrayBase::size() const {
+    size_t ans = 1;
     for (int i = 0; i < dims_.size(); ++i) ans *= dims_[i];
     return ans;
   }
