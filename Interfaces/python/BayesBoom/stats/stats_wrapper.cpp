@@ -414,6 +414,19 @@ namespace BayesBoom {
         ;
 
     //=========================================================================
+    py::class_<InteractionEncoder, DataEncoder, Ptr<InteractionEncoder>>(
+        boom, "InteractionEncoder")
+        .def(py::init(
+            [](DataEncoder *enc1, DataEncoder *enc2) {
+              return new InteractionEncoder(enc1, enc2);
+            }),
+             py::arg("enc1"),
+             py::arg("enc2"),
+             "Args:\n\n"
+             "  enc1, enc2:  The base encoders to interat.\n")
+        ;
+
+    //=========================================================================
     py::class_<DatasetEncoder, DataEncoder, Ptr<DatasetEncoder>>(
         boom, "DatasetEncoder")
         .def(py::init(
