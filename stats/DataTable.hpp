@@ -307,6 +307,10 @@ namespace BOOM {
 
     int size() const {return data_.size();}
 
+    const std::vector<DateTime> &data() const {
+      return data_;
+    }
+
    private:
     std::vector<DateTime> data_;
   };
