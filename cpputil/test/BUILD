@@ -47,6 +47,17 @@ cc_test(
 )
 
 cc_test(
+    name = "date_time_test",
+    size = "small",
+    srcs = ["date_time_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "find_test",
     size = "small",
     srcs = ["find_test.cc"],
