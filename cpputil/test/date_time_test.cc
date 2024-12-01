@@ -20,6 +20,20 @@ namespace {
 
     EXPECT_EQ(dt1.nanoseconds_into_day(),
               1.1e+9);
+
+    Date epoch_date(MonthNames::Jan, 1, 1970);
+    DateTime dt_epoch(epoch_date, 0, 0, 0.0);
+    EXPECT_EQ(dt_epoch.nanoseconds_since_epoch(), 0);
+
+    DateTime dt_one_second(epoch_date, 0, 0, 1.0);
+    EXPECT_EQ(dt_one_second.nanoseconds_since_epoch(),
+              1e+9);
+
+    Date May_15_2024(MonthNames::May, 15, 2024);
+    DateTime May_15_2024_midnight(May_15_2024, 0, 0, 0);
+    int64_t May_15_2024_ns = May_15_2024_midnight.nanoseconds_since_epoch();
+    EXPECT_EQ(May_15_2024_ns,
+              1715702400000000000);
   }
 
 }  // namespace

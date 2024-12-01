@@ -322,6 +322,10 @@ namespace BayesBoom {
                    return "numeric";
                    break;
 
+                 case VariableType::datetime:
+                   return "datetime";
+                   break;
+
                  default:
                    return "unknown";
                }
@@ -353,6 +357,17 @@ namespace BayesBoom {
              "This is an error if column 'i' is not a nominal categorical "
              "variable."
              )
+        .def("get_datetime",
+             [](DataTable &table, int i) {
+               DateTimeVariable var = table.get_datetime(i);
+               return var.data();
+             },
+             py::arg("i"),
+             "Args:\n\n"
+             "  i: The column index to get.  This is an error if column i "
+             "is not a DateTime variable.\n\n"
+             "Returns:\n"
+             "  The requested column as a list of boom.DateTime objects.\n")
         ;
 
     //===========================================================================
@@ -511,6 +526,18 @@ namespace BayesBoom {
              "  day:  Day of month 1-31 (list of ints).\n"
              "  day_fraction:  Vector of numers [0-1) giving the time of "
              "day as a fraction of 24 hours.\n");
+
+    boom.def("to_nanoseconds",
+             [](const std::vector<DateTime> &dt_vector) {
+               std::vector<long> ns;
+               ns.reserve(dt_vector.size());
+               for (const auto &dt : dt_vector) {
+                 ns.push_back(dt.nanoseconds_since_epoch());
+               }
+               return ns;
+             },
+             "Convert a boom.DateTime vector to the number of nanoseconds "
+             "since midnight beginning Jan 1, 1970.\n");
 
   }  // stats_def
 

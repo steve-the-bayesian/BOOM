@@ -19,6 +19,10 @@ class TestUtilities(unittest.TestCase):
         v = R.to_boom_vector(x)
         self.assertIsInstance(v, boom.Vector)
 
+        x = pd.to_datetime(["2004-05-15"])
+        boom_dt = to_boom_datetime_vector(x);
+        v = to_pd_datetime64(boom_dt)
+
     def test_numerics(self):
         numeric_df = pd.DataFrame(np.random.randn(10, 3))
         self.assertTrue(R.is_all_numeric(numeric_df))

@@ -102,6 +102,26 @@ namespace BayesBoom {
             [](const DateTime &dt) {
               return dt.nanoseconds_after_second();
             })
+        .def_property_readonly(
+            "nanoseconds_since_epoch",
+            [](const DateTime &dt) {
+              return dt.nanoseconds_since_epoch();
+            })
+        .def_property_readonly(
+            "hours_left_in_day",
+            [](const DateTime &dt) {
+              return dt.hours_left_in_day();
+            })
+        .def_property_readonly(
+            "minutes_left_in_hour",
+            [](const DateTime &dt) {
+              return dt.minutes_left_in_hour();
+            })
+        .def_property_readonly(
+            "seconds_left_in_minute",
+            [](const DateTime &dt) {
+              return dt.seconds_left_in_minute();
+            })
         .def("__repr__",
              [] (const DateTime &dt) {
                std::ostringstream out;
