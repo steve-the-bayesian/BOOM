@@ -355,6 +355,14 @@ class MvnGivenSigma(MvnBase):
         return boom.MvnGivenSigma(to_boom_vector(self._mu),
                                   self._sample_size)
 
+    @property
+    def variance(self):
+        raise Exception("MvnGivenSigma needs Sigma value to compute the variance.")
+
+    @property
+    def mean(self):
+        return self._mu
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 

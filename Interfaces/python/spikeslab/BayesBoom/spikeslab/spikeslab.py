@@ -373,7 +373,7 @@ class lm_spike:
 
         if number_of_variables is None:
             number_of_variables = np.sum(inc >= inclusion_threshold)
-            inc = inc[index[:number_of_variables]]
+            inc = inc.iloc[index[:number_of_variables]]
 
         index = index[:number_of_variables]
         nonzero_coefs = [self._coefficient_draws[:, i].data for i in index]
@@ -385,7 +385,7 @@ class lm_spike:
         ax.boxplot(nonzero_coefs,
                    widths=.8 * inc,
                    vert=False,
-                   labels=names,
+                   tick_labels=names,
                    **kwargs)
         return ax
 

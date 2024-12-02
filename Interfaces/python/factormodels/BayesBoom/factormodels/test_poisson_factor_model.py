@@ -255,7 +255,7 @@ class PoissonFactorModelTest(unittest.TestCase):
         self.assertEqual(known_user_draws.shape[0], niter)
         self.assertEqual(len(known_user_draws.shape), 1)
         known_user_true_value = known_users.iloc[0]
-        self.assertTrue(np.alltrue(known_user_draws == known_user_true_value))
+        self.assertTrue(np.all(known_user_draws == known_user_true_value))
 
         user_idx = [3, 8, 12]
         some_users = known_users.index[user_idx]
