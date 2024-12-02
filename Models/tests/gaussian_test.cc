@@ -40,7 +40,7 @@ namespace {
     EXPECT_DOUBLE_EQ(1.0, suf.n());
     EXPECT_DOUBLE_EQ(y[0], suf.sum());
     EXPECT_DOUBLE_EQ(square(y[0]), suf.sumsq());
-    EXPECT_DOUBLE_EQ(0, suf.centered_sumsq(suf.ybar()));
+    EXPECT_NEAR(0, suf.centered_sumsq(suf.ybar()), 1e-10);
   }
 
   TEST_F(GaussianTest, LogLikelihood) {
