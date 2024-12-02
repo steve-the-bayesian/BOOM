@@ -77,7 +77,7 @@ class DataTableTest(unittest.TestCase):
 
         errors = (Sigma_root @ np.random.randn(ydim, sample_size)).T
         encoder = boom.DatasetEncoder(encoders)
-        xcat = encoder.encode_dataset(R.to_data_table(
+        xcat = encoder.encode_dataset(R.to_boom_data_table(
             pd.DataFrame(cats)))
         yhat = xcat.to_numpy() @ self._beta
         numerics = yhat + errors
@@ -95,11 +95,11 @@ class DataTableTest(unittest.TestCase):
         pass
 
     def test_data_table(self):
-        table = R.to_data_table(self._data)
+        table = R.to_boom_data_table(self._data)
         self.assertEqual(table.nrow, self._data.shape[0])
         self.assertEqual(table.ncol, self._data.shape[1])
 
-        frame = R.to_data_frame(table)
+        frame = R.to_pd_dataframe(table)
         for i in range(5):
             self.assertTrue(np.all(self._data.iloc[:, i] == frame.iloc[:, i]))
 
@@ -109,19 +109,21 @@ class DataTableTest(unittest.TestCase):
         dates = pd.date_range("2024-05-15", periods = table.shape[0], freq="D")
         table["dates"] = dates
 
-        pdb.set_trace()
-
+        # Check that the round trip with boom preseves the dates unaltered.
         boom_dates = R.to_boom_datetime_vector(pd.Series(dates))
         py_dates = R.to_pd_datetime64(boom_dates)
-
+        self.assertTrue(np.all(py_dates == dates))
+        
 
         boom_table = R.to_boom_data_table(table)
-
         frame = R.to_pd_dataframe(boom_table)
-        self.assertTrue(table.equals(frame))
+        self.assertTrue(np.allclose(frame.shape, table.shape))
+        self.assertTrue(np.all(frame.columns == table.columns))
+        for colname in table.columns:
+            self.assertTrue(np.all(table[colname] == frame[colname]))
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     # Turn warnings into errors.

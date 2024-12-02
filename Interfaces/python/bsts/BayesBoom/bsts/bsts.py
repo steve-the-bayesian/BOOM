@@ -1341,12 +1341,12 @@ def extend_timestamps(timestamps, num_steps, dt: pd.Timedelta = None):
 
     elif dt >= pd.Timedelta(28, "days") and dt <= pd.Timedelta(31, "days"):
         return pd.date_range(start=np.max(timestamps),
-                             freq="M",
+                             freq="ME",
                              periods=num_steps + 1)[1:]
 
     elif dt >= pd.Timedelta(90, "days") and dt <= pd.Timedelta(93, "days"):
         return pd.date_range(start=np.max(timestamps),
-                             freq="3M",
+                             freq="3ME",
                              periods=num_steps + 1)[1:]
     elif dt >= pd.Timedelta(365, "days") and dt <= pd.Timedelta(366, "days"):
         return pd.date_range(start=np.max(timestamps),

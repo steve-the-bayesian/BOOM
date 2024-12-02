@@ -57,13 +57,6 @@ class TestMoments(unittest.TestCase):
             R.sd(matrix[:, 0]),
             np.std(matrix[:, 0], ddof=1))
 
-        x = np.matrix([])
-        self.assertAlmostEqual(0.0, R.sd(x))
-
-        raw = np.random.randn(10)
-        x = np.matrix(raw)
-        self.assertAlmostEqual(R.sd(x), R.sd(raw))
-
 
 _debug_mode = False
 

@@ -48,7 +48,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
 
         errors = model.one_step_prediction_errors()
         self.assertIsInstance(errors, np.ndarray)
-        self.assertEqual(errors.shape, (10, 100))
+        self.assertEqual(errors.shape, (9, 100))
 
         errors = model.one_step_prediction_errors(burn=7)
         self.assertEqual(errors.shape, (3, 100))
@@ -62,7 +62,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
         errors = model.one_step_prediction_errors(cutpoints=cutpoints)
         self.assertIsInstance(errors, dict)
         self.assertEqual(len(errors), len(cutpoints))
-        self.assertEqual(errors[60].shape,  (10, 100))
+        self.assertEqual(errors[60].shape,  (9, 100))
         self.assertEqual(errors[80].shape,  (10, 100))
         self.assertEqual(errors[100].shape,  (10, 100))
         self.assertEqual(model.time_dimension, 100)

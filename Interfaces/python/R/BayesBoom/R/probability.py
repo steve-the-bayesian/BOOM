@@ -231,7 +231,7 @@ def dmvn(y, mu, Sigma, inv=False, logscale=False):
 
     ans = 0.5 * (-dim * log2pi + ldsi - qform)
     if nobs == 1:
-        ans = float(ans)
+        ans = float(ans[0])
     if logscale:
         return ans
     return np.exp(ans)

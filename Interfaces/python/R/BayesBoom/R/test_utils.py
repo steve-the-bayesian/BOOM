@@ -20,8 +20,8 @@ class TestUtilities(unittest.TestCase):
         self.assertIsInstance(v, boom.Vector)
 
         x = pd.to_datetime(["2004-05-15"])
-        boom_dt = to_boom_datetime_vector(x);
-        v = to_pd_datetime64(boom_dt)
+        boom_dt = R.to_boom_datetime_vector(x);
+        v = R.to_pd_datetime64(boom_dt)
 
     def test_numerics(self):
         numeric_df = pd.DataFrame(np.random.randn(10, 3))

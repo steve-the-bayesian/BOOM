@@ -19,6 +19,6 @@ AirPassengers = pd.Series(
      360, 342, 406, 396, 420, 472, 548, 559, 463, 407,
      362, 405, 417, 391, 419, 461, 472, 535, 622, 606,
      508, 461, 390, 432])
-dates = pd.date_range("1960-01-01", freq="M",
+dates = pd.date_range("1960-01-01", freq="ME",
                       periods=len(AirPassengers))
 AirPassengers.index = dates

@@ -184,7 +184,7 @@ def _boom_labelled_matrix_to_pd_dataframe(boom_labelled_matrix):
 
 
 def to_boom_datetime_vector(series):
-    series = pd.to_datetime(series)
+    series = pd.Series(pd.to_datetime(series))
 
     # convert dates to lists of years, months, and days (integers).
     year = series.dt.year.tolist()
