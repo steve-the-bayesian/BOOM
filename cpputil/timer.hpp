@@ -66,6 +66,9 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // A TimeRecorder is a repository where one or more timers can write their
+  // results.  An external repository is helpful in the case of a ScopedTimer,
+  // which is intentionally destroyed when it goes out of scope.
   class TimeRecorder {
    public:
     void record_elapsed_time(const std::string &category, double seconds) {
@@ -133,6 +136,7 @@ namespace BOOM {
     TimeRecorder *recorder_;
     std::string category_;
   };
+  
 }  // namespace BOOM
 
 #endif  //  BOOM_CPPUTIL_TIMER_HPP_

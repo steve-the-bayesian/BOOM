@@ -156,7 +156,8 @@ namespace BOOM {
       report_error(err.str());
     }
 
-    const auto time_point = std::chrono::system_clock::from_time_t(d_.to_time_t());
+    const auto time_point = std::chrono::system_clock::from_time_t(
+        d_.to_time_t(false));
     return std::chrono::duration_cast<std::chrono::nanoseconds>(
         time_point.time_since_epoch()).count() + nanoseconds_into_day();
   }

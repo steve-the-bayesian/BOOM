@@ -33,7 +33,8 @@ namespace {
     DateTime May_15_2024_midnight(May_15_2024, 0, 0, 0);
     int64_t May_15_2024_ns = May_15_2024_midnight.nanoseconds_since_epoch();
     EXPECT_EQ(May_15_2024_ns,
-              1715702400000000000);
+              1715731200000000000);
+
   }
 
 }  // namespace
