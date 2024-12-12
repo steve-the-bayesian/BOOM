@@ -1,6 +1,12 @@
 COPTS = [
-    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
+]
+
+COMMON_DEPS = [
+        ":mv_statespace_test_framework",
+        "//:boom",
+        "//:boom_test_utils",
+        "@googletest//:gtest_main",
 ]
 
 SANITIZERS = [
@@ -27,12 +33,7 @@ cc_test(
         "multivariate_state_space_regression_test.cc",
     ],
     copts = COPTS,
-    deps = [
-        ":mv_statespace_test_framework",
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -42,10 +43,5 @@ cc_test(
         "student_mvss_regression_test.cc",
     ],
     copts = COPTS,
-    deps = [
-        ":mv_statespace_test_framework",
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )

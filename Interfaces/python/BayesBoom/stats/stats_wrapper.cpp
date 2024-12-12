@@ -5,15 +5,18 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Array.hpp"
 
-#include "stats/Spline.hpp"
 #include "stats/Bspline.hpp"
-#include "stats/moments.hpp"
 #include "stats/DataTable.hpp"
-#include "stats/IQagent.hpp"
 #include "stats/Encoders.hpp"
-#include "stats/hexbin.hpp"
+#include "stats/IQagent.hpp"
+#include "stats/Spline.hpp"
+
 #include "stats/acf.hpp"
+#include "stats/hexbin.hpp"
+#include "stats/moments.hpp"
+#include "stats/optimal_arm_probabilities.hpp"
 
 #include "Models/DataTypes.hpp"
 #include "cpputil/Ptr.hpp"
@@ -51,6 +54,65 @@ namespace BayesBoom {
       "  lags:  The number of lags to compute.\n"
       "  correlation:  If true the autocorrelation function is returned.  "
       "If false the autocovariance function is returned.\n");
+
+    boom.def("compute_optimal_arm_probabilities",
+             [](Matrix &values) {
+               return compute_optimal_arm_probabilities(values);
+             },
+             py::arg("values"),
+             "Args:\n\n"
+             "  values:  A boom.Matrix with element (i, j) giving the "
+             "expected reward value for iteration i, arm j.\n\n"
+             "Returns:\n"
+             "  A boom.Vector containing the optimal arm probability "
+             "for each arm.\n");
+
+    boom.def("compute_user_specific_optimal_arm_probabilities",
+             [](Array &values) {
+               return compute_user_specific_optimal_arm_probabilities(values);
+             },
+             py::arg("values"),
+             "Args:\n\n"
+             "  values:  A boom.Array with three dimensions.  "
+             "Element (i, j, a) contains the expected reward value for "
+             "subject i, iteration j, arm a.\n\n"
+             "Returns:\n"
+             "  A boom.Vector containing the optimal arm probability "
+             "for each arm.\n");
+
+    boom.def("compute_user_specific_optimal_arm_probabilities_linear_bandit",
+             [](Matrix &coefficient_draws,
+                const DataTable &arm_definitions,
+                const DataTable &context,
+                const DatasetEncoder &encoder,
+                RNG &rng) {
+               return compute_user_specific_optimal_arm_probabilities_linear_bandit(
+                   coefficient_draws,
+                   arm_definitions,
+                   context,
+                   encoder,
+                   rng);
+             },
+             py::arg("coefficient_draws"),
+             py::arg("arm_definitions"),
+             py::arg("context"),
+             py::arg("encoder"),
+             py::arg("rng"),
+             "Args:\n\n"
+             "  coefficient_draws:  A boom.Matrix of Monte Carlo draws of "
+             "the model coefficients from their posterior distribution.  "
+             "Each row is a draw.\n"
+             "  arm_definitions:  A boom.DataTable describing the arms.  Each "
+             "row is an arm.  The columns describe the different "
+             "configurations of action variables for that arm.\n"
+             "  context:  A boom.DataTable with one row per subject, giving "
+             "the context variables for that subject.\n"
+             "  encoder:  A boom.DatasetEncoder that produces the matrix of "
+             "predictors from the combination of  action and context "
+             "variables.\n"
+             );
+
+
 
     //===========================================================================
     py::class_<SplineBase> (boom, "SplineBase")
@@ -172,7 +234,7 @@ namespace BayesBoom {
         ;
 
 
-    //===========================================================================
+    //==========================================================================
     py::class_<DataTable,
                Data,
                Ptr<DataTable>>(boom, "DataTable")
@@ -217,6 +279,18 @@ namespace BayesBoom {
              "Args:\n"
              "  values:  The values (as strings) of the variable to be added.\n"
              "  name:  The name of the categorical variable.")
+        .def("add_datetime",
+             [](DataTable &table,
+                const std::vector<DateTime> &dt,
+                const std::string &name) {
+               table.append_variable(DateTimeVariable(dt), name);
+             },
+             py::arg("dt"),
+             py::arg("name"),
+             "Args:\n\n"
+             "  dt: A list of boom.DateTime objects.  \n"
+             "      See to_boom_datetime_vector.\n"
+             "  name:  The name of the new datetime variable.\n")
         .def_property_readonly(
             "nrow", &DataTable::nobs,
             "Number of rows (observations) in the table.")
@@ -246,6 +320,10 @@ namespace BayesBoom {
 
                  case VariableType::numeric:
                    return "numeric";
+                   break;
+
+                 case VariableType::datetime:
+                   return "datetime";
                    break;
 
                  default:
@@ -279,6 +357,17 @@ namespace BayesBoom {
              "This is an error if column 'i' is not a nominal categorical "
              "variable."
              )
+        .def("get_datetime",
+             [](DataTable &table, int i) {
+               DateTimeVariable var = table.get_datetime(i);
+               return var.data();
+             },
+             py::arg("i"),
+             "Args:\n\n"
+             "  i: The column index to get.  This is an error if column i "
+             "is not a DateTime variable.\n\n"
+             "Returns:\n"
+             "  The requested column as a list of boom.DateTime objects.\n")
         ;
 
     //===========================================================================
@@ -294,35 +383,65 @@ namespace BayesBoom {
              "matrix.\n\n"
              "Args:\n"
              "  data:  The boom.DataTable object to be encoded.\n")
+        .def_property_readonly(
+            "encoded_variable_names",
+            [](const DataEncoder &enc) {
+              return enc.encoded_variable_names();
+            })
         ;
 
-    //===========================================================================
-    py::class_<MainEffectsEncoder, DataEncoder, Ptr<MainEffectsEncoder>>(
-        boom, "MainEffectsEncoder")
+    //=========================================================================
+    py::class_<MainEffectEncoder, DataEncoder, Ptr<MainEffectEncoder>>(
+        boom, "MainEffectEncoder")
         ;
 
-    //===========================================================================
-    py::class_<EffectsEncoder, MainEffectsEncoder, Ptr<EffectsEncoder>>(
+    //=========================================================================
+    py::class_<IdentityEncoder, MainEffectEncoder, Ptr<IdentityEncoder>>(
+        boom, "IdentityEncoder")
+        .def(py::init(
+            [](const std::string &variable_name) {
+              return new IdentityEncoder(variable_name);
+            }),
+             py::arg("variable_name"),
+             "Args:\n"
+             "  variable_name: The name of the variable to be encoded.\n")
+        ;
+
+    //=========================================================================
+    py::class_<EffectsEncoder, MainEffectEncoder, Ptr<EffectsEncoder>>(
         boom, "EffectsEncoder")
         .def(py::init(
-            [](int which_variable, const std::vector<std::string> &levels) {
+            [](const std::string &variable_name,
+               const std::vector<std::string> &levels) {
               NEW(CatKey, key)(levels);
-              return new EffectsEncoder(which_variable, key);
+              return new EffectsEncoder(variable_name, key);
             }),
-             py::arg("which_variable"),
+             py::arg("variable_name"),
              py::arg("levels"),
              "Args:\n"
-             "  which_variable: The position of the input variable in the "
-             "data table.\n"
+             "  variable_name: The name of the variable to be encoded.\n"
              "  levels: The set of levels (as strings) to be encoded.  The \n"
              "    last level listed will be the reference level.\n")
         .def("encode", [](const EffectsEncoder &encoder, int level) {
-            return encoder.encode(level);
+            return encoder.encode_level(level);
           },
           "Encode a categorical value by its integer code.")
         ;
 
-    //===========================================================================
+    //=========================================================================
+    py::class_<InteractionEncoder, DataEncoder, Ptr<InteractionEncoder>>(
+        boom, "InteractionEncoder")
+        .def(py::init(
+            [](DataEncoder *enc1, DataEncoder *enc2) {
+              return new InteractionEncoder(enc1, enc2);
+            }),
+             py::arg("enc1"),
+             py::arg("enc2"),
+             "Args:\n\n"
+             "  enc1, enc2:  The base encoders to interat.\n")
+        ;
+
+    //=========================================================================
     py::class_<DatasetEncoder, DataEncoder, Ptr<DatasetEncoder>>(
         boom, "DatasetEncoder")
         .def(py::init(
@@ -340,6 +459,14 @@ namespace BayesBoom {
              "  encoders:  The encoders that produce individual effects.\n"
              "  add_intercept: If True then a column of 1's is prepended \n"
              "    to the beginning of the output matrix.\n")
+        .def("add_encoder",
+             [](DatasetEncoder &encoder,
+                DataEncoder *enc) {
+               encoder.add_encoder(Ptr<DataEncoder>(enc));
+             },
+             py::arg("enc"),
+             "Args:\n\n"
+             "  enc:  An encoder to add to the dataset encoder.")
         ;
 
     //===========================================================================
@@ -369,6 +496,48 @@ namespace BayesBoom {
             "A 3 column matrix containing the x and y coordinates of the hexagon centers \n"
             "(first two columns) and the hexagon counts (frequency, third column).\n")
         ;
+
+    boom.def("to_boom_datetime_vector",
+             [](const std::vector<int> &year,
+                const std::vector<int> &month,
+                const std::vector<int> &day,
+                const Vector &day_fraction) {
+               if (year.size() != month.size()
+                   || year.size() != day.size()
+                   || year.size() != day_fraction.size()) {
+                 report_error("All arguments to add_datetime must have "
+                              "the same length.");
+               }
+               size_t n = year.size();
+               std::vector<DateTime> ans;
+               for (size_t i = 0; i < n; ++i) {
+                 Date date(month[i], day[i], year[i]);
+                 ans.push_back(DateTime(date, day_fraction[i]));
+               }
+               return ans;
+             },
+             py::arg("year"),
+             py::arg("month"),
+             py::arg("day"),
+             py::arg("day_fraction"),
+             "Args:\n\n"
+             "  year:  Four digit year (list of ints).\n"
+             "  month: Month number 1-12 (list of ints).\n"
+             "  day:  Day of month 1-31 (list of ints).\n"
+             "  day_fraction:  Vector of numers [0-1) giving the time of "
+             "day as a fraction of 24 hours.\n");
+
+    boom.def("to_nanoseconds",
+             [](const std::vector<DateTime> &dt_vector) {
+               std::vector<long> ns;
+               ns.reserve(dt_vector.size());
+               for (const auto &dt : dt_vector) {
+                 ns.push_back(dt.nanoseconds_since_epoch());
+               }
+               return ns;
+             },
+             "Convert a boom.DateTime vector to the number of nanoseconds "
+             "since midnight beginning Jan 1, 1970.\n");
 
   }  // stats_def
 

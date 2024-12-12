@@ -26,13 +26,13 @@ namespace {
   };
 
   TEST_F(DataTableTest, DefaultConstructor) {
-    DataTable data;
+    MixedMultivariateData data;
   }
 
   // Read the autopref.txt data in from a .txt file.
   // Read in CarsClean.csv from a .csv file.
   // Check that the data types are correct.
-  TEST_F(DataTableTest, CheckAutopref) {
+  TEST_F(DataTableTest, ReadFromFile) {
     bool header = false;
     std::string path = "stats/tests/autopref.txt";
     DataTable autopref(path, header, "\t");
@@ -75,12 +75,46 @@ namespace {
     EXPECT_EQ(table.variable_type(4), VariableType::categorical);
     EXPECT_EQ(table.variable_type(5), VariableType::categorical);
 
-    EXPECT_EQ(table.nlevels(0), -1);
-    EXPECT_EQ(table.nlevels(1), -1);
-    EXPECT_EQ(table.nlevels(2), -1);
+    EXPECT_EQ(table.nlevels(0), 1);
+    EXPECT_EQ(table.nlevels(1), 1);
+    EXPECT_EQ(table.nlevels(2), 1);
     EXPECT_EQ(table.nlevels(3), 4);
     EXPECT_EQ(table.nlevels(4), 2);
     EXPECT_EQ(table.nlevels(5), 3);
   }
 
+
+  TEST_F(DataTableTest, Repeat) {
+    NEW(MixedMultivariateData, row)();
+    row->add_numeric(new DoubleData(3.2), "X1");
+    NEW(LabeledCategoricalData, stooge)(
+        "Moe", new CatKey({"Larry", "Moe", "Curly", "Shemp"}));
+    row->add_categorical(stooge, "Stooges");
+    row->add_numeric(new DoubleData(8675309), "Jenny");
+    row->add_datetime(new DateTimeData(DateTime()), "Timestamp");
+
+
+    DataTable table = repeat(*row, 12);
+    EXPECT_EQ(table.nvars(), 4);
+    EXPECT_EQ(table.nobs(), 12);
+    EXPECT_EQ(table.variable_type(0), VariableType::numeric);
+    EXPECT_EQ(table.variable_type(1), VariableType::categorical);
+    EXPECT_EQ(table.variable_type(2), VariableType::numeric);
+    EXPECT_EQ(table.variable_type(3), VariableType::datetime);
+
+    EXPECT_DOUBLE_EQ(table.getvar(0, 0), table.getvar(1, 0));
+    for (int i = 0; i < table.nrow(); ++i) {
+      EXPECT_DOUBLE_EQ(table.getvar(0, 0), table.getvar(i, 0));
+    }
+
+    for (int i = 0; i < table.nrow(); ++i) {
+      EXPECT_DOUBLE_EQ(table.getvar(0, 2), table.getvar(i, 2));
+    }
+
+    for (int i = 0; i < table.nrow(); ++i) {
+      EXPECT_EQ(table.get_nominal(0, 1)->value(),
+                table.get_nominal(i, 1)->value());
+    }
+
+  }
 }  // namespace

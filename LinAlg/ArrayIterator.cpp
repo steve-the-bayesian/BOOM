@@ -127,6 +127,10 @@ namespace BOOM {
     return (*host_)[position_.position()];
   }
 
+  size_t ArrayIterator::scalar_position() const {
+    return host_->array_index(position_.position(), host_->dim(), host_->strides());
+  }
+
   //======================================================================
 
   ConstArrayIterator::ConstArrayIterator(
@@ -143,6 +147,10 @@ namespace BOOM {
       report_error("ConstArrayIterator dereference past end of data.");
     }
     return (*host_)[position()];
+  }
+
+  size_t ConstArrayIterator::scalar_position() const {
+    return host_->array_index(position_.position(), host_->dim(), host_->strides());
   }
 
 }  // namespace BOOM

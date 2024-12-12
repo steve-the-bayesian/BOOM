@@ -66,7 +66,7 @@ namespace BOOM {
 
     // size() is the number of elements stored in the array.  It is
     // the product of dims_;
-    int size() const;
+    size_t size() const;
 
     // If an Array is the same size and shape as another Array-like
     // thing then they can be compared with operator==
@@ -107,6 +107,36 @@ namespace BOOM {
 
     virtual ostream & print(ostream &out) const = 0;
     virtual std::string to_string() const = 0;
+
+    // Return the position in the underlying data array of the object at
+    // position [i, j, k, ...].
+    //
+    // Args:
+    //   index:  The vector of indicies to be mapped to a memory position.
+    //   dims:  The dimensions (extents) of an array.
+    //   strides:  The strides between dimensions for an array.
+    //
+    // Returns:
+    //   The array offset of the data at index [i, j, k, ...].
+    static size_t array_index(const std::vector<int> &index,
+                              const std::vector<int> &dims,
+                              const std::vector<int> &strides);
+
+    // Compute the vector of strides needed to store an array with the given set
+    // of dimensions.  Views into an array may use different strides.  These are
+    // for a dense, packed array.
+    //
+    // Args:
+    //   dims: The dimensions of the array.
+    //   strides: The vector that will receive the computed strides.  On output
+    //     it will be the same size as 'dims'.
+    //   fortran_order: If true then the strides will be computed according to
+    //     'column major order' where the lowest indicies change the fastest.
+    //     If false then strides will be computed for 'row major order' where
+    //     the highest indices change the fastest.
+    static void compute_strides(const std::vector<int> &dims,
+                                std::vector<int> &strides,
+                                bool fortran_order = true);
 
    private:
     std::vector<int> dims_;
@@ -231,6 +261,23 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
+
+    // Args:
+    //   apply_over_dims: The dimensions of the array over which to apply the
+    //     function.
+    //   functor:  The function to apply.
+    //
+    // Returns:
+    //   The array formed by applying the scalar valued function over the
+    //   requested dimensions.
+    //
+    // Example: If the array has 3 dimensions (8, 6, 7) and apply_over_dims =
+    //   {0, 2} then the return value will be an array of a single dimension of
+    //   size 6.  Entry i in the returned array is the result of 'functor'
+    //   applied to the sub-array(this->slice(-1, i, -1)).
+    Array apply_scalar_function(
+        const std::vector<int> &apply_over_dims,
+        const std::function<double(const ConstArrayView &)> &functor) const;
 
    private:
     const double *data_;
@@ -436,6 +483,13 @@ namespace BOOM {
     VectorView vector_slice(int x1, int x2, int x3, int x4, int x5);
     VectorView vector_slice(int x1, int x2, int x3, int x4, int x5, int x6);
 
+    Array apply_scalar_function(
+        const std::vector<int> &apply_over_dims,
+        const std::function<double(const ConstArrayView &view)> &functor) const {
+      return ConstArrayView(*this).apply_scalar_function(
+          apply_over_dims, functor);
+    }
+
     // The easiest way to iterate over all the array elements is to iterate over
     // data_.
     iterator begin() { return data_.begin(); }
@@ -465,6 +519,14 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
+
+    using ArrayBase::operator[];
+
+    // Return the i'th element of the Array.  This is storage order dependent,
+    // but for single dimension arrays it allows access to the underlying data
+    // vector.
+    double operator[](int i) const { return data_[i]; }
+    double &operator[](int i) { return data_[i]; }
 
    private:
     Vector data_;
@@ -766,6 +828,34 @@ namespace BOOM {
       const GenericArrayConstIterator &rhs) const {
     return (host_ != rhs.host_) || (position_ != rhs.position_);
   }
+
+  //===========================================================================
+  // Free functions
+  //===========================================================================
+
+  double max(const ConstArrayView &view);
+  inline double max(const Array &array) {
+    return max(ConstArrayView(array));
+  }
+
+  double min(const ConstArrayView &view);
+  inline double min(const Array &array) {
+    return min(ConstArrayView(array));
+  }
+
+  // A functor for finding the index of the maximal value in a 1-D array.  If
+  // there are multiple copies of the same max value, then ties are broken
+  // uniformly at random.
+  class ArrayArgMax {
+   public:
+    ArrayArgMax(RNG &rng = ::BOOM::GlobalRng::rng);
+
+    size_t operator()(const ConstArrayView &view) const;
+
+   private:
+    mutable RNG rng_;
+    mutable std::vector<int> candidates_;
+  };
 
 }  // namespace BOOM
 

@@ -20,7 +20,7 @@
 #include "distributions/trun_gamma.hpp"
 
 namespace BOOM {
-
+  /*
   namespace {
     using BIPF = LoglinearModelBipfSampler;
   }  // namespace
@@ -93,5 +93,5 @@ namespace BOOM {
 
     model_->set_effect_coefficients(coefficients, effect_index);
   }
-
+  */
 }  // namespace BOOM

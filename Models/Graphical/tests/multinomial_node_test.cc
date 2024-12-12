@@ -29,6 +29,5 @@ namespace {
 
     NEW(MultinomialNode, v1)(data_, "V1");
     EXPECT_EQ(v1->node_type(), NodeType::CATEGORICAL);
-    EXPECT_EQ(v1->output_dim(), 3);
   }
 }

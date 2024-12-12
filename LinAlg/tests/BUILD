@@ -3,7 +3,7 @@ COPTS = ["-Wno-sign-compare"]
 COMMON_DEPS = [
     "//:boom",
     "//:boom_test_utils",
-    "@gtest//:gtest_main",
+    "@googletest//:gtest_main",
 ]
 
 cc_test(

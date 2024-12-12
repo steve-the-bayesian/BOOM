@@ -330,7 +330,7 @@ namespace BOOM {
 
         for (int level = 0; level < truth_logp.size(); ++level) {
           if (std::isfinite(truth_logp[level])) {
-            encoders[i]->encode(level, view);
+            encoders[i]->encode_level(level, view);
             Vector yhat = numeric_model->predict(predictors);
             truth_logp[level] -=
                 0.5 * numeric_model->Siginv().Mdist(y_numeric - yhat);
@@ -338,7 +338,7 @@ namespace BOOM {
         }
         truth_logp.normalize_logprob();
         imputed_categorical_data[i] = rmulti_mt(rng, truth_logp);
-        view = encoders[i]->encode(imputed_categorical_data[i]);
+        view = encoders[i]->encode_level(imputed_categorical_data[i]);
         if (update_complete_data_suf) {
           categorical_ec_models_[i]->update_complete_data_suf(
               imputed_categorical_data[i], observed_categories[i]->value());

@@ -3,16 +3,9 @@ COPTS = ["-Wno-sign-compare"]
 DEPS = [
     "//:boom",
     "//:boom_test_utils",
-    "@gtest//:gtest_main",
+    "@googletest//:gtest",
+    "@googletest//:gtest_main",
 ]
-
-cc_test(
-    name = "ascii_distribution_compare_test",
-    size = "small",
-    srcs = ["ascii_distribution_compare_test.cc"],
-    copts = COPTS,
-    deps = DEPS,
-)
 
 filegroup(
     name = "test_data",
@@ -21,6 +14,14 @@ filegroup(
         "CarsClean.csv",
         "autopref.txt",
     ],
+)
+
+cc_test(
+    name = "ascii_distribution_compare_test",
+    size = "small",
+    srcs = ["ascii_distribution_compare_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
 )
 
 cc_test(
@@ -62,7 +63,6 @@ cc_test(
     copts = COPTS,
     deps = DEPS,
 )
-
 cc_test(
     name = "mixed_multivariate_data_test",
     size = "small",
@@ -76,6 +76,14 @@ cc_test(
     name = "moments_test",
     size = "small",
     srcs = ["moments_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "optimal_arm_probabilities_test",
+    size = "small",
+    srcs = ["optimal_arm_probabilities_test.cc"],
     copts = COPTS,
     deps = DEPS,
 )

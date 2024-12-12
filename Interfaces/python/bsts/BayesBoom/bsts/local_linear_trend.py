@@ -126,7 +126,7 @@ class LocalLinearTrendStateModel(StateModel):
                         "One of initial_y, y, or initial_level_prior must be "
                         "specified.")
                 else:
-                    initial_y = y[0]
+                    initial_y = np.array(y)[0]
             initial_level_prior = R.NormalPrior(initial_y, sdy)
         if not isinstance(initial_level_prior, R.NormalPrior):
             raise Exception("Unexpected type for initial_level_prior.")

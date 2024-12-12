@@ -61,17 +61,17 @@ namespace BOOM {
 
   FrequencyDistribution::FrequencyDistribution(const std::vector<uint> &y,
                                                bool contiguous) {
-    counts_ = count_values(y, labs_, contiguous);
+    counts_ = count_values(y, labels_, contiguous);
   }
 
   FrequencyDistribution::FrequencyDistribution(const std::vector<int> &y,
                                                bool contiguous) {
-    counts_ = count_values(y, labs_, contiguous);
+    counts_ = count_values(y, labels_, contiguous);
   }
 
   FrequencyDistribution::FrequencyDistribution(
       const std::vector<unsigned long> &y, bool contiguous) {
-    counts_ = count_values(y, labs_, contiguous);
+    counts_ = count_values(y, labels_, contiguous);
   }
 
   FrequencyDistribution::FrequencyDistribution(
@@ -81,7 +81,7 @@ namespace BOOM {
       ++counts_[yi - lo];
     }
     for (int i = lo; i <= hi; ++i) {
-      labs_.push_back(std::to_string(i));
+      labels_.push_back(std::to_string(i));
     }
   }
 
@@ -90,11 +90,11 @@ namespace BOOM {
   }
 
   std::ostream &FrequencyDistribution::print(std::ostream &out) const {
-    uint N = labs_.size();
+    uint N = labels_.size();
     uint labfw = 0;
     uint countfw = 0;
     for (uint i = 0; i < N; ++i) {
-      uint len = labs_[i].size();
+      uint len = labels_[i].size();
       if (len > labfw) labfw = len;
 
       std::string s = std::to_string(counts_[i]);
@@ -105,8 +105,8 @@ namespace BOOM {
     countfw += 2;
 
     for (uint i = 0; i < N; ++i) {
-      out << std::setw(labfw) << labs_[i] << std::setw(countfw) << counts_[i]
-          << std::endl;
+      out << std::setw(labfw) << labels_[i] << std::setw(countfw)
+          << counts_[i] << std::endl;
     }
     return out;
   }
@@ -120,12 +120,12 @@ namespace BOOM {
         mode_position = i;
       }
     }
-    return labs_[mode_position];
+    return labels_[mode_position];
   }
 
   int FrequencyDistribution::count(const std::string &label) const {
-    for (int i = 0; i < labs_.size(); ++i) {
-      if (labs_[i] == label) {
+    for (int i = 0; i < labels_.size(); ++i) {
+      if (labels_[i] == label) {
         return counts_[i];
       }
     }
@@ -140,7 +140,14 @@ namespace BOOM {
           "FrequencyDistribution::reset");
     }
     counts_ = counts;
-    labs_ = labels;
+    labels_ = labels;
+  }
+
+  void FrequencyDistribution::set_default_labels() {
+    labels_.clear();
+    for (int i = 0; i < counts_.size(); ++i) {
+      labels_.push_back(std::string("L") + std::to_string(i));
+    }
   }
 
   BucketedFrequencyDistribution::BucketedFrequencyDistribution(

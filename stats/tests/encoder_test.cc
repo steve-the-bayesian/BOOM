@@ -24,16 +24,16 @@ namespace {
   };
 
   TEST_F(EncoderTest, EffectsEncoderTest) {
-    EffectsEncoder encoder(0, colors_);
-    CategoricalData red("red", colors_);
+    EffectsEncoder encoder("Color", colors_);
+    LabeledCategoricalData red("red", colors_);
     Vector enc = encoder.encode(red);
     EXPECT_TRUE(VectorEquals(enc, Vector{1, 0}));
 
-    CategoricalData blue("blue", colors_);
+    LabeledCategoricalData blue("blue", colors_);
     enc = encoder.encode(blue);
     EXPECT_TRUE(VectorEquals(enc, Vector{0, 1}));
 
-    CategoricalData green("green", colors_);
+    LabeledCategoricalData green("green", colors_);
     enc = encoder.encode(green);
     EXPECT_TRUE(VectorEquals(enc, Vector{-1, -1}));
   }

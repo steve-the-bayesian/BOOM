@@ -143,6 +143,9 @@ namespace BOOM {
 
     VectorView col(uint j);
     const VectorView col(uint j) const;
+    VectorView column(uint j) {return col(j);}
+    const VectorView column(uint j) const {return col(j);}
+
     void set_col(uint j, const Vector &v);
     void set_col(uint j, const double *v);
     void set_col(uint j, double x);

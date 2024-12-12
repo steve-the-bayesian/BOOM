@@ -56,8 +56,9 @@ class StateSpaceStudentModelFactory:
                 # Time series regression case.
                 response, predictors = patsy.dmatrices(self._formula, data)
                 self.predictor_names = predictors.design_info.term_names
-
-            boom_response = boom.Vector(R.to_numpy(response))
+                
+            response = R.to_numpy(response)
+            boom_response = boom.Vector(response)
             boom_predictors = boom.Matrix(R.to_numpy(predictors))
             response_is_observed = np.isfinite(response).ravel()
 

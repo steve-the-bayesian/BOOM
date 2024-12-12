@@ -62,7 +62,7 @@ class TestSeasonalLLT(unittest.TestCase):
         pass
 
 
-_debug_mode = True
+_debug_mode = False
 
 
 if _debug_mode:

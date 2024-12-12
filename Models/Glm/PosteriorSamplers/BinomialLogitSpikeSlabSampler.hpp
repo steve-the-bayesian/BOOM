@@ -74,6 +74,10 @@ namespace BOOM {
       slab_ = check_slab_dimension(new_slab);
     }
 
+    int xdim() const {
+      return model_->xdim();
+    }
+
    private:
     double mcmc_one_flip(Selector &mod, uint which_var, double logp_old);
     BinomialLogitModel *model_;

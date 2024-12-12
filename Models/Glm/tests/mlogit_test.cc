@@ -125,7 +125,8 @@ namespace {
     NEW(VariableSelectionPrior, spike)(Vector(beta_dim, 1.0 / beta_dim));
     NEW(MultinomialLogitCompositeSpikeSlabSampler, sampler)(
         model.get(), slab, spike);
-    sampler->set_move_probabilities(.80, 0, .20);
+    //    sampler->set_move_probabilities(.80, 0, .20);
+    sampler->set_move_probabilities(.80, .2, 0.0);
     model->set_method(sampler);
 
     std::cout << "Finding MLE.\n";

@@ -138,13 +138,18 @@ namespace BOOM {
     const std::vector<std::string> &labels() const;
     const std::string &label(int value) const { return labs_[value]; }
 
-    // Returns the position in labs_ containing the string 's'.  If the string
-    // is found then 'found' is set to true, otherwise it is set to false.
+    // Returns the position in labs_ containing the string 'label'.  If the
+    // string is found then 'found' is set to true, otherwise it is set to
+    // false.
     uint findstr_safe(const std::string &label, bool &found) const;
 
-    // Returns the position in labs_ containing the string 's'.  If the string
-    // is not found in labs_ an error is reported.
-    uint findstr(const std::string &) const override;
+    // Returns the position in labs_ containing the string 'label'.  If the
+    // string is not found in labs_ an error is reported.
+    uint findstr(const std::string &label) const override;
+
+    // Return the position in labs_ corresponding to 'label'.  If the string is
+    // not found in labs_, -1 is returned.
+    int findstr_or_neg(const std::string &label) const;
 
     // Adds a label to the end of labs_.
     void add_label(const std::string &lab);
@@ -223,6 +228,7 @@ namespace BOOM {
 
     // value querries.............
     const uint &value() const override;
+
     const Ptr<CatKeyBase> &key() const { return key_; }
     bool comparable(const CategoricalData &rhs) const;
 

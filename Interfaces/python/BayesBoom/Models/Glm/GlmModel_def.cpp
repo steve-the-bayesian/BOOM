@@ -933,6 +933,20 @@ namespace BayesBoom {
              "  max_flips:  At most this many model exploration steps will be "
              "attempted each iteration.\n"
              "")
+        .def("set_prior_inclusion_probability",
+             [](BinomialLogitSpikeSlabSampler *sampler, double prob) {
+               if (prob < 0 || prob > 1) {
+                 report_error("The 'prob' parameter must be between 0 and 1.");
+               }
+               int xdim = sampler->xdim();
+               NEW(VariableSelectionPrior, spike)(xdim, prob);
+               sampler->set_spike(spike);
+             },
+             py::arg("prob"),
+             "Set all prior inclusion probabilities to the same value.\n\n"
+             "Args:\n\n"
+             "  prob:  The new value for all the prior inclusion probabilities."
+             "  This parameter must satisfy 0 <= prob <= 1. \n")
         ;
 
     py::class_<PoissonRegressionSpikeSlabSampler,

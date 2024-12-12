@@ -6,7 +6,6 @@
 #include "stats/ChiSquareTest.hpp"
 #include "stats/FreqDist.hpp"
 #include "stats/DataTable.hpp"
-#include "stats/fake_data_table.hpp"
 
 namespace {
   using namespace BOOM;
@@ -59,5 +58,4 @@ namespace {
     EXPECT_EQ(cars.vnames()[1], "MPGCity");
     EXPECT_EQ(cars.vnames()[21], "GP1000MCity");
   }
-
 }  // namespace

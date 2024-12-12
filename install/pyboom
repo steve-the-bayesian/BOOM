@@ -168,8 +168,8 @@ fi
 ##---------------------------------------------------------------------------
 ## Find the right 'pip' command.
 
-echo "Running ensurepip with $PYTHON"
-$PYTHON -m ensurepip --upgrade
+# echo "Running ensurepip with $PYTHON"
+# $PYTHON -m ensurepip --upgrade
 
 if command -v pip &> /dev/null
 then

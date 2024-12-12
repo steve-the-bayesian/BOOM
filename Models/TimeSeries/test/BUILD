@@ -1,5 +1,4 @@
 COPTS = [
-    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
     #    "-fsanitize=memory",
 ]
@@ -11,7 +10,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:gtest_main",
+        "@googletest//:gtest_main",
     ],
     size = "small",
 )

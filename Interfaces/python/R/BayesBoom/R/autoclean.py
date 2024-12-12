@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 
-from .data_table import to_data_table, to_data_frame
-
 
 class AutoClean:
     """
@@ -110,7 +108,7 @@ class AutoClean:
 
         atoms_arg = [boom.Vector(np.array(self._atoms[vname]))
                      for vname in self._numeric_colnames]
-        table_arg = to_data_table(data)
+        table_arg = R.to_boom_data_table(data)
         print("creating model object")
         self._model = boom.MixedDataImputerWithErrorCorrection(
             nclusters, table_arg, atoms_arg, boom.GlobalRng.rng)
@@ -275,14 +273,14 @@ class AutoClean:
         """
         imputed = []
 
-        data_table = to_data_table(data)
+        data_table = R.to_boom_data_table(data)
 
         for it in iterations:
             self._restore_parameters(it)
             imputed_data_table = self._model.impute_data_set(data_table, 10)
             imputed.append(
-                to_data_frame(imputed_data_table, columns=data.columns,
-                              index=data.index)
+                R.to_pd_dataframe(imputed_data_table, columns=data.columns,
+                                  index=data.index)
             )
         return imputed
 

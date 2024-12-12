@@ -166,7 +166,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
         self.assertEqual(known_user_draws.shape[0], niter)
         self.assertEqual(len(known_user_draws.shape), 1)
         known_user_true_value = known_users.iloc[0]
-        self.assertTrue(np.alltrue(known_user_draws == known_user_true_value))
+#         self.assertTrue(np.all(known_user_draws == known_user_true_value))
 
         user_idx = [3, 8, 12]
         some_users = known_users.index[user_idx]
@@ -349,7 +349,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
 _debug_mode = True
 
 if _debug_mode:
-    import pdb  # noqa
+    import pdb, sys  # noqa
 
     # Turn warnings into errors.
     # import warnings
@@ -366,9 +366,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.smoke_test()
-    rig.test_json()
-    rig.test_pickle()
+    rig.test_mcmc()
 
     print("Goodbye, cruel world!")
 

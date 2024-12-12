@@ -426,8 +426,10 @@ namespace BOOM {
   uint rmulti_mt(RNG &rng, const Vector &);
   uint rmulti_mt(RNG &rng, const VectorView &);
   uint rmulti_mt(RNG &rng, const ConstVectorView &);
-  int rmulti(int, int);
-  int rmulti_mt(RNG &, int, int);
+
+  // Return a uniform integer between lo and hi.  Both endpoints are included.
+  int rmulti(int lo, int hi);
+  int rmulti_mt(RNG &rng, int lo, int hi);
 
   // Args:
   //   rng:  The random number generator.

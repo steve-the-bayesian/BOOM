@@ -1,5 +1,4 @@
 COPTS = [
-    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
 ]
 
@@ -39,9 +38,16 @@ cc_library(
         "//:boom",
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
-        "@gtest",
+        "@googletest//:gtest",
     ],
 )
+
+COMMON_DEPS = [
+        ":test_utils",
+        "//:boom",
+        "//:boom_test_utils",
+        "@googletest//:gtest_main",
+]
 
 cc_test(
     name = "dynamic_regression_test",
@@ -49,12 +55,7 @@ cc_test(
     srcs = ["dynamic_regression_test.cc"],
     copts = COPTS,
     data = [":testdata"],
-    deps = [
-        ":test_utils",
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -64,12 +65,7 @@ cc_test(
     copts = COPTS + SANITIZERS,
     data = [":testdata"],
     linkopts = SANITIZERS,
-    deps = [
-        ":test_utils",
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -77,10 +73,7 @@ cc_test(
     size = "small",
     srcs = ["mixed_frequency_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 # genrule(
@@ -97,11 +90,7 @@ cc_test(
     size = "small",
     srcs = ["state_model_vector_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -111,11 +100,7 @@ cc_test(
     copts = COPTS + SANITIZERS,
     data = [":testdata"],
     linkopts = SANITIZERS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -124,9 +109,5 @@ cc_test(
     srcs = ["state_space_regression_model_test.cc"],
     copts = COPTS,
     data = [":testdata"],
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )

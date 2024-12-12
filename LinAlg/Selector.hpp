@@ -52,7 +52,7 @@ namespace BOOM {
     explicit Selector(const std::string &zeros_and_ones);
     explicit Selector(const std::vector<bool> &values);
     Selector(const std::vector<uint> &pos, uint n);
-    Selector(const std::vector<int> &pos, int n);
+    Selector(const std::vector<int> &pos, uint n);
 
     bool operator==(const Selector &rhs) const;
     bool operator!=(const Selector &rhs) const;

@@ -31,8 +31,12 @@ namespace BOOM {
    public:
 
     // Construct a null frequency distribution.
-    FrequencyDistribution() {}
-    
+    FrequencyDistribution(int nlevels = 0)
+        : counts_(nlevels)
+    {
+      set_default_labels();
+    }
+
     // Overloaded constructors for various integral types.
     // Args:
     //   y:  A vector of categorical data to be tabulated.
@@ -60,7 +64,7 @@ namespace BOOM {
 
     // Set the category labels for the unique values in y.
     void set_labels(const std::vector<std::string> &labels);
-    const std::vector<std::string> &labels() const { return labs_; }
+    const std::vector<std::string> &labels() const { return labels_; }
 
     // Count the frequency of each value in y.
     const std::vector<int> &counts() const { return counts_; }
@@ -80,7 +84,7 @@ namespace BOOM {
     // with category 3.
     void add_count(int level_index) {++counts_[level_index];}
     void remove_count(int level_index) {--counts_[level_index];}
-    
+
     std::ostream &print(std::ostream &out) const;
 
     // Returns the label corresponding to the largest count.  If two or more
@@ -98,8 +102,11 @@ namespace BOOM {
     void reset(const std::vector<int> &counts,
                const std::vector<std::string> &labels);
 
+    // Set the labels equal to L0, L1, ..., LN-1, where N is counts_.size();
+    void set_default_labels();
+
    private:
-    std::vector<std::string> labs_;
+    std::vector<std::string> labels_;
     std::vector<int> counts_;
   };
 

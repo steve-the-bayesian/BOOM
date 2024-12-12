@@ -1,5 +1,4 @@
 COPTS = [
-    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
 ]
 
@@ -7,7 +6,7 @@ COPTS = [
 COMMON_DEPS = [
     "//:boom",
     "//:boom_test_utils",
-    "@gtest//:gtest_main",
+    "@googletest//:gtest_main",
 ]
 
 cc_test(

@@ -20,6 +20,7 @@
 #ifndef BOOM_DATE_TIME_HPP
 #define BOOM_DATE_TIME_HPP
 #include <string>
+#include <cstdint>
 #include "cpputil/Date.hpp"
 
 namespace BOOM {
@@ -50,7 +51,7 @@ namespace BOOM {
 
     bool operator<(const DateTime &rhs) const;
     bool operator==(const DateTime &rhs) const;
-    
+
     // The remaining operations are in terms of < and ==.
     bool operator!=(const DateTime &rhs) const {
       return !(*this == rhs);
@@ -73,15 +74,25 @@ namespace BOOM {
 
     const Date &date() const;
 
-    // Compute the amount of time remaining before the next epoch.  In
-    // each case, the final time period in the epoch is 0, the instant
-    // of the start of the final time period is 1, etc.
+    // The number of nanoseconds since midnight beginning Jan 1, 1970.
+    int64_t nanoseconds_since_epoch() const;
+
+    // the number of nanoseconds since the start of the day.
+    int64_t nanoseconds_into_day() const;   // [0.. 8.64e+12)
+
+    // The number of nanoseconds that have passed since the last integer second.
+    int64_t nanoseconds_after_second() const;  // [0.. 1e+9)
+
+    // Compute the amount of time remaining before the next time gate.  In each
+    // case, the final time period in the time period is 0, the instant of the
+    // start of the final time period is 1, etc.
     double hours_left_in_day() const;       // 0..24
     double minutes_left_in_hour() const;    // 0..60
     double seconds_left_in_minute() const;  // 0..60
 
     // The number of seconds into a day.
     double seconds_into_day() const;  // [0..86400)
+
     // The time to the next day is always strictly positive, so if the
     // current time is exactly on the start of a day then
     // seconds_to_next_day is 86400.
@@ -122,8 +133,11 @@ namespace BOOM {
     static const uint seconds_in_day_;
     static const uint minutes_in_day_;
     static const uint hours_in_day_;
-    static const double milliseconds_in_day_;
-    static const double microseconds_in_day_;
+    static const int64_t milliseconds_in_day_;
+    static const int64_t microseconds_in_day_;
+    static const int64_t nanoseconds_in_day_;
+
+    static const int64_t nanoseconds_in_second_;
   };
 
   std::ostream &operator<<(std::ostream &out, const DateTime &dt);
@@ -136,7 +150,7 @@ namespace BOOM {
   inline DateTime operator-(const DateTime &time, double duration) {
     return time + (-duration);
   }
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_DATE_TIME_HPP

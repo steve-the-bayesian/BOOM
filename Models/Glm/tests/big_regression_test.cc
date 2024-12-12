@@ -205,7 +205,7 @@ namespace {
     for( int i = 1; i < pos93; ++i) EXPECT_FALSE(inc2[i]);
     for( int i = pos93 + 1; i < inc2.nvars_possible(); ++i) EXPECT_FALSE(inc2[i]);
 
-    Selector good_ones({0, 3, 22, 93}, total_predictor_dim);
+    Selector good_ones(std::vector<int>{0, 3, 22, 93}, total_predictor_dim);
     SpdMatrix xtx(4, 0.0);
     for (int i = 0; i < regression_data_.size(); ++i) {
       xtx.add_outer(good_ones.select(regression_data_[i]->x()));
@@ -292,7 +292,7 @@ namespace {
     sampler->initial_screen(100, inclusion_threshold, use_threads);
     std::cout << "done with initial screen: " << DateTime() << "\n";
 
-    Selector good_ones({0, 3, 22, 93}, total_predictor_dim);
+    Selector good_ones(std::vector<int>{0, 3, 22, 93}, total_predictor_dim);
     EXPECT_EQ(good_ones, model->candidate_selector());
 
     for (int i = 0; i < sample_size; ++i) {

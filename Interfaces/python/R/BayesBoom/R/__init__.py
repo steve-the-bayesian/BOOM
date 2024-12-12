@@ -48,8 +48,6 @@ from .cbind import cbind
 
 from .density import Density
 
-from .data_table import to_data_table, to_data_frame
-
 from .autoclean import AutoClean
 
 from .empirical_distribution import NumericEmpiricalDistribution, ECDF
@@ -138,7 +136,11 @@ from .test_utilities import delete_if_present
 from .boom_py_utils import (
     is_all_numeric,
     is_iterable,
+    to_boom_array,
+    to_boom_data_table,
     to_boom_date,
+    to_boom_datetime_vector,
+    to_pd_datetime64,
     to_boom_vector,
     to_boom_matrix,
     to_boom_labelled_matrix,

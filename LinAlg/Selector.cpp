@@ -87,7 +87,7 @@ namespace BOOM {
     for (uint i = 0; i < pos.size(); ++i) add(pos[i]);
   }
 
-  Selector::Selector(const std::vector<int> &pos, int n)
+  Selector::Selector(const std::vector<int> &pos, uint n)
       : Selector(std::vector<uint>(pos.begin(), pos.end()), n)
   {}
 

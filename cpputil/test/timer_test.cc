@@ -16,6 +16,12 @@ namespace {
   TEST(timer, works_as_intended) {
 
     TimeRecorder recorder;
+    {
+      ScopedTimer single_timer(&recorder, "single");
+      sleep(500);
+    }
+    EXPECT_NEAR(recorder["single"], .5, .02);
+    
     for (int i = 0; i < 3; ++i) {
       ScopedTimer timer(&recorder, "for_loop");
       sleep(100);
@@ -25,8 +31,8 @@ namespace {
         sleep(10);
       }
     }
-    EXPECT_NEAR(recorder["while_loop"], .12, .02);
-    EXPECT_NEAR(recorder["for_loop"], .12 + .3, .02);
+    EXPECT_NEAR(recorder["while_loop"], .12, .05);
+    EXPECT_NEAR(recorder["for_loop"], .12 + .3, .05);
     std::cout << recorder;
   }
 

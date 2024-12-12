@@ -230,7 +230,7 @@ namespace BOOM {
         }
       }
 
-      return logp;
+      return logprob;
     }
 
     double NSMD::compute_likelihood(

@@ -97,12 +97,12 @@ GLM_HDRS = glob([
 
 GRAPHICAL_MODEL_SRCS = glob([
     "Models/Graphical/*.cpp",
-    "Models/Graphical/PosteriorSamplers/*.cpp",
+##    "Models/Graphical/PosteriorSamplers/*.cpp",
 ])
 
 GRAPHICAL_MODEL_HDRS = glob([
     "Models/Graphical/*.hpp",
-    "Models/Graphical/PosteriorSamplers/*.hpp",
+##    "Models/Graphical/PosteriorSamplers/*.hpp",
 ])
 
 HMM_SRCS = glob([
@@ -139,12 +139,12 @@ IMPUTE_HDRS = glob([
 
 IRT_SRCS = glob([
     "Models/IRT/*.cpp",
-    "Models/IRT/PosteriorSamplers/*.cpp",
+##    "Models/IRT/PosteriorSamplers/*.cpp",
 ])
 
 IRT_HDRS = glob([
     "Models/IRT/*.hpp",
-    "Models/IRT/PosteriorSamplers/*.hpp",
+##    "Models/IRT/PosteriorSamplers/*.hpp",
 ])
 
 MIXTURE_SRCS = glob([

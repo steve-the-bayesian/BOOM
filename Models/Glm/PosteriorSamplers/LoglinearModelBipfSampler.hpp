@@ -25,6 +25,7 @@
 
 namespace BOOM {
 
+  /*
   // Simulate the parameters of a log linear model using the "Bayesian iterative
   // proportional fitting" algorithm described in Gelman (BDA) and Schafer
   // (1999, incomplete data).
@@ -48,7 +49,7 @@ namespace BOOM {
     double prior_count_;
     double min_scale_;
   };
-
+  */
 }  // namespace BOOM
 
 #endif  // BOOM_LOGLINEAR_MODEL_BIPF_SAMPLER_HPP_

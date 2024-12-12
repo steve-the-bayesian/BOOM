@@ -7,6 +7,9 @@
 #include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
 
+#include "stats/ChiSquareTest.hpp"
+#include "stats/FreqDist.hpp"
+
 #include "test_utils/test_utils.hpp"
 #include <fstream>
 
@@ -215,6 +218,52 @@ namespace {
             + array(i, 1, j, 1));
       }
     }
+  }
+
+  // The compiler has trouble recognizing the free standing 'max' function
+  // because of overloads.  This struct is just a pass-through.
+  struct ArrayMax {
+    double operator()(const ConstArrayView &view) const {
+      return max(view);
+    }
+  };
+
+  TEST_F(ArrayTest, ApplyScalarFunction) {
+    Array arr(std::vector<int>{3, 4, 5});
+    arr.randomize();
+
+    // std::function<double(const ConstArrayView &view)> my_max = ::BOOM::max;
+    ArrayMax my_max;
+    Array ans = arr.apply_scalar_function(std::vector<int>{0, 2},
+                                          my_max);
+    EXPECT_EQ(ans.ndim(), 1);
+    EXPECT_EQ(ans.dim(0), 4);
+    EXPECT_DOUBLE_EQ(ans[0], max(arr.slice(-1, 0, -1)));
+    EXPECT_DOUBLE_EQ(ans[1], max(arr.slice(-1, 1, -1)));
+    EXPECT_DOUBLE_EQ(ans[2], max(arr.slice(-1, 2, -1)));
+    EXPECT_DOUBLE_EQ(ans[3], max(arr.slice(-1, 3, -1)));
+  }
+
+  TEST_F(ArrayTest, ArgMaxTest) {
+    Array one(std::vector<int>{4},
+              Vector{1.0, 1.0, 1.0, 1.0});
+
+    FrequencyDistribution freq(4);
+    ArrayArgMax imax;
+
+    int trials = 10000;
+    for (int i = 0; i < trials; ++i) {
+      freq.add_count(lround(imax(one)));
+    }
+    EXPECT_EQ(freq.counts().size(), 4);
+    EXPECT_DOUBLE_EQ(Vector(freq.counts()).sum(), trials);
+
+    OneWayChiSquareTest test(freq, Vector(4, .25));
+    EXPECT_GE(test.p_value(), 0.05)
+        << "Observed frequency distribution: \n"
+        << freq
+        << "Test:\n"
+        << test ;
   }
 
 }  // namespace
