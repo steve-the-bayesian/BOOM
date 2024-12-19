@@ -41,21 +41,48 @@ class TestCbind(unittest.TestCase):
         self.assertTrue(foo.shape, (3, 2))
         self.assertTrue(np.allclose(foo.iloc[:, 0], x))
         self.assertTrue(np.allclose(foo.iloc[:, 1], y))
+        self.assertEqual(foo.columns[0], "x")
+        self.assertEqual(foo.columns[1], "y")
 
         bar = cbind(x, y, z)
         self.assertEqual(bar.shape, (3, 3))
         self.assertTrue(np.allclose(bar.iloc[:, 2], np.full(3, 2.0)))
+        self.assertEqual(bar.columns[0], "x")
+        self.assertEqual(bar.columns[1], "y")
+        self.assertEqual(bar.columns[2], "z")
 
         baz = cbind(x, y, z, w)
         self.assertEqual(baz.shape, (3, 7))
         self.assertTrue(np.allclose(baz.iloc[:, 3], w[:, 0]))
+        self.assertEqual(baz.columns[0], "x")
+        self.assertEqual(baz.columns[1], "y")
+        self.assertEqual(baz.columns[2], "z")
+        self.assertEqual(baz.columns[3], "w0")
+        self.assertEqual(baz.columns[4], "w1")
+        self.assertEqual(baz.columns[5], "w2")
+        self.assertEqual(baz.columns[6], "w3")
 
         qux = cbind(x, y, z, w, d)
         self.assertEqual(qux.shape, (3, 9))
         self.assertTrue(np.allclose(qux.iloc[:, 7], d.iloc[:, 0]))
+        self.assertEqual(qux.columns[0], "x")
+        self.assertEqual(qux.columns[1], "y")
+        self.assertEqual(qux.columns[2], "z")
+        self.assertEqual(qux.columns[3], "w0")
+        self.assertEqual(qux.columns[4], "w1")
+        self.assertEqual(qux.columns[5], "w2")
+        self.assertEqual(qux.columns[6], "w3")
+        self.assertEqual(qux.columns[7], "Fred")
+        self.assertEqual(qux.columns[8], "Barney")
+
+        blah = cbind(d, 1.8)
+        self.assertEqual(blah.shape, (3, 3))
+        self.assertEqual(blah.columns[0], "Fred")
+        self.assertEqual(blah.columns[1], "Barney")
+        self.assertEqual(blah.columns[2], "1.8")
 
 
-_debug_mode = False
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
