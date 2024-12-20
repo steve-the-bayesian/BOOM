@@ -191,6 +191,9 @@ class lm_spike:
             prior.slab(self._model.Sigsq_prm),
             prior.residual_precision,
             prior.spike)
+        if prior.max_flips > 0:
+            sampler.set_max_flips(prior.max_flips)
+        
         self._model.set_method(sampler)
         # A "lil" matrix is a "linked list" matrix.  This is an efficient method
         # for constructing matrices.  It should be converted to a different

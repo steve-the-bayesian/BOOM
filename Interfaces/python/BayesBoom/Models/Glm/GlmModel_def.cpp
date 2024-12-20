@@ -657,6 +657,16 @@ namespace BayesBoom {
              "  prior_inclusion_probabilities: boom.Vector containing the "
              "prior probability that each variable is to be included. "
              )
+        .def("set_max_size",
+             [](VariableSelectionPrior &prior,
+                int max_size) {
+               prior.set_max_model_size(max_size);
+             },
+             py::arg("max_size"),
+             "Args:\n\n"
+             "  max_size:  models with more than this many nonzero coefficients "
+             "are given zero prior probability."
+             )
         ;
 
     py::class_<RegressionConjugateSampler,
