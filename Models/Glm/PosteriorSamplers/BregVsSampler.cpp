@@ -272,6 +272,8 @@ namespace BOOM {
     model_->set_sigsq(SS_ / DF_);
   }
 
+  // Attempt to swap out an included predictor for another excluded predictor
+  // that is "highly correlated" with the response variable.
   void BVS::attempt_swap() {
     if (correlation_map_.threshold() >= 1.0) {
       return;

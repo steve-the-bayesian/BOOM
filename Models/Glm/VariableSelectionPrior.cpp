@@ -241,14 +241,16 @@ namespace BOOM {
   //===========================================================================
   VSP::VariableSelectionPrior()
       : ParamPolicy(new VectorParams(0)),
-        current_(false)
+        current_(false),
+        max_model_size_(-1)
   {
     observe_prior_inclusion_probabilities();
   }
 
   VSP::VariableSelectionPrior(uint n, double inclusion_probability)
       : ParamPolicy(new VectorParams(n, inclusion_probability)),
-        current_(false)
+        current_(false),
+        max_model_size_(-1)
   {
     if (inclusion_probability < 0 || inclusion_probability > 1) {
       report_error("Prior inclusion probability must be between 0 and 1.");
@@ -258,7 +260,8 @@ namespace BOOM {
 
   VSP::VariableSelectionPrior(const Vector &marginal_inclusion_probabilities)
       : ParamPolicy(new VectorParams(marginal_inclusion_probabilities)),
-        current_(false)
+        current_(false),
+        max_model_size_(-1)
   {
     observe_prior_inclusion_probabilities();
   }
@@ -266,6 +269,9 @@ namespace BOOM {
   VSP *VSP::clone() const {return new VSP(*this);}
 
   double VSP::logp(const Selector &inc) const {
+    if (max_model_size_ >= 0 && inc.nvars() > max_model_size_) {
+      return negative_infinity();
+    }
     ensure_log_probabilities();
     double ans = 0;
     for (int i = 0; i < inc.nvars_possible(); ++i) {
