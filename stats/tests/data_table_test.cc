@@ -6,6 +6,7 @@
 #include "stats/ChiSquareTest.hpp"
 #include "stats/FreqDist.hpp"
 #include "stats/DataTable.hpp"
+#include "stats/fake_data_table.hpp"
 
 namespace {
   using namespace BOOM;
@@ -28,6 +29,9 @@ namespace {
     MixedMultivariateData data;
   }
 
+  // Read the autopref.txt data in from a .txt file.
+  // Read in CarsClean.csv from a .csv file.
+  // Check that the data types are correct.
   TEST_F(DataTableTest, ReadFromFile) {
     bool header = false;
     std::string path = "stats/tests/autopref.txt";
@@ -58,6 +62,27 @@ namespace {
     EXPECT_EQ(cars.vnames()[1], "MPGCity");
     EXPECT_EQ(cars.vnames()[21], "GP1000MCity");
   }
+
+  TEST_F(DataTableTest, TestFakeDataTable) {
+    DataTable table = fake_data_table(112, 3, {4, 2, 3});
+
+    EXPECT_EQ(table.nobs(), 112);
+    EXPECT_EQ(table.ncol(), 6);
+    EXPECT_EQ(table.variable_type(0), VariableType::numeric);
+    EXPECT_EQ(table.variable_type(1), VariableType::numeric);
+    EXPECT_EQ(table.variable_type(2), VariableType::numeric);
+    EXPECT_EQ(table.variable_type(3), VariableType::categorical);
+    EXPECT_EQ(table.variable_type(4), VariableType::categorical);
+    EXPECT_EQ(table.variable_type(5), VariableType::categorical);
+
+    EXPECT_EQ(table.nlevels(0), 1);
+    EXPECT_EQ(table.nlevels(1), 1);
+    EXPECT_EQ(table.nlevels(2), 1);
+    EXPECT_EQ(table.nlevels(3), 4);
+    EXPECT_EQ(table.nlevels(4), 2);
+    EXPECT_EQ(table.nlevels(5), 3);
+  }
+
 
   TEST_F(DataTableTest, Repeat) {
     NEW(MixedMultivariateData, row)();

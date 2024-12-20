@@ -80,6 +80,11 @@ namespace {
     EXPECT_EQ(array.slice(-1, -1, 0).ndim(), 2);
   }
 
+  TEST_F(ArrayTest, TestResize) {
+
+
+  }
+
   // TODO
   TEST_F(ArrayTest, ConstArrayViewTest) { }
 
@@ -118,6 +123,99 @@ namespace {
       for (int k = 0; k < 3; ++k) {
         EXPECT_DOUBLE_EQ(array(0, j, k), m1(j, k));
         EXPECT_DOUBLE_EQ(array(1, j, k), m2(j, k));
+      }
+    }
+  }
+
+  TEST_F(ArrayTest, InitializerConstruction) {
+    Array a{3, 4, 5};
+
+    EXPECT_EQ(3, a.ndim());
+    EXPECT_EQ(3, a.dim(0));
+    EXPECT_EQ(4, a.dim(1));
+    EXPECT_EQ(5, a.dim(2));
+
+    EXPECT_DOUBLE_EQ(0.0, a(1, 2, 3));
+    EXPECT_DOUBLE_EQ(0.0, a(0, 0, 0));
+    EXPECT_DOUBLE_EQ(0.0, a(2, 3, 4));
+  }
+
+  TEST_F(ArrayTest, ScalarOperations) {
+    Array a{3, 4, 5};
+    a.randomize();
+
+    Array a1 = a + 1;
+    EXPECT_DOUBLE_EQ(a1(1, 2, 3), a(1, 2, 3) + 1.0);
+
+    a1 = 1 + a;
+    EXPECT_DOUBLE_EQ(a1(1, 2, 3), a(1, 2, 3) + 1.0);
+
+    a1 = a - 1;
+    EXPECT_DOUBLE_EQ(a1(1, 2, 3), a(1, 2, 3) - 1.0);
+
+    a1 = 3.7 - a;
+    EXPECT_DOUBLE_EQ(3.7 - a(1, 2, 3), a1(1, 2, 3));
+
+    a1 = 3.7 * a;
+    EXPECT_DOUBLE_EQ(3.7 * a(1, 2, 3), a1(1, 2, 3));
+
+    a1 = a * 3.7;
+    EXPECT_DOUBLE_EQ(3.7 * a(1, 2, 3), a1(1, 2, 3));
+
+    a1 = a / 3.7;
+    EXPECT_DOUBLE_EQ(a(1, 2, 3) / 3.7, a1(1, 2, 3));
+
+    a1 = 3.7 / a;
+    EXPECT_DOUBLE_EQ(3.7 / a(1, 2, 3), a1(1, 2, 3));
+  }
+
+  TEST_F(ArrayTest, TestSummation) {
+    std::vector<int> dims = {3, 2, 4, 2};
+
+    Array array(dims);
+    array.randomize();
+
+    double total = 0.0;
+    for (int i = 0; i < dims[0]; ++i) {
+      for (int j = 0; j < dims[1]; ++j) {
+        for (int k = 0; k < dims[2]; ++k) {
+          for (int m = 0; m < dims[3]; ++m) {
+            total += array(i, j, k, m);
+          }
+        }
+      }
+    }
+    EXPECT_DOUBLE_EQ(total, array.sum());
+
+    std::vector<int> sum_over = {1, 3};
+    Array sums = array.sum(sum_over);
+
+    EXPECT_EQ(sums.ndim(), 2);
+    EXPECT_EQ(sums.dim(0), 3);
+    EXPECT_EQ(sums.dim(1), 4);
+
+    EXPECT_DOUBLE_EQ(
+        sums(0, 0),
+        array(0, 0, 0, 0)
+        + array(0, 0, 0, 1)
+        + array(0, 1, 0, 0)
+        + array(0, 1, 0, 1));
+
+    EXPECT_DOUBLE_EQ(
+        sums(2, 1),
+        array(2, 0, 1, 0)
+        + array(2, 0, 1, 1)
+        + array(2, 1, 1, 0)
+        + array(2, 1, 1, 1));
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 4; ++j) {
+        EXPECT_DOUBLE_EQ(
+            sums(i, j),
+            array(i, 0, j, 0)
+            + array(i, 0, j, 1)
+            + array(i, 1, j, 0)
+            + array(i, 1, j, 1));
       }
     }
   }

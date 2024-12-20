@@ -35,6 +35,21 @@
 
 namespace BOOM {
 
+  // A DataTable is a rectangular array of mixed type data.  Each column in a
+  // DataTable contains data of homogeneous type: numeric, categorical, ordinal,
+  // datetime, etc.
+  //
+  // A single row of a DataTable is represented by the type
+  // MixedMultivariateData.  The type information in a DataTable and a
+  // MixedMultivariateData is kept in a DataTypeIndex, which can be shared by a
+  // DataTable and potentially multiple MixedMultivariateData objects.
+  //
+  // Columns in a DataTable are represented by different data types.  Vector is
+  // used for numeric data.  CategoricalVariable and DateTimeVariable are used
+  // for categorical and DateTime objects, respectively.  Using these variable
+  // types (instead of vectors of integers and DateTime objects) allows for
+  // observation-by-observation data missingness.
+
   enum class VariableType {unknown = -1, numeric, categorical, datetime};
 
   using DateTimeData = UnivData<DateTime>;
@@ -217,11 +232,13 @@ namespace BOOM {
     // not then raise an error.
     const DoubleData &numeric(int i) const;
     Ptr<DoubleData> mutable_numeric(int i);
+    
     const DoubleData &numeric(const std::string &variable_name) const;
     Ptr<DoubleData> mutable_numeric(const std::string &variable_name);
 
     const LabeledCategoricalData &categorical(int i) const;
     Ptr<LabeledCategoricalData> mutable_categorical(int i) const;
+    
     const LabeledCategoricalData &categorical(
         const std::string &variable_name) const;
     Ptr<LabeledCategoricalData> mutable_categorical(
@@ -244,6 +261,10 @@ namespace BOOM {
     }
 
    private:
+    // Returns the position number of the variable named 'name'.  If 'name' is
+    // not the name of a variable then -1 gets returned.
+    int get_position(const std::string &name) const;
+    
     Ptr<DataTypeIndex> type_index_;
     std::vector<Ptr<DoubleData>> numeric_data_;
     std::vector<Ptr<LabeledCategoricalData>> categorical_data_;
@@ -307,6 +328,10 @@ namespace BOOM {
 
     int size() const {return data_.size();}
 
+    const std::vector<DateTime> &data() const {
+      return data_;
+    }
+
    private:
     std::vector<DateTime> data_;
   };
@@ -331,10 +356,8 @@ namespace BOOM {
   // name dummy variables.
   class DataTable : public Data {
    public:
-    typedef std::vector<double> dvector;
-
-    //--- constructors ---
-    // Creates an empty data table.
+    // Empty data table that can be populated by calls to 'append_row',
+    // 'append_variable', or 'read_file'.
     DataTable();
 
     // Create a data table from a file.
@@ -370,10 +393,27 @@ namespace BOOM {
                          const std::string &name);
     void append_variable(const DateTimeVariable &dt,
                          const std::string &name);
+    
+    DataTable &cbind(const Vector &v, const std::string &name) {
+      append_variable(v, name);
+      return *this;
+    }
+    DataTable &cbind(const CategoricalVariable &cv, const std::string &name) {
+      append_variable(cv, name);
+      return *this;
+    }
+    DataTable &cbind(const DateTimeVariable &dt, const std::string &name) {
+      append_variable(dt, name);
+      return *this;
+    }
 
     // If the data table is empty, appending the first row determines the number
     // and type of columns.
     void append_row(const MixedMultivariateData &row);
+    DataTable &rbind(const MixedMultivariateData &row) {
+      append_row(row);
+      return *this;
+    }
 
     //--- size  ---
     // Number of variables stored in the table
@@ -390,7 +430,8 @@ namespace BOOM {
     // The number of levels for variable i.  If the variable is numeric or
     // datetime then the answer is 1.  Otherwise the number of levels is
     // returned for categorical variables.
-    uint nlevels(uint i) const;
+    int nlevels(uint i) const;
+
 
     //--- look inside ---
     std::ostream &print(std::ostream &out, uint from = 0,

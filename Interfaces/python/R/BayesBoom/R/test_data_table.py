@@ -77,7 +77,7 @@ class DataTableTest(unittest.TestCase):
 
         errors = (Sigma_root @ np.random.randn(ydim, sample_size)).T
         encoder = boom.DatasetEncoder(encoders)
-        xcat = encoder.encode_dataset(R.to_data_table(
+        xcat = encoder.encode_dataset(R.to_boom_data_table(
             pd.DataFrame(cats)))
         yhat = xcat.to_numpy() @ self._beta
         numerics = yhat + errors
@@ -95,71 +95,32 @@ class DataTableTest(unittest.TestCase):
         pass
 
     def test_data_table(self):
-        table = R.to_data_table(self._data)
+        table = R.to_boom_data_table(self._data)
         self.assertEqual(table.nrow, self._data.shape[0])
         self.assertEqual(table.ncol, self._data.shape[1])
 
-        frame = R.to_data_frame(table)
+        frame = R.to_pd_dataframe(table)
         for i in range(5):
             self.assertTrue(np.all(self._data.iloc[:, i] == frame.iloc[:, i]))
 
-    # def test_autoclean_construction(self):
-    #     ac = R.AutoClean()
-    #     ac.train_model(self._data, nclusters=3, niter=10)
+    def test_datetime_support(self):
+        table = self._data
+        epoch = pd.Timestamp("2024-05-15", )
+        dates = pd.date_range("2024-05-15", periods = table.shape[0], freq="D")
+        table["dates"] = dates
 
-    # def test_mcmc(self):
-    #     nlevels = 5
-    #     self.create_base_dataset(
-    #         sample_size=1000,
-    #         num_numeric=3,
-    #         num_cat=4,
-    #         num_levels=nlevels)
-    #     ac = R.AutoClean()
-    #     niter = 100
-    #     nclusters = 7
-    #     ac.train_model(self._data, nclusters=nclusters, niter=niter)
+        # Check that the round trip with boom preseves the dates unaltered.
+        boom_dates = R.to_boom_datetime_vector(pd.Series(dates))
+        py_dates = R.to_pd_datetime64(boom_dates)
+        self.assertTrue(np.all(py_dates == dates))
+        
 
-    #     beta = self._beta
-    #     xdim = beta.shape[0]
-    #     ydim = beta.shape[1]
-    #     self.assertEqual(ac.coefficients.shape, (niter, xdim, ydim))
-    #     self.assertEqual(ac.residual_variance.shape, (niter, ydim, ydim))
-
-    #     self.assertEqual(len(ac.atom_probs), ydim)
-    #     self.assertEqual(ac.atom_probs["X1"].shape,
-    #                      (niter, nclusters, 1))
-    #     self.assertTrue(
-    #         np.allclose(ac.atom_probs["X1"].sum(axis=2),
-    #                     np.ones((niter, nclusters)))
-    #     )
-
-    #     self.assertEqual(len(ac.atom_error_probs), ydim)
-    #     self.assertEqual(ac.atom_error_probs["X1"].shape,
-    #                      (niter, nclusters, 1, 2))
-    #     self.assertTrue(np.allclose(
-    #         ac.atom_error_probs["X1"].sum(axis=3),
-    #         np.ones((niter, nclusters, 1))))
-
-    #     self.assertEqual(len(ac.level_probs), self._ncat)
-    #     self.assertEqual(ac.level_probs["cat1"].shape,
-    #                      (niter, nclusters, nlevels))
-    #     self.assertTrue(np.allclose(
-    #         ac.level_probs["cat1"].sum(axis=2),
-    #         np.ones((niter, nclusters))))
-
-    #     self.assertEqual(len(ac.level_observation_probs), self._ncat)
-    #     self.assertEqual(ac.level_observation_probs["cat1"].shape,
-    #                      (niter, nclusters, nlevels, nlevels+1))
-    #     self.assertTrue(np.allclose(
-    #         ac.level_observation_probs["cat1"].sum(axis=3),
-    #         np.ones((niter, nclusters, nlevels))))
-
-    #     to_impute = self._data.iloc[[3, 9, 24], :]
-    #     iterations = [50, 60, 70, 75, 90]
-
-    #     imputed = ac.impute_rows(to_impute, iterations)
-    #     self.assertEqual(len(imputed), len(iterations))
-    #     self.assertEqual(imputed[0].shape, to_impute.shape)
+        boom_table = R.to_boom_data_table(table)
+        frame = R.to_pd_dataframe(boom_table)
+        self.assertTrue(np.allclose(frame.shape, table.shape))
+        self.assertTrue(np.all(frame.columns == table.columns))
+        for colname in table.columns:
+            self.assertTrue(np.all(table[colname] == frame[colname]))
 
 
 _debug_mode = False
@@ -179,7 +140,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_mcmc()
+    rig.test_datetime_support()
 
     print("Goodbye, cruel world!")
 

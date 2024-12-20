@@ -17,19 +17,25 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "cpputil/DateTime.hpp"
+#include "cpputil/report_error.hpp"
 #include <cassert>
 #include <cmath>
 #include <ctime>
 #include <ostream>
 #include <sstream>
+#include <chrono>
 
 namespace BOOM {
 
-  const double DateTime::microseconds_in_day_(seconds_in_day_ * 1.0e+6);
-  const double DateTime::milliseconds_in_day_(seconds_in_day_ * 1000.0);
   const uint DateTime::seconds_in_day_(86400);
   const uint DateTime::minutes_in_day_(1440);
   const uint DateTime::hours_in_day_(24);
+
+  const int64_t DateTime::milliseconds_in_day_(seconds_in_day_ * 1000);
+  const int64_t DateTime::microseconds_in_day_(milliseconds_in_day_ * 1000);
+  const int64_t DateTime::nanoseconds_in_day_(microseconds_in_day_ * 1000);
+
+  const int64_t DateTime::nanoseconds_in_second_(1000 * 1000 * 1000);
 
   const double DateTime::time_scale_factor_[7] = {
       double(microseconds_in_day_),
@@ -140,6 +146,30 @@ namespace BOOM {
   }
 
   const Date &DateTime::date() const { return d_; }
+
+  int64_t DateTime::nanoseconds_since_epoch() const {
+    long days = d_.days_after_jan_1_1970();
+    if (fabs(days) > 106751) {
+      std::ostringstream err;
+      err << "DateTime " << *this << " cannot be expressed as a "
+          "number of nanoseconds since Jan 1, 1970.";
+      report_error(err.str());
+    }
+
+    const auto time_point = std::chrono::system_clock::from_time_t(
+        d_.to_time_t(false));
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+        time_point.time_since_epoch()).count() + nanoseconds_into_day();
+  }
+
+  int64_t DateTime::nanoseconds_into_day() const {
+    return t_ * nanoseconds_in_day_;
+  }
+
+  int64_t DateTime::nanoseconds_after_second() const {
+    return nanoseconds_into_day()
+        - floor(seconds_into_day()) * nanoseconds_in_second_;
+  }
 
   double DateTime::hours_left_in_day() const {
     return hours_in_day_ * (1 - t_);

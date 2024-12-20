@@ -43,7 +43,7 @@ namespace BOOM {
     {}
 
     // Return a permutation 'perm' of 'things' such that perm * things is sorted
-    // in ascending order.  
+    // in ascending order.
     template <class T>
     static Permutation order(const std::vector<T> &things) {
       return Permutation<INT>(index_table<T, INT>(things));
@@ -69,7 +69,7 @@ namespace BOOM {
       }
       return Permutation<INT>(*this * rhs.elements_);
     }
-    
+
     // Permute the input.
     template <class T>
     std::vector<T> apply(const std::vector<T> &input) const {
@@ -97,7 +97,7 @@ namespace BOOM {
       permute_inplace(elements_, input);
       return input;
     }
-    
+
     // Permute the input in place.  Return a reference to the input, after
     // permuting.
     VectorView &apply_inplace(VectorView &input) const {
@@ -117,7 +117,7 @@ namespace BOOM {
       out << "]";
       return out;
     }
-    
+
    private:
     std::vector<INT> elements_;
   };
@@ -134,13 +134,20 @@ namespace BOOM {
                              const Permutation<INT> &p2) {
     return p1.apply(p2);
   }
-  
+
   template <class INT=Int>
   std::ostream & operator<<(std::ostream &out,
                             const Permutation<INT> &perm) {
     return perm.print(out);
   }
-  
+
+  template <class INT=Int>
+  Permutation<INT> random_permutation(INT num_elements) {
+    Vector v(num_elements);
+    v.randomize();
+    return Permutation<INT>::order(v);
+  }
+
 }  // namespace BOOM
 
 

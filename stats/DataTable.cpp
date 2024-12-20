@@ -248,11 +248,6 @@ namespace BOOM {
     return numeric(type_index_->position(variable_name));
   }
 
-  Ptr<DoubleData> MixedMultivariateData::mutable_numeric(
-      const std::string &variable_name) {
-    return mutable_numeric(type_index_->position(variable_name));
-  }
-
   Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
     VariableType type;
     int pos;
@@ -263,6 +258,11 @@ namespace BOOM {
       report_error(err.str());
     }
     return numeric_data_[pos];
+  }
+
+  Ptr<DoubleData> MixedMultivariateData::mutable_numeric(
+      const std::string &name) {
+    return mutable_numeric(get_position(name));
   }
 
   const LabeledCategoricalData &MixedMultivariateData::categorical(int i) const {
@@ -340,6 +340,17 @@ namespace BOOM {
       ans[i] = numeric_data_[i]->value();
     }
     return ans;
+  }
+
+  int MixedMultivariateData::get_position(const std::string &name) const {
+    int position = type_index_->position(name);
+    if (position < 0) {
+      std::ostringstream err;
+      err << "MixedMultivariateData contains no variable named " << name
+          << ".";
+      report_error(err.str());
+    }
+    return position;
   }
 
   //===========================================================================
@@ -628,14 +639,15 @@ namespace BOOM {
     return type_index_->total_number_of_fields();
   }
 
-  LabeledMatrix DataTable::design(bool add_int) const {
+  LabeledMatrix DataTable::design(bool add_intercept) const {
     std::vector<bool> include(nvars(), true);
-    return design(Selector(include), add_int);
+    return design(Selector(include), add_intercept);
   }
 
   //------------------------------------------------------------
-  LabeledMatrix DataTable::design(const Selector &include, bool add_int) const {
-    uint dimension = add_int ? 1 : 0;
+  LabeledMatrix DataTable::design(const Selector &include,
+                                  bool add_intercept) const {
+    uint dimension = add_intercept ? 1 : 0;
     for (uint i = 0; i < include.nvars(); ++i) {
       uint J = include.indx(i);
       uint incremental_dimension = 1;
@@ -648,8 +660,8 @@ namespace BOOM {
     uint number_of_observations = nobs();
     Matrix X(number_of_observations, dimension);
     for (uint i = 0; i < number_of_observations; ++i) {
-      if (add_int) X(i, 0) = 1.0;
-      uint column = add_int ? 1 : 0;
+      if (add_intercept) X(i, 0) = 1.0;
+      uint column = add_intercept ? 1 : 0;
       for (uint j = 0; j < include.nvars(); ++j) {
         uint J = include.indx(j);
         VariableType type;
@@ -668,7 +680,7 @@ namespace BOOM {
     }
 
     std::vector<std::string> dimnames;
-    if (add_int) {
+    if (add_intercept) {
       dimnames.push_back("Intercept");
     }
     for (uint j = 0; j < include.nvars(); ++j) {
@@ -755,7 +767,7 @@ namespace BOOM {
   }
 
   //======================================================================
-  uint DataTable::nlevels(uint i) const {
+  int DataTable::nlevels(uint i) const {
     VariableType type;
     int index;
     std::tie(type, index) = type_index_->type_map(i);

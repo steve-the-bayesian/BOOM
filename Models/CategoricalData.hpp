@@ -110,6 +110,8 @@ namespace BOOM {
   // between text labels and numerical values.
   class CatKey : public CatKeyBase {
    public:
+
+    // Create an empty CatKey.  This can be useful if
     CatKey();
     explicit CatKey(int number_of_levels);
     explicit CatKey(const std::vector<std::string> &labels);

@@ -21,7 +21,8 @@ class RegressionSpikeSlabPrior:
                  mean_y=None,
                  sdy=None,
                  prior_inclusion_probabilities=None,
-                 sigma_upper_limit=None):
+                 sigma_upper_limit=None,
+                 max_size=None):
         """
         Computes information that is shared by the different implementation of
         spike and slab priors.  Currently, the only difference between the
@@ -62,6 +63,8 @@ class RegressionSpikeSlabPrior:
             expected_model_size / number_of_variables.
           sigma_upper_limit: The largest acceptable value for the residual
             standard deviation.
+          max_size: Assign prior probabilty zero to models with more than this
+            many nonzero coefficients.
         """
 
         if isinstance(x, R.RegSuf):
@@ -113,6 +116,8 @@ class RegressionSpikeSlabPrior:
 
         self._max_flips = max_flips
 
+        self._max_size = max_size
+
     def __getstate__(self):
         """
         Allows objects to be pickled.
@@ -152,7 +157,10 @@ class RegressionSpikeSlabPrior:
 
     @property
     def spike(self):
-        return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
+        ans = boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
+        if (self._max_size is not None) and (self._max_size > 0):
+            ans.set_max_size(int(self._max_size))
+        return ans
 
     @property
     def residual_precision(self):
@@ -169,6 +177,14 @@ class RegressionSpikeSlabPrior:
     @property
     def max_flips(self):
         return self._max_flips
+
+    @property
+    def max_size(self):
+        """
+        Models with more than this many nonzero coefficients are assigned
+        zero prior probability.  If there is no max size then max_size is None.
+        """
+        return self._max_size
 
     def _init_from_data(self, x, y):
         x = np.array(x)
@@ -348,8 +364,7 @@ class LogitZellnerPrior:
 
     @property
     def spike(self):
-        return boom.VariableSelectionPrior(
-            self._prior_inclusion_probabilities)
+        return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
 
     @property
     def max_flips(self):

@@ -3,13 +3,21 @@ COPTS = ["-Wno-sign-compare"]
 COMMON_DEPS = [
     "//:boom",
     "//:boom_test_utils",
-    "@gtest//:gtest_main",
+    "@googletest//:gtest_main",
 ]
 
 cc_test(
     name = "array_test",
     size = "small",
     srcs = ["array_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
+    name = "generic_array_test",
+    size = "small",
+    srcs = ["generic_array_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
 )

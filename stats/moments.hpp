@@ -55,5 +55,14 @@ namespace BOOM {
   double mean(const std::vector<double> &x, const std::vector<bool> &observed);
   double var(const std::vector<double> &x, const std::vector<bool> &observed);
   double sd(const std::vector<double> &x, const std::vector<bool> &observed);
+
+  template<class T>
+  T prod(const std::vector<T> &values) {
+    T ans = 1;
+    for (const auto &value : values) {
+      ans *= value;
+    }
+    return ans;
+  }
 }  // namespace BOOM
 #endif  // BOOM_MOMENTS_HPP

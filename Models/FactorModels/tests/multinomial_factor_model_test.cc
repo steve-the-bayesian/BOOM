@@ -28,11 +28,13 @@ namespace {
     //   site_lambdas: Each row represents a site, and each column a latent
     //     category.
     //   class_indicators:  Each element is a class indicator for a visitor.
+    //   other_class_name: The name of a default  to use when
     //
     // Returns:
     //   A data set containing visits to sites.
     std::vector<Ptr<MultinomialFactorData>> simulate_data(
         const Matrix &site_probs,
+
         std::vector<int> class_indicators,
         const std::string &default_site_name = "Other") {
       std::vector<Ptr<MultinomialFactorData>> ans;
@@ -129,7 +131,7 @@ namespace {
         GlobalRng::rng, num_visitors, class_membership_probabilities);
 
     std::vector<Ptr<MultinomialFactorData>> data = simulate_data(
-        site_probs, class_indicators);
+        site_probs, class_indicators, "Other");
 
     for (const auto &data_point : data) {
       model.add_data(data_point);
@@ -140,6 +142,8 @@ namespace {
 
     EXPECT_EQ(model.site("12")->id(), "12");
     EXPECT_EQ(model.visitor("12")->id(), "12");
+
+    EXPECT_EQ(model.site("Other")->id(), "Other");
 
     NEW(MultinomialFactorModelPosteriorSampler, sampler)(
         &model,

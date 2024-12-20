@@ -119,6 +119,21 @@ namespace BOOM {
 
     virtual std::ostream &print(std::ostream &out) const override;
 
+    // If max_model_size > 0 then models with more than this many included
+    // coefficients are assigned zero prior probability.
+    int64_t max_model_size() const {
+      return max_model_size_;
+    }
+    
+    // Set the maximum model size.
+    // Args:
+    //   max_size: Models with more than this many nonzero coefficients have
+    //     probability zero.  If max_size < 0 then there is no maximum enforeced
+    //     by the prior.
+    void set_max_model_size(int64_t max_size) {
+      max_model_size_ = max_size;
+    }
+    
    private:
     // Set an observer on the vector of prior inclusion probabilities so that
     // the vectors of log probabilities will be marked not current if the raw
@@ -134,6 +149,10 @@ namespace BOOM {
     mutable bool current_;
     mutable Vector log_inclusion_probabilities_;
     mutable Vector log_complementary_inclusion_probabilities_;
+
+    // Models with more than max_size_ nonzero coefficients have probability
+    // zero.  If max_size < 0 then there is no maximum enforeced by the prior.
+    int64_t max_model_size_;
   };
 
   //===========================================================================

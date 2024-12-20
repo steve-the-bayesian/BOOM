@@ -132,7 +132,11 @@ namespace BOOM {
     std::ostream &display_month(std::ostream &) const;
     std::string str() const;
 
-    time_t to_time_t() const;
+    // Convert the Date to a number of seconds after Jan 1 1970.
+    //
+    // Args:
+    //   local_timezone:  If true then adjust for the local time zone.
+    time_t to_time_t(bool local_timezone = true) const;
 
     //---------------public static members below this line ------------------
     // These could also be free functions in an appropriate namespace.

@@ -495,13 +495,9 @@ namespace BayesBoom {
                }
                if (std::thread::hardware_concurrency() > 2
                    && visitor_id.size() > thread_threshold) {
-                 std::cout << "Using threads to load data." << std::endl;
                  add_data_mt(model, visitor_id, site_id, num_visits);
                } else {
-                 std::cout << "Loading data the old fashioned way" << std::endl;
                  for (size_t i = 0; i < visitor_id.size(); ++i) {
-                   std::cout << "record " << i << " of " << visitor_id.size()
-                             << "." << std::endl;
                    model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
                  }
                }

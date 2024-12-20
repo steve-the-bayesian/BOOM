@@ -439,7 +439,7 @@ def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
     time = remove_common_prefix(
         remove_common_suffix(
             [str(x) for x in time]))
-    ax.boxplot(curves, labels=time, **kwargs)
+    ax.boxplot(curves, tick_labels=time, **kwargs)
     return ax
 
 
@@ -886,7 +886,8 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     else:
         fig = None
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
-        pd.qcut(predicted, 10))["actual"].mean()
+        pd.qcut(predicted, 10),
+        observed=True)["actual"].mean()
     bar_locations = group_means.index.categories.mid.values
 
     lower = np.array([x.left for x in group_means.index.values])

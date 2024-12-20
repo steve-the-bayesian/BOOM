@@ -9,7 +9,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:gtest_main",
+        "@googletest//:gtest_main",
     ],
     size = "small",
 )

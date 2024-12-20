@@ -1,5 +1,4 @@
 COPTS = [
-    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
 ]
 
@@ -7,7 +6,7 @@ COPTS = [
 COMMON_DEPS = [
     "//:boom",
     "//:boom_test_utils",
-    "@gtest//:gtest_main",
+    "@googletest//:gtest_main",
 ]
 
 cc_test(
@@ -40,11 +39,7 @@ cc_test(
     size = "small",
     srcs = ["binomial_regression_data_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -52,11 +47,7 @@ cc_test(
     size = "small",
     srcs = ["choice_data_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -64,11 +55,7 @@ cc_test(
     size = "small",
     srcs = ["glm_coefs_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -103,11 +90,7 @@ cc_test(
     copts = COPTS + ["-lprofiler"],
     data = [":test_data"],
     #     linkopts = ["-lprofiler"],
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -115,11 +98,7 @@ cc_test(
     size = "small",
     srcs = ["multivariate_regression_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -127,11 +106,7 @@ cc_test(
     size = "small",
     srcs = ["mvn_given_x_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -139,11 +114,7 @@ cc_test(
     size = "small",
     srcs = ["ordinal_logit_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -151,11 +122,7 @@ cc_test(
     size = "small",
     srcs = ["regression_model_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -163,11 +130,7 @@ cc_test(
     size = "small",
     srcs = ["regression_spike_slab_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -175,11 +138,7 @@ cc_test(
     size = "small",
     srcs = ["student_spike_slab_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )
 
 cc_test(
@@ -187,9 +146,5 @@ cc_test(
     size = "small",
     srcs = ["variable_selection_prior_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS, 
 )

@@ -286,7 +286,7 @@ namespace BOOM {
     return key_ == rhs.key_;
   }
 
-  inline void incompat() {
+  inline void incompatible_category_error() {
     report_error("comparison between incompatible categorical variables");
   }
   //------------------------------------------------------------
@@ -355,25 +355,25 @@ namespace BOOM {
 
   bool OrdinalData::operator<(const OrdinalData &rhs) const {
     if (!comparable(rhs)) {
-      incompat();
+      incompatible_category_error();
     }
     return value() < rhs.value();
   }
   bool OrdinalData::operator<=(const OrdinalData &rhs) const {
     if (!comparable(rhs)) {
-      incompat();
+      incompatible_category_error();
     }
     return value() <= rhs.value();
   }
   bool OrdinalData::operator>(const OrdinalData &rhs) const {
     if (!comparable(rhs)) {
-      incompat();
+      incompatible_category_error();
     }
     return value() > rhs.value();
   }
   bool OrdinalData::operator>=(const OrdinalData &rhs) const {
     if (!comparable(rhs)) {
-      incompat();
+      incompatible_category_error();
     }
     return value() >= rhs.value();
   }

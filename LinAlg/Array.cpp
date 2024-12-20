@@ -18,6 +18,7 @@
 */
 
 #include "LinAlg/Array.hpp"
+#include "LinAlg/Selector.hpp"
 #include <algorithm>
 #include <cstdarg>
 #include <sstream>
@@ -209,6 +210,15 @@ namespace BOOM {
                                          const std::vector<int> &host_strides) {
       return template_vector_slice_array<VectorView, double *>(
           host_data, index, host_dims, host_strides);
+    }
+
+    template <class ARRAY>
+    double array_sum(const ARRAY &array) {
+      double ans = 0.0;
+      for (auto it = array.begin(); it != array.end(); ++it) {
+        ans += *it;
+      }
+      return ans;
     }
 
   }  // namespace
@@ -550,6 +560,7 @@ namespace BOOM {
   }
 
   ArrayIterator ArrayView::begin() { return ArrayIterator(this); }
+
   ConstArrayIterator ArrayView::begin() const {
     return ConstArrayIterator(this);
   }
@@ -615,6 +626,15 @@ namespace BOOM {
     }
     std::copy(a.begin(), a.end(), begin());
     return *this;
+  }
+
+  Array ArrayView::sum(const std::vector<int> &sum_over_dims) const {
+    ConstArrayView view(*this);
+    return view.sum(sum_over_dims);
+  }
+
+  double ArrayView::scalar_sum() const {
+    return array_sum<ArrayView>(*this);
   }
 
   ostream &ArrayView::print(ostream &out) const {
@@ -714,6 +734,27 @@ namespace BOOM {
     return ans;
   }
 
+  Array ConstArrayView::sum(const std::vector<int> &sum_over_dims) const {
+    // output_dims contains the extent of each dimension in the output array.
+    Selector sum_over(sum_over_dims, ndim());
+    Selector keep = sum_over.complement();
+    std::vector<int> output_dims = keep.select(dim());
+
+    Array ans(output_dims, 0.0);
+    for (auto it = ans.abegin(); it != ans.aend(); ++it) {
+      std::vector<int> index = keep.expand(it.position());
+      for (const auto &d : sum_over_dims) {
+        index[d] = -1;
+      }
+      *it = slice(index).scalar_sum();
+    }
+    return ans;
+  }
+
+  double ConstArrayView::scalar_sum() const {
+    return array_sum<ConstArrayView>(*this);
+  }
+
   ostream & ConstArrayView::print(ostream &out) const {
     return print_array(out, *this);
   }
@@ -744,6 +785,9 @@ namespace BOOM {
   //======================================================================
   Array::Array(const std::vector<int> &dims, double initial_value)
       : ArrayBase(dims), data_(ConstArrayBase::size(), initial_value) {}
+
+  Array::Array(const std::initializer_list<int> &dims, double initial_value)
+      : Array(std::vector<int>(dims), initial_value) {}
 
   Array::Array(const std::vector<int> &dims, const std::vector<double> &data)
       : ArrayBase(dims), data_(data) {
@@ -797,6 +841,13 @@ namespace BOOM {
         this->vector_slice(i, j, -1) = matrices[i].row(j);
       }
     }
+  }
+
+  Array &Array::resize(const std::vector<int> &dims) {
+    data_.resize(product(dims));
+    reset_dims(dims);
+    compute_strides();
+    return *this;
   }
 
   Array &Array::operator=(const ArrayView &a) {
@@ -858,6 +909,11 @@ namespace BOOM {
     }
     return *this;
   }
+
+  Array &Array::operator+=(double x) { data_ += x; return *this;}
+  Array &Array::operator-=(double x) { data_ -= x; return *this;}
+  Array &Array::operator*=(double x) { data_ *= x; return *this;}
+  Array &Array::operator/=(double x) { data_ /= x; return *this;}
 
   int ConstArrayBase::product(const std::vector<int> &dims) {
     int ans = 1;
@@ -983,6 +1039,15 @@ namespace BOOM {
     return it;
   }
 
+  Array Array::sum(const std::vector<int> &sum_over_dims) const {
+    ConstArrayView view(*this);
+    return view.sum(sum_over_dims);
+  }
+
+  double Array::scalar_sum() const {
+    return array_sum<Array>(*this);
+  }
+
   ostream &Array::print(ostream &out) const {
     return print_array(out, *this);
   }
@@ -990,6 +1055,57 @@ namespace BOOM {
     return array_to_string(*this);
   }
   //======================================================================
+
+  Array operator+(const Array &arr, double x) {
+    Array ans(arr);
+    ans += x;
+    return ans;
+  }
+
+  Array operator+(double x, const Array &arr) {
+    Array ans(arr);
+    ans += x;
+    return ans;
+  }
+
+  Array operator-(const Array &arr, double x) {
+    Array ans(arr);
+    ans -= x;
+    return ans;
+  }
+
+  Array operator-(double x, const Array &arr) {
+    Array ans(arr);
+    ans *= -1;
+    ans += x;
+    return ans;
+  }
+
+  Array operator*(const Array &arr, double x) {
+    Array ans(arr);
+    ans *= x;
+    return ans;
+  }
+
+  Array operator*(double x, const Array &arr) {
+    Array ans(arr);
+    ans *= x;
+    return ans;
+  }
+
+  Array operator/(const Array &arr, double x) {
+    Array ans(arr);
+    ans /= x;
+    return ans;
+  }
+
+  Array operator/(double x, const Array &arr) {
+    Array ans(arr);
+    for (auto &el : ans) {
+      el = x / el;
+    }
+    return ans;
+  }
 
   double max(const ConstArrayView &view) {
     double max_val = negative_infinity();

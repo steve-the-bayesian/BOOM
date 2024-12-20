@@ -110,9 +110,9 @@ namespace BOOM {
     IntEffectsEncoder(IntEffectsEncoder &&rhs) = default;
     IntEffectsEncoder & operator=(IntEffectsEncoder &&rhs) = default;
 
-    IntEffectsEncoder * clone() const;
+    IntEffectsEncoder * clone() const override;
 
-    CatKeyBase &key() const {return *key_;}
+    CatKeyBase &key() const override {return *key_;}
 
     std::vector<std::string> encoded_variable_names() const override;
 
@@ -129,21 +129,9 @@ namespace BOOM {
     Ptr<CatKeyBase> key_;
   };
 
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////
-  // One problem here is that the key for the EffectsEncoder might not have the
-  // variables in the same order as the key for the DategoricalData.
-  ///////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////
-
   class EffectsEncoder : public EffectsEncoderBase {
    public:
     // Args:
-
     //   variable_name: The name of the variable to be encoded.  This is
     //     frequently a column heading in a DataTable.
     //   key: Lists all the levels of the variable to be encoded, including the
@@ -160,7 +148,7 @@ namespace BOOM {
 
     EffectsEncoder * clone() const override;
 
-    const CatKey &key() const {return *key_;}
+    const CatKey &key() const override {return *key_;}
 
     Matrix encode(const CategoricalVariable &variable) const override;
     Vector encode_row(const MixedMultivariateData &data) const override;
@@ -172,6 +160,7 @@ namespace BOOM {
     std::vector<std::string> encoded_variable_names() const override;
 
     int baseline_level() const override {return baseline_level_index_;}
+    
    private:
     Ptr<CatKey> key_;
     std::string baseline_level_;

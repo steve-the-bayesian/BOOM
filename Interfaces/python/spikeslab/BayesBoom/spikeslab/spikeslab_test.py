@@ -246,6 +246,19 @@ class SpikeSlabTest(unittest.TestCase):
         self.assertEqual(set(prior.__dict__.keys()),
                          set(p2.__dict__.keys()))
 
+    def test_max_size(self):
+        sample_size = 1000
+        nvars = 10
+        X = pd.DataFrame(np.random.randn(sample_size, nvars),
+                         columns=["X" + str(x+1) for x in range(nvars)])
+        errors = np.random.randn(sample_size) * .1
+        y = 23 + 17 * X.iloc[:, 0] + 12 * X.iloc[:, 1] - 33 * X.iloc[:, 2] + errors
+        model = lm_spike("y ~ " + dot(X), data = R.cbind(y, X), niter=1000, max_size=2)
+
+        beta = model.sparse_coefficients.todense()
+        beta_size = np.sum(beta != 0, axis=1)
+        self.assertLessEqual(np.max(beta_size), 2)
+
 
 class BigAssSpikeSlabTest(unittest.TestCase):
     def setUp(self):
