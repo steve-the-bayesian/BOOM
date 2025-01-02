@@ -180,21 +180,11 @@ class lm_spike:
                     "x" + str(i) for i in range(1, suf.xdim)]
             self._x_design_info = patsy.DesignInfo(xnames)
 
-        # xdim = predictors.shape[1]
-        # sample_size = predictors.shape[0]
-
         if seed is not None:
             boom.GlobalRng.rng.seed(int(seed))
 
-        sampler = boom.BregVsSampler(
-            self._model,
-            prior.slab(self._model.Sigsq_prm),
-            prior.residual_precision,
-            prior.spike)
-        if prior.max_flips > 0:
-            sampler.set_max_flips(prior.max_flips)
-        
-        self._model.set_method(sampler)
+        sampler = prior.create_sampler(self._model, assign=True)
+
         # A "lil" matrix is a "linked list" matrix.  This is an efficient method
         # for constructing matrices.  It should be converted to a different
         # matrix type before doing anything with it.

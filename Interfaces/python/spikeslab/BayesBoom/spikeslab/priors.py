@@ -51,7 +51,9 @@ class RegressionSpikeSlabPrior:
             to use as the prior mean of the regression coefficients.  This can
             also be None, in which case the prior mean for the intercept will
             be set to mean.y, and the prior mean for all slopes will be 0.
-          mean.y: The mean of the response variable.  Used to create a sensible
+          max_flips: The maximum number of coefficients to investigate (in
+            random order) each iteration.
+          mean_y: The mean of the response variable.  Used to create a sensible
             default prior mean for the regression coefficients when
             optional_coefficient_estimate is None.
           sdy: Used along with expected_r2 to create a prior guess at the
@@ -118,28 +120,6 @@ class RegressionSpikeSlabPrior:
 
         self._max_size = max_size
 
-    def __getstate__(self):
-        """
-        Allows objects to be pickled.
-        """
-        ans = self.__dict__.copy()
-        if hasattr(self, "_residual_precision_prior"):
-            prior = self._residual_precision_prior
-            ans["prior_df"] = 2.0 * prior.alpha()
-            ans["prior_ss"] = 2.0 * prior.beta()
-        del ans["_residual_precision_prior"]
-        return ans
-
-    def __setstate__(self, payload):
-        """
-        Allows objects to be unpickled.
-        """
-        self.__dict__.update(payload)
-        self._residual_precision_prior = boom.ChisqModel(
-            self.prior_df, np.sqrt(self.prior_ss / self.prior_df))
-        del self.prior_df
-        del self.prior_ss
-
     def slab(self, boom_sigsq_prm):
         """Return a boom.MvnGivenScalarSigma model.
 
@@ -158,8 +138,13 @@ class RegressionSpikeSlabPrior:
     @property
     def spike(self):
         ans = boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
-        if (self._max_size is not None) and (self._max_size > 0):
-            ans.set_max_size(int(self._max_size))
+        if (
+                (self.max_size is not None)
+                and (self.max_size > 0)
+                and np.isfinite(self.max_size)
+        ):
+            ans.set_max_size(int(self.max_size))
+            
         return ans
 
     @property
@@ -186,6 +171,29 @@ class RegressionSpikeSlabPrior:
         """
         return self._max_size
 
+    def create_sampler(self, model, assign=False):
+        """
+        Args:
+          model:  A boom.RegressionModel object.
+          assign:  If True then the created sampler is assigned to 'model'.
+
+        Returns:
+          A boom.BregVsSampler object.
+        """
+        sampler = boom.BregVsSampler(model,
+                                     self.slab(model.Sigsq_prm),
+                                     self.residual_precision,
+                                     self.spike)
+        if ((self.max_flips is not None)
+            and (self.max_flips > 0)
+            and (np.isfinite(self.max_flips))):
+            sampler.limit_model_selection(self.max_flips)
+
+        if assign:
+            model.set_method(sampler)
+
+        return sampler
+                                          
     def _init_from_data(self, x, y):
         x = np.array(x)
         xtx = x.T @ x
@@ -207,6 +215,29 @@ class RegressionSpikeSlabPrior:
             suf.sample_sd,
             suf.sample_size
         )
+    
+    def __getstate__(self):
+        """
+        Allows objects to be pickled.
+        """
+        ans = self.__dict__.copy()
+        if hasattr(self, "_residual_precision_prior"):
+            prior = self._residual_precision_prior
+            ans["prior_df"] = 2.0 * prior.alpha()
+            ans["prior_ss"] = 2.0 * prior.beta()
+        del ans["_residual_precision_prior"]
+        return ans
+
+    def __setstate__(self, payload):
+        """
+        Allows objects to be unpickled.
+        """
+        self.__dict__.update(payload)
+        self._residual_precision_prior = boom.ChisqModel(
+            self.prior_df, np.sqrt(self.prior_ss / self.prior_df))
+        del self.prior_df
+        del self.prior_ss
+
 
 
 class StudentSpikeSlabPrior(RegressionSpikeSlabPrior):

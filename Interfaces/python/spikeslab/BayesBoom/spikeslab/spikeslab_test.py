@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 from BayesBoom.spikeslab import (
     dot,
@@ -259,6 +260,33 @@ class SpikeSlabTest(unittest.TestCase):
         beta_size = np.sum(beta != 0, axis=1)
         self.assertLessEqual(np.max(beta_size), 2)
 
+    def test_max_flips(self):
+        """
+        Check that when max_flips == 2 no more than 2 coefficients are
+        flipped from 0 to nonzero (or vice versa) in each MCMC iteration.
+        """
+        sample_size = 1000
+        nvars = 100
+        max_flips = 2
+        
+        X = pd.DataFrame(np.random.randn(sample_size, nvars),
+                         columns=["X" + str(x+1) for x in range(nvars)])
+        errors = np.random.randn(sample_size) * .1
+        beta = np.random.randn(nvars)
+        y = 23 + X @ beta + errors
+        
+        model = lm_spike("y ~ " + dot(X), data = R.cbind(y, X), niter=1000, max_flips=max_flips)
+        
+        draws = model.dense_coefficients
+        nonzero_flags = np.array(draws != 0.0)
+
+        current_nonzero_flags = nonzero_flags[1: , :]
+        previous_nonzero_flags = nonzero_flags[:-1, :]
+        flag_changes = (current_nonzero_flags != previous_nonzero_flags)
+        num_changes = np.sum(flag_changes, axis=1)
+
+        self.assertTrue(np.all(num_changes <= max_flips))
+        
 
 class BigAssSpikeSlabTest(unittest.TestCase):
     def setUp(self):
@@ -289,7 +317,7 @@ class BigAssSpikeSlabTest(unittest.TestCase):
         model.initial_screen()
 
 
-_debug_mode = False
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
@@ -309,7 +337,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plots()
+    rig.test_max_flips()
 
     print("Goodbye, cruel world!")
 
