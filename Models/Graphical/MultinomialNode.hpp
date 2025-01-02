@@ -78,6 +78,9 @@ namespace BOOM {
       int categorical_value(
           const MixedMultivariateData &data_point) const override;
 
+      void set_categorical_value(MixedMultivariateData &data_point,
+                                 int value) const override;
+
       // Syntactic sugar for categorical_value.
       int value(const MixedMultivariateData &data_point) {
         return categorical_value(data_point);

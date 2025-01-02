@@ -197,6 +197,9 @@ namespace BOOM {
       virtual int categorical_value(
           const MixedMultivariateData &data_point) const;
 
+      virtual void set_categorical_value(
+          MixedMultivariateData &data_point, int value) const;
+
      private:
       friend void intrusive_ptr_add_ref(Node *d) { d->up_count(); }
       friend void intrusive_ptr_release(Node *d) {

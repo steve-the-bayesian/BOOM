@@ -34,8 +34,8 @@ namespace BOOM {
     // marked as known.
     //
     // When passed forward through a junction tree, this class gives the
-    // marginal (joint) distribution of the variables in the node set given their
-    // ancestors.
+    // marginal (joint) distribution of the variables in the node set given
+    // their observed ancestors (and marginalizing over unobserved ancestors).
     //
     // When passed backward through a junction tree, a node set marginal
     // distribution is updated to contain the marginal distribution of the
@@ -158,9 +158,25 @@ namespace BOOM {
       // Computes the conditional likelihood of the given elements of the
       // supplied data_point.  The likelihood conditions on any parents in the
       // directed graph, and averages over any missing values.
-      double compute_likelihood(
+      //
+      // Args:
+      //   index:  The index (i, j, k, ...) of the data point in the
+      double compute_complete_data_loglikelihood(
           const std::vector<int> &index,
           const MixedMultivariateData &data_point) const;
+
+      // Args:
+      //   index: A collection of the specific integer-valued levels of the
+      //     missing values in unknown_discrete_distribution_.
+      //   data_point: A scratch data object containing the values of the
+      //     observed data, where the values of the missing data can be
+      //     overwritten.
+      //
+      // Effects:
+      //   The values of the missing variables in 'data_point' will be set to
+      //   the levels of 'index'
+      void fill_scratch_data(const std::vector<int> &index,
+                             MixedMultivariateData &data_point) const;
 
      private:
       const NodeSet *host_;
@@ -173,7 +189,7 @@ namespace BOOM {
       // unknown (missing) values.  The number of discrete nodes in this vector
       // determines the number of dimensions in unknown_discrete_distribution_,
       // and their order corresponds to the dimensions of that array.
-      NodeSet  unknown_discrete_nodes_;
+      NodeSet unknown_discrete_nodes_;
       Array unknown_discrete_distribution_;
 
       std::vector<Ptr<Node>> unknown_gaussian_nodes_;

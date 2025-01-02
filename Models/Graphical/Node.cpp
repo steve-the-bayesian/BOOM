@@ -101,5 +101,12 @@ namespace BOOM {
       return -1;
     }
 
+    void Node::set_categorical_value(
+        MixedMultivariateData &data_point, int value) const {
+      std::ostringstream err;
+      err << "Node " << name() << " does not model categorical data.";
+      report_error(err.str());
+    }
+
   }  // namespace Graphical
 }  // namespace BOOM

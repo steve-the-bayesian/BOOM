@@ -100,6 +100,13 @@ namespace BOOM {
       return data.missing() == Data::missing_status::observed ? data.value() : -1;
     }
 
+    void MultinomialNode::set_categorical_value(
+        const MixedMultivariateData &data_point, int value) const {
+      Ptr<LabeledCategoricalData> data_field(data_point.mutable_categorical(
+          variable_index()));
+      data_field->set(value);
+    }
+
     std::vector<int> MultinomialNode::parent_dims() const {
       std::vector<int> dims;
       for (const auto &parent : parents()) {

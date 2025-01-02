@@ -162,6 +162,7 @@ namespace BOOM {
            it != unknown_discrete_distribution_.aend();
            ++it) {
         const std::vector<int> &index(it.position());
+        fill_scratch_data(index, scratch_data_point);
         double prior = compute_prior_probability(index, prior_margin, scratch_data_point);
         double likelihood = compute_likelihood(index, data_point);
         double product = prior * likelihood;
@@ -172,16 +173,35 @@ namespace BOOM {
       return total_prob;
     }
 
+    void NSMD::fill_scratch_data(const std::vector<int> &index,
+                                 MixedMultivariateData &data_point) const {
+      if (index.size() != unknown_discrete_nodes_.size()) {
+        std::ostringstream err;
+        err << "This node set has " << unknown_discrete_nodes_.size()
+            << " missing values but 'index' has " << index.size()
+            << " entries.";
+        report_error(err.str());
+      }
+      for (int which_node = 0; which_node < index.size(); ++which_node) {
+        int node_value = index[which_node];
+        unknown_discrete_nodes_[which_node]->set_categorical_value(
+            scratch_data_point, node_value);
+      }
+    }
+
     // Compute the prior probability of a given cell in
     // unknown_discrete_distribution_.  Here "prior probability" means the
-    // probability conditional on the preceding node in the junction tree.
+    // probability conditional on the preceding NodeSet in the junction tree.
+    // That NodeSet contains all the parents of the nodes in this object's host
+    // NodeSet.
     //
     // Args:
     //   index: The position (i, j, k, ...) in the
     //     unknown_discrete_distribution_ table.
     //   separator_margin: The marginal distribution of the nodes that appear in
     //     both this clique and the parent clique in the junction tree.
-    //   scratch_data_point:  scratch workspace
+    //   scratch_data_point: scratch workspace, where the values of 'index' have
+    //     already been filled in.
     //
     // Details:
     //   This function works by writing the value of 'index' to
@@ -197,43 +217,20 @@ namespace BOOM {
     double NSMD::compute_prior_probability(
         const std::vector<int> &index,
         const NodeSetMarginalDistribution &separator_margin,
-        MixedMultivariateData &scratch_data_point) const {
+        const MixedMultivariateData &scratch_data_point) const {
       double logprob = 0.0;
-
-      // Need the set of nodes in the separator, and the set not in the
-      // separator.
-      //
-      // For the requested index
-
-      if (!separator_margin.host()->empty()) {
-        // Need to take index and pull out the indices corresponding to the
-        // variables in the margin.
-
-        // We need a way of mapping between index positions and nodes in host().
-
-        // TODO:
-        std::vector<int> subset_index(index);
-        logprob = log(separator_margin.unknown_discrete_distribution()[
-            subset_index]);
-        if (!std::isfinite(logprob)) {
-          return 0.0;
-        } else {
-
-        }
+      for (int which_node = 0; which_node < index.size(); ++which_node) {
+        ////////////////
+        ////////////////
+        // How is this different from log likelihood?
+        ////////////////
+        ////////////////
+        logprob += unknown_discrete_nodes_[which_node]->logp(scratch_data_point);
       }
-
-      std::vector<int> increment_index;
-
-      for (const Ptr<Node> &node : unknown_discrete_nodes_) {
-        if (separator_margin.host()->contains(node)) {
-
-        }
-      }
-
       return logprob;
     }
 
-    double NSMD::compute_likelihood(
+    double NSMD::compute_complete_data_loglikelihood(
         const std::vector<int> &index,
         const MixedMultivariateData &data_point) const {
 
