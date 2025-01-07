@@ -95,6 +95,7 @@ from .plots import (
     boxplot,
     BoxplotTrue,
     compare_dynamic_distributions,
+    ensure_ax,
     hist,
     histabunch,
     hosmer_lemeshow_plot,

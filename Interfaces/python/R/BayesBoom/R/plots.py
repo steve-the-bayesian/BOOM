@@ -52,6 +52,19 @@ def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
         ax.set_title(title)
 
 
+def ensure_ax(ax):
+    """
+    Create new Figure and Axes objects, if needed.
+
+    If ax already exists then the returned Figure is None.  Calling code can
+    rely on this behavior when deciding whether to call plt.show().
+    """
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    return fig, ax
+        
+
 def pretty_plot_ticks(low, high, n):
     """
     Return a set of 'pretty' tick locations.
@@ -181,11 +194,7 @@ def plot(x, y=None, s=None, hexbin_threshold=1e+5, ax=None, **kwargs):
     For now, a 'plot' is a scatterplot.  At some point I will make 'plot'
     generic as with R.
     """
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-        draw = True
-    else:
-        draw = False
+    fig, ax = ensure_ax(ax)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
@@ -203,10 +212,10 @@ def plot(x, y=None, s=None, hexbin_threshold=1e+5, ax=None, **kwargs):
         ax.hexbin(x, y, **kwargs)
     _set_plot_options(ax, **plot_options)
 
-    if draw:
+    if fig:
         fig.show()
 
-    return ax
+    return fig, ax
 
 
 def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
@@ -218,10 +227,7 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       x: The variable to be plotted.
       density: If True then the area of the histogram bars sums to 1.
     """
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-
+    fig, ax = ensure_ax(ax)
     plot_options, kwargs = _skim_plot_options(**kwargs)
     ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
             color=color, **kwargs)
@@ -245,11 +251,7 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
       kwargs: extra arguments passed to plt.subplots or plt.barh.
 
     """
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-        draw = True
-    else:
-        draw = False
+    fig, ax = ensure_ax(ax)
 
     x = x[::-1]
     if labels is not None:
@@ -276,18 +278,14 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
     ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
     _set_plot_options(ax, **plot_options)
 
-    if draw:
+    if fig:
         fig.show()
 
-    return ax
+    return fig, ax
 
 
 def boxplot(x, labels=None, ax=None, **kwargs):
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-        draw = True
-    else:
-        draw = False
+    fig, ax = ensure_ax(ax)
 
     if labels is None and isinstance(x, pd.DataFrame):
         labels = x.columns
@@ -295,10 +293,10 @@ def boxplot(x, labels=None, ax=None, **kwargs):
     ax.boxplot(x, vert=False)
     _set_plot_options(ax, **kwargs)
 
-    if draw:
+    if fig:
         fig.show()
 
-    return ax
+    return fig, ax
 
 
 def AddSegments(x, y, ax, half_width_factor=.45, adjust=True, **kwargs):
@@ -375,8 +373,7 @@ def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
     Returns:
       The ax object.
     """
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
+    fig, ax = ensure_ax(ax)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
     _set_plot_options(ax, **plot_options)
@@ -402,7 +399,7 @@ def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
         ticks = ax.get_xticks()
         AddSegments(ticks, truth, ax)
 
-    return ax
+    return fig, ax
 
 
 def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
@@ -425,6 +422,8 @@ def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
 
       **kwargs:  Extra arguments passed to 'boxplot'.
     """
+    fig, ax = ensure_ax(ax)
+    
     plot_options, kwargs = _skim_plot_options(**kwargs)
     _set_plot_options(ax, **plot_options)
 
@@ -440,14 +439,12 @@ def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
         remove_common_suffix(
             [str(x) for x in time]))
     ax.boxplot(curves, tick_labels=time, **kwargs)
-    return ax
+    return fig, ax
 
 
 def plot_ts(x, timestamps=None, ax=None, **kwargs):
     """ Plot a time series."""
-
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
+    fig, ax = ensure_ax(ax)
 
     if timestamps is None:
         if isinstance(x, pd.Series):
@@ -456,7 +453,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     ax.plot(x)
     _set_plot_options(ax, **kwargs)
 
-    return ax
+    return fig, ax
 
 
 def pairs(x, **kwargs):
@@ -488,10 +485,7 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
         describing the relationship between two categorical variables.
       ax:
     """
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-    else:
-        fig = None
+    fig, ax = ensure_ax(ax)
 
     if not isinstance(ax, plt.Axes):
         raise Exception("ax must be a plt.Axes object")
@@ -546,7 +540,7 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
     if fig is not None:
         fig.show()
 
-    return ax
+    return fig, ax
 
 
 def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
@@ -728,12 +722,7 @@ def plot_dynamic_distribution(
 
       **kwargs: Extra arguments passed to _skim_plot_options.
     """
-    redraw = False
-    if ax is None:
-        # device = get_current_graphics_device()
-        # ax = device.next_axes
-        fig, ax = plt.subplots(1, 1)
-        redraw = True
+    fig, ax = ensure_ax(ax)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
@@ -756,12 +745,10 @@ def plot_dynamic_distribution(
 
     _set_plot_options(ax, **plot_options)
 
-    if redraw:
-        # device = get_current_graphics_device()
-        # device.draw_current_axes()
+    if fig:
         fig.show()
 
-    return ax
+    return fig, ax
 
 
 # Allow the same function name as R.
@@ -859,7 +846,7 @@ def compare_dynamic_distributions(
 
     if main:
         fig.suptitle(main)
-    return fig
+    return fig, ax
 
 
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
@@ -881,10 +868,8 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
         indexed by pd.Interval objects indicating the interval over which the
         means are averaged.
     """
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = None
+    fig, ax = ensure_ax(ax)
+    
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
         pd.qcut(predicted, 10),
         observed=True)["actual"].mean()
@@ -916,20 +901,25 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     if fig is not None:
         fig.show()
 
-    return ax, group_means
+    ######
+    # TODO: make a separate function to compute groupd means.
+    return fig, ax, group_means
 
 
-def lines_gaussian_kde(kde, ax=None, **kwargs):
+def plot_gaussian_kde(kde, ax=None, **kwargs):
     """
     Add a kernel density estimate to the plot.
     """
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
+    fig, ax = ensure_ax(ax)
     xlim = ax.get_xlim()
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)
     ax.plot(x, y, **kwargs)
-    return ax
+
+    if fig:
+        fig.show()
+        
+    return fig, ax
 
 
 def lty(style):
@@ -937,11 +927,13 @@ def lty(style):
     Python linestyle characters from R 'lty' (linetype).
 
     Args:
-      style:  An int or string.
+      style:  An int [0-5], or string.
 
+    Returns:
+      The python equivalent of the R line type.
     """
-    style_names = ["solid", "dashed", "dotted", "dotdash",
-                   "longdash", "twodash"]
+    style_names = ["solid", "dashed", "dotted", "dotdash", "longdash",
+                   "twodash"]
 
     mappings = {
         "solid": "-",
