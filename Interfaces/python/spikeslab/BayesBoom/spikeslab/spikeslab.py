@@ -187,7 +187,7 @@ class lm_spike:
         if seed is not None:
             boom.GlobalRng.rng.seed(int(seed))
 
-        sampler = prior.create_sampler(self._model, assign=True)
+        prior.create_sampler(self._model, assign=True)
 
         # A "lil" matrix is a "linked list" matrix.  This is an efficient method
         # for constructing matrices.  It should be converted to a different

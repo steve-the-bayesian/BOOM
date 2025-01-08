@@ -144,7 +144,7 @@ class RegressionSpikeSlabPrior:
                 and np.isfinite(self.max_size)
         ):
             ans.set_max_size(int(self.max_size))
-            
+
         return ans
 
     @property

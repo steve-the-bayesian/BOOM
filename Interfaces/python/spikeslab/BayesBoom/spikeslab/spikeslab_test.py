@@ -1,5 +1,4 @@
 import unittest
-import sys
 
 from BayesBoom.spikeslab import (
     dot,
@@ -268,7 +267,7 @@ class SpikeSlabTest(unittest.TestCase):
         sample_size = 1000
         nvars = 100
         max_flips = 2
-        
+
         X = pd.DataFrame(np.random.randn(sample_size, nvars),
                          columns=["X" + str(x+1) for x in range(nvars)])
         errors = np.random.randn(sample_size) * .1
