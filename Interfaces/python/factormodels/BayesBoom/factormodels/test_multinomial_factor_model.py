@@ -16,7 +16,6 @@ import pickle
 # import BayesBoom.R as R
 import BayesBoom.test_utils as test_utils
 
-
 import numpy as np
 import pandas as pd
 
@@ -40,12 +39,17 @@ def simulate_site_params(num_sites, num_categories, default_site_name="Other"):
 def simulate_multinomial_factor_data(user_classes, site_params):
     """
     Args:
-
       user_classes: A pd.Series of values in 0, ..., K-1 indicating the class
         to which each user belongs.  The index of the series is the user-id.
       site_params: A pd.DataFrame with num_sites rows and num_classes columns,
         giving the Poisson rate parameters for users in each category.  The
         index is the site-id.
+
+    Returns:
+      A list of data frames, one for each user_class.  Each data frame has 3 columns:
+      - "user": user id
+      - "site": the site visited by the user in the first column.
+      - "count":  The number of visits by that user to that site.
     """
     frames = []
     for i, level in enumerate(user_classes):

@@ -190,8 +190,8 @@ class SpikeSlabTest(unittest.TestCase):
         formula = "y ~ " + dot(data, ["y"])
 
         model = lm_spike(formula, niter=niter, data=data)
-        ax1 = model.plot_inclusion(inclusion_threshold=.1)
-        ax2 = model.plot_coefficients(inclusion_threshold=.1)
+        fig1, ax1 = model.plot_inclusion(inclusion_threshold=.1)
+        fig2, ax2 = model.plot_coefficients(inclusion_threshold=.1)
         self.assertIsInstance(ax1, plt.Axes)
         self.assertIsInstance(ax2, plt.Axes)
 

@@ -13,11 +13,12 @@ class TestRandomStrings(unittest.TestCase):
         self.assertEqual(4, len(strings[0]))
 
     def test_uniqueness(self):
+        print("testing uniqueness")
         non_unique = random_strings(1000, 2, ensure_unique=False)
         self.assertEqual(1000, len(non_unique))
 
         
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa

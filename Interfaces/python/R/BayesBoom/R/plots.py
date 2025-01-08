@@ -443,15 +443,25 @@ def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
 
 
 def plot_ts(x, timestamps=None, ax=None, **kwargs):
-    """ Plot a time series."""
+    """
+    Plot a time series.
+
+    Args:
+      x: The series to plot.
+      timestamps: The time points (
+      ax:  The Axes 
+    """
     fig, ax = ensure_ax(ax)
 
-    if timestamps is None:
-        if isinstance(x, pd.Series):
-            timestamps = x.index
+    x = pd.Series(x)
+    if timestamps is not None:
+        x.index = timestamps
 
-    ax.plot(x)
+    x.plot(ax=ax)
     _set_plot_options(ax, **kwargs)
+
+    if fig:
+        fig.show()
 
     return fig, ax
 
