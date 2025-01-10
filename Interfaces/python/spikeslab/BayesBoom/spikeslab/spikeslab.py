@@ -333,7 +333,7 @@ class lm_spike:
         what_arg = what
         if what is None:
             what = plot_types[0]
-            
+
         what = R.unique_match(what, plot_types)
         if what == "coefficients":
             return self.plot_coefficients(**kwargs)
@@ -366,7 +366,7 @@ class lm_spike:
             print(plot_model_size.__doc__)
         else:
             print(self.plot.__doc__)
-        
+
     def plot_inclusion(self,
                        burn=None,
                        inclusion_threshold=0,
@@ -451,7 +451,7 @@ class lm_spike:
 
         ax.boxplot(nonzero_coefs,
                    widths=.8 * inc,
-                   vert=False,
+                   orientation="horizontal",
                    tick_labels=names,
                    **kwargs)
         return fig, ax
@@ -516,7 +516,7 @@ class lm_spike:
         Returns:
           The Figure and Axes objects containing the plot.  The Figure will be
           None if an Axes was passed in as 'ax'.
-        
+
         """
         fig, ax = R.plot(self.fitted_values,
                          self.residuals + self.fitted_values,
@@ -746,7 +746,7 @@ def plot_inclusion_probs(coefficients,
 
     if (xnames is None) and hasattr(coefficients, columns):
         xnames = coefficients.columns
-        
+
     coef = np.array(coefficients)[burn:, :]
     inc = compute_inclusion_probabilities(coef)
     pos = coefficient_positive_probability(coef)

@@ -150,11 +150,10 @@ class GeneralSeasonalLLT(StateModel):
         self._state_model.set_initial_state_variance(
             boom.SpdMatrix(self._initial_state_prior.variance))
 
-        level_precision_priors = [
-            x.boom() for x in self._level_precision_priors]
-        slope_precision_priors = [
-            x.boom() for x in self._slope_precision_priors]
-
+        # Convert the python prior objects to boom objects before passing to
+        # the boom PosteriorSampler constructor.
+        level_precision_priors = [x.boom() for x in self._level_precision_priors]
+        slope_precision_priors = [x.boom() for x in self._slope_precision_priors]
         sampler = boom.GeneralSeasonalLLTIndependenceSampler(
             self._state_model,
             level_precision_priors,
