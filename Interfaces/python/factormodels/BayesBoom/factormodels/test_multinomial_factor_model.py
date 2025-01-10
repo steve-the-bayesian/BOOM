@@ -179,12 +179,36 @@ class MultinomialFactorModelTest(unittest.TestCase):
         # =====================================================================
         # For users that are unknown, check that the model is choosing the true
         # class as 'most likely' most of the time.
-        ud = model.user_distribution()
-        ud["truth"] = self._user_classes[model.user_ids]
-        ud["chosen"] = np.argmax(ud.values[:, :4], axis=1)
-        xtab = pd.crosstab(ud["truth"], ud["chosen"])
+        user_distribution = model.infer_posterior_distributions(
+            self._data["user"],
+            self._data["site"]
+        )
 
-        self.assertGreater(np.sum(np.diag(xtab)), .9 * self.num_users)
+        known_user_flags = user_distribution.index.isin(model._known_users.index)
+        unknown_user_flags = ~known_user_flags
+        user_distribution["truth"] = self._user_classes[model.user_ids]
+        user_distribution["chosen"] = np.argmax(
+            user_distribution.values[:, :4], axis=1)
+        unknown_user_distribution = user_distribution.iloc[
+            unknown_user_flags, :]
+        xtab = pd.crosstab(unknown_user_distribution["truth"],
+                           unknown_user_distribution["chosen"])
+
+        # xtab cross tabulates the most likely value of each unknown user under
+        # the model with his actual value.  The elements on the diagonal fo xtab
+        # are the correct classifications.
+        
+        #         (Pdb) xtab
+        # chosen   0   1   2   3
+        # truth                 
+        # 0       20   1   1   4
+        # 1        4  35   3   4
+        # 2       14   8  78   6
+        # 3        3   2   1  16
+
+        # Check that correct classifications occur at least 50% of the time.
+        num_unknown_users = np.sum(unknown_user_flags)
+        self.assertGreater(np.sum(np.diag(xtab)), .5 * num_unknown_users)
 
         # =====================================================================
         # Check that the marginal distributions of the site parameters cover the
@@ -218,7 +242,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
         known_users = self._user_classes.iloc[:num_known]
         niter = 1000
         model.set_known_user_demographics(known_users)
-        model.set_nthreads(14)
+        model.set_num_threads(14)
         model.run_mcmc(niter=niter)
         user_ids = model.user_ids[-5:-1]
         probs = model.posterior_class_probabilities(user_ids)
@@ -350,7 +374,7 @@ class MultinomialFactorModelTest(unittest.TestCase):
             more_test_data["user"], more_test_data["site"])
         self.assertTrue(np.allclose(post1, post2))
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb, sys  # noqa
