@@ -264,8 +264,8 @@ boom_library_sources = (
     + factor_sources
     + glm_sources
     + gp_sources
-    + hmm_sources
     + hierarchical_sources
+    + hmm_sources
     + impute_sources
     + irt_sources
     + mixture_sources

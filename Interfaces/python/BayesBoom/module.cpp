@@ -47,6 +47,9 @@ namespace BayesBoom {
   void DirichletProcessMvn_def(py::module &);
   void BetaBinomialMixture_def(py::module &);
 
+  void FiniteMixtureModel_def(py::module &);
+  void HMM_def(py::module &);
+  
   void FactorModel_def(py::module &);
 
   void test_utils_def(py::module &);
@@ -107,6 +110,9 @@ namespace BayesBoom {
     DirichletProcessMvn_def(boom);
     BetaBinomialMixture_def(boom);
 
+    FiniteMixtureModel_def(boom);
+    HMM_def(boom);
+    
     FactorModel_def(boom);
 
     test_utils_def(boom);

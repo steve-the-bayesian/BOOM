@@ -52,6 +52,11 @@ namespace BayesBoom {
              "Args:\n\n"
              "  probs:  A discrete probability distribution.\n")
         .def_property_readonly(
+            "dim",
+            [](const MultinomialModel &model) {
+              return model.dim();
+            })
+        .def_property_readonly(
             "probs",
             [](const MultinomialModel &model) {
               return model.pi();
