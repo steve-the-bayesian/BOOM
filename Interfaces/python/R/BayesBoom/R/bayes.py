@@ -34,6 +34,110 @@ class DoubleModel(ABC):
         return self.__dict__ == other.__dict__
 
 
+class MixtureComponent(ABC):
+    """
+    Base class for models that can serve as mixture components.
+    """
+
+    @abstractmethod
+    def allocate_space(self, niter):
+        """
+        Allocate space to store 'niter' MCMC draws of the model parameters.
+        """
+
+    @abstractmethod
+    def record_draw(self, iteration):
+        """
+        Record the current model parameters (to be obtained from a stored
+        boom model object) in position 'iteration' of previously allocated
+        storage.
+        """
+
+    
+class MultinomialModel(MixtureComponent):
+    """
+    A Python wrapper for the boom MultinomialModel object.
+    """
+
+    def __init__(self, probs, categories=None):
+        """
+        Args:
+          probs: A numpy vector of probabilities.  This is a discrete
+            probability distribution: nonnegative values summing to 1.
+          categories: Optional numpy vector of category names.  If supplied, the
+            vector's lengh must mathc probs.
+        """
+        self._probs = probs
+        self._categories = categories
+        self._boom_model = None
+
+    @property
+    def probs(self):
+        if self._boom_model:
+            self._probs = self._boom_model.probs.to_numpy()
+        return self._probs
+
+    @property
+    def dim(self):
+        if self._boom_model:
+            return self._boom_model.dim
+        else:
+            return len(probs)
+        
+    def allocate_space(self, niter):
+        self._prob_draws = np.empty((niter, self.dim))
+
+    def record_draw(self, iteration):
+        if not self._boom_model:
+            raise Exception("Object contains no boom model")
+        self._prob_draws[i, :] = self.probs
+
+    def boom(self):
+        if not self._boom_model:
+            self._boom_model = boom.MultinomialModel(
+                R.to_boom_vector(self._probs))
+        return self._boom_model
+
+
+class MarkovModel(MixtureComponent):
+    def __init__(self,
+                 transition_matrix=None,
+                 state_size=None,
+                 initial_distribution=None):
+        """
+        Args:
+          transition_matrix: A square matrix with element (r, s) giving the
+            conditional probability of a transition to state s given current
+            state r.  Each row sums to 1.  If None, then a matrix will be
+            created giving uniform transition probability between any two
+            states.
+          state_size: An integer giving the number of states.  If None then
+            transition_matrix must be supplied explicityly.  If
+            transition_matrix is supplied this argument is not used.
+          initial_distribution: A discrete probability distribution (as a numpy
+            vector) giving the distribution of the state at time 0.  If None a
+            uniform distribution is assumed for the initial state.
+        """
+        if transition_matrix is None:
+            if state_size is None:
+                raise Exception("If transition_matrix is None then "
+                                "state_size must be given.")
+            transition_matrix = np.ones((state_size, state_size)) / state_size
+
+        state_size = transition_matrix.shape[0]
+        if initial_distribution is None:
+            initial_distribution = np.ones(state_size) / state_size
+
+        self._transition_matrix = transition_matrix
+        self._initial_distribution = initial_distribution
+        self._boom_model = None
+
+    @property
+    def transition_probabilities(self):
+        if self._boom_model:
+            self._transition_matrix = self._boom_model
+
+    
 class SdPrior(DoubleModel):
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
     that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here 'df' is

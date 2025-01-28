@@ -8,10 +8,9 @@ from .ls import ls
 from .assign_classes import assign_classes, ClassAssigner
 
 from .base import (
-    data_frame,
-    table,
-    data_range,
     corr,
+    data_frame,
+    data_range,
     first_true,
     invert_order,
     order,
@@ -22,6 +21,8 @@ from .base import (
     recycle,
     remove_common_prefix,
     remove_common_suffix,
+    scan,
+    table,
     unique_match,
     var,
     which,
