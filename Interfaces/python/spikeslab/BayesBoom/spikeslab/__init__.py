@@ -17,6 +17,7 @@ from .mlogit_spike import mlogit_spike
 from .priors import (
     LogitZellnerPrior,
     MultinomialLogitSpikeSlabPrior,
+    RegressionSlabPrior,
     RegressionSpikeSlabPrior,
     StudentSpikeSlabPrior,
 )

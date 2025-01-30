@@ -316,7 +316,7 @@ class BigAssSpikeSlabTest(unittest.TestCase):
         model.initial_screen()
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa
@@ -336,7 +336,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_max_flips()
+    rig.test_student_spike_slab_prior()
 
     print("Goodbye, cruel world!")
 

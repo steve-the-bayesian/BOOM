@@ -6,7 +6,7 @@ import BayesBoom.R as R
 import scipy.sparse
 import matplotlib.pyplot as plt
 
-from .priors import RegressionSpikeSlabPrior
+from .priors import RegressionSpikeSlabPrior, RegressionSlabPrior
 
 
 def sparsify(glm_coefs):
@@ -451,7 +451,8 @@ class lm_spike:
 
         ax.boxplot(nonzero_coefs,
                    widths=.8 * inc,
-                   orientation="horizontal",
+                   # orientation="horizontal",
+                   vert=False,
                    tick_labels=names,
                    **kwargs)
         return fig, ax
@@ -808,66 +809,6 @@ def plot_model_size(coefficients, burn=0, ax=None, style="hist", **kwargs):
     else:
         msg = "'style' argument must be either 'hist' or 'ts'."
     return fig, ax
-
-
-class RegressionSlabPrior:
-    """
-    A multivariate normal distribution intended to be the prior in a multiple
-    regression problem.  The prior is
-
-    beta ~ N(b, V)
-
-    where b = (ybar, 0, 0, 0, ....)
-    and V^{-1} = kappa * [(1 - alpha) * xtx + alpha * diag(xtx)] / n
-
-    The mean parameter shrinks the intercept towards the sample mean, and all
-    other coefficients towards zero.  In the literature it is more standard to
-    shrink all coefficients towards zero, but in practice this can inflate
-    estimates of the residual standard deviation.
-
-    The prior precision is defined in terms of xtx: the cross product matrix
-    from the regression problem.  We average xtx with its diagonal (with weight
-    alpha on the diagonal) to ensure that the overall matrix is full rank.  xtx
-    is the information matrix for the regression coefficients in a standard
-    regression problem, so dividing by 'n' (the sample size) turns the whole
-    thing into the "average information from a single observation."
-    Multiplying by 'kappa' means that the information content of the prior is
-    equivalent to 'kappa' prior observations.
-    """
-
-    def __init__(self, xtx, sample_mean, data_sample_size,
-                 prior_sample_size=1.0, diagonal_shrinkage=0.05):
-        """
-        Args:
-          Please see the class comments, above.
-          xtx:  The cross product matrix from the regression.
-          sample_mean: The mean of the response variable in the regression
-            problem ('ybar' above).
-          data_sample_size: The number of observations in the regression ('n'
-            above).
-          prior_sample_size: The number of observations of prior weight to
-            assign the prior.  ('kappa' above).
-          diagonal_shrinkage: The weight to assign the diagonal of xtx in the
-            full rank adjustment.  ('alpha' above).
-        """
-        self._xtx = xtx
-        self._sample_mean = sample_mean
-        self._data_sample_size = data_sample_size
-        self._prior_sample_size = prior_sample_size
-        self._diagonal_shrinkage = diagonal_shrinkage
-
-    def set_xtx(self, xtx: np.ndarray):
-        self._xtx = xtx
-
-    def boom(self, sigsq_param: boom.UnivParams):
-        xtx = self._xtx if self._xtx is not None else np.ones((1, 1))
-        return boom.RegressionSlabPrior(
-            boom.SpdMatrix(xtx),
-            sigsq_param,
-            self._sample_mean,
-            self._data_sample_size,
-            self._prior_sample_size,
-            self._diagonal_shrinkage)
 
 
 class BigAssSpikeSlab:
