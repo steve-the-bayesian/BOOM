@@ -3,3 +3,5 @@ from .dirichlet_process import DirichletProcessMvn, identify_permutation_from_la
 from .beta_binomial_mixture import BetaBinomialMixture
 
 from .utils import normalize_logprob
+
+from .hmm import HiddenMarkovModel
