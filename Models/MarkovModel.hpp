@@ -205,10 +205,6 @@ namespace BOOM {
 
   //======================================================================
 
-  class ProductDirichletModel;
-  class DirichletModel;
-  class MarkovConjSampler;
-
   class MarkovModel
       : public ParamPolicy_2<MatrixParams, VectorParams>,
         public TimeSeriesSufstatDataPolicy<MarkovData,
