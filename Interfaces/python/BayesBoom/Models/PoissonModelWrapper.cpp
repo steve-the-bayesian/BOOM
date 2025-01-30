@@ -17,17 +17,12 @@ namespace BayesBoom {
                BOOM::Ptr<PoissonModel>>(
                    boom, "PoissonModel", py::multiple_inheritance())
         .def(py::init(
-            [](double lambda) {
-              return new PoissonModel(lambda);
+            [](double mean) {
+              return new PoissonModel(mean);
             }),
-             py::arg("lambda"),
+             py::arg("mean"),
              "Args:\n\n"
-             "  lambda:  The mean parameter for the Poisson distribution.\n")
-        .def_property_readonly(
-            "lambda",
-            [](const PoissonModel &model) {
-              return model.lambda();
-            })
+             "  mean:  The mean parameter for the Poisson distribution.\n")
         .def_property_readonly(
             "mean",
             [](const PoissonModel &model) {
