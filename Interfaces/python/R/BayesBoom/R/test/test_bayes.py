@@ -1,5 +1,6 @@
 import unittest
 import BayesBoom.R as R
+import BayesBoom.boom as boom
 import numpy as np
 
 
@@ -30,6 +31,36 @@ class TestRegSuf(unittest.TestCase):
         self.assertAlmostEqual(bs.yty, yty, 4)
 
 
+class TestMarkovModel(unittest.TestCase):
+
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_model(self):
+        probs = np.ones((3, 3)) / 3.0
+        init = np.ones(3) / 3.0
+
+        model = R.MarkovModel(probs, init)
+        boom_model = model.boom()
+        self.assertIsInstance(boom_model, boom.MarkovModel)
+
+        probs = model.transition_probabilities
+        self.assertEqual(probs.shape, (3, 3))
+        self.assertTrue(np.allclose(
+            probs.sum(axis=1),
+            np.ones(3)))
+
+        
+class TestPoissonModel(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_poisson(self):
+        model = R.PoissonModel(2.3)
+        boom_model = model.boom()
+        self.assertIsInstance(boom_model, boom.PoissonModel)
+        
+        
 _debug_mode = False
 
 if _debug_mode:

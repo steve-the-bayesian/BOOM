@@ -2,13 +2,12 @@ import numpy as np
 from abc import ABC, abstractmethod
 import copy
 
-from .boom_py_utils import to_boom_vector, to_boom_spd
+from .boom_py_utils import to_boom_vector, to_boom_spd, to_boom_matrix
 
 """
 Wrapper classes to encapsulate and expand models and prior distributions
 from the Boom library.
 """
-
 
 class DoubleModel(ABC):
     """
@@ -54,271 +53,6 @@ class MixtureComponent(ABC):
         """
 
     
-class MultinomialModel(MixtureComponent):
-    """
-    A Python wrapper for the boom MultinomialModel object.
-    """
-
-    def __init__(self, probs, categories=None):
-        """
-        Args:
-          probs: A numpy vector of probabilities.  This is a discrete
-            probability distribution: nonnegative values summing to 1.
-          categories: Optional numpy vector of category names.  If supplied, the
-            vector's lengh must mathc probs.
-        """
-        self._probs = probs
-        self._categories = categories
-        self._boom_model = None
-
-    @property
-    def probs(self):
-        if self._boom_model:
-            self._probs = self._boom_model.probs.to_numpy()
-        return self._probs
-
-    @property
-    def dim(self):
-        if self._boom_model:
-            return self._boom_model.dim
-        else:
-            return len(probs)
-        
-    def allocate_space(self, niter):
-        self._prob_draws = np.empty((niter, self.dim))
-
-    def record_draw(self, iteration):
-        if not self._boom_model:
-            raise Exception("Object contains no boom model")
-        self._prob_draws[i, :] = self.probs
-
-    def boom(self):
-        if not self._boom_model:
-            self._boom_model = boom.MultinomialModel(
-                R.to_boom_vector(self._probs))
-        return self._boom_model
-
-
-class MarkovModel(MixtureComponent):
-    def __init__(self,
-                 transition_matrix=None,
-                 state_size=None,
-                 initial_distribution=None):
-        """
-        Args:
-          transition_matrix: A square matrix with element (r, s) giving the
-            conditional probability of a transition to state s given current
-            state r.  Each row sums to 1.  If None, then a matrix will be
-            created giving uniform transition probability between any two
-            states.
-          state_size: An integer giving the number of states.  If None then
-            transition_matrix must be supplied explicityly.  If
-            transition_matrix is supplied this argument is not used.
-          initial_distribution: A discrete probability distribution (as a numpy
-            vector) giving the distribution of the state at time 0.  If None a
-            uniform distribution is assumed for the initial state.
-        """
-        if transition_matrix is None:
-            if state_size is None:
-                raise Exception("If transition_matrix is None then "
-                                "state_size must be given.")
-            transition_matrix = np.ones((state_size, state_size)) / state_size
-
-        state_size = transition_matrix.shape[0]
-        if initial_distribution is None:
-            initial_distribution = np.ones(state_size) / state_size
-
-        self._transition_matrix = transition_matrix
-        self._initial_distribution = initial_distribution
-        self._boom_model = None
-
-    @property
-    def transition_probabilities(self):
-        if self._boom_model:
-            self._transition_matrix = self._boom_model
-
-    
-class SdPrior(DoubleModel):
-    """A prior distribution for a standard deviation 'sigma'.  This prior assumes
-    that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here 'df' is
-    the 'sample_size' and ss is the "sum of squares" equal to the sample size
-    times 'sigma_guess'**2.
-
-    This prior allows an upper limit on the support of sigma, which is infinite
-    by default.
-
-    """
-
-    def __init__(self, sigma_guess, sample_size=.01, initial_value=None,
-                 fixed=False, upper_limit=np.inf):
-        """
-        Create an SdPrior.
-
-        Args:
-          sigma_guess:  Guess at the value of the standard deviation.
-          sample_size: Number of observations worth of information with which
-            to weight the guess.
-          initial_value: The initial value to be used in an MCMC chain.  This
-            is not always respected.  The default value is sigma_guess.
-          fixed: Flag indicating whether the parameter should be held fixed in
-            an MCMC algorithm.  This is mainly for debugging and is not always
-            respected.
-          upper_limit: Upper limit on the value of 'sigma'.
-        """
-        self.sigma_guess = float(sigma_guess)
-        self.sample_size = float(sample_size)
-        if initial_value is None:
-            initial_value = sigma_guess
-        self.initial_value = float(initial_value)
-        self.fixed = bool(fixed)
-        self.upper_limit = float(upper_limit)
-
-    @property
-    def sum_of_squares(self):
-        return self.sigma_guess**2 * self.sample_size
-
-    def create_chisq_model(self):
-        return self.boom()
-
-    def boom(self):
-        """
-        Return the boom.ChisqModel corresponding to the input parameters.
-        """
-        import BayesBoom.boom as boom
-        return boom.ChisqModel(self.sample_size, self.sigma_guess)
-
-    @property
-    def mean(self):
-        """
-        The mean of the distribution on the precision scale.
-        """
-        return self.sample_size / self.sigma_guess**2
-
-    def __repr__(self):
-        ans = f"SdPrior with sigma_guess = {self.sigma_guess}, "
-        ans += f"sample_size = {self.sample_size}, "
-        ans += f"upper_limit = {self.upper_limit}"
-        return ans
-
-    def __getstate__(self):
-        return self.__dict__
-
-    def __setstate__(self, payload):
-        self.__dict__ = payload
-
-
-class NormalPrior(DoubleModel):
-    """
-    A scalar normal prior distribution.
-    """
-    def __init__(self,
-                 mu: float = 0.0,
-                 sigma: float = 1.0,
-                 initial_value: float = None):
-        self.mu = float(mu)
-        self.sigma = float(sigma)
-        if initial_value is None:
-            self.initial_value = mu
-        else:
-            self.initial_value = float(initial_value)
-
-    @property
-    def mean(self):
-        return self.mu
-
-    @property
-    def sd(self):
-        return self.sigma
-
-    @property
-    def variance(self):
-        return self.sigma ** 2
-
-    def boom(self):
-        """
-        Return the boom.GaussianModel corresponding to the object's parameters.
-        """
-        import BayesBoom.boom as boom
-        return boom.GaussianModel(self.mu, self.sigma)
-
-    def __getstate__(self):
-        return self.__dict__
-
-    def __setstate__(self, payload):
-        self.__dict__ = payload
-
-
-class GammaModel(DoubleModel):
-    def __init__(self, shape=None, scale=None, mu=None, a=None, b=None):
-        """
-        A GammaModel(a, b) can be defined either in terms of its shape (a) and
-        scale (b) paramaeters (with mean a/b, variance a/b^2), or it's mean
-        (mu) and shape parameters (so the mean is mu and the variance is
-        mu^2/a).
-
-        Args:
-          shape:  The shape parameter a.
-          scale:  The scale parameter b.
-          mu:  The mean of the distribution.
-          a:  Another name for the shape parameter.
-          b:  Another name for the scale parameter.
-
-        Only two of these parameters need to be specified.  If all three are
-        given, then 'mu' is ignored.
-        """
-        if a is not None:
-            shape = a
-        if b is not None:
-            scale = b
-
-        if (shape is None) + (scale is None) + (mu is None) > 1:
-            raise Exception("Two parameters must be specified.")
-
-        self._a = shape
-        if self._a is None:
-            self._a = scale * mu
-
-        self._b = scale
-        if self._b is None:
-            self._b = mu / shape
-
-        if self._a <= 0 or self._b <= 0:
-            raise Exception("GammaModel parameters must be positive.")
-
-    @property
-    def mean(self):
-        return self._a / self._b
-
-    @property
-    def variance(self):
-        return self._a / self._b**2
-
-    @property
-    def a(self):
-        return self._a
-
-    @property
-    def shape(self):
-        return self._a
-
-    @property
-    def b(self):
-        return self._b
-
-    @property
-    def scale(self):
-        return self._b
-
-    def boom(self):
-        import BayesBoom.boom as boom
-        return boom.GammaModel(self.a, self.b)
-
-    def __repr__(self):
-        ans = f"A GammaModel with shape = {self.shape} "
-        ans += f"and scale = {self.scale}."
-        return ans
-
-
 class Ar1CoefficientPrior(DoubleModel):
     """
     Contains the information needed to create a prior distribution on an AR1
@@ -368,131 +102,6 @@ class Ar1CoefficientPrior(DoubleModel):
         self.__dict__ = payload
 
 
-class MvnBase(ABC):
-    @property
-    @abstractmethod
-    def dim(self):
-        """
-        The dimension of the variable described by the distribution.
-        """
-    @property
-    @abstractmethod
-    def mean(self):
-        """
-        The mean of the distribution.
-        """
-
-    @property
-    @abstractmethod
-    def variance(self):
-        """
-        The variance of the distribution, as a 2-d numpy array.
-        """
-
-    @abstractmethod
-    def boom(self):
-        """
-        Return the corresponding boom object.
-        """
-
-
-class MvnPrior(MvnBase):
-    """
-    Encodes a multivariate normal distribution.
-    """
-    def __init__(self, mu, Sigma):
-        if len(mu.shape) != 1:
-            raise Exception("mu must be a vector.")
-        if len(Sigma.shape) != 2:
-            raise Exception("Sigma must be a matrix.")
-        if Sigma.shape[0] != Sigma.shape[1]:
-            raise Exception("Sigma must be symmetric")
-        if Sigma.shape[0] != len(mu):
-            raise Exception("mu and Sigma must be the same dimension.")
-        self._mu = mu
-        self._Sigma = Sigma
-
-    @property
-    def dim(self):
-        return len(self._mu)
-
-    @property
-    def mu(self):
-        return self._mu
-
-    @property
-    def mean(self):
-        return self.mu
-
-    @property
-    def Sigma(self):
-        return self._Sigma
-
-    @property
-    def variance(self):
-        return self.Sigma
-
-    def boom(self):
-        """
-        Return the boom.MvnModel corresponding to this object's parameters.
-        """
-        import BayesBoom.boom as boom
-        return boom.MvnModel(boom.Vector(self._mu),
-                             boom.SpdMatrix(self._Sigma))
-
-
-class MvnGivenSigma(MvnBase):
-    """
-    Encodes a conditional multivariate normal distribution given an external
-    variance matrix Sigma.  This model describes y ~ Mvn(mu, Sigma / kappa).
-    """
-    def __init__(self, mu: np.ndarray, sample_size: float):
-        self._mu = np.array(mu, dtype="float").ravel()
-        self._sample_size = float(sample_size)
-
-    @property
-    def dim(self):
-        return len(self._mu)
-
-    def boom(self):
-        import BayesBoom.boom as boom
-        return boom.MvnGivenSigma(to_boom_vector(self._mu),
-                                  self._sample_size)
-
-    @property
-    def variance(self):
-        raise Exception("MvnGivenSigma needs Sigma value to compute the variance.")
-
-    @property
-    def mean(self):
-        return self._mu
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-
-class UniformPrior(DoubleModel):
-    """
-    Univariate uniform distribution.
-    """
-    def __init__(self, lo, hi):
-        if hi < lo:
-            lo, hi = hi, lo
-        self._lo = lo
-        self._hi = hi
-
-    @property
-    def mean(self):
-        return .5 * (self._lo + self._hi)
-
-    def boom(self):
-        """
-        Return the boom.UniformModel corresponding to this object's parameters.
-        """
-        import BayesBoom.boom as boom
-        return boom.UniformModel(self._lo, self._hi)
-
-
 class BetaPrior(DoubleModel):
     """
     A distribution, typically used as the prior over a scalar probability.
@@ -500,17 +109,32 @@ class BetaPrior(DoubleModel):
     def __init__(self, a=1.0, b=1.0):
         self._a = float(a)
         self._b = float(b)
+        self._boom_model = None
 
     @property
     def mean(self):
         return self._a / (self._a + self._b)
 
     def boom(self):
+        if self._boom_model is not None:
+            return self._boom_model
         import BayesBoom.boom as boom
-        return boom.BetaModel(self._a, self._b)
+        self._boom_model = boom.BetaModel(self._a, self._b)
+        return self._boom_model
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def __getstate__(self):
+        payload = self.__dict__
+        payload["_boom_model"] = self._boom_model is not None
+        return payload
+
+    def __setstate__(self):
+        self.__dict__ = payload
+        if payload["_boom_model"]:
+            self._boom_model = None
+            self.boom()
 
 
 class DirichletPrior:
@@ -523,64 +147,132 @@ class DirichletPrior:
         if not np.all(counts > 0):
             raise Exception("All elements of 'counts' must be positive.")
         self._counts = counts
+        self._boom_model = None
 
     def boom(self):
-        import BayesBoom.boom as boom
-        return boom.DirichletModel(boom.Vector(self._counts))
+        if self._boom_model is None:
+            import BayesBoom.boom as boom
+            self._boom_model = boom.DirichletModel(boom.Vector(self._counts))
+        return self._boom_model
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def __getstate__(self):
+        ans = self.__dict__
+        ans["_boom_model"] = self._boom_model is not None
+        return ans
 
-class WishartPrior:
-    def __init__(self, df: float, variance_estimate: np.ndarray):
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        if payload["_boom_model"]:
+            self._boom_model = None
+            self.boom()
+    
+
+class GammaModel(DoubleModel):
+    def __init__(self, shape=None, scale=None, mu=None, a=None, b=None):
         """
+        A GammaModel(a, b) can be defined either in terms of its shape (a) and
+        scale (b) paramaeters (with mean a/b, variance a/b^2), or it's mean
+        (mu) and shape parameters (so the mean is mu and the variance is
+        mu^2/a).
+
         Args:
-          df: The prior sample size.  For the distribution to be proper df must
-            be larger than the number of rows in 'variance_estimate'.
-          variance_estimate: A symmetric positive definite matrix defining the
-            center of the distribution.
+          shape:  The shape parameter a.
+          scale:  The scale parameter b.
+          mu:  The mean of the distribution.
+          a:  Another name for the shape parameter.
+          b:  Another name for the scale parameter.
 
-        Let X_i ~ Mvn(0, V).  Then the Wishart(nu, V) distribution describes
-        the sum of 'nu' draws X_i * X_i'.  If the draws are placed as rows in a
-        matrix X then X'X ~ Wishart(nu, V).  The mean of this distribution is
-        nu * V.
-
-        The Wishart distribution is the conjugate prior for the precision
-        parameter (inverse variance) of the multivariate normal distribution.
+        Only two of these parameters need to be specified.  If all three are
+        given, then 'mu' is ignored.
         """
-        sumsq = df * variance_estimate
-        if len(sumsq.shape) != 2:
-            raise Exception("sumsq must be a matrix")
+        if a is not None:
+            shape = a
+        if b is not None:
+            scale = b
 
-        if sumsq.shape[0] != sumsq.shape[1]:
-            raise Exception("sumsq must be square")
+        if (shape is None) + (scale is None) + (mu is None) > 1:
+            raise Exception("Two parameters must be specified.")
 
-        sym_sumsq = (sumsq + sumsq.T) * .5
-        sumabs = np.sum(np.abs(sumsq - sym_sumsq))
-        relative = np.sum(np.abs(sumsq))
-        if sumabs / relative > 1e-8:
-            raise Exception("sumsq must be symmetric")
+        self._a = shape
+        if self._a is None:
+            self._a = scale * mu
 
-        if df <= sumsq.shape[0]:
-            raise Exception(
-                "df must be largern than nrow(sumsq) for the prior to be "
-                "proper.")
+        self._b = scale
+        if self._b is None:
+            self._b = mu / shape
 
-        self._df = df
-        self._sumsq = sumsq
+        if self._a <= 0 or self._b <= 0:
+            raise Exception("GammaModel parameters must be positive.")
 
-    @property
-    def variance_estimate(self):
-        return self._sumsq / self._df
+        self._boom_model = None
 
     @property
-    def df(self):
-        return self._df
+    def mean(self):
+        self._refresh_params()
+        return self._a / self._b
+
+    @property
+    def variance(self):
+        self._refresh_params()
+        return self._a / self._b**2
+
+    @property
+    def a(self):
+        self._refresh_params()
+        return self._a
+
+    @property
+    def shape(self):
+        self._refresh_params()
+        return self._a
+
+    @property
+    def b(self):
+        self._refresh_params()
+        return self._b
+
+    @property
+    def scale(self):
+        self._refresh_params()
+        return self._b
 
     def boom(self):
-        import BayesBoom.boom as boom
-        return boom.WishartModel(self.df, self.variance_estimate)
+        if self._boom_model is None:
+            import BayesBoom.boom as boom
+            self._boom_model = boom.GammaModel(self._a, self._b)
+        return self._boom_model
+
+    def allocate_space(self, niter):
+        self._a_draws = np.empty(niter)
+        self._b_draws = np.empty(niter)
+
+    def record_draw(self, iteration):
+        if self._boom_model is not None:
+            self._a_draws[iteration] = self._boom_model.alpha()
+    
+    def _refresh_params(self):
+        if self._boom_model is not None:
+            self._a = self._boom_model.a
+            self._b = self._boom_model.b
+
+    def __getstate__(self):
+        payload = self.__dict__
+        payload["_boom_model"] = self._boom_model is not None
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        if payload["_boom_model"]:
+            self._boom_model = None
+            self.boom()
+            
+    def __repr__(self):
+        ans = f"A GammaModel with shape = {self.shape} "
+        ans += f"and scale = {self.scale}."
+        return ans
 
 
 class GaussianSuf:
@@ -684,6 +376,354 @@ class GaussianSuf:
         return self.__dict__ == other.__dict__
 
 
+class MarkovModel(MixtureComponent):
+    def __init__(self,
+                 transition_matrix=None,
+                 state_size=None,
+                 initial_distribution=None):
+        """
+        Args:
+          transition_matrix: A square matrix with element (r, s) giving the
+            conditional probability of a transition to state s given current
+            state r.  Each row sums to 1.  If None, then a matrix will be
+            created giving uniform transition probability between any two
+            states.
+          state_size: An integer giving the number of states.  If None then
+            transition_matrix must be supplied explicityly.  If
+            transition_matrix is supplied this argument is not used.
+          initial_distribution: A discrete probability distribution (as a numpy
+            vector) giving the distribution of the state at time 0.  If None a
+            uniform distribution is assumed for the initial state.
+        """
+        if transition_matrix is None:
+            if state_size is None:
+                raise Exception("If transition_matrix is None then "
+                                "state_size must be given.")
+            transition_matrix = np.ones((state_size, state_size)) / state_size
+
+        state_size = transition_matrix.shape[0]
+        if initial_distribution is None:
+            initial_distribution = np.ones(state_size) / state_size
+
+        self._transition_matrix = transition_matrix
+        self._initial_distribution = initial_distribution
+        self._boom_model = None
+        self._prior = None
+        self._data = None
+
+    @property
+    def state_size(self):
+        return self._transition_matrix.shape[0]
+        
+    @property
+    def transition_probabilities(self):
+        if self._boom_model:
+            self._transition_matrix = (
+                self._boom_model.transition_probabilities.to_numpy()
+            )
+        return self._transition_matrix
+
+    @property
+    def initial_distribution(self):
+        if self._boom_model:
+            self._initial_distribution = (
+                self._boom_model.initial_distribution.to_numpy()
+            )
+
+        return self._initial_distribution
+
+    def boom(self):
+        if self._boom_model is not None:
+            return self._boom_model
+
+        import BayesBoom.boom as boom
+        self._boom_model = boom.MarkovModel(
+            to_boom_matrix(self._transition_matrix),
+            to_boom_vector(self._initial_distribution))
+
+        # if self._data is not None:
+        #     # Add the data to the boom model
+        #     pass
+        
+        if isinstance(self._prior, MarkovConjugatePrior):
+            if self._prior.prior_initial_counts is None:
+                self._boom_sampler = boom.MarkovConjugateSampler(
+                    self._boom_model,
+                    to_boom_matrix(self._prior.prior_transition_counts),
+                    boom.GlobalRng.rng)
+                self._boom_model.fix_pi0(self._boom_model.pi0)
+            else:
+                self._boom_sampler = boom.MarkovConjugateSampler(
+                    self._boom_model,
+                    to_boom_matrix(self._prior.prior_transition_counts),
+                    to_boom_vector(self._prior.prior_initial_counts),
+                    boom.GlobalRng.rng)
+                
+            self._boom_model.set_method(self._boom_sampler)
+
+        return self._boom_model
+
+    def allocate_space(self, niter):
+        dim = self.state_size
+        self._transition_probability_draws = np.empty((niter, dim, dim))
+
+    def record_draw(self, iteration):
+        self._transition_probability_draws[iteration, :, :] = (
+            self._boom_model.transition_probabilities.to_numpy()
+        )
+
+    
+class MarkovConjugatePrior:
+    """
+    Conjugate prior for a MarkovModel.  The parameters are
+    'prior_transition_counts' and optionally 'prior_initial_counts'.
+    """
+    def __init__(self, prior_transition_counts, prior_initial_counts=None):
+        self._prior_transition_counts = prior_transition_counts
+        self._prior_initial_counts = prior_initial_counts
+
+    @property
+    def prior_transition_counts(self):
+        return self._prior_transition_counts
+
+    @property
+    def prior_initial_counts(self):
+        return self._prior_initial_counts
+
+        
+class MultinomialModel(MixtureComponent):
+    """
+    A Python wrapper for the boom MultinomialModel object.
+    """
+
+    def __init__(self, probs, categories=None):
+        """
+        Args:
+          probs: A numpy vector of probabilities.  This is a discrete
+            probability distribution: nonnegative values summing to 1.
+          categories: Optional numpy vector of category names.  If supplied, the
+            vector's lengh must mathc probs.
+        """
+        self._probs = probs
+        self._categories = categories
+        self._boom_model = None
+
+    @property
+    def probs(self):
+        if self._boom_model:
+            self._probs = self._boom_model.probs.to_numpy()
+        return self._probs
+
+    @property
+    def dim(self):
+        if self._boom_model:
+            return self._boom_model.dim
+        else:
+            return len(probs)
+        
+    def allocate_space(self, niter):
+        self._prob_draws = np.empty((niter, self.dim))
+
+    def record_draw(self, iteration):
+        if not self._boom_model:
+            raise Exception("Object contains no boom model")
+        self._prob_draws[i, :] = self.probs
+
+    def boom(self):
+        if not self._boom_model:
+            self._boom_model = boom.MultinomialModel(
+                to_boom_vector(self._probs))
+        return self._boom_model
+
+
+class MvnBase(ABC):
+    @property
+    @abstractmethod
+    def dim(self):
+        """
+        The dimension of the variable described by the distribution.
+        """
+    @property
+    @abstractmethod
+    def mean(self):
+        """
+        The mean of the distribution.
+        """
+
+    @property
+    @abstractmethod
+    def variance(self):
+        """
+        The variance of the distribution, as a 2-d numpy array.
+        """
+
+    @abstractmethod
+    def boom(self):
+        """
+        Return the corresponding boom object.
+        """
+
+
+class MvnPrior(MvnBase):
+    """
+    Encodes a multivariate normal distribution.
+    """
+    def __init__(self, mu, Sigma):
+        if len(mu.shape) != 1:
+            raise Exception("mu must be a vector.")
+        if len(Sigma.shape) != 2:
+            raise Exception("Sigma must be a matrix.")
+        if Sigma.shape[0] != Sigma.shape[1]:
+            raise Exception("Sigma must be symmetric")
+        if Sigma.shape[0] != len(mu):
+            raise Exception("mu and Sigma must be the same dimension.")
+        self._mu = mu
+        self._Sigma = Sigma
+
+    @property
+    def dim(self):
+        return len(self._mu)
+
+    @property
+    def mu(self):
+        return self._mu
+
+    @property
+    def mean(self):
+        return self.mu
+
+    @property
+    def Sigma(self):
+        return self._Sigma
+
+    @property
+    def variance(self):
+        return self.Sigma
+
+    def boom(self):
+        """
+        Return the boom.MvnModel corresponding to this object's parameters.
+        """
+        if self._boom_model is None:
+            import BayesBoom.boom as boom
+            self._boom_model = boom.MvnModel(boom.Vector(self._mu),
+                                             boom.SpdMatrix(self._Sigma))
+        return self._boom_model
+
+
+class MvnGivenSigma(MvnBase):
+    """
+    Encodes a conditional multivariate normal distribution given an external
+    variance matrix Sigma.  This model describes y ~ Mvn(mu, Sigma / kappa).
+    """
+    def __init__(self, mu: np.ndarray, sample_size: float):
+        self._mu = np.array(mu, dtype="float").ravel()
+        self._sample_size = float(sample_size)
+        self._boom_model = None
+
+    @property
+    def dim(self):
+        return len(self._mu)
+
+    def boom(self):
+        if self._boom_model is None:
+            import BayesBoom.boom as boom
+            self._boom_model = boom.MvnGivenSigma(to_boom_vector(self._mu),
+                                                  self._sample_size)
+        return self._boom_model
+
+    @property
+    def variance(self):
+        raise Exception("MvnGivenSigma needs Sigma value to compute the variance.")
+
+    @property
+    def mean(self):
+        return self._mu
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class NormalPrior(DoubleModel):
+    """
+    A scalar normal prior distribution.
+    """
+    def __init__(self,
+                 mu: float = 0.0,
+                 sigma: float = 1.0,
+                 initial_value: float = None):
+        self.mu = float(mu)
+        self.sigma = float(sigma)
+        if initial_value is None:
+            self.initial_value = mu
+        else:
+            self.initial_value = float(initial_value)
+
+    @property
+    def mean(self):
+        return self.mu
+
+    @property
+    def sd(self):
+        return self.sigma
+
+    @property
+    def variance(self):
+        return self.sigma ** 2
+
+    def boom(self):
+        """
+        Return the boom.GaussianModel corresponding to the object's parameters.
+        """
+        import BayesBoom.boom as boom
+        return boom.GaussianModel(self.mu, self.sigma)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+
+
+class PoissonModel(MixtureComponent):
+    def __init__(self, mean=1):
+        self._lambda = mean
+        self._prior = None
+        self._lambda_draws = None
+        self._boom_model = None
+        self._boom_sampler = None
+
+    @property
+    def mean(self):
+        if self._boom_model is not None:
+            self._lambda = self._boom_model.mean
+        return self._lambda
+
+    def boom(self):
+        if self._boom_model is not None:
+            return self._boom_model
+        
+        import BayesBoom.boom as boom
+        self._boom_model = boom.PoissonModel(self._lambda)
+        if self._prior is not None:
+            if isinstance(self._prior, GammaModel):
+                self._boom_sampler = boom.PoissonGammaSampler(
+                    self._boom_model,
+                    self._prior.boom(),
+                    boom.GlobalRng.rng)
+            else:
+                pass
+            self._boom_model.set_method(self._boom_sampler)
+
+        return self._boom_model
+
+    def allocate_space(self, niter):
+        self._lambda_draws = np.empty(niter)
+
+    def record_draw(self, iteration):
+        self._lambda_draws[iteration] = self._boom_model.mean
+    
+        
 class RegSuf:
     """
     The sufficient statistics needed to specify a regression model.
@@ -763,8 +803,8 @@ class RegSuf:
     def boom(self):
         import BayesBoom.boom as boom
         import BayesBoom.R as R
-        return boom.RegSuf(xtx=R.to_boom_spd(self._xtx),
-                           xty=R.to_boom_vector(self._xty),
+        return boom.RegSuf(xtx=to_boom_spd(self._xtx),
+                           xty=to_boom_vector(self._xty),
                            sample_sd=self._sample_sd,
                            sample_size=self._sample_size,
                            ybar=self._ybar,
@@ -881,3 +921,147 @@ class ScottZellnerMvnPrior(MvnBase):
         import BayesBoom.boom as boom
         return boom.MvnModel(to_boom_vector(self.mean),
                              to_boom_spd(self.variance))
+
+
+class SdPrior(DoubleModel):
+    """A prior distribution for a standard deviation 'sigma'.  This prior assumes
+    that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here 'df' is
+    the 'sample_size' and ss is the "sum of squares" equal to the sample size
+    times 'sigma_guess'**2.
+
+    This prior allows an upper limit on the support of sigma, which is infinite
+    by default.
+
+    """
+
+    def __init__(self, sigma_guess, sample_size=.01, initial_value=None,
+                 fixed=False, upper_limit=np.inf):
+        """
+        Create an SdPrior.
+
+        Args:
+          sigma_guess:  Guess at the value of the standard deviation.
+          sample_size: Number of observations worth of information with which
+            to weight the guess.
+          initial_value: The initial value to be used in an MCMC chain.  This
+            is not always respected.  The default value is sigma_guess.
+          fixed: Flag indicating whether the parameter should be held fixed in
+            an MCMC algorithm.  This is mainly for debugging and is not always
+            respected.
+          upper_limit: Upper limit on the value of 'sigma'.
+        """
+        self.sigma_guess = float(sigma_guess)
+        self.sample_size = float(sample_size)
+        if initial_value is None:
+            initial_value = sigma_guess
+        self.initial_value = float(initial_value)
+        self.fixed = bool(fixed)
+        self.upper_limit = float(upper_limit)
+
+    @property
+    def sum_of_squares(self):
+        return self.sigma_guess**2 * self.sample_size
+
+    def create_chisq_model(self):
+        return self.boom()
+
+    def boom(self):
+        """
+        Return the boom.ChisqModel corresponding to the input parameters.
+        """
+        import BayesBoom.boom as boom
+        return boom.ChisqModel(self.sample_size, self.sigma_guess)
+
+    @property
+    def mean(self):
+        """
+        The mean of the distribution on the precision scale.
+        """
+        return self.sample_size / self.sigma_guess**2
+
+    def __repr__(self):
+        ans = f"SdPrior with sigma_guess = {self.sigma_guess}, "
+        ans += f"sample_size = {self.sample_size}, "
+        ans += f"upper_limit = {self.upper_limit}"
+        return ans
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+
+
+class UniformPrior(DoubleModel):
+    """
+    Univariate uniform distribution.
+    """
+    def __init__(self, lo, hi):
+        if hi < lo:
+            lo, hi = hi, lo
+        self._lo = lo
+        self._hi = hi
+
+    @property
+    def mean(self):
+        return .5 * (self._lo + self._hi)
+
+    def boom(self):
+        """
+        Return the boom.UniformModel corresponding to this object's parameters.
+        """
+        import BayesBoom.boom as boom
+        return boom.UniformModel(self._lo, self._hi)
+
+    
+class WishartPrior:
+    def __init__(self, df: float, variance_estimate: np.ndarray):
+        """
+        Args:
+          df: The prior sample size.  For the distribution to be proper df must
+            be larger than the number of rows in 'variance_estimate'.
+          variance_estimate: A symmetric positive definite matrix defining the
+            center of the distribution.
+
+        Let X_i ~ Mvn(0, V).  Then the Wishart(nu, V) distribution describes
+        the sum of 'nu' draws X_i * X_i'.  If the draws are placed as rows in a
+        matrix X then X'X ~ Wishart(nu, V).  The mean of this distribution is
+        nu * V.
+
+        The Wishart distribution is the conjugate prior for the precision
+        parameter (inverse variance) of the multivariate normal distribution.
+        """
+        sumsq = df * variance_estimate
+        if len(sumsq.shape) != 2:
+            raise Exception("sumsq must be a matrix")
+
+        if sumsq.shape[0] != sumsq.shape[1]:
+            raise Exception("sumsq must be square")
+
+        sym_sumsq = (sumsq + sumsq.T) * .5
+        sumabs = np.sum(np.abs(sumsq - sym_sumsq))
+        relative = np.sum(np.abs(sumsq))
+        if sumabs / relative > 1e-8:
+            raise Exception("sumsq must be symmetric")
+
+        if df <= sumsq.shape[0]:
+            raise Exception(
+                "df must be largern than nrow(sumsq) for the prior to be "
+                "proper.")
+
+        self._df = df
+        self._sumsq = sumsq
+
+    @property
+    def variance_estimate(self):
+        return self._sumsq / self._df
+
+    @property
+    def df(self):
+        return self._df
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.WishartModel(self.df, self.variance_estimate)
+
+
