@@ -29,8 +29,8 @@ class TestHmm(unittest.TestCase):
              0, 0, 0, 0, 0, 0, 0, 0, 0], dtype='int')
 
     def test_fetal_lamb(self):
-        model = mix.HiddenMarkovModel(2)
-        model.add_data(self._fetal_lamb_data)
+        hmm = mix.HiddenMarkovModel(2)
+        hmm.add_data(self._fetal_lamb_data)
 
 
         lower_poisson_model = R.PoissonModel()
@@ -38,14 +38,21 @@ class TestHmm(unittest.TestCase):
 
         upper_poisson_model = R.PoissonModel()
         upper_poisson_model.set_prior(R.GammaModel(2.0, 1.0))
-        model.add_state_model(lower_poisson_model)
-        model.add_state_model(upper_poisson_model)
-
-        model.set_markov_prior(markov_prior)
-
-        model.train(niter=100)
         
+        hmm.add_state_model(lower_poisson_model)
+        hmm.add_state_model(upper_poisson_model)
 
+        niter = 100
+        hmm.train(niter=niter, ping=None)
+
+        self.assertEqual(hmm._log_likelihood_draws.shape[0], niter)
+        self.assertEqual(hmm.markov_model._transition_probability_draws.shape[0],
+                         niter)
+        self.assertEqual(lower_poisson_model._lambda_draws.shape[0],
+                         niter)
+        self.assertEqual(upper_poisson_model._lambda_draws.shape[0],
+                         niter)
+        
     
 _debug_mode = False
 
