@@ -32,6 +32,7 @@ namespace BayesBoom {
 
     py::class_<MultinomialModel,
                PriorPolicy,
+               MixtureComponent,
                BOOM::Ptr<MultinomialModel>>(boom,
                                             "MultinomialModel",
                                             py::multiple_inheritance())

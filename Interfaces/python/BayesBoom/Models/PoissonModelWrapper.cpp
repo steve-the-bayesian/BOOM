@@ -14,6 +14,7 @@ namespace BayesBoom {
 
     py::class_<PoissonModel,
                PriorPolicy,
+               MixtureComponent,
                BOOM::Ptr<PoissonModel>>(
                    boom, "PoissonModel", py::multiple_inheritance())
         .def(py::init(

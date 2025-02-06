@@ -14,6 +14,7 @@ namespace BayesBoom {
 
     py::class_<MarkovModel,
                PriorPolicy,
+               MixtureComponent,
                BOOM::Ptr<MarkovModel>>(
                    boom, "MarkovModel", py::multiple_inheritance())
         .def(py::init(
