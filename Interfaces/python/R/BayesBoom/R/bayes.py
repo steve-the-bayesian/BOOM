@@ -2,7 +2,22 @@ import numpy as np
 from abc import ABC, abstractmethod
 import copy
 
-from .boom_py_utils import to_boom_vector, to_boom_spd, to_boom_matrix
+from .boom_py_utils import (
+    to_boom_vector,
+    to_boom_spd,
+    to_boom_matrix,
+)
+
+from .boom_data_builders import (
+    DataBuilder,
+    IntDataBuilder,
+    DoubleDataBuilder,
+    VectorDataBuilder,
+    LabelledCategoricalDataBuilder,
+    UnlabelledCategoricalDataBuilder,
+    LabelledMarkovDataBuilder,
+    UnlabelledMarkovDataBuilder,
+)
 
 """
 Wrapper classes to encapsulate and expand models and prior distributions
@@ -29,6 +44,9 @@ class DoubleModel(ABC):
         The mean of the distribution.
         """
 
+    def create_boom_data_builder(self):
+        return DoubleDataBuilder()
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -50,6 +68,13 @@ class MixtureComponent(ABC):
         Record the current model parameters (to be obtained from a stored
         boom model object) in position 'iteration' of previously allocated
         storage.
+        """
+
+    @abstractmethod
+    def create_boom_data_builder(self):
+        """
+        Return a DataBuilder object that can convert Python data into the
+        BOOM data of the format expected by the concrete (child) model.
         """
 
     
@@ -376,11 +401,30 @@ class GaussianSuf:
         return self.__dict__ == other.__dict__
 
 
+class MarkovConjugatePrior:
+    """
+    Conjugate prior for a MarkovModel.  The parameters are
+    'prior_transition_counts' and optionally 'prior_initial_counts'.
+    """
+    def __init__(self, prior_transition_counts, prior_initial_counts=None):
+        self._prior_transition_counts = prior_transition_counts
+        self._prior_initial_counts = prior_initial_counts
+
+    @property
+    def prior_transition_counts(self):
+        return self._prior_transition_counts
+
+    @property
+    def prior_initial_counts(self):
+        return self._prior_initial_counts
+
+        
 class MarkovModel(MixtureComponent):
     def __init__(self,
                  transition_matrix=None,
                  state_size=None,
-                 initial_distribution=None):
+                 initial_distribution=None,
+                 categories=None):
         """
         Args:
           transition_matrix: A square matrix with element (r, s) giving the
@@ -394,7 +438,14 @@ class MarkovModel(MixtureComponent):
           initial_distribution: A discrete probability distribution (as a numpy
             vector) giving the distribution of the state at time 0.  If None a
             uniform distribution is assumed for the initial state.
+          categories: A sequence of strings describing the states of the Markov
+            model.  This is an optional argument.  If it is used it will
+            supercede 'state_size.'  If 'categories' is omitted then the states
+            of the model will be integers 0, 1, 2, ..., state_size - 1.
         """
+        if categories is not None:
+            state_size = len(categories)
+        
         if transition_matrix is None:
             if state_size is None:
                 raise Exception("If transition_matrix is None then "
@@ -402,6 +453,11 @@ class MarkovModel(MixtureComponent):
             transition_matrix = np.ones((state_size, state_size)) / state_size
 
         state_size = transition_matrix.shape[0]
+        if categories and (state_size != len(categories)):
+            raise Exception(
+                f"The number of categories ({len(categories)}) does not match "
+                f"the state size ({state_size}).")
+        
         if initial_distribution is None:
             initial_distribution = np.ones(state_size) / state_size
 
@@ -410,6 +466,7 @@ class MarkovModel(MixtureComponent):
         self._boom_model = None
         self._prior = None
         self._data = None
+        self._categories = categories
 
     @property
     def state_size(self):
@@ -432,6 +489,11 @@ class MarkovModel(MixtureComponent):
 
         return self._initial_distribution
 
+    def set_prior(self, prior):
+        if not isinstance(prior, MarkovConjugatePrior):
+            raise Exception("Prior must be of class MarkovConjugatePrior.")
+        self._prior = prior
+    
     def boom(self):
         if self._boom_model is not None:
             return self._boom_model
@@ -472,25 +534,14 @@ class MarkovModel(MixtureComponent):
             self._boom_model.transition_probabilities.to_numpy()
         )
 
-    
-class MarkovConjugatePrior:
-    """
-    Conjugate prior for a MarkovModel.  The parameters are
-    'prior_transition_counts' and optionally 'prior_initial_counts'.
-    """
-    def __init__(self, prior_transition_counts, prior_initial_counts=None):
-        self._prior_transition_counts = prior_transition_counts
-        self._prior_initial_counts = prior_initial_counts
-
-    @property
-    def prior_transition_counts(self):
-        return self._prior_transition_counts
-
-    @property
-    def prior_initial_counts(self):
-        return self._prior_initial_counts
-
+    def create_boom_data_builder(self):
+        if self._categories:
+            return LabelledMarkovDataBuilder(self._categories)
+        else:
+            return UnlabelledCategoricalDataBuilder(self._state_size)
         
+
+    
 class MultinomialModel(MixtureComponent):
     """
     A Python wrapper for the boom MultinomialModel object.
@@ -502,12 +553,16 @@ class MultinomialModel(MixtureComponent):
           probs: A numpy vector of probabilities.  This is a discrete
             probability distribution: nonnegative values summing to 1.
           categories: Optional numpy vector of category names.  If supplied, the
-            vector's lengh must mathc probs.
+            vector's lengh must match probs.
         """
         self._probs = probs
         self._categories = categories
         self._boom_model = None
 
+    @property
+    def data_type(self):
+        return 
+        
     @property
     def probs(self):
         if self._boom_model:
@@ -562,6 +617,10 @@ class MvnBase(ABC):
         """
         Return the corresponding boom object.
         """
+
+    @property
+    def create_boom_data_builder(self):
+        return VectorDataBuilder()
 
 
 class MvnPrior(MvnBase):
@@ -699,6 +758,9 @@ class PoissonModel(MixtureComponent):
             self._lambda = self._boom_model.mean
         return self._lambda
 
+    def set_prior(self, prior):
+        self._prior = prior
+    
     def boom(self):
         if self._boom_model is not None:
             return self._boom_model
@@ -712,7 +774,10 @@ class PoissonModel(MixtureComponent):
                     self._prior.boom(),
                     boom.GlobalRng.rng)
             else:
-                pass
+                raise Exception(
+                    f"PoissonModel has a prior of class {type(self._prior)}.  "
+                    "I'm unclear how to create a sampler.")
+                    
             self._boom_model.set_method(self._boom_sampler)
 
         return self._boom_model
@@ -722,6 +787,9 @@ class PoissonModel(MixtureComponent):
 
     def record_draw(self, iteration):
         self._lambda_draws[iteration] = self._boom_model.mean
+
+    def create_boom_data_builder(self):
+        return IntDataBuilder()
     
         
 class RegSuf:
