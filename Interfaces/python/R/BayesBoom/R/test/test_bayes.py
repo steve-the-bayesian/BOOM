@@ -50,6 +50,14 @@ class TestMarkovModel(unittest.TestCase):
             probs.sum(axis=1),
             np.ones(3)))
 
+    def test_sim(self):
+        trans_probs = np.array([[.9, .1],
+                                [.15, .85]])
+        init = np.array([.7, .3])
+        model = R.MarkovModel(trans_probs, init)
+        chain = model.sim(10)
+        self.assertEqual(len(chain), 10)
+
         
 class TestPoissonModel(unittest.TestCase):
     def setUp(self):

@@ -422,8 +422,8 @@ class MarkovConjugatePrior:
 class MarkovModel(MixtureComponent):
     def __init__(self,
                  transition_matrix=None,
-                 state_size=None,
                  initial_distribution=None,
+                 state_size=None,
                  categories=None):
         """
         Args:
@@ -539,6 +539,20 @@ class MarkovModel(MixtureComponent):
             return LabelledMarkovDataBuilder(self._categories)
         else:
             return UnlabelledCategoricalDataBuilder(self._state_size)
+
+    def sim(self, sample_size):
+        P = self._transition_matrix
+        states = np.arange(self.state_size)
+        ind = np.empty(sample_size, dtype="int")
+        rng = np.random.default_rng()
+        ind[0] = rng.choice(a=states, size=1, p=self._initial_distribution)[0]
+        for i in range(1, sample_size):
+            ind[i] = rng.choice(a=states, size=1, p=P[ind[i-1], :])[0]
+
+        if self._categories is not None:
+            return self._categories[ind]
+        else:
+            return ind
         
 
     
@@ -556,9 +570,12 @@ class MultinomialModel(MixtureComponent):
             vector's lengh must match probs.
         """
         self._probs = probs
-        self._categories = categories
+        self._categories = range(len(probs)) if categories is None else categories
         self._boom_model = None
-
+        self._boom_sampler = None
+        self._prior = None
+    
+        
     @property
     def data_type(self):
         return 
@@ -582,14 +599,40 @@ class MultinomialModel(MixtureComponent):
     def record_draw(self, iteration):
         if not self._boom_model:
             raise Exception("Object contains no boom model")
-        self._prob_draws[i, :] = self.probs
+        self._prob_draws[iteration, :] = self.probs
 
     def boom(self):
+        import BayesBoom.boom as boom
+        if self._boom_model:
+            return self._boom_model
+        
         if not self._boom_model:
             self._boom_model = boom.MultinomialModel(
                 to_boom_vector(self._probs))
+
+        if self._prior:
+            if isinstance(self._prior, DirichletPrior):
+                self._boom_sampler = boom.MultinomialDirichletSampler(
+                    self._boom_model,
+                    self._prior.boom(),
+                    boom.GlobalRng.rng)
+            else:
+                raise Exception("Not sure how to create a posterior sampler.")
+
+            self._boom_model.set_method(self._boom_sampler)
+                
         return self._boom_model
 
+    def sim(self, sample_size = 1):
+        rng = np.random.default_rng()
+        values = rng.choice(a=self._categories, size=sample_size, p=self._probs)
+        return values
+        
+    def create_boom_data_builder(self):
+        if isinstance(self._categories, range):
+            return UnlabelledCategoricalDataBuilder(self.dim)
+        else:
+            return LabelledCategoricalDataBuilder(self._categories)
 
 class MvnBase(ABC):
     @property
