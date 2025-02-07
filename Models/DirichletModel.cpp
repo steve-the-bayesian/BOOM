@@ -108,12 +108,13 @@ namespace BOOM {
   DM::DirichletModel(const DirichletModel &rhs)
       : Model(rhs),
         VectorModel(rhs),
+        MixtureComponent(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         DiffVectorModel(rhs),
-        NumOptModel(rhs),
-        MixtureComponent(rhs) {}
+        NumOptModel(rhs)
+  {}
 
   DM *DM::clone() const { return new DirichletModel(*this); }
 

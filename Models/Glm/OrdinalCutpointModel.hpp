@@ -77,7 +77,7 @@ namespace BOOM {
                                public PriorPolicy,
                                public GlmModel,
                                public NumOptModel,
-                               public MixtureComponent {
+                               virtual public MixtureComponent {
    public:
     // Initialize parameters to be 
     OrdinalCutpointModel(int xdim, int nlevels);

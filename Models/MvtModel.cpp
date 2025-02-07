@@ -56,6 +56,7 @@ namespace BOOM {
   MVT::MvtModel(const MvtModel &rhs)
       : Model(rhs),
         VectorModel(rhs),
+        MixtureComponent(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),

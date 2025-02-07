@@ -65,7 +65,7 @@ namespace BOOM {
                          public PriorPolicy,
                          public DiffVectorModel,
                          public NumOptModel,
-                         public MixtureComponent {
+                         virtual public MixtureComponent {
    public:
     explicit DirichletModel(uint S, double Nu = 1.0);
     explicit DirichletModel(const Vector &Nu);

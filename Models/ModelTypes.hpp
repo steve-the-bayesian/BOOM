@@ -279,6 +279,9 @@ namespace BOOM {
     CorrelationModel *clone() const override = 0;
   };
   //======================================================================
+  //
+  // Classes that inherit from MixtureComponent need to do so virtually.
+  // 
   class MixtureComponent : virtual public Model {
    public:
     MixtureComponent() : component_(-1) {}

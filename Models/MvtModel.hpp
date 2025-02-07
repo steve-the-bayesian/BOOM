@@ -40,7 +40,7 @@ namespace BOOM {
                    public LatentVariableModel,
                    public LoglikeModel,
                    public LocationScaleVectorModel,
-                   public MixtureComponent {
+                   virtual public MixtureComponent {
    public:
     explicit MvtModel(uint p, double mu = 0.0, double sig = 1.0,
                       double nu = 30.0);
