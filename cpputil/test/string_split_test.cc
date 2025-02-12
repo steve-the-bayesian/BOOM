@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "cpputil/Split.hpp"
+#include "cpputil/StringSplitter.hpp"
 #include "test_utils/test_utils.hpp"
 
 namespace {
