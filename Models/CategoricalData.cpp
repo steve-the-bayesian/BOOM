@@ -24,6 +24,7 @@
 #include <sstream>
 #include <utility>
 #include "cpputil/report_error.hpp"
+#include "cpputil/Split.hpp"
 
 namespace BOOM {
 
@@ -377,7 +378,272 @@ namespace BOOM {
     }
     return value() >= rhs.value();
   }
+  
   //======================================================================
+  bool TaxNodeLess::operator()(const Ptr<TaxonomyNode> &lhs,
+                               const Ptr<TaxonomyNode> &rhs) const {
+    return lhs->value() < rhs->value();
+  }
+
+  bool TaxNodeStringLess::operator()(const Ptr<TaxonomyNode> &lhs,
+                                     const std::string &rhs) const {
+    return lhs->value() < rhs;
+  }
+  
+  //======================================================================
+  TaxonomyNode::TaxonomyNode(const std::string &value)
+      : value_(value),
+        position_(-1),
+        parent_(nullptr)
+  {}
+
+  TaxonomyNode *TaxonomyNode::add_child(const std::string &level) {
+    NEW(TaxonomyNode, child)(level);
+    children_.insert(child);
+    child->set_parent(this);
+    return child.get();
+  }
+
+  TaxonomyNode *TaxonomyNode::find_child(const std::string &value) const {
+    // auto it = children_.find(value, TaxNodeStringLess());
+    // if (it == children_.end()) {
+    //   return nullptr;
+    // } else {
+    //   return (*it).get();
+    // }
+    for (const Ptr<TaxonomyNode> &child : children_) {
+      if (child->value() == value) {
+        return child.get();
+      }
+    }
+    return nullptr;
+  }
+
+  void TaxonomyNode::set_parent(TaxonomyNode *parent) {
+    parent_ = parent;
+  }
+
+  bool TaxonomyNode::operator==(const TaxonomyNode &rhs) const {
+      if (value_ != rhs.value_) {
+        return false;
+      } else if (parent_) {
+        return *parent_ == *rhs.parent_;
+      } else {
+        return true;
+      }
+    }
+
+  void TaxonomyNode::fill_position(const std::vector<std::string> &values,
+                                   std::vector<int> &output,
+                                   const TaxNodeStringLess &less) const {
+    if (output.size() == values.size()) {
+      return;
+    }
+    int step = output.size();
+    const std::string &value(values[step]);
+    auto it = children_.find(values[step], less);
+    if (it == children_.end()) {
+      std::ostringstream err;
+      err << values[step] << " was not found in level " << step
+          << " of the taxonomy with taxonomy element ";
+      for (int i = 0; i < values.size(); ++i) {
+        err << value;
+        if (i + 1 < values.size()) {
+          err << "/";
+        }
+      }
+      err << ".";
+      report_error(err.str());
+    } else {
+      const Ptr<TaxonomyNode> &node(*it);
+      output.push_back(node->position());
+    }
+  }
+  
+  std::vector<std::string> TaxonomyNode::leaf_names(char sep) const {
+    std::vector<std::string> ans;
+    if (children_.empty()) {
+      ans.push_back(value_);
+    } else {
+      for (const auto &el : children_) {
+        std::vector<std::string> child_levels = el->leaf_names(sep);
+        for (const auto &level : child_levels) {
+          ans.push_back(value_ + sep + level);
+        }
+      }
+    }
+    return ans;
+  }
+
+  std::vector<std::string> TaxonomyNode::node_names(char sep) const {
+    std::vector<std::string> ans;
+    ans.push_back(value_);
+    for (const auto &el : children_) {
+      std::vector<std::string> child_levels = el->node_names(sep);
+      for (const auto &level : child_levels) {
+        ans.push_back(value_ + sep + level);
+      }
+    }
+    return ans;
+  }
+  
+  Int TaxonomyNode::tree_size() const {
+    Int ans = 1;
+    for (const auto &el : children_) {
+      ans += el->tree_size();
+    }
+    return ans;
+  }
+
+  Int TaxonomyNode::number_of_leaves() const {
+    if (children_.empty()) {
+      return 1;
+    } else {
+      Int ans = 0;
+      for (const auto &el : children_) {
+        ans += el->number_of_leaves();
+      }
+      return ans;
+    }
+  }
+
+  void TaxonomyNode::finalize(int position) {
+    position_ = position;
+    for (size_t i = 0; i < children_.size(); ++i) {
+      children_[i]->finalize(i);
+    }
+  }
+  
+  //======================================================================
+
+  void Taxonomy::add(const std::vector<std::string> &element) {
+    if (element.empty()) {
+      return;
+    }
+
+    std::vector<std::string>::const_iterator it = element.begin();
+    while (it->empty() && it != element.end()) {
+      ++it;
+    }
+    if (it == element.end()) {
+      // All entries in 'element' are empty strings.
+      return;
+    }
+    
+    TaxonomyNode *node = nullptr;
+    
+    for (Ptr<TaxonomyNode> &top_level : top_levels_) {
+      if (top_level->value() == *it) {
+        node = top_level.get();
+        break;
+      }
+    }
+
+    if (!node) {
+      NEW(TaxonomyNode, new_node)(*it);
+      top_levels_.insert(new_node);
+      node = new_node.get();
+    }
+
+    // Now 'node' points to the top level node, and 'it' points to the first
+    // non-empty string in 'element'.
+    while (++it != element.end()) {
+      TaxonomyNode *next_level = node->find_child(*it);
+      if (!next_level) {
+        next_level = node->add_child(*it);
+      }
+      node = next_level;
+    }
+  }
+
+  void Taxonomy::finalize() {
+    for (int i = 0; i  < top_levels_.size(); ++i) {
+      top_levels_[i]->finalize(i);
+    }
+  }
+  
+  std::vector<int> Taxonomy::index(const std::vector<std::string> &levels) const {
+    std::vector<int> ans;
+    if (levels.empty()) {
+      return ans;
+    }
+    auto it = top_levels_.find(levels[0], level_less_);
+    if (it == top_levels_.end()){
+      std::ostringstream err;
+      err << "Initial level " << levels[0] << " not present in taxonomy.";
+      report_error(err.str());
+    } else {
+      const Ptr<TaxonomyNode> &top(*it);
+      ans.push_back(top->position());
+      if (ans[0] == -1) {
+        report_error("Taxonomy was never finalized.");
+      }
+      top->fill_position(levels, ans, level_less_);
+    }
+    return ans;
+  }
+  
+  std::vector<std::string> Taxonomy::leaf_names(char sep) const {
+    std::vector<std::string> ans;
+    for (const auto &top : top_levels_) {
+      auto entries = top->leaf_names(sep);
+      std::copy(entries.begin(), entries.end(), std::back_inserter(ans));
+    }
+    return ans;
+  }
+  
+  std::vector<std::string> Taxonomy::node_names(char sep) const {
+    std::vector<std::string> ans;
+    for (const auto &top : top_levels_) {
+      auto entries = top->node_names(sep);
+      std::copy(entries.begin(), entries.end(), std::back_inserter(ans));
+    }
+    return ans;
+  }
+
+  Int Taxonomy::tree_size() const {
+    Int ans = 0;
+    for (const auto &top : top_levels_) {
+      ans += top->tree_size();
+    }
+    return ans;
+  }
+
+  Int Taxonomy::number_of_leaves() const {
+    Int ans = 0;
+    for (const auto &top : top_levels_) {
+      ans += top->number_of_leaves(); 
+    }
+    return ans;
+  }
+
+  //======================================================================
+
+  Ptr<Taxonomy> read_taxonomy(const std::vector<std::string> &values,
+                              char sep) {
+    std::string delim(1, sep);
+    std::vector<std::vector<std::string>> unpacked;
+    StringSplitter splitter(delim);
+    for (const auto &el : values) {
+      std::vector<std::string> split = splitter(el);
+      unpacked.push_back(split);
+    }
+    return read_taxonomy(unpacked);
+  }
+
+  Ptr<Taxonomy> read_taxonomy(
+      const std::vector<std::vector<std::string>> &values) {
+    NEW(Taxonomy, tax)();
+    
+    for (const auto &entry : values) {
+      tax->add(entry);
+    }
+
+    return tax;
+  }
+  
+  //======================================================================
+  
   Ptr<CatKey> make_catkey(const std::vector<std::string> &sv) {
     std::vector<std::string> tmp(sv);
     std::sort(tmp.begin(), tmp.end());

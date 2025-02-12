@@ -24,7 +24,9 @@
 #include <vector>
 #include "Models/DataTypes.hpp"
 #include "cpputil/RefCounted.hpp"
+#include "cpputil/SortedVector.hpp"
 #include "stats/FreqDist.hpp"
+#include "uint.hpp"
 
 namespace BOOM {
 
@@ -290,6 +292,202 @@ namespace BOOM {
     bool operator>(const std::string &rhs) const;
     bool operator>=(const std::string &rhs) const;
   };
+  
+  //======================================================================
+  // A TaxonomyNode is a node in the directed graph of a Taxonomy.
+  class TaxonomyNode;
+
+  //---------------------------------------------------------------------------
+  // TaxonomyNode's need to be less-than comparable so we can keep them in a
+  // SortedVector.
+  class TaxNodeLess {
+   public:
+    bool operator()(const Ptr<TaxonomyNode> &lhs,
+                    const Ptr<TaxonomyNode> &rhs) const;
+  };
+
+  //---------------------------------------------------------------------------
+  // A "less" functor for comparing TaxonomyNode Ptr's to string's.  Used to
+  // quickly find a TaxonomyNode given its value.
+  class TaxNodeStringLess {
+   public:
+    bool operator()(const Ptr<TaxonomyNode> &lhs,
+                    const std::string &rhs) const;
+  };
+
+  //---------------------------------------------------------------------------
+  class TaxonomyNode : private RefCounted {
+   public:
+    TaxonomyNode(const std::string &value);
+
+    // Create a TaxonomyNode with the given value.  Add it to children_.  Return
+    // a raw pointer to the created node.
+    TaxonomyNode * add_child(const std::string &value);
+
+    // If one of the children has value equal to 'level' then return a raw
+    // pointer to the child.  Otherwise return nullptr.
+    TaxonomyNode *find_child(const std::string &level) const;
+
+    // Set the parent of this node to the supplied node.
+    void set_parent(TaxonomyNode *parent);
+    
+    bool operator==(const std::string &value) const {
+      return value_ == value;
+    }
+
+    int position() const {return position_;}
+
+    void fill_position(const std::vector<std::string> &values,
+                       std::vector<int> &output,
+                       const TaxNodeStringLess &less) const;
+    
+    // The names of all the leaves appearing underneath this node.
+    std::vector<std::string> leaf_names(char sep) const;
+
+    // The names of all the nodes in the tree rooted by this node.
+    std::vector<std::string> node_names(char sep) const;
+
+    // Two TaxonomyNode's are equal if their values are equal, and if they have
+    // the same parent.
+    bool operator==(const TaxonomyNode &rhs) const;
+
+    // The text describing this level of the taxonomy.
+    const std::string &value() const {return value_;}
+
+    // The total number of nodes, including this one, in the tree headed by this
+    // node.
+    Int tree_size() const;
+
+    // The total number of leaves in the tree headed by this taxonomy.  If this
+    // is a leaf then the return value is 1.
+    Int number_of_leaves() const;
+
+    // Args:
+    //   position:  This node's position in the hierarchy below its parent node.
+    //
+    // Effects:
+    //   The node's children are all finalized as well.
+    void finalize(int position);
+    
+   private:
+    // The text describing this node in the taxonomy.
+    std::string value_;
+
+    // Position is set to -1 on construction, and then updated when finalize is
+    // called.  This is the node's position in the hierarchy relative to its
+    // parent.  It is the integer value assigned to a data point that hits this
+    // node.
+    int position_;
+    
+    // parent_ will be nullptr for nodes at the top of the hierarchy.
+    TaxonomyNode *parent_;
+
+    // The children of this node are stored in alphabetical order by their
+    // value_ attribute.
+    SortedVector<Ptr<TaxonomyNode>, TaxNodeLess> children_;
+
+    friend void intrusive_ptr_add_ref(TaxonomyNode *node) {
+      node->up_count();
+    }
+
+    friend void intrusive_ptr_release(TaxonomyNode *node) {
+      node->down_count();
+      if (node->ref_count() == 0) {
+        delete node;
+      }
+    }
+  };
+
+  //===========================================================================
+  class Taxonomy : private RefCounted {
+   public:
+    // Add an element to the taxonomy.  If the element is already present the
+    // taxonomy remains unchanged.
+    //
+    // Args:
+    //   element: A sequence of nested taxonomy levels.  For example
+    //     ["shopping", "clothes", "shoes"].  
+    void add(const std::vector<std::string> &element);
+
+    // To be called after the last taxonomy element has been added.
+    //
+    // Effects: Each TaxonomyNode is informed of its position relative to its
+    // parent.
+    void finalize();
+    
+    // Args:
+    //   levels:  The taxonomy levels identifying an observation.
+    //
+    // Returns:
+    //   The numeric indices of each supplied level.
+    //
+    // Throws:
+    //   If a taxonomy level is supplied, but that level is not present in the
+    //   taxonomy then an exception is thrown.
+    std::vector<int> index(const std::vector<std::string> &levels) const;
+
+    // The names of the leaf nodes in the taxonomy.
+    std::vector<std::string> leaf_names(char sep='/') const;
+
+    // The names of all nodes in the taxonomy, including interior nodes.
+    std::vector<std::string> node_names(char sep='/') const;
+
+    // The total number of nodes in the taxonomy, including interior nodes.
+    Int tree_size() const;
+
+    // The total number of leaves in the taxonomy.
+    Int number_of_leaves() const;
+
+   private:
+    // The first levels of the taxonomy tree.
+    SortedVector<Ptr<TaxonomyNode>, TaxNodeLess> top_levels_;
+    TaxNodeStringLess level_less_;
+    
+    friend void intrusive_ptr_add_ref(Taxonomy *taxonomy) {
+      taxonomy->up_count();
+    }
+
+    friend void intrusive_ptr_release(Taxonomy *taxonomy) {
+      taxonomy->down_count();
+      if (taxonomy->ref_count() == 0) {
+        delete taxonomy;
+      }
+    }
+
+  };
+
+
+  // Read a taxonomy from a collection of strings of the form L1/L2/L3
+  // describing different taxonomy levels separated by a character (by default
+  // '/')
+  Ptr<Taxonomy> read_taxonomy(const std::vector<std::string> &values,
+                              char sep='/');
+
+  // Read a taxonomy from a collection of strings of the form
+  // [[L1, L2, L3],
+  //  [L1, L2],
+  //  [L1, L2, L3, L4]]
+  Ptr<Taxonomy> read_taxonomy(
+      const std::vector<std::vector<std::string>> &values);
+  
+  //======================================================================
+
+  class MultilevelCategoricalData : public Data {
+   public:
+    MultilevelCategoricalData(const Ptr<Taxonomy> &taxonomy);
+    MultilevelCategoricalData(const Ptr<Taxonomy> &taxonomy,
+                              const std::vector<int> &values);
+    MultilevelCategoricalData(const Ptr<Taxonomy> &taxonomy,
+                              const std::vector<std::string> &values);
+
+    void set(const std::vector<int> &values);
+    void set(const std::vector<std::string> &values);
+    
+   private:
+    Ptr<Taxonomy> taxonomy_;
+    std::vector<int> values_;
+  };
+
   //======================================================================
 
   // Create a vector of pointers to CategoricalData from a variety of sources,
