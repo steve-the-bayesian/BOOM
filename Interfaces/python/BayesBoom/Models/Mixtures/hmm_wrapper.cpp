@@ -85,6 +85,11 @@ namespace BayesBoom {
              "Args:\n\n"
              "  data_series:  A time-ordered list of BOOM Data objects "
              "comprising the data values for a single subject.")
+        .def("save_state_probs",
+             [](HiddenMarkovModel &hmm) {
+               hmm.save_state_probs();
+             },
+             "Save the marginal probabilities of the hidden states at each time point"
         .def("__repr__",
              [](const  HiddenMarkovModel &model) {
                std::ostringstream out;

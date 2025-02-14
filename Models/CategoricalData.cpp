@@ -24,7 +24,8 @@
 #include <sstream>
 #include <utility>
 #include "cpputil/report_error.hpp"
-#include "cpputil/Split.hpp"
+#include "cpputil/StringSplitter.hpp"
+
 
 namespace BOOM {
 
@@ -419,6 +420,16 @@ namespace BOOM {
     return nullptr;
   }
 
+  TaxonomyNode *TaxonomyNode::find_child(int level) const {
+    if (level < 0 || level >= children_.size()) {
+      std::ostringstream err;
+      err << "Level " << level << " is not present under taxonomy node "
+          << path_from_root();
+      report_error(err.str());
+    } 
+    return children_[level].get();
+  }
+
   void TaxonomyNode::set_parent(TaxonomyNode *parent) {
     parent_ = parent;
   }
@@ -441,7 +452,8 @@ namespace BOOM {
     }
     int step = output.size();
     const std::string &value(values[step]);
-    auto it = children_.find(values[step], less);
+
+    auto it = children_.find(value, less);
     if (it == children_.end()) {
       std::ostringstream err;
       err << values[step] << " was not found in level " << step
@@ -453,10 +465,16 @@ namespace BOOM {
         }
       }
       err << ".";
+
+      err << "The available children are: \n";
+      for (const auto &child : children_) {
+        err << "   " << child->value() << "\n";
+      }
       report_error(err.str());
     } else {
       const Ptr<TaxonomyNode> &node(*it);
       output.push_back(node->position());
+      node->fill_position(values, output, less);
     }
   }
   
@@ -485,6 +503,14 @@ namespace BOOM {
       }
     }
     return ans;
+  }
+
+  std::string TaxonomyNode::path_from_root() const {
+    if (!parent_) {
+      return value_;
+    } else {
+      return parent_->path_from_root() + "/" + value_;
+    }
   }
   
   Int TaxonomyNode::tree_size() const {
@@ -582,6 +608,30 @@ namespace BOOM {
     }
     return ans;
   }
+
+  std::string Taxonomy::name(const std::vector<int> &values) const {
+    std::ostringstream name_builder;
+    if (values.empty()) {
+      return "";
+    }
+    TaxonomyNode *node = top_levels_[values[0]].get();
+    name_builder << node->value();
+    for (int level = 1; level < values.size(); ++level) {
+      node = node->find_child(values[level]);
+      name_builder << '/' << node->value();
+    }
+    return name_builder.str();
+  }
+
+  void Taxonomy::ensure_valid(const std::vector<int> &values) const {
+    if (values.empty()) {
+      return;
+    }
+    TaxonomyNode *node = top_levels_[values[0]].get();
+    for (int level = 1; level < values.size(); ++level) {
+      node = node->find_child(values[level]);
+    }
+  }
   
   std::vector<std::string> Taxonomy::leaf_names(char sep) const {
     std::vector<std::string> ans;
@@ -617,6 +667,75 @@ namespace BOOM {
     return ans;
   }
 
+  TaxonomyIterator Taxonomy::begin() {
+    std::vector<TaxonomyIterator::base_iterator> iterator_stack;
+    if (!top_levels_.empty()) {
+      iterator_stack.push_back(top_levels_.begin());
+      top_levels_[0]->descend_left(iterator_stack);
+    }
+    return TaxonomyIterator(top_levels_[0]->descend_left(iterator_stack),
+                            top_levels_.end());
+    
+  }
+
+  TaxonomyIterator Taxonomy::end() {
+    std::vector<TaxonomyIterator::base_iterator> iterator_stack;
+    return TaxonomyIterator(iterator_stack, top_levels_.end());
+  }
+  
+  //======================================================================
+
+  MultilevelCategoricalData::MultilevelCategoricalData(
+      const Ptr<Taxonomy> &taxonomy)
+      : taxonomy_(taxonomy)
+  {}
+  
+  MultilevelCategoricalData::MultilevelCategoricalData(
+      const Ptr<Taxonomy> &taxonomy,
+      const std::vector<int> &values)
+      : taxonomy_(taxonomy)
+  {
+    set(values);
+  }
+  
+  MultilevelCategoricalData::MultilevelCategoricalData(
+      const Ptr<Taxonomy> &taxonomy,
+      const std::vector<std::string> &values)
+      : taxonomy_(taxonomy)
+  {
+    set(values);
+  }
+
+  MultilevelCategoricalData::MultilevelCategoricalData(
+      const Ptr<Taxonomy> &taxonomy,
+      const std::string &value,
+      char sep)
+      : taxonomy_(taxonomy)
+  {
+    StringSplitter split(std::string(1, sep));
+    set(split(value));
+  }
+
+  MultilevelCategoricalData *MultilevelCategoricalData::clone() const {
+    return new MultilevelCategoricalData(*this);
+  }
+
+  std::ostream &MultilevelCategoricalData::display(std::ostream &out) const {
+    out << taxonomy_->name(values_);
+    return out;
+   
+  }
+  
+  void MultilevelCategoricalData::set(const std::vector<int> &values) {
+    taxonomy_->ensure_valid(values);
+    values_ = values;
+  }
+
+  void MultilevelCategoricalData::set(
+      const std::vector<std::string> &value_names) {
+    values_ = taxonomy_->index(value_names);
+  }
+  
   //======================================================================
 
   Ptr<Taxonomy> read_taxonomy(const std::vector<std::string> &values,
@@ -639,6 +758,7 @@ namespace BOOM {
       tax->add(entry);
     }
 
+    tax->finalize();
     return tax;
   }
   

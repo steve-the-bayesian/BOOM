@@ -194,6 +194,7 @@ class HiddenMarkovModel:
         self._boom_hmm.set_method(self._boom_hmm_sampler)
 
         self._assign_data_to_boom_model(self._boom_hmm, self._state_models[0])
+        self._boom_hmm.save_state_probs()
 
         return self._boom_hmm
 
@@ -202,6 +203,8 @@ class HiddenMarkovModel:
         self._markov_model.allocate_space(niter)
         for model in self._state_models:
             model.allocate_space(niter)
+
+        
 
     def _record_draw(self, iteration):
         self._log_likelihood_draws[iteration] = self._boom_hmm.loglike
@@ -218,8 +221,6 @@ class HiddenMarkovModel:
         for user, data in self._data.items():
             boom_data = data_builder.build_boom_data(data)
             boom_hmm.add_data(boom_data)
-
-
 
     def _ensure_markov_model(self):
         if self._markov_model is None:

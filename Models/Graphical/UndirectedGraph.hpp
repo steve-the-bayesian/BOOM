@@ -165,7 +165,7 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // A generic undirected graph that stores
+  // A generic undirected graph where each node is an ELEMENT.
   template <class ELEMENT>
   class UndirectedGraph {
    public:

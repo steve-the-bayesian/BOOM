@@ -29,6 +29,8 @@ class TestHmm(unittest.TestCase):
              0, 0, 0, 0, 0, 0, 0, 0, 0], dtype='int')
 
     def test_fetal_lamb(self):
+        print("testing fetail lamb data with Poisson models.")
+        
         hmm = mix.HiddenMarkovModel(2)
         hmm.add_data(self._fetal_lamb_data)
 
@@ -52,6 +54,45 @@ class TestHmm(unittest.TestCase):
                          niter)
         self.assertEqual(upper_poisson_model._lambda_draws.shape[0],
                          niter)
+
+
+    def test_categorical(self):
+
+        # simulate some Categorical data.
+
+        initial_distribution = np.array([.8, .2])
+        transition_probabilities = np.array([[.9, .1],
+                                             [.2, .8]])
+
+        sample_size = 100
+        markov = R.MarkovModel(transition_probabilities, initial_distribution)
+        states = markov.sim(sample_size)
+
+        colors = ["Red", "Blue", "Green"]
+        first = R.MultinomialModel(np.array([.5, .3, .2]), categories=colors)
+        second = R.MultinomialModel(np.array([.2, .3, .5]), categories=colors)
+
+        values = ["blah"] * sample_size
+        for i in range(sample_size):
+            if states[i] == 0:
+                values[i] = first.sim(1)[0]
+            else:
+                values[i] = second.sim(1)[0]
+
+        learned1 = R.MultinomialModel(np.ones(3) / 3, categories=colors)
+        learned2 = R.MultinomialModel(np.ones(3) / 3, categories=colors)
+
+        hmm = mix.HiddenMarkovModel(2)
+        hmm.add_data(values)
+
+        hmm.add_state_model(learned1)
+        hmm.add_state_model(learned2)
+
+        niter = 100
+        hmm.train(niter=niter, ping=None)
+        import pdb
+        pdb.set_trace()
+        print("blah")
         
     
 _debug_mode = False

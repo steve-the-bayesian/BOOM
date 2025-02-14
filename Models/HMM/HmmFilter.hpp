@@ -66,6 +66,9 @@ namespace BOOM {
     std::map<std::vector<Ptr<Data>>, std::vector<int>> imputed_state_map_;
   };
   //----------------------------------------------------------------------
+  // 
+  // A forward-backward filter for hidden Markov models that saves the
+  // user-level state probabilities.
   class HmmSavePiFilter : public HmmFilter {
    public:
     HmmSavePiFilter(const std::vector<Ptr<MixtureComponent>> &mix,
