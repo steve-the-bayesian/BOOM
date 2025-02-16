@@ -29,6 +29,23 @@
 
 namespace BOOM {
 
+  namespace {
+    inline std::ostream &print_iterator_stack_fun(
+        std::ostream &out,
+        const std::vector<TaxonomyIterator::base_iterator> &stack) {
+      if (stack.empty()) {
+        out << "Iterator stack is empty.\n";
+      } else {
+        out << "------\n";
+        for (const auto &el : stack) {
+          out << "   " << (*el)->path_from_root() << std::endl;
+        }
+        out << "------\n";
+      }
+      return out;
+    }
+  }  // namespace
+
   void CatKeyBase::Register(CategoricalData *dp) {
     observers_.insert(dp);
     dp->set_key(this);
@@ -379,7 +396,7 @@ namespace BOOM {
     }
     return value() >= rhs.value();
   }
-  
+
   //======================================================================
   bool TaxNodeLess::operator()(const Ptr<TaxonomyNode> &lhs,
                                const Ptr<TaxonomyNode> &rhs) const {
@@ -390,7 +407,66 @@ namespace BOOM {
                                      const std::string &rhs) const {
     return lhs->value() < rhs;
   }
-  
+
+  //======================================================================
+  TaxonomyIterator::TaxonomyIterator(const std::vector<base_iterator> &stack,
+                                     const base_iterator &top_level_end)
+        : iterator_stack_(stack),
+          top_level_end_(top_level_end)
+    {
+      set_current_end();
+    }
+
+  std::ostream &TaxonomyIterator::print_iterator_stack(
+      std::ostream &out) const {
+    return print_iterator_stack_fun(out, iterator_stack_);
+  }
+
+
+  //---------------------------------------------------------------------------
+  // This iterator is supposed to iterate over the whole tree, not just the
+  // leaves.
+  TaxonomyIterator &TaxonomyIterator::operator++() {
+    if (iterator_stack_.empty()) {
+      return *this;
+    }
+
+    // 'node' is the TaxonomyNode we're pointing to before we iterate.
+    Ptr<TaxonomyNode> &node(*iterator_stack_.back());
+    if (!node->is_leaf()) {
+      // Search depth first.  Unless the node is a leaf, step down to its
+      // children.
+      iterator_stack_.push_back(node->begin());
+      set_current_end();
+    } else {
+      // If the node is a leaf, step to its next sibling.
+      ++iterator_stack_.back();
+    }
+
+    while(!iterator_stack_.empty() && iterator_stack_.back() == current_end_) {
+      // If stepping took us as far as we can go, step back up, then step over
+      // to the next sibling of the parent.
+      iterator_stack_.pop_back();
+      set_current_end();
+      if (!iterator_stack_.empty()) {
+        ++iterator_stack_.back();
+        // The 'while' loop handles the case of this being a step to the 'end'.
+      }
+    }
+
+    return *this;
+  }
+
+  void TaxonomyIterator::set_current_end() {
+    int n = iterator_stack_.size();
+    if (n < 2) {
+      current_end_ = top_level_end_;
+    } else {
+      Ptr<TaxonomyNode> &parent(*iterator_stack_[n-2]);
+      current_end_ = parent->end();
+    }
+  }
+
   //======================================================================
   TaxonomyNode::TaxonomyNode(const std::string &value)
       : value_(value),
@@ -426,7 +502,7 @@ namespace BOOM {
       err << "Level " << level << " is not present under taxonomy node "
           << path_from_root();
       report_error(err.str());
-    } 
+    }
     return children_[level].get();
   }
 
@@ -477,7 +553,7 @@ namespace BOOM {
       node->fill_position(values, output, less);
     }
   }
-  
+
   std::vector<std::string> TaxonomyNode::leaf_names(char sep) const {
     std::vector<std::string> ans;
     if (children_.empty()) {
@@ -512,7 +588,7 @@ namespace BOOM {
       return parent_->path_from_root() + "/" + value_;
     }
   }
-  
+
   Int TaxonomyNode::tree_size() const {
     Int ans = 1;
     for (const auto &el : children_) {
@@ -539,7 +615,7 @@ namespace BOOM {
       children_[i]->finalize(i);
     }
   }
-  
+
   //======================================================================
 
   void Taxonomy::add(const std::vector<std::string> &element) {
@@ -555,9 +631,9 @@ namespace BOOM {
       // All entries in 'element' are empty strings.
       return;
     }
-    
+
     TaxonomyNode *node = nullptr;
-    
+
     for (Ptr<TaxonomyNode> &top_level : top_levels_) {
       if (top_level->value() == *it) {
         node = top_level.get();
@@ -587,7 +663,7 @@ namespace BOOM {
       top_levels_[i]->finalize(i);
     }
   }
-  
+
   std::vector<int> Taxonomy::index(const std::vector<std::string> &levels) const {
     std::vector<int> ans;
     if (levels.empty()) {
@@ -632,7 +708,7 @@ namespace BOOM {
       node = node->find_child(values[level]);
     }
   }
-  
+
   std::vector<std::string> Taxonomy::leaf_names(char sep) const {
     std::vector<std::string> ans;
     for (const auto &top : top_levels_) {
@@ -641,7 +717,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   std::vector<std::string> Taxonomy::node_names(char sep) const {
     std::vector<std::string> ans;
     for (const auto &top : top_levels_) {
@@ -662,7 +738,7 @@ namespace BOOM {
   Int Taxonomy::number_of_leaves() const {
     Int ans = 0;
     for (const auto &top : top_levels_) {
-      ans += top->number_of_leaves(); 
+      ans += top->number_of_leaves();
     }
     return ans;
   }
@@ -671,25 +747,22 @@ namespace BOOM {
     std::vector<TaxonomyIterator::base_iterator> iterator_stack;
     if (!top_levels_.empty()) {
       iterator_stack.push_back(top_levels_.begin());
-      top_levels_[0]->descend_left(iterator_stack);
     }
-    return TaxonomyIterator(top_levels_[0]->descend_left(iterator_stack),
-                            top_levels_.end());
-    
+    return TaxonomyIterator(iterator_stack, top_levels_.end());
   }
 
   TaxonomyIterator Taxonomy::end() {
     std::vector<TaxonomyIterator::base_iterator> iterator_stack;
     return TaxonomyIterator(iterator_stack, top_levels_.end());
   }
-  
+
   //======================================================================
 
   MultilevelCategoricalData::MultilevelCategoricalData(
       const Ptr<Taxonomy> &taxonomy)
       : taxonomy_(taxonomy)
   {}
-  
+
   MultilevelCategoricalData::MultilevelCategoricalData(
       const Ptr<Taxonomy> &taxonomy,
       const std::vector<int> &values)
@@ -697,7 +770,7 @@ namespace BOOM {
   {
     set(values);
   }
-  
+
   MultilevelCategoricalData::MultilevelCategoricalData(
       const Ptr<Taxonomy> &taxonomy,
       const std::vector<std::string> &values)
@@ -723,9 +796,9 @@ namespace BOOM {
   std::ostream &MultilevelCategoricalData::display(std::ostream &out) const {
     out << taxonomy_->name(values_);
     return out;
-   
+
   }
-  
+
   void MultilevelCategoricalData::set(const std::vector<int> &values) {
     taxonomy_->ensure_valid(values);
     values_ = values;
@@ -735,7 +808,7 @@ namespace BOOM {
       const std::vector<std::string> &value_names) {
     values_ = taxonomy_->index(value_names);
   }
-  
+
   //======================================================================
 
   Ptr<Taxonomy> read_taxonomy(const std::vector<std::string> &values,
@@ -753,7 +826,7 @@ namespace BOOM {
   Ptr<Taxonomy> read_taxonomy(
       const std::vector<std::vector<std::string>> &values) {
     NEW(Taxonomy, tax)();
-    
+
     for (const auto &entry : values) {
       tax->add(entry);
     }
@@ -761,9 +834,9 @@ namespace BOOM {
     tax->finalize();
     return tax;
   }
-  
+
   //======================================================================
-  
+
   Ptr<CatKey> make_catkey(const std::vector<std::string> &sv) {
     std::vector<std::string> tmp(sv);
     std::sort(tmp.begin(), tmp.end());

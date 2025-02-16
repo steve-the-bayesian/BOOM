@@ -17,16 +17,37 @@
 */
 
 #include "Models/MultilevelMultinomialModel.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
+
 
 namespace BOOM {
 
-  
+
   MultilevelMultinomialModel::MultilevelMultinomialModel(const Ptr<Taxonomy> &tax)
       : taxonomy_(tax)
   {
     create_models();
   }
 
+  MultilevelMultinomialModel *MultilevelMultinomialModel::clone() const {
+    return new MultilevelMultinomialModel(*this);
+  }
+
+  int MultilevelMultinomialModel::number_of_observations() const {
+    report_error("NYI");
+    return -1;
+  }
+
+  double MultilevelMultinomialModel::logp(const MultilevelCategoricalData &data_point) const {
+    report_error("NYI");
+    return negative_infinity();
+  }
+
+  double MultilevelMultinomialModel::pdf(const Data *dp, bool logscale) const {
+    report_error("NYI");
+    return negative_infinity();
+  }
 
   void MultilevelMultinomialModel::create_models() {
     top_level_model_.reset(new MultinomialModel(taxonomy_->top_level_size()));
@@ -37,6 +58,6 @@ namespace BOOM {
         conditional_models_[node] = new MultinomialModel(node->number_of_children());
       }
     }
-    
+
   }
 }

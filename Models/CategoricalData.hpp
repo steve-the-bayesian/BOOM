@@ -292,7 +292,7 @@ namespace BOOM {
     bool operator>(const std::string &rhs) const;
     bool operator>=(const std::string &rhs) const;
   };
-  
+
   //======================================================================
   // A TaxonomyNode is a node in the directed graph of a Taxonomy.
   class TaxonomyNode;
@@ -316,10 +316,48 @@ namespace BOOM {
   };
 
   //---------------------------------------------------------------------------
+
+  //===========================================================================
+  // An iterator class for iterating across a taxonomy.
+  //
+  class TaxonomyIterator {
+   public:
+    typedef SortedVector<Ptr<TaxonomyNode>>::iterator base_iterator;
+
+    // Args:
+    //   stack: The begin value for the iterator.  The END value is indicated by
+    //     an empty stack.
+    TaxonomyIterator(const std::vector<base_iterator> &stack,
+                     const base_iterator &top_level_end);
+
+    bool operator==(const TaxonomyIterator &rhs) const {
+      return iterator_stack_ == rhs.iterator_stack_;
+    }
+
+    bool operator!=(const TaxonomyIterator &rhs) const {
+      return !(*this == rhs);
+    }
+
+    Ptr<TaxonomyNode> &operator*() { return *iterator_stack_.back(); }
+    TaxonomyNode * operator->() { return iterator_stack_.back()->get(); }
+
+    TaxonomyIterator &operator++();
+
+    std::ostream &print_iterator_stack(std::ostream &out) const;
+
+   private:
+    std::vector<base_iterator> iterator_stack_;
+    base_iterator top_level_end_;
+    base_iterator current_end_;
+
+    void set_current_end();
+  };
+
+  //===========================================================================
   class TaxonomyNode : private RefCounted {
    public:
     typedef SortedVector<Ptr<TaxonomyNode>>::iterator base_iterator;
-    
+
     TaxonomyNode(const std::string &value);
 
     // Create a TaxonomyNode with the given value.  Add it to children_.  Return
@@ -334,20 +372,20 @@ namespace BOOM {
 
     // Set the parent of this node to the supplied node.
     void set_parent(TaxonomyNode *parent);
-    
+
     bool operator==(const std::string &value) const {
       return value_ == value;
     }
 
-    // The index of this node's value in the parent node of the taxonomy.  
+    // The index of this node's value in the parent node of the taxonomy.
     int position() const {return position_;}
 
     // Fill the next entry in the vector of integer positions/indexes describing
-    // the numerical value 
+    // the numerical value
     void fill_position(const std::vector<std::string> &values,
                        std::vector<int> &output,
                        const TaxNodeStringLess &less) const;
-    
+
     // The names of all the leaves appearing underneath this node.
     std::vector<std::string> leaf_names(char sep) const;
 
@@ -357,7 +395,7 @@ namespace BOOM {
     // This taxonomy node's full name, including the names of all
     // ancestors.
     std::string path_from_root() const;
-    
+
     // Two TaxonomyNode's are equal if their values are equal, and if they have
     // the same parent.
     bool operator==(const TaxonomyNode &rhs) const;
@@ -391,23 +429,11 @@ namespace BOOM {
     base_iterator begin() {
       return children_.begin();
     }
-    
+
     base_iterator end() {
       return children_.end();
     }
-    
-    // Given a vector of iterators to this node's ancestors (with the final
-    // element pointing to this node), fill the iterator with iterators pointing
-    // to this node's descendants.
-    const std::vector<base_iterator> &
-    descend_left(std::vector<base_iterator> &iterator_stack) {
-      if (!children_.empty()) {
-        iterator_stack.push_back(children_.begin());
-        children_[0]->descend_left(iterator_stack);
-      }
-      return iterator_stack;
-    }
-    
+
    private:
     // The text describing this node in the taxonomy.
     std::string value_;
@@ -417,7 +443,7 @@ namespace BOOM {
     // parent.  It is the integer value assigned to a data point that hits this
     // node.
     int position_;
-    
+
     // parent_ will be nullptr for nodes at the top of the hierarchy.
     TaxonomyNode *parent_;
 
@@ -438,82 +464,6 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // An iterator class for iterating across a taxonomy.
-  //
-  class TaxonomyIterator {
-   public:
-    typedef SortedVector<Ptr<TaxonomyNode>>::iterator base_iterator;
-
-    // Args:
-    //   stack: The begin value for the iterator.  The END value is indicated by
-    //     an empty stack.
-    TaxonomyIterator(const std::vector<base_iterator> &stack,
-                     const base_iterator &top_level_end)
-        : iterator_stack_(stack),
-          top_level_end_(top_level_end)
-    {
-      set_current_end();
-    }
-    
-    bool operator==(const TaxonomyIterator &rhs) const {
-      return iterator_stack_ == rhs.iterator_stack_;
-    }
-
-    bool operator!=(const TaxonomyIterator &rhs) const {
-      return !(*this == rhs);
-    }
-
-    Ptr<TaxonomyNode> &operator*() { return *iterator_stack_.back(); }
-
-    Ptr<TaxonomyNode> &operator->() { return *iterator_stack_.back(); }
-    
-    TaxonomyIterator &operator++() {
-      // In the usual case we can just iterate to the next node at the current
-      // level.
-      ++iterator_stack_.back();
-      while (!iterator_stack_.empty() && iterator_stack_.back() == current_end_) {
-        iterator_stack_.pop_back();
-
-        if (iterator_stack_.empty()) {
-          // This really shouldn't happen, but JIC....
-          break;
-        }
-        
-        // Move to the next level of the parent.
-        ++iterator_stack_.back();
-
-        if (iterator_stack_.size() == 1 && iterator_stack_.back() == top_level_end_) {
-          // If the current iterator is at the end of the top level then we're done.  Clear the iterator_stack_
-          iterator_stack_.clear();
-          break;
-        } else {
-          Ptr<TaxonomyNode> &node(*iterator_stack_.back());
-          node->descend_left(iterator_stack_);   
-          set_current_end();
-        }
-      }
-      return *this;
-    }
-
-    
-    
-   private:
-    std::vector<base_iterator> iterator_stack_;
-    base_iterator top_level_end_;
-    base_iterator current_end_;
-
-    void set_current_end() {
-      int n = iterator_stack_.size();
-      if (n < 2) {
-        current_end_ = top_level_end_;
-      } else {
-        Ptr<TaxonomyNode> &parent(*iterator_stack_[n-2]);
-        current_end_ = parent->end();
-      }
-    }
-  };
-
-  //===========================================================================
   class Taxonomy : private RefCounted {
    public:
     // Add an element to the taxonomy.  If the element is already present the
@@ -521,7 +471,7 @@ namespace BOOM {
     //
     // Args:
     //   element: A sequence of nested taxonomy levels.  For example
-    //     ["shopping", "clothes", "shoes"].  
+    //     ["shopping", "clothes", "shoes"].
     void add(const std::vector<std::string> &element);
 
     // To be called after the last taxonomy element has been added.
@@ -529,7 +479,7 @@ namespace BOOM {
     // Effects: Each TaxonomyNode is informed of its position relative to its
     // parent.
     void finalize();
-    
+
     // Args:
     //   levels:  The taxonomy levels identifying an observation.
     //
@@ -551,7 +501,7 @@ namespace BOOM {
     //   An exception is thrown if the values do not correspond to a valid
     //   taxonomy element.
     std::string name(const std::vector<int> &values) const;
-    
+
     // Args:
     //   values: Integer indexes of a taxonomy level. For example, [0, 3, 2]
     //     means level 0 of taxonomy level 1, level 3 in the children of level
@@ -561,7 +511,7 @@ namespace BOOM {
     //   An exception is thrown if the level set does not exist within the
     //   taxonomy.  Otherwise nothing happens.
     void ensure_valid(const std::vector<int> &values) const;
-    
+
     // The names of the leaf nodes in the taxonomy.
     std::vector<std::string> leaf_names(char sep='/') const;
 
@@ -581,12 +531,12 @@ namespace BOOM {
 
     TaxonomyIterator begin();
     TaxonomyIterator end();
-    
+
    private:
     // The first levels of the taxonomy tree.
     SortedVector<Ptr<TaxonomyNode>, TaxNodeLess> top_levels_;
     TaxNodeStringLess level_less_;
-    
+
     friend void intrusive_ptr_add_ref(Taxonomy *taxonomy) {
       taxonomy->up_count();
     }
@@ -613,7 +563,7 @@ namespace BOOM {
   //  [L1, L2, L3, L4]]
   Ptr<Taxonomy> read_taxonomy(
       const std::vector<std::vector<std::string>> &values);
-  
+
   //======================================================================
 
   class MultilevelCategoricalData : public Data {
@@ -629,7 +579,7 @@ namespace BOOM {
 
     MultilevelCategoricalData *clone() const override;
     std::ostream &display(std::ostream &out) const override;
-    
+
     void set(const std::vector<int> &values);
     void set(const std::vector<std::string> &values);
 
@@ -637,7 +587,7 @@ namespace BOOM {
     std::string name() const {return taxonomy_->name(values_);}
 
     const Ptr<Taxonomy> &taxonomy() const {return taxonomy_;}
-    
+
    private:
     Ptr<Taxonomy> taxonomy_;
     std::vector<int> values_;

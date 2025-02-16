@@ -18,7 +18,7 @@ namespace {
       std::cout << el << std::endl;
     }
   }
-  
+
   class CatKeyTest : public ::testing::Test {
    protected:
     CatKeyTest() {
@@ -35,7 +35,7 @@ namespace {
       GlobalRng::rng.seed(8675309);
     }
   };
-  
+
   class TaxonomyTest : public ::testing::Test {
    protected:
     TaxonomyTest() {
@@ -56,12 +56,6 @@ namespace {
     };
 
     Ptr<Taxonomy> tax = read_taxonomy(input_tax);
-    std::cout << "leaf levels: \n";
-    print(tax->leaf_names());
-
-    std::cout << "full tree: \n";
-    print(tax->node_names());
-    
     EXPECT_EQ(tax->number_of_leaves(), 7);
     EXPECT_EQ(tax->tree_size(), 13);
 
@@ -89,14 +83,28 @@ namespace {
       output.push_back(it->path_from_root());
     }
 
-    std::cout << "input_tax: \n";
-    print(input_tax);
+    // Add the interior nodes.
+    std::vector<std::string> full_tree_output = input_tax;
+    full_tree_output.push_back("shopping");
+    full_tree_output.push_back("shopping/clothes");
+    full_tree_output.push_back("shopping/food");
+    full_tree_output.push_back("restaurants");
+    full_tree_output.push_back("restaurants/fancy");
 
-    std::cout << "output: \n";
-    print(output);
-    
+    std::sort(full_tree_output.begin(), full_tree_output.end());
+    std::sort(output.begin(), output.end());
+
+    EXPECT_EQ(full_tree_output.size(), output.size());
+
+    Ptr<Taxonomy> empty_tax = read_taxonomy(std::vector<std::string>());
+    int counter = 0;
+    for (const auto &el : *empty_tax) {
+      std::cout << el->path_from_root() << std::endl;
+      ++counter;
+    }
+    EXPECT_EQ(counter, 0);
   }
-  
+
   class MultilevelCategoricalDataTest : public ::testing::Test {
    protected:
     MultilevelCategoricalDataTest() {
@@ -118,7 +126,7 @@ namespace {
 
     Ptr<Taxonomy> tax = read_taxonomy(input_tax);
     std::string level = "restaurants/fancy/seafood/fish";
-    
+
     NEW(MultilevelCategoricalData, data_point)(
         tax, level);
     std::vector<std::string> levels = {
@@ -137,7 +145,7 @@ namespace {
 
     EXPECT_EQ(dp2->name(), data_point->name());
     EXPECT_EQ(dp2->name(), level);
-    
+
   }
 
 }  // namespace
