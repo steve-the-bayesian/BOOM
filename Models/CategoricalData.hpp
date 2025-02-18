@@ -360,11 +360,6 @@ namespace BOOM {
 
     TaxonomyNode(const std::string &value);
 
-    // Returns true iff value_ is the same for both nodes, both nodes have the
-    // same number of children, and if recursive_equals evaluates to true for
-    // each child.
-    bool recursive_equals(const TaxonomyNode &rhs);
-    
     // Create a TaxonomyNode with the given value.  Add it to children_.  Return
     // a raw pointer to the created node.
     TaxonomyNode * add_child(const std::string &value);
@@ -378,10 +373,13 @@ namespace BOOM {
     // Set the parent of this node to the supplied node.
     void set_parent(TaxonomyNode *parent);
 
-    bool operator==(const std::string &value) const {
-      return value_ == value;
-    }
+    bool operator==(const std::string &value) const;
 
+    // Returns true iff value_ is the same for both nodes, both nodes have the
+    // same number of children, and if recursive_equals evaluates to true for
+    // each child.
+    bool recursive_equals(const TaxonomyNode &rhs) const; 
+    
     // The index of this node's value in the parent node of the taxonomy.
     int position() const {return position_;}
 

@@ -533,7 +533,7 @@ namespace BOOM {
     } else {
       ans = false;
     }
-      return ans;
+    return ans;
   }
   
   void TaxonomyNode::fill_position(const std::vector<std::string> &values,
