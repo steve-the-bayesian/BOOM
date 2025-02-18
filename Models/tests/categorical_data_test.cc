@@ -13,11 +13,11 @@ namespace {
   using std::endl;
   using std::cout;
 
-  inline void print(const std::vector<std::string> &stuff) {
-    for (const auto &el : stuff) {
-      std::cout << el << std::endl;
-    }
-  }
+  // inline void print(const std::vector<std::string> &stuff) {
+  //   for (const auto &el : stuff) {
+  //     std::cout << el << std::endl;
+  //   }
+  // }
 
   class CatKeyTest : public ::testing::Test {
    protected:

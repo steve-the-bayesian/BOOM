@@ -73,6 +73,15 @@ cc_test(
 )
 
 cc_test(
+    name = "multilevel_multinomial_test",
+    size = "small",
+    srcs = ["multilevel_multinomial_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+
+cc_test(
     name = "multinomial_test",
     size = "small",
     srcs = ["multinomial_test.cc"],

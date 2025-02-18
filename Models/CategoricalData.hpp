@@ -360,6 +360,11 @@ namespace BOOM {
 
     TaxonomyNode(const std::string &value);
 
+    // Returns true iff value_ is the same for both nodes, both nodes have the
+    // same number of children, and if recursive_equals evaluates to true for
+    // each child.
+    bool recursive_equals(const TaxonomyNode &rhs);
+    
     // Create a TaxonomyNode with the given value.  Add it to children_.  Return
     // a raw pointer to the created node.
     TaxonomyNode * add_child(const std::string &value);
@@ -434,6 +439,14 @@ namespace BOOM {
       return children_.end();
     }
 
+    TaxonomyNode *child(int i) {
+      return children_[i].get();
+    }
+    
+    const TaxonomyNode *child(int i) const {
+      return children_[i].get();
+    }
+
    private:
     // The text describing this node in the taxonomy.
     std::string value_;
@@ -466,6 +479,11 @@ namespace BOOM {
   //===========================================================================
   class Taxonomy : private RefCounted {
    public:
+    bool operator==(const Taxonomy &rhs) const;
+    bool operator!=(const Taxonomy &rhs) const {
+      return !(rhs == *this);
+    }
+    
     // Add an element to the taxonomy.  If the element is already present the
     // taxonomy remains unchanged.
     //
@@ -527,6 +545,14 @@ namespace BOOM {
     // The number of entries in the top level of the taxonomy.
     Int top_level_size() const {
       return top_levels_.size();
+    }
+
+    TaxonomyNode *top_level_node(int i) {
+      return top_levels_[i].get();
+    }
+    
+    const TaxonomyNode *top_level_node(int i) const {
+      return top_levels_[i].get();
     }
 
     TaxonomyIterator begin();

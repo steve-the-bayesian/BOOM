@@ -49,23 +49,49 @@ namespace BOOM {
   // MultinomialModel objects.
   class MultilevelMultinomialModel
       : public CompositeParamPolicy,
-        public IID_DataPolicy<MultilevelCategoricalData>,
+        public DeferredDataPolicy,
         public PriorPolicy,
         virtual public MixtureComponent
   {
    public:
     MultilevelMultinomialModel(const Ptr<Taxonomy> &tax);
+
+    MultilevelMultinomialModel(const MultilevelMultinomialModel &rhs);
+    MultilevelMultinomialModel &operator=(const MultilevelMultinomialModel &rhs);
+
+    MultilevelMultinomialModel(MultilevelMultinomialModel &&rhs) = default;
+    MultilevelMultinomialModel &operator=(MultilevelMultinomialModel &&rhs) = default;
+    
     MultilevelMultinomialModel *clone() const override;
+
     double logp(const MultilevelCategoricalData &data_point) const;
     double pdf(const Data *dp, bool logscale) const override;
     int number_of_observations() const override;
 
+    void add_data(const Ptr<Data> &dp) override;
+    void add_data(const Ptr<MultilevelCategoricalData> &dp);
+    void clear_data() override;
+    void combine_data(const Model &other_model, bool just_suf = true) override;
+
+    MultinomialModel *conditional_model(const std::string &value);
+    const MultinomialModel *conditional_model(const std::string &value) const;
+    MultinomialModel *conditional_model(const TaxonomyNode *node);
+    const MultinomialModel *conditional_model(const TaxonomyNode *node) const;
     
+    MultinomialModel *top_level_model() {return top_level_model_.get();}
+    const MultinomialModel *top_level_model() const {return top_level_model_.get();}
     
    private:
     Ptr<Taxonomy> taxonomy_;
+
+    // The top_level_model_ is the model for the first level in the taxonomy.
     Ptr<MultinomialModel> top_level_model_;
-    std::map<Ptr<TaxonomyNode>, Ptr<MultinomialModel>> conditional_models_;
+
+    // conditional_models_ 
+    std::map<const TaxonomyNode *, Ptr<MultinomialModel>> conditional_models_;
+
+    std::vector<Ptr<MultilevelCategoricalData>> data_;
+    bool only_keep_suf_;
 
     // Populate top_level_model_ and conditional_models_ using 
     void create_models();

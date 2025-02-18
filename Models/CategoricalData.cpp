@@ -474,6 +474,7 @@ namespace BOOM {
         parent_(nullptr)
   {}
 
+  
   TaxonomyNode *TaxonomyNode::add_child(const std::string &level) {
     NEW(TaxonomyNode, child)(level);
     children_.insert(child);
@@ -520,6 +521,21 @@ namespace BOOM {
       }
     }
 
+  bool TaxonomyNode::recursive_equals(const TaxonomyNode &rhs) const {
+    bool ans = true;
+    if (value_ == rhs.value_ && children_.size() == rhs.children_.size()) {
+      for (int i = 0; i < children_.size(); ++i) {
+        ans = ans && children_[i]->recursive_equals(*rhs.children_[i]);
+        if (!ans) {
+          return false;
+        }
+      }
+    } else {
+      ans = false;
+    }
+      return ans;
+  }
+  
   void TaxonomyNode::fill_position(const std::vector<std::string> &values,
                                    std::vector<int> &output,
                                    const TaxNodeStringLess &less) const {
@@ -617,6 +633,24 @@ namespace BOOM {
   }
 
   //======================================================================
+
+  bool Taxonomy::operator==(const Taxonomy &rhs) const {
+    if (tree_size() != rhs.tree_size()) {
+      return false;
+    }
+
+    if (top_levels_.size() != rhs.top_levels_.size()) {
+      return false;
+    }
+
+    for (Int i = 0; i < top_levels_.size(); ++i) {
+      if (!top_levels_[i]->recursive_equals(*rhs.top_levels_[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   void Taxonomy::add(const std::vector<std::string> &element) {
     if (element.empty()) {
