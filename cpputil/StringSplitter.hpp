@@ -35,6 +35,9 @@ namespace BOOM {
     //     in new fields.
     explicit StringSplitter(const std::string &sep = " ",
                             bool allow_quotes = true);
+    explicit StringSplitter(char sep, bool allow_quotes = true)
+        : StringSplitter(std::string(1, sep), allow_quotes)
+    {}
 
     // Split the string 's' into a vector of strings.
     std::vector<std::string> operator()(const std::string &s) const;
