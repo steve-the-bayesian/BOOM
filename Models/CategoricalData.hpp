@@ -22,6 +22,7 @@
 
 #include <set>
 #include <vector>
+#include <list>
 #include "Models/DataTypes.hpp"
 #include "cpputil/RefCounted.hpp"
 #include "cpputil/SortedVector.hpp"
@@ -349,14 +350,44 @@ namespace BOOM {
     std::vector<base_iterator> iterator_stack_;
     base_iterator top_level_end_;
     base_iterator current_end_;
+  };
 
-    void set_current_end();
+  class TaxonomyConstIterator {
+   public:
+    typedef SortedVector<Ptr<TaxonomyNode>>::const_iterator base_iterator;
+
+    // Args:
+    //   stack: The begin value for the iterator.  The END value is indicated by
+    //     an empty stack.
+    TaxonomyConstIterator(const std::vector<base_iterator> &stack,
+                          const base_iterator &top_level_end);
+
+    bool operator==(const TaxonomyConstIterator &rhs) const {
+      return iterator_stack_ == rhs.iterator_stack_;
+    }
+
+    bool operator!=(const TaxonomyConstIterator &rhs) const {
+      return !(*this == rhs);
+    }
+
+    const Ptr<TaxonomyNode> &operator*() { return *iterator_stack_.back(); }
+    const TaxonomyNode * operator->() { return iterator_stack_.back()->get(); }
+
+    TaxonomyConstIterator &operator++();
+
+    std::ostream &print_iterator_stack(std::ostream &out) const;
+
+   private:
+    std::vector<base_iterator> iterator_stack_;
+    base_iterator top_level_end_;
+    base_iterator current_end_;
   };
 
   //===========================================================================
   class TaxonomyNode : private RefCounted {
    public:
     typedef SortedVector<Ptr<TaxonomyNode>>::iterator base_iterator;
+    typedef SortedVector<Ptr<TaxonomyNode>>::const_iterator base_const_iterator;
 
     TaxonomyNode(const std::string &value);
 
@@ -370,6 +401,10 @@ namespace BOOM {
 
     TaxonomyNode *find_child(int level) const;
 
+    // Find a descendant of this node.
+    TaxonomyNode *find_node(std::list<std::string> &child_levels);
+    const TaxonomyNode *find_node(std::list<std::string> &child_levels) const;
+
     // Set the parent of this node to the supplied node.
     void set_parent(TaxonomyNode *parent);
 
@@ -378,8 +413,8 @@ namespace BOOM {
     // Returns true iff value_ is the same for both nodes, both nodes have the
     // same number of children, and if recursive_equals evaluates to true for
     // each child.
-    bool recursive_equals(const TaxonomyNode &rhs) const; 
-    
+    bool recursive_equals(const TaxonomyNode &rhs) const;
+
     // The index of this node's value in the parent node of the taxonomy.
     int position() const {return position_;}
 
@@ -433,16 +468,29 @@ namespace BOOM {
       return children_.begin();
     }
 
+    base_const_iterator begin() const {
+      return children_.begin();
+    }
+
     base_iterator end() {
+      return children_.end();
+    }
+
+    base_const_iterator end() const {
       return children_.end();
     }
 
     TaxonomyNode *child(int i) {
       return children_[i].get();
     }
-    
+
     const TaxonomyNode *child(int i) const {
       return children_[i].get();
+    }
+
+    std::ostream &print(std::ostream &out) const {
+      out << path_from_root();
+      return out;
     }
 
    private:
@@ -474,6 +522,10 @@ namespace BOOM {
     }
   };
 
+  inline std::ostream &operator<<(std::ostream &out, const TaxonomyNode &node) {
+    return node.print(out);
+  }
+
   //===========================================================================
   class Taxonomy : private RefCounted {
    public:
@@ -481,7 +533,7 @@ namespace BOOM {
     bool operator!=(const Taxonomy &rhs) const {
       return !(rhs == *this);
     }
-    
+
     // Add an element to the taxonomy.  If the element is already present the
     // taxonomy remains unchanged.
     //
@@ -548,13 +600,25 @@ namespace BOOM {
     TaxonomyNode *top_level_node(int i) {
       return top_levels_[i].get();
     }
-    
+
     const TaxonomyNode *top_level_node(int i) const {
       return top_levels_[i].get();
     }
 
+    TaxonomyNode *node(const std::string &level, char sep='/');
+    const TaxonomyNode *node(const std::string &level, char sep='/') const;
+
+    TaxonomyNode *node(const std::vector<std::string> &levels);
+    const TaxonomyNode *node(const std::vector<std::string> &levels) const;
+
     TaxonomyIterator begin();
     TaxonomyIterator end();
+
+    TaxonomyConstIterator begin() const;
+    TaxonomyConstIterator end() const;
+
+    std::ostream &print(std::ostream &out) const;
+    std::string to_string() const;
 
    private:
     // The first levels of the taxonomy tree.
@@ -574,7 +638,6 @@ namespace BOOM {
 
   };
 
-
   // Read a taxonomy from a collection of strings of the form L1/L2/L3
   // describing different taxonomy levels separated by a character (by default
   // '/')
@@ -587,6 +650,10 @@ namespace BOOM {
   //  [L1, L2, L3, L4]]
   Ptr<Taxonomy> read_taxonomy(
       const std::vector<std::vector<std::string>> &values);
+
+  inline std::ostream &operator<<(std::ostream &out, const Taxonomy &tax) {
+    return tax.print(out);
+  }
 
   //======================================================================
 

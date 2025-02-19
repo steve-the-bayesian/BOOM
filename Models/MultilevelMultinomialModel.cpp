@@ -48,12 +48,12 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   MultilevelMultinomialModel *MultilevelMultinomialModel::clone() const {
     return new MultilevelMultinomialModel(*this);
   }
 
-  
+
   double MultilevelMultinomialModel::logp(
       const MultilevelCategoricalData &data_point) const {
     const std::vector<int> &levels(data_point.levels());
@@ -92,19 +92,25 @@ namespace BOOM {
 
   void MultilevelMultinomialModel::add_data(
       const Ptr<MultilevelCategoricalData> &data_point) {
+    // The numeric levels of the data point being added.
     const std::vector<int> &levels(data_point->levels());
     if (levels.empty()) {
+      // This should never happen.
       return;
     }
-
     top_level_model_->suf()->update_raw(levels[0]);
     TaxonomyNode *taxonomy_node = taxonomy_->top_level_node(levels[0]);
     for (int i = 0; i < levels.size(); ++i) {
-      Ptr<MultinomialModel> &model(conditional_models_[taxonomy_node]);
-      model->suf()->update_raw(levels[i]);
       if (taxonomy_node->is_leaf()) {
+        if (i + 1 < levels.size()) {
+          std::ostringstream err;
+          err << "Some levels of " << *data_point << " were abandonded.";
+          report_error(err.str());
+        }
         break;
       } else {
+        Ptr<MultinomialModel> &model(conditional_models_[taxonomy_node]);
+        model->suf()->update_raw(levels[i]);
         taxonomy_node = taxonomy_node->child(levels[i]);
       }
     }
@@ -125,7 +131,7 @@ namespace BOOM {
                                                 bool just_suf) {
     const MultilevelMultinomialModel &rhs(
         dynamic_cast<const MultilevelMultinomialModel &>(other_model));
-    
+
     if (*taxonomy_ != *rhs.taxonomy_) {
       report_error("Models must have the same taxonomy.");
     }
@@ -145,9 +151,19 @@ namespace BOOM {
     if (!just_suf) {
       std::copy(rhs.data_.begin(), rhs.data_.end(), std::back_inserter(data_));
     }
-    
+
   }
-  
+
+  MultinomialModel *MultilevelMultinomialModel::conditional_model(
+      const std::string &taxonomy_level, char sep) {
+    return conditional_model(taxonomy_->node(taxonomy_level, sep));
+  }
+
+  const MultinomialModel *MultilevelMultinomialModel::conditional_model(
+      const std::string &taxonomy_level, char sep) const {
+    return conditional_model(taxonomy_->node(taxonomy_level));
+  }
+
   const MultinomialModel *MultilevelMultinomialModel::conditional_model(
       const TaxonomyNode *node) const {
     auto it = conditional_models_.find(node);
@@ -161,7 +177,7 @@ namespace BOOM {
       const TaxonomyNode *node) {
     return conditional_models_[node].get();
   }
-  
+
   void MultilevelMultinomialModel::create_models() {
     top_level_model_.reset(new MultinomialModel(taxonomy_->top_level_size()));
 
@@ -172,6 +188,6 @@ namespace BOOM {
             node->number_of_children());
       }
     }
-
   }
-}
+
+}  // namespace BOOM

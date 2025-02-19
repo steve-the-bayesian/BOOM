@@ -32,7 +32,7 @@ namespace {
     Ptr<Taxonomy> taxonomy_;
   };
 
-  
+
   TEST_F(MultilevelMultinomialTest, Model) {
     NEW(MultilevelMultinomialModel, model)(taxonomy_);
 
@@ -46,13 +46,15 @@ namespace {
 
     model->add_data(data[0]);
     std::cout << model->top_level_model()->suf() << std::endl;
-    
+
     EXPECT_EQ(1, model->number_of_observations());
     for (int i = 1; i < data.size(); ++i) {
       model->add_data(data[i]);
     }
 
     EXPECT_EQ(6, model->number_of_observations());
+    EXPECT_EQ(6, model->top_level_model()->number_of_observations());
+    EXPECT_EQ(3, model->conditional_model("shopping")->number_of_observations());
   }
 
 

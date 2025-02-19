@@ -30,9 +30,10 @@
 namespace BOOM {
 
   namespace {
-    inline std::ostream &print_iterator_stack_fun(
+    template <class IT>
+    std::ostream &print_iterator_stack_fun(
         std::ostream &out,
-        const std::vector<TaxonomyIterator::base_iterator> &stack) {
+        const std::vector<IT> &stack) {
       if (stack.empty()) {
         out << "Iterator stack is empty.\n";
       } else {
@@ -409,62 +410,135 @@ namespace BOOM {
   }
 
   //======================================================================
+  namespace {
+
+    // Set 'current_end' to an iterator value corresponding to the 'end'
+    // iterator for the last element in the iterator stack.
+    //
+    // A TaxonomyIterator moves through a taxonmy in a depth-first traversal.
+    // If a node has a child, the next node will be that node's child.  If not
+    // the next node will be that node's sibling.  If there are no further
+    // siblings, then the next node is the parent's next sibling, and so forth.
+    //
+    // The algorithm needs an 'end' for the top level of the stack.  Otherwise,
+    // the
+    template <class IT>
+    void set_current_end(const std::vector<IT> &stack,
+                         const IT &top_level_end,
+                         IT &current_end) {
+      int n = stack.size();
+      if (n < 2) {
+        // If we are at the top level of the stack, then current_end =
+        // top_level_end, sort of by definition.
+        current_end = top_level_end;
+      } else {
+        // Otherwise, the ending element for the final iterator in the stack can
+        // be obtained by asking its parent.
+        current_end = (*stack[n-2])->end();
+      }
+    }
+
+    template <class IT>
+    void taxonomy_iterator_increment(std::vector<IT> &stack,
+                                     IT &top_level_end,
+                                     IT &current_end) {
+      if (stack.empty()) {
+        return;
+      }
+      // 'node' is the TaxonomyNode we're pointing to before we iterate.
+      auto &node(*stack.back());
+      if (!node->is_leaf()) {
+        // Search depth first.  Unless the node is a leaf, step down to its
+        // children.
+        stack.push_back(node->begin());
+        set_current_end(stack, top_level_end, current_end);
+      } else {
+        // If the node is a leaf, step to its next sibling.
+        ++stack.back();
+      }
+
+      while(!stack.empty() && stack.back() == current_end) {
+        // If stepping took us as far as we can go, step back up, then step over
+        // to the next sibling of the parent.
+        stack.pop_back();
+        set_current_end(stack, top_level_end, current_end);
+        if (!stack.empty()) {
+          ++stack.back();
+          // The 'while' loop handles the case of this being a step to the 'end'.
+        }
+      }
+    }
+  }  // namespace
+
+  //======================================================================
   TaxonomyIterator::TaxonomyIterator(const std::vector<base_iterator> &stack,
                                      const base_iterator &top_level_end)
         : iterator_stack_(stack),
           top_level_end_(top_level_end)
-    {
-      set_current_end();
-    }
+  {
+    set_current_end(
+        iterator_stack_,
+        top_level_end_,
+        current_end_);
+  }
+
+  TaxonomyConstIterator::TaxonomyConstIterator(
+      const std::vector<base_iterator> &stack,
+      const base_iterator &top_level_end)
+      : iterator_stack_(stack),
+        top_level_end_(top_level_end)
+  {
+    set_current_end(iterator_stack_, top_level_end_, current_end_);
+  }
+
 
   std::ostream &TaxonomyIterator::print_iterator_stack(
       std::ostream &out) const {
     return print_iterator_stack_fun(out, iterator_stack_);
   }
 
+  std::ostream &TaxonomyConstIterator::print_iterator_stack(
+      std::ostream &out) const {
+    return print_iterator_stack_fun(out, iterator_stack_);
+  }
 
   //---------------------------------------------------------------------------
   // This iterator is supposed to iterate over the whole tree, not just the
   // leaves.
   TaxonomyIterator &TaxonomyIterator::operator++() {
-    if (iterator_stack_.empty()) {
-      return *this;
-    }
+    // if (iterator_stack_.empty()) {
+    //   return *this;
+    // }
 
-    // 'node' is the TaxonomyNode we're pointing to before we iterate.
-    Ptr<TaxonomyNode> &node(*iterator_stack_.back());
-    if (!node->is_leaf()) {
-      // Search depth first.  Unless the node is a leaf, step down to its
-      // children.
-      iterator_stack_.push_back(node->begin());
-      set_current_end();
-    } else {
-      // If the node is a leaf, step to its next sibling.
-      ++iterator_stack_.back();
-    }
+    // // 'node' is the TaxonomyNode we're pointing to before we iterate.
+    // Ptr<TaxonomyNode> &node(*iterator_stack_.back());
+    // if (!node->is_leaf()) {
+    //   // Search depth first.  Unless the node is a leaf, step down to its
+    //   // children.
+    //   iterator_stack_.push_back(node->begin());
+    //   set_current_end();
+    // } else {
+    //   // If the node is a leaf, step to its next sibling.
+    //   ++iterator_stack_.back();
+    // }
 
-    while(!iterator_stack_.empty() && iterator_stack_.back() == current_end_) {
-      // If stepping took us as far as we can go, step back up, then step over
-      // to the next sibling of the parent.
-      iterator_stack_.pop_back();
-      set_current_end();
-      if (!iterator_stack_.empty()) {
-        ++iterator_stack_.back();
-        // The 'while' loop handles the case of this being a step to the 'end'.
-      }
-    }
-
+    // while(!iterator_stack_.empty() && iterator_stack_.back() == current_end_) {
+    //   // If stepping took us as far as we can go, step back up, then step over
+    //   // to the next sibling of the parent.
+    //   iterator_stack_.pop_back();
+    //   set_current_end();
+    //   if (!iterator_stack_.empty()) {
+    //     ++iterator_stack_.back();
+    //     // The 'while' loop handles the case of this being a step to the 'end'.
+    //   }
+    // }
+    taxonomy_iterator_increment(iterator_stack_, top_level_end_, current_end_);
     return *this;
   }
 
-  void TaxonomyIterator::set_current_end() {
-    int n = iterator_stack_.size();
-    if (n < 2) {
-      current_end_ = top_level_end_;
-    } else {
-      Ptr<TaxonomyNode> &parent(*iterator_stack_[n-2]);
-      current_end_ = parent->end();
-    }
+  TaxonomyConstIterator &TaxonomyConstIterator::operator++() {
+    taxonomy_iterator_increment(iterator_stack_, top_level_end_, current_end_);
+    return *this;
   }
 
   //======================================================================
@@ -474,7 +548,7 @@ namespace BOOM {
         parent_(nullptr)
   {}
 
-  
+
   TaxonomyNode *TaxonomyNode::add_child(const std::string &level) {
     NEW(TaxonomyNode, child)(level);
     children_.insert(child);
@@ -535,7 +609,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void TaxonomyNode::fill_position(const std::vector<std::string> &values,
                                    std::vector<int> &output,
                                    const TaxNodeStringLess &less) const {
@@ -629,6 +703,38 @@ namespace BOOM {
     position_ = position;
     for (size_t i = 0; i < children_.size(); ++i) {
       children_[i]->finalize(i);
+    }
+  }
+
+  TaxonomyNode *TaxonomyNode::find_node(std::list<std::string> &child_levels) {
+    if (child_levels.empty()) {
+      return this;
+    } else {
+      std::string child = child_levels.front();
+      child_levels.pop_front();
+      TaxonomyNode *child_node = find_child(child);
+      if (!child_node) {
+        std::ostringstream err;
+        err << "child node at level '" << child << "' not found.";
+        report_error(err.str());
+      }
+      return child_node->find_node(child_levels);
+    }
+  }
+
+  const TaxonomyNode *TaxonomyNode::find_node(std::list<std::string> &child_levels) const {
+    if (child_levels.empty()) {
+      return this;
+    } else {
+      std::string child = child_levels.front();
+      child_levels.pop_front();
+      const TaxonomyNode *child_node = find_child(child);
+      if (!child_node) {
+        std::ostringstream err;
+        err << "child node at level '" << child << "' not found.";
+        report_error(err.str());
+      }
+      return child_node->find_node(child_levels);
     }
   }
 
@@ -777,6 +883,58 @@ namespace BOOM {
     return ans;
   }
 
+  TaxonomyNode *Taxonomy::node(const std::string &level, char sep) {
+    StringSplitter split(sep);
+    return node(split(level));
+  }
+
+  const TaxonomyNode *Taxonomy::node(const std::string &level, char sep) const {
+    StringSplitter split(sep);
+    return node(split(level));
+  }
+
+  TaxonomyNode *Taxonomy::node(const std::vector<std::string> &levels) {
+    if (levels.empty()) {
+      return nullptr;
+    }
+    auto it = top_levels_.find(levels[0], level_less_);
+    if (it == top_levels_.end()){
+      std::ostringstream err;
+      err << "Initial level " << levels[0] << " not present in taxonomy.";
+      report_error(err.str());
+    } else {
+      const Ptr<TaxonomyNode> &top(*it);
+      if (levels.size() == 1) {
+        return top.get();
+      } else {
+        std::list<std::string> child_levels(levels.begin() + 1, levels.end());
+        return top->find_node(child_levels);
+      }
+    }
+    return nullptr;
+  }
+
+  const TaxonomyNode *Taxonomy::node(const std::vector<std::string> &levels) const {
+    if (levels.empty()) {
+      return nullptr;
+    }
+    auto it = top_levels_.find(levels[0], level_less_);
+    if (it == top_levels_.end()){
+      std::ostringstream err;
+      err << "Initial level " << levels[0] << " not present in taxonomy.";
+      report_error(err.str());
+    } else {
+      const Ptr<TaxonomyNode> &top(*it);
+      if (levels.size() == 1) {
+        return top.get();
+      } else {
+        std::list<std::string> child_levels(levels.begin() + 1, levels.end());
+        return top->find_node(child_levels);
+      }
+    }
+    return nullptr;
+  }
+
   TaxonomyIterator Taxonomy::begin() {
     std::vector<TaxonomyIterator::base_iterator> iterator_stack;
     if (!top_levels_.empty()) {
@@ -785,9 +943,37 @@ namespace BOOM {
     return TaxonomyIterator(iterator_stack, top_levels_.end());
   }
 
+  TaxonomyConstIterator Taxonomy::begin() const {
+    std::vector<TaxonomyConstIterator::base_iterator> iterator_stack;
+    if (!top_levels_.empty()) {
+      iterator_stack.push_back(top_levels_.begin());
+    }
+    return TaxonomyConstIterator(iterator_stack, top_levels_.end());
+  }
+
   TaxonomyIterator Taxonomy::end() {
     std::vector<TaxonomyIterator::base_iterator> iterator_stack;
     return TaxonomyIterator(iterator_stack, top_levels_.end());
+  }
+
+  TaxonomyConstIterator Taxonomy::end() const {
+    std::vector<TaxonomyConstIterator::base_iterator> iterator_stack;
+    return TaxonomyConstIterator(iterator_stack, top_levels_.end());
+  }
+
+  std::ostream & Taxonomy::print(std::ostream &out) const {
+    out << "[\n";
+    for (auto it = begin(); it != end(); ++it) {
+      out << "   " << (*it)->path_from_root() << ",\n";
+    }
+    out << "]" << std::endl;
+    return out;
+  }
+
+  std::string Taxonomy::to_string() const {
+    std::ostringstream out;
+    print(out);
+    return out.str();
   }
 
   //======================================================================

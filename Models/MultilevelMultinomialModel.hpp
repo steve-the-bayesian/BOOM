@@ -61,7 +61,7 @@ namespace BOOM {
 
     MultilevelMultinomialModel(MultilevelMultinomialModel &&rhs) = default;
     MultilevelMultinomialModel &operator=(MultilevelMultinomialModel &&rhs) = default;
-    
+
     MultilevelMultinomialModel *clone() const override;
 
     double logp(const MultilevelCategoricalData &data_point) const;
@@ -73,27 +73,43 @@ namespace BOOM {
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
-    MultinomialModel *conditional_model(const std::string &value);
-    const MultinomialModel *conditional_model(const std::string &value) const;
-    MultinomialModel *conditional_model(const TaxonomyNode *node);
-    const MultinomialModel *conditional_model(const TaxonomyNode *node) const;
-    
+    // There are three ways of getting at the conditional models:
+    // 1) 'restaurants/fancy/steak', '/'
+    // 2) ["restaurants", "fancy", "steak"]
+    // 3) taxonomy node pointing to above.
+    MultinomialModel *conditional_model(
+        const std::string &value,
+        char sep = '/');
+    const MultinomialModel *conditional_model(
+        const std::string &value,
+        char sep = '/') const;
+
+    MultinomialModel *conditional_model(
+        const std::vector<std::string> &levels);
+    const MultinomialModel *conditional_model(
+        const std::vector<std::string> &levels) const;
+
+    MultinomialModel *conditional_model(
+        const TaxonomyNode *node);
+    const MultinomialModel *conditional_model(
+        const TaxonomyNode *node) const;
+
     MultinomialModel *top_level_model() {return top_level_model_.get();}
     const MultinomialModel *top_level_model() const {return top_level_model_.get();}
-    
+
    private:
     Ptr<Taxonomy> taxonomy_;
 
     // The top_level_model_ is the model for the first level in the taxonomy.
     Ptr<MultinomialModel> top_level_model_;
 
-    // conditional_models_ 
+    // conditional_models_
     std::map<const TaxonomyNode *, Ptr<MultinomialModel>> conditional_models_;
 
     std::vector<Ptr<MultilevelCategoricalData>> data_;
     bool only_keep_suf_;
 
-    // Populate top_level_model_ and conditional_models_ using 
+    // Populate top_level_model_ and conditional_models_ using
     void create_models();
   };
 
