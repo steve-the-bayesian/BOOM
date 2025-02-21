@@ -83,7 +83,6 @@ namespace BOOM {
     return top_level_model_->number_of_observations();
   }
 
-
   void MultilevelMultinomialModel::add_data(const Ptr<Data> &dp) {
     Ptr<MultilevelCategoricalData> data_point(
         dp.dcast<MultilevelCategoricalData>());
@@ -92,6 +91,7 @@ namespace BOOM {
 
   void MultilevelMultinomialModel::add_data(
       const Ptr<MultilevelCategoricalData> &data_point) {
+
     // The numeric levels of the data point being added.
     const std::vector<int> &levels(data_point->levels());
     if (levels.empty()) {
@@ -99,8 +99,11 @@ namespace BOOM {
       return;
     }
     top_level_model_->suf()->update_raw(levels[0]);
+
+    // Update the taxonomy mode to point to the child... now the second level.
     TaxonomyNode *taxonomy_node = taxonomy_->top_level_node(levels[0]);
-    for (int i = 0; i < levels.size(); ++i) {
+
+    for (int i = 1; i < levels.size(); ++i) {
       if (taxonomy_node->is_leaf()) {
         if (i + 1 < levels.size()) {
           std::ostringstream err;
@@ -166,6 +169,9 @@ namespace BOOM {
 
   const MultinomialModel *MultilevelMultinomialModel::conditional_model(
       const TaxonomyNode *node) const {
+    if (!node) {
+      report_error("Illegal request for conditional_model.");
+    }
     auto it = conditional_models_.find(node);
     if (it == conditional_models_.end()) {
       report_error("Could not find model.");
@@ -184,6 +190,7 @@ namespace BOOM {
     for (auto it = taxonomy_->begin(); it != taxonomy_->end(); ++it) {
       const TaxonomyNode *node((*it).get());
       if (!node->is_leaf()) {
+        // The data for the new model are the child levels of this node.
         conditional_models_[node] = new MultinomialModel(
             node->number_of_children());
       }

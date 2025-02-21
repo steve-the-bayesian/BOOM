@@ -610,6 +610,27 @@ namespace BOOM {
     return ans;
   }
 
+  void TaxonomyNode::fill_position_error(const std::vector<std::string> &values,
+                                         int step) const {
+    const std::string &value(values[step]);
+    std::ostringstream err;
+    err << value << " was not found in level " << step
+        << " of the taxonomy with taxonomy element ";
+    for (int i = 0; i < values.size(); ++i) {
+      err << values[i];
+      if (i + 1 < values.size()) {
+        err << "/";
+      }
+    }
+    err << "." << std::endl;
+
+    err << "The available children are: \n";
+    for (const auto &child : children_) {
+      err << "   " << child->value() << "\n";
+    }
+    report_error(err.str());
+  }
+
   void TaxonomyNode::fill_position(const std::vector<std::string> &values,
                                    std::vector<int> &output,
                                    const TaxNodeStringLess &less) const {
@@ -621,26 +642,15 @@ namespace BOOM {
 
     auto it = children_.find(value, less);
     if (it == children_.end()) {
-      std::ostringstream err;
-      err << values[step] << " was not found in level " << step
-          << " of the taxonomy with taxonomy element ";
-      for (int i = 0; i < values.size(); ++i) {
-        err << value;
-        if (i + 1 < values.size()) {
-          err << "/";
-        }
-      }
-      err << ".";
-
-      err << "The available children are: \n";
-      for (const auto &child : children_) {
-        err << "   " << child->value() << "\n";
-      }
-      report_error(err.str());
+      fill_position_error(values, step);
     } else {
       const Ptr<TaxonomyNode> &node(*it);
-      output.push_back(node->position());
-      node->fill_position(values, output, less);
+      if (node->value() == value) {
+        output.push_back(node->position());
+        node->fill_position(values, output, less);
+      } else {
+        fill_position_error(values, step);
+      }
     }
   }
 
@@ -739,6 +749,27 @@ namespace BOOM {
   }
 
   //======================================================================
+  Taxonomy::Taxonomy(const std::vector<std::vector<std::string>> &values) {
+    create(values);
+  }
+
+  void Taxonomy::create(const std::vector<std::vector<std::string>> &values) {
+    for (const auto &entry : values) {
+      add(entry);
+    }
+    finalize();
+  }
+
+  Taxonomy::Taxonomy(const std::vector<std::string> &values, char sep) {
+    std::string delim(1, sep);
+    std::vector<std::vector<std::string>> unpacked;
+    StringSplitter splitter(delim);
+    for (const auto &el : values) {
+      std::vector<std::string> split = splitter(el);
+      unpacked.push_back(split);
+    }
+    create(unpacked);
+  }
 
   bool Taxonomy::operator==(const Taxonomy &rhs) const {
     if (tree_size() != rhs.tree_size()) {
@@ -1016,7 +1047,6 @@ namespace BOOM {
   std::ostream &MultilevelCategoricalData::display(std::ostream &out) const {
     out << taxonomy_->name(values_);
     return out;
-
   }
 
   void MultilevelCategoricalData::set(const std::vector<int> &values) {
@@ -1031,31 +1061,6 @@ namespace BOOM {
 
   //======================================================================
 
-  Ptr<Taxonomy> read_taxonomy(const std::vector<std::string> &values,
-                              char sep) {
-    std::string delim(1, sep);
-    std::vector<std::vector<std::string>> unpacked;
-    StringSplitter splitter(delim);
-    for (const auto &el : values) {
-      std::vector<std::string> split = splitter(el);
-      unpacked.push_back(split);
-    }
-    return read_taxonomy(unpacked);
-  }
-
-  Ptr<Taxonomy> read_taxonomy(
-      const std::vector<std::vector<std::string>> &values) {
-    NEW(Taxonomy, tax)();
-
-    for (const auto &entry : values) {
-      tax->add(entry);
-    }
-
-    tax->finalize();
-    return tax;
-  }
-
-  //======================================================================
 
   Ptr<CatKey> make_catkey(const std::vector<std::string> &sv) {
     std::vector<std::string> tmp(sv);

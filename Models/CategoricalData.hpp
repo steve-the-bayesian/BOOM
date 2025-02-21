@@ -510,6 +510,12 @@ namespace BOOM {
     // value_ attribute.
     SortedVector<Ptr<TaxonomyNode>, TaxNodeLess> children_;
 
+    // To be called when 'fill_position' encounters an error condition.  Throws
+    // an exception an error message summarizing the information in 'values' and
+    // 'step'.
+    void fill_position_error(const std::vector<std::string> &values,
+                             int step) const;
+
     friend void intrusive_ptr_add_ref(TaxonomyNode *node) {
       node->up_count();
     }
@@ -529,24 +535,23 @@ namespace BOOM {
   //===========================================================================
   class Taxonomy : private RefCounted {
    public:
+    // Args:
+    //   levels: element [i] is a vector of levels for a single taxonomy
+    //     element.  Element [i][j] is nested within element[i][j - 1].
+    //     Example: ["shopping", "clothes", "shoes"].
+    Taxonomy(const std::vector<std::vector<std::string>> &levels);
+
+    // Args:
+    //   levels: element [i] is a single taxonomy element of the form
+    //     "shopping/clothes/shoes".
+    //   sep: The field delimiter used to separate values in 'levels'.
+    Taxonomy(const std::vector<std::string> &levels, char sep='/');
+
     bool operator==(const Taxonomy &rhs) const;
     bool operator!=(const Taxonomy &rhs) const {
       return !(rhs == *this);
     }
 
-    // Add an element to the taxonomy.  If the element is already present the
-    // taxonomy remains unchanged.
-    //
-    // Args:
-    //   element: A sequence of nested taxonomy levels.  For example
-    //     ["shopping", "clothes", "shoes"].
-    void add(const std::vector<std::string> &element);
-
-    // To be called after the last taxonomy element has been added.
-    //
-    // Effects: Each TaxonomyNode is informed of its position relative to its
-    // parent.
-    void finalize();
 
     // Args:
     //   levels:  The taxonomy levels identifying an observation.
@@ -624,6 +629,23 @@ namespace BOOM {
     // The first levels of the taxonomy tree.
     SortedVector<Ptr<TaxonomyNode>, TaxNodeLess> top_levels_;
     TaxNodeStringLess level_less_;
+
+    // To be called during construction.
+    void create(const std::vector<std::vector<std::string>> &levels);
+
+    // Add an element to the taxonomy.  If the element is already present the
+    // taxonomy remains unchanged.
+    //
+    // Args:
+    //   element: A sequence of nested taxonomy levels.  For example
+    //     ["shopping", "clothes", "shoes"].
+    void add(const std::vector<std::string> &element);
+
+    // To be called after the last taxonomy element has been added.
+    //
+    // Effects: Each TaxonomyNode is informed of its position relative to its
+    // parent.
+    void finalize();
 
     friend void intrusive_ptr_add_ref(Taxonomy *taxonomy) {
       taxonomy->up_count();

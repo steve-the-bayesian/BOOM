@@ -77,6 +77,9 @@ namespace BOOM {
     // 1) 'restaurants/fancy/steak', '/'
     // 2) ["restaurants", "fancy", "steak"]
     // 3) taxonomy node pointing to above.
+    //
+    // In all three cases conditional_model[level] describes the children of
+    // 'level'.
     MultinomialModel *conditional_model(
         const std::string &value,
         char sep = '/');
@@ -97,19 +100,31 @@ namespace BOOM {
     MultinomialModel *top_level_model() {return top_level_model_.get();}
     const MultinomialModel *top_level_model() const {return top_level_model_.get();}
 
+    Taxonomy *taxonomy() {return taxonomy_.get();}
+    const Taxonomy *taxonomy() const {return taxonomy_.get();}
+
    private:
+    // The taxonomy describes the potential values of the data supported by the
+    // model.  The taxonomy's role is analogous to the 'cat key' in a flat
+    // multinomial model.
     Ptr<Taxonomy> taxonomy_;
 
     // The top_level_model_ is the model for the first level in the taxonomy.
     Ptr<MultinomialModel> top_level_model_;
 
-    // conditional_models_
+    // conditional_models_["shopping/clothes"] points to the model for
+    // ["shopping/clothes/shoes", "shopping/clothes/pants", ...].  I.e. the data
+    // for 'conditional_models_[node]' are the child levels of 'node'.
     std::map<const TaxonomyNode *, Ptr<MultinomialModel>> conditional_models_;
 
+    // If only_keep_suf_ is true then data_ will be empty.  Whether or not data_
+    // is empty, the values of data_[i] are accumulated in the sufficient
+    // statistics of the models corresponding to the levels of data_[i].
     std::vector<Ptr<MultilevelCategoricalData>> data_;
     bool only_keep_suf_;
 
-    // Populate top_level_model_ and conditional_models_ using
+    // Populate top_level_model_ and conditional_models_.  To be called during
+    // construction.
     void create_models();
   };
 
