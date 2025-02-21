@@ -86,11 +86,14 @@ namespace {
   }
 
   TEST_F(MultilevelMultinomialTest, TestMcmc) {
+    // With a large sample size and a small taxonomy, each taxonomy element is
+    // going to be visited at least once.
     int sample_size = 1000;
     int niter = 100;
 
     NEW(MultilevelMultinomialModel, model)(taxonomy_);
     NEW(MultilevelMultinomialPosteriorSampler, sampler)(model.get());
+    model->set_method(sampler);
 
     std::vector<std::string> leaves = taxonomy_->leaf_names();
 
@@ -100,10 +103,23 @@ namespace {
       model->add_data(data_point);
     }
 
+    Matrix top_level_draws(niter, model->top_level_model()->dim());
+
+    Vector seafood_counts = model->conditional_model("restaurants/fancy/seafood")->suf()->n();
+    Matrix seafood_draws(niter, seafood_counts.size());
+
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
+      top_level_draws.row(i) = model->top_level_model()->pi();
+      seafood_draws.row(i) = model->conditional_model("restaurants/fancy/seafood")->pi();
     }
-  }
 
+    Vector top_level_counts = model->top_level_model()->suf()->n();
+    Vector top_level_probs = top_level_counts / sum(top_level_counts);
+    CheckMcmcMatrix(top_level_draws, top_level_probs);
+
+    Vector seafood_probs = seafood_counts / sum(seafood_counts);
+    CheckMcmcMatrix(seafood_draws, seafood_probs);
+  }
 
 }  // namespace
