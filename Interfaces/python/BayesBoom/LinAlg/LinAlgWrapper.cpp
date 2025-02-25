@@ -97,7 +97,7 @@ namespace BayesBoom {
         .def("__repr__",
              [](const Vector &v) {
                std::ostringstream out;
-               out << v;
+               out << "[" << v << "]";
                return out.str();
              })
         ;

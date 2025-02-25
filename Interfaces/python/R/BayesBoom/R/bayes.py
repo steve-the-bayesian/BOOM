@@ -17,6 +17,7 @@ from .boom_data_builders import (
     UnlabelledCategoricalDataBuilder,
     LabelledMarkovDataBuilder,
     UnlabelledMarkovDataBuilder,
+    MultilevelCategoricalDataBuilder,
 )
 
 """
@@ -553,9 +554,61 @@ class MarkovModel(MixtureComponent):
             return self._categories[ind]
         else:
             return ind
-        
 
+
+class MultilevelMultinomialModel(MixtureComponent):
+    def __init__(self, taxonomy, sep="/"):
+        """
+        Args:
+          taxonomy: A sequence of strings giving taxonomy id's in the form
+            "top/second/third/etc".  The number of levels in each entry can
+            vary.  Each level of the taxonomy that has children will be assigned
+            a sub-model.
+        """
+        import BayesBoom.boom as boom        
+        self._sep = sep
+        self._boom_taxonomy = boom.Taxonomy(taxonomy, sep)
+        self._boom_model = None
+        self._boom_sampler = None
+
+    def probs(self, level=""):
+        if self._boom_model is None:
+            self.boom()
+        
+        if level:
+            return self._boom_model.conditional_model(level, self._sep).probs.to_numpy()
+        else:
+            return self._boom_model.top_level_model.probs.to_numpy()
+
+    def boom(self):
+        import BayesBoom.boom as boom        
+        if (self._boom_model is None):
+            self._boom_model = boom.MultilevelMultinomialModel(self._boom_taxonomy)
+            self._ensure_posterior_sampler();
+
+        return self._boom_model
+
+    def allocate_space(self, niter):
+        self.boom()
+        self._model_levels = self._boom_model.model_levels
+        params = self._boom_model.parameters
+        self._draws = {x[0]: np.empty((niter, x[1].size)) for x in zip(self._model_levels, params)}
+
+    def record_draw(self, iteration):
+        for draw in zip(self._model_levels, self._boom_model.parameters):
+            self._draws[draw[0]][iteration, :] = draw[1].to_numpy()
+        
+    def create_boom_data_builder(self):
+        return MultilevelCategoricalDataBuilder(self._boom_taxonomy, self._sep)
     
+    def _ensure_posterior_sampler(self):
+        import BayesBoom.boom as boom
+        self._boom_sampler = boom.MultilevelMultinomialPosteriorSampler(
+            self._boom_model,
+            1.0)  ####### TODO: add prior control
+        self._boom_model.set_method(self._boom_sampler)
+
+
 class MultinomialModel(MixtureComponent):
     """
     A Python wrapper for the boom MultinomialModel object.
@@ -575,10 +628,6 @@ class MultinomialModel(MixtureComponent):
         self._boom_sampler = None
         self._prior = None
     
-        
-    @property
-    def data_type(self):
-        return 
         
     @property
     def probs(self):

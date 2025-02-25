@@ -552,7 +552,6 @@ namespace BOOM {
       return !(rhs == *this);
     }
 
-
     // Args:
     //   levels:  The taxonomy levels identifying an observation.
     //

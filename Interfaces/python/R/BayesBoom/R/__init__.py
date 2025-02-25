@@ -38,6 +38,7 @@ from .bayes import (
     MarkovModel,
     MarkovConjugatePrior,
     MixtureComponent,
+    MultilevelMultinomialModel,
     MultinomialModel,
     MvnBase,
     MvnPrior,
@@ -167,4 +168,5 @@ from .boom_data_builders import (
     UnlabelledCategoricalDataBuilder,
     LabelledMarkovDataBuilder,
     UnlabelledMarkovDataBuilder,
+    MultilevelCategoricalDataBuilder,
 )

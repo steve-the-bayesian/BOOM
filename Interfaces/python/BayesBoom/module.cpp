@@ -25,6 +25,7 @@ namespace BayesBoom {
   //   void BinomialModel_def(py::module &);
   void BetaBinomialModel_def(py::module &);
   void MultinomialModel_def(py::module &);
+  void MultilevelMultinomialModel_def(py::module &);
 
   void GaussianModel_def(py::module &m);
   void GammaModel_def(py::module &m);
@@ -88,6 +89,7 @@ namespace BayesBoom {
     //    BinomialModel_def(boom);
     BetaBinomialModel_def(boom);
     MultinomialModel_def(boom);
+    MultilevelMultinomialModel_def(boom);
 
     GaussianModel_def(boom);
     GammaModel_def(boom);

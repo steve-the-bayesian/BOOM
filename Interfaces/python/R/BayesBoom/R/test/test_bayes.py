@@ -68,6 +68,47 @@ class TestPoissonModel(unittest.TestCase):
         boom_model = model.boom()
         self.assertIsInstance(boom_model, boom.PoissonModel)
         
+
+class TestMultilevelMultinomialModel(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_model(self):
+        taxonomy = [
+            "red/crimson",
+            "red/brick",
+            "blue/sky",
+            "blue/ocean",
+        ]
+
+        model = R.MultilevelMultinomialModel(taxonomy)
+        top_probs = model.probs()
+        self.assertEqual(2, len(top_probs))
+        red_probs = model.probs("red")
+        self.assertEqual(2, len(red_probs))
+        blue_probs = model.probs("blue")
+        self.assertEqual(2, len(blue_probs))
+
+        model.allocate_space(5)
+        self.assertIsInstance(model._model_levels, list)
+        self.assertEqual(len(model._model_levels), 3)
+        self.assertEqual(model._model_levels[0], "top")
+        self.assertTrue("red" in model._model_levels)
+        self.assertTrue("blue" in model._model_levels)
+
+        self.assertIsInstance(model._draws, dict)
+        for x in model._model_levels:
+            self.assertTrue(x in model._draws.keys())
+        
+        model.record_draw(3)
+
+        data = np.random.choice(taxonomy, size=100, replace=True)
+        data_builder = model.create_boom_data_builder()
+        boom_data = data_builder.build_boom_data(data)
+        self.assertIsInstance(boom_data, list)
+        self.assertEqual(len(boom_data), len(data))
+        self.assertIsInstance(boom_data[0], boom.MultilevelCategoricalData)
+
         
 _debug_mode = False
 

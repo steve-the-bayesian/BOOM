@@ -82,3 +82,17 @@ class UnlabelledMarkovDataBuilder(DataBuilder):
             else:
                 ans.append(boom.MarkovData(data[i], ans[i-1]))
         return ans
+
+
+class MultilevelCategoricalDataBuilder(DataBuilder):
+    def __init__(self, boom_taxonomy, sep="/"):
+        self._boom_taxonomy = boom_taxonomy
+        self._sep = sep
+
+    def build_boom_data(self, data):
+        ans = [
+            boom.MultilevelCategoricalData(self._boom_taxonomy, x, self._sep)
+            for x in data
+        ]
+        return ans;
+        

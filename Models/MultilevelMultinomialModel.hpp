@@ -103,6 +103,16 @@ namespace BOOM {
     Taxonomy *taxonomy() {return taxonomy_.get();}
     const Taxonomy *taxonomy() const {return taxonomy_.get();}
 
+    std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::iterator
+    conditional_model_begin() {return conditional_models_.begin();}
+    std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::iterator
+    conditional_model_end() {return conditional_models_.end();}
+
+    std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::const_iterator
+    conditional_model_begin() const {return conditional_models_.begin();}
+    std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::const_iterator
+    conditional_model_end() const {return conditional_models_.end();}
+    
    private:
     // The taxonomy describes the potential values of the data supported by the
     // model.  The taxonomy's role is analogous to the 'cat key' in a flat

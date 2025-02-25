@@ -89,7 +89,7 @@ namespace BayesBoom {
              [](HiddenMarkovModel &hmm) {
                hmm.save_state_probs();
              },
-             "Save the marginal probabilities of the hidden states at each time point"
+             "Save the marginal probabilities of the hidden states at each time point.")
         .def("__repr__",
              [](const  HiddenMarkovModel &model) {
                std::ostringstream out;
