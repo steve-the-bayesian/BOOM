@@ -10,7 +10,7 @@ import pdb
 import matplotlib.pyplot as plt
 
 import BayesBoom.R as R
-
+import BayesBoom.boom as boom
 import BayesBoom.mixtures as mix
 
 class TestHmm(unittest.TestCase):
@@ -90,10 +90,45 @@ class TestHmm(unittest.TestCase):
 
         niter = 100
         hmm.train(niter=niter, ping=None)
+
+    def test_multilevel_categorical(self):
+        taxonomy = [
+            "red/crimson",
+            "red/brick",
+            "blue/sky",
+            "blue/ocean",
+        ]
+
+        initial_distribution = np.array([.8, .2])
+        transition_probabilities = np.array([[.9, .1],
+                                             [.2, .8]])
+
+        sample_size = 100
+        markov = R.MarkovModel(transition_probabilities, initial_distribution)
+        states = markov.sim(sample_size)
+
+        p0 = np.array([.1, .2, .3, .4])
+        p1 = np.array([.4, .3, .2, .1])
+        data = np.array([""] * sample_size, dtype="object")
+        n0 = np.sum(states == 0)
+        n1 = sample_size - n0
+        data[states == 0] = np.random.choice(taxonomy, size=n0, replace=True, p=p0)
+        data[states == 1] = np.random.choice(taxonomy, size=n1, replace=True, p=p1)
+
+        boom_taxonomy = boom.Taxonomy(taxonomy, "/")
+        state1 = R.MultilevelMultinomialModel(boom_taxonomy)
+        state2 = R.MultilevelMultinomialModel(boom_taxonomy)
+
+        hmm = mix.HiddenMarkovModel(2)
+        hmm.add_data(data)
+        hmm.add_state_model(state1)
+        hmm.add_state_model(state2)
+
         import pdb
         pdb.set_trace()
-        print("blah")
+        hmm.train(100)
         
+
     
 _debug_mode = False
 

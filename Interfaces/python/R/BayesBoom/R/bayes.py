@@ -567,7 +567,10 @@ class MultilevelMultinomialModel(MixtureComponent):
         """
         import BayesBoom.boom as boom        
         self._sep = sep
-        self._boom_taxonomy = boom.Taxonomy(taxonomy, sep)
+        if isinstance(taxonomy, boom.Taxonomy):
+            self._boom_taxonomy = taxonomy
+        else:
+            self._boom_taxonomy = boom.Taxonomy(taxonomy, sep)
         self._boom_model = None
         self._boom_sampler = None
 
