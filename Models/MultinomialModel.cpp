@@ -169,15 +169,42 @@ namespace BOOM {
   }
 
   const double &MM::pi(int s) const { return pi()[s]; }
+
   const Vector &MM::pi() const { return Pi_prm()->value(); }
+
   const Vector &MM::logpi() const {
     check_logp();
     return logp_;
   }
 
+  double MM::logp(int index) const {
+    check_logp();
+    return logp_[index];
+  }
+
   void MM::set_pi(const Vector &probs) {
     Pi_prm()->set(probs);
     check_logp();
+  }
+
+  double MM::pdf(const Data *dp, bool logscale) const {
+    check_logp();
+    uint i = DAT(dp)->value();
+    if (i >= dim()) {
+      std::string msg = "too large a value passed to MultinomialModel::pdf";
+      report_error(msg);
+    }
+    return logscale ? logp_[i] : pi(i);
+  }
+
+  double MM::pdf(const Ptr<Data> &dp, bool logscale) const {
+    check_logp();
+    uint i = DAT(dp)->value();
+    if (i >= dim()) {
+      std::string msg = "too large a value passed to MultinomialModel::pdf";
+      report_error(msg);
+    }
+    return logscale ? logp_[i] : pi(i);
   }
 
   double MM::entropy() const {
@@ -219,30 +246,6 @@ namespace BOOM {
     set_pi(n / tot);
   }
 
-  double MM::pdf(const Data *dp, bool logscale) const {
-    check_logp();
-    uint i = DAT(dp)->value();
-    if (i >= dim()) {
-      std::string msg = "too large a value passed to MultinomialModel::pdf";
-      report_error(msg);
-    }
-    return logscale ? logp_[i] : pi(i);
-  }
-
-  double MM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    check_logp();
-    uint i = DAT(dp)->value();
-    if (i >= dim()) {
-      std::string msg = "too large a value passed to MultinomialModel::pdf";
-      report_error(msg);
-    }
-    return logscale ? logp_[i] : pi(i);
-  }
-
-  double MM::logp(int index) const {
-    return logp_[index];
-  }
-  
   uint MM::sim(RNG &rng) const { return rmulti_mt(rng, pi()); }
 
   void MM::add_mixture_data(const Ptr<Data> &dp, double prob) {
@@ -251,9 +254,10 @@ namespace BOOM {
   }
 
   void MM::check_logp() const {
-    if (logp_current_) return;
-    logp_ = log(pi());
-    logp_current_ = true;
+    if (!logp_current_) {
+      logp_ = log(pi());
+      logp_current_ = true;
+    }
   }
 
   void MM::set_observer() {
