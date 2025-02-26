@@ -71,6 +71,9 @@ class HiddenMarkovModel:
         """
         return self._markov_model
 
+    def state_model(self, index):
+        return self._state_models[index]
+
     def add_state_model(self, model):
         """
         Args:
@@ -82,7 +85,6 @@ class HiddenMarkovModel:
             its 'boom' method is called.
         """
         self._state_models.append(model)
-
 
     def set_markov_prior(self, prior):
         """
@@ -204,7 +206,7 @@ class HiddenMarkovModel:
         for model in self._state_models:
             model.allocate_space(niter)
 
-        
+
 
     def _record_draw(self, iteration):
         self._log_likelihood_draws[iteration] = self._boom_hmm.loglike
