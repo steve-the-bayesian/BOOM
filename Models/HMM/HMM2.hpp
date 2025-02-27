@@ -66,34 +66,73 @@ namespace BOOM {
       ParamPolicy::add_model(mark_);
     }
 
+    // The number of mixture components
     uint state_space_size() const;
-    virtual void initialize_params();
+
+    // Randomly assign values to the latent Markov chain, and set all Markov
+    // transition probabilities to uniform.
+    virtual void initialize_params(RNG &rng);
+
+    // When modeling multiple users, the model can use multiple threads for data
+    // augmentation.
     void set_nthreads(uint);
-
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
-    void clear_client_data();
-
-    std::vector<Ptr<MixtureComponent>> mixture_components();
-    Ptr<MixtureComponent> mixture_component(uint s);
-
-    // returns loglike as a side effect
-    double impute_latent_data();
     uint nthreads() const;
 
+    // Args:
+    //   dp:  A TimeSeries<Data> object describing a sequence of data values.
+    //   logscale: see below.
+    //
+    // Returns: If logscale is true then return the probability (density) of dp
+    //   on the log scale.  Otherwise report on the probability scale.
+    double pdf(const Ptr<Data> &dp, bool logscale) const;
+
+    // Clear any latent data that has been stored by the data augmentation
+    // algorithm in the mixture components or the hidden Markov chain.
+    void clear_client_data();
+
+    // Access to the underlying mixture components or Markov model object.
+    std::vector<Ptr<MixtureComponent>> mixture_components();
+    Ptr<MixtureComponent> mixture_component(uint s);
     Ptr<MarkovModel> mark();
+
+    // Impute a value for each (subject, timestamp) location of the hidden
+    // Markov chain(s), store the imputed values in the appropriate mixture
+    // components or Markov model object.
+    //
+    // Returns:
+    //   The log likelihood of the assigned data.
+    double impute_latent_data();
+
+    // Args:
+    //   series:  The time series of data for a specific subject.
+    //
+    // Returns:
+    //   The Markov chain values taht were simulted for that subject by
+    //   'impute_latent_data'.
+    std::vector<int> imputed_state(const std::vector<Ptr<Data>> &series) const;
+
+    // Compute (or recompute) the log likelihood of the assigned data.
     double loglike() const;
+
+    // The most recent log likelihood value computed by the forward recursions.
     double saved_loglike() const;
-    void randomly_assign_data();
+
+    // Randomly assign values to the hidden Markov chain.  Useful as a random
+    // starting point to an MCMC algorithm.
+    void randomly_assign_data(RNG &rng);
 
     // For managing the distribution of hidden states.
     void save_state_probs();
     void clear_prob_hist();
     Matrix report_state_probs(const DataSeriesType &ts) const;
 
-    const Vector &pi0() const;
+    // The transition probability matrix of the hidden Markov chain.
     const Matrix &Q() const;
-    void set_pi0(const Vector &Pi0);
     void set_Q(const Matrix &Q);
+    
+    // The initial distribution of the hidden Markov chain.
+    const Vector &pi0() const;
+    void set_pi0(const Vector &Pi0);
 
     // Options for managing the distribution of the initial state.
     void fix_pi0(const Vector &Pi0);
@@ -103,24 +142,28 @@ namespace BOOM {
    protected:
     void set_loglike(double);
     void set_logpost(double);
-    void write_loglike(double);  // deprecated
-    void write_logpost(double);  // deprecated
     void set_filter(const Ptr<HmmFilter> &f);
 
    private:
     Ptr<MarkovModel> mark_;
     std::vector<Ptr<MixtureComponent>> mix_;
     Ptr<HmmFilter> filter_;
+    
     std::map<Ptr<Data>, Vector> prob_hist_;
+    
     Ptr<UnivParams> loglike_;
     Ptr<UnivParams> logpost_;
+    
     std::vector<Ptr<HmmDataImputer>> workers_;
 
     ThreadWorkerPool thread_pool_;
 
     double impute_latent_data_with_threads();
   };
-  //----------------------------------------------------------------------
+  
+  //===========================================================================
+  // A hidden Markov model that can be estimated by the EM algorithm instead of
+  // the data augmentation algorithm.
   class HMM_EM : public HiddenMarkovModel {
    public:
     typedef EmMixtureComponent EMC;
@@ -128,7 +171,7 @@ namespace BOOM {
     HMM_EM(const HMM_EM &rhs);
     HMM_EM *clone() const override;
 
-    void initialize_params() override;
+    void initialize_params(RNG &rng) override;
     virtual void mle();
     double Estep(bool bayes = false);
     void Mstep(bool bayes = false);

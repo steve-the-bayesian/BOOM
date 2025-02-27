@@ -73,7 +73,7 @@ namespace BOOM {
 
   HMM *HMM::clone() const { return new HMM(*this); }
 
-  void HMM::randomly_assign_data() {
+  void HMM::randomly_assign_data(RNG &rng) {
     clear_client_data();
     uint S = state_space_size();
     Vector prob(S, 1.0 / S);
@@ -81,18 +81,20 @@ namespace BOOM {
       const DataSeriesType &ts(dat(s));
       uint n = ts.size();
       for (uint i = 0; i < n; ++i) {
-        uint h = rmulti(prob);
+        uint h = rmulti_mt(rng, prob);
         mix_[h]->add_data(ts[i]);
       }
     }
   }
 
-  void HMM::initialize_params() {
-    randomly_assign_data();
+  void HMM::initialize_params(RNG &rng) {
+    randomly_assign_data(rng);
     uint S = state_space_size();
     Matrix Q(S, S, 1.0 / S);
     set_Q(Q);
-    for (uint s = 0; s < S; ++s) mix_[s]->sample_posterior();
+    for (uint s = 0; s < S; ++s) {
+      mix_[s]->sample_posterior();
+    }
   }
 
   const Vector &HMM::pi0() const { return mark_->pi0(); }
@@ -218,8 +220,8 @@ namespace BOOM {
 
   void HMM_EM::set_epsilon(double Eps) { eps = Eps; }
 
-  void HMM_EM::initialize_params() {
-    randomly_assign_data();
+  void HMM_EM::initialize_params(RNG &rng) {
+    randomly_assign_data(rng);
     uint S = state_space_size();
     for (uint h = 0; h < S; ++h) mix_[h]->mle();
     Matrix Q(S, S, 1.0 / S);
@@ -244,6 +246,11 @@ namespace BOOM {
     return ans;
   }
 
+  std::vector<int> HMM::imputed_state(
+      const std::vector<Ptr<Data>> &series) const {
+    return filter_->imputed_state(series);
+  }
+  
   double HMM_EM::Estep(bool bayes) {
     clear_client_data();
     double ans = 0;

@@ -71,8 +71,6 @@ namespace BOOM {
 
   MvtModel *MVT::clone() const { return new MvtModel(*this); }
 
-  void MVT::initialize_params() { mle(); }
-
   Ptr<VectorParams> MVT::Mu_prm() { return mvn->Mu_prm(); }
   Ptr<SpdParams> MVT::Sigma_prm() { return mvn->Sigma_prm(); }
   Ptr<UnivParams> MVT::Nu_prm() { return wgt->Nu_prm(); }

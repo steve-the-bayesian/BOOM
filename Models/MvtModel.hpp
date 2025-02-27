@@ -49,8 +49,6 @@ namespace BOOM {
 
     MvtModel *clone() const override;
 
-    void initialize_params() override;
-
     Ptr<VectorParams> Mu_prm();
     Ptr<SpdParams> Sigma_prm();
     Ptr<UnivParams> Nu_prm();

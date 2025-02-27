@@ -65,7 +65,6 @@ namespace BOOM {
     MvnModel *clone() const override;
 
     void mle() override;
-    void initialize_params() override;
     void add_mixture_data(const Ptr<Data> &, double prob) override;
     double loglike(const Vector &mu_siginv) const override;
     double log_likelihood() const override {

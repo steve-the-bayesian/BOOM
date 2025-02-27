@@ -97,8 +97,6 @@ namespace BOOM {
     set_Sigma(suf()->var_hat());
   }
 
-  void MvnModel::initialize_params() { mle(); }
-
   void MvnModel::add_mixture_data(const Ptr<Data> &dp, double prob) {
     suf()->add_mixture_data(DAT(dp)->value(), prob);
   }

@@ -126,8 +126,6 @@ namespace BOOM {
   }
 
   //============================================================
-  void MLE_Model::initialize_params() { mle(); }
-
   MLE_Model::MLE_Model(MLE_Model &&rhs)
       : Model(rhs),
         status_(rhs.status_),
