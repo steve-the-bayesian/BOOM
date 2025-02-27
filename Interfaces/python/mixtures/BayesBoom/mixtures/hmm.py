@@ -21,6 +21,9 @@ class HiddenMarkovModel:
         # A dict of data sets indexed by user id.
         self._data = {}
 
+        # A dict mapping user ID's to integer user numbers.
+        self._user_index = {}
+
         # A list of R "Model" objects corresponding to Boom Model objects.
         # Adding a state model to the list increases the size of the hidden
         # state space by 1.
@@ -132,13 +135,11 @@ class HiddenMarkovModel:
 
         frame = frame.sort_values(by=["subject_id", "timestamp"])
         grouped = frame.groupby("subject_id")
-        # import pdb
-        # pdb.set_trace()
-        self._data = {
-            subject: group["data"]
-            for subject, group in dict(tuple(grouped)).items()
-        }
-
+        user_counter = 0
+        for subject, group in dict(tuple(grouped)).items():        
+            self._data[subject] = group["data"]
+            self._user_index[subject] = user_counter
+            user_counter += 1
 
     def train(self, niter, ping=100):
         """
@@ -204,13 +205,24 @@ class HiddenMarkovModel:
         for model in self._state_models:
             model.allocate_space(niter)
 
-        
+        user_index = 0
+        self._state_draws = {}
+        for user, data_series in self._data.items():
+            self._state_draws[user] = np.empty((niter, data_series.shape[0]))
+            self._user_index[user] = user_index
+            user_index += 1
 
     def _record_draw(self, iteration):
         self._log_likelihood_draws[iteration] = self._boom_hmm.loglike
         self._markov_model.record_draw(iteration)
         for model in self._state_models:
             model.record_draw(iteration)
+
+        for user in self._marginal_state_distributions.keys():
+            user_index = self._user_index[user]
+            self._state_draws[user][iteration, :] = (
+                self._boom_hmm.imputed_state(user_index).to_numpy()
+            )
 
     def _assign_data_to_boom_model(self, boom_hmm, mixture_component):
         """

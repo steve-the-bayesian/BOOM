@@ -124,10 +124,10 @@ class TestHmm(unittest.TestCase):
         hmm.add_state_model(state1)
         hmm.add_state_model(state2)
 
+        hmm.train(100)
         import pdb
         pdb.set_trace()
-        hmm.train(100)
-        
+        print("foo")
 
     
 _debug_mode = False

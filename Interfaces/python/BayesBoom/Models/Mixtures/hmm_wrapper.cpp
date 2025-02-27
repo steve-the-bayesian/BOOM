@@ -89,7 +89,26 @@ namespace BayesBoom {
              [](HiddenMarkovModel &hmm) {
                hmm.save_state_probs();
              },
-             "Save the marginal probabilities of the hidden states at each time point.")
+             "Save the marginal probabilities of the hidden states at each "
+             "time point.")
+        .def("imputed_states",
+             [](const HiddenMarkovModel &hmm, int user_index) {
+               // The HMM stores the imputed states in a map keyed by the user
+               // data series.  That map is not available outside the C++
+               // environment, so we have to do the mapping here between user 0,
+               // user 1, etc and the respective data sets for those users.
+               Ptr<Data> user_data_series();
+               std::vector<int> state_draws = hmm.imputed_state(
+                   hmm.dat(user_index));
+               return Vector(state_draws.begin(), state_draws.end());
+             },
+             py::arg("user_index"),
+             "Args:\n\n "
+             "  user_index:  Users 0, 1, 2, etc are stored in the order "
+             "their data was added to the HMM.\n\n"
+             "Returns:\n"
+             "  The state (hidden Markov chain) values imputed by the most "
+             "recent draw from the forward-backward sampling algorithm.\n ")
         .def("__repr__",
              [](const  HiddenMarkovModel &model) {
                std::ostringstream out;

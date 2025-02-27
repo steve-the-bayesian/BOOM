@@ -98,6 +98,8 @@ namespace BOOM {
 
     virtual DataSeriesType &dat(uint i = 0) { return *(ts_[i]); }
     virtual const DataSeriesType &dat(uint i = 0) const { return *(ts_[i]); }
+    Ptr<DataSeriesType> series_ptr(uint i) {return ts_[i];}
+    const Ptr<DataSeriesType> series_ptr(uint i) const {return ts_[i];}
 
     uint nseries() const { return ts_.size(); }
 

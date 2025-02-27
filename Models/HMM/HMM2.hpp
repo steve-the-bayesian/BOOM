@@ -107,8 +107,8 @@ namespace BOOM {
     //   series:  The time series of data for a specific subject.
     //
     // Returns:
-    //   The Markov chain values taht were simulted for that subject by
-    //   'impute_latent_data'.
+    //   The Markov chain values that were simulted for that subject by
+    //   the most recent call to 'impute_latent_data'.
     std::vector<int> imputed_state(const std::vector<Ptr<Data>> &series) const;
 
     // Compute (or recompute) the log likelihood of the assigned data.
