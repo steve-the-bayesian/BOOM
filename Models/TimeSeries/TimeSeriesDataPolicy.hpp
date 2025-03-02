@@ -26,12 +26,12 @@
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
-  //======================================================================
+  //===========================================================================
+  // A data policy for time series models.  Many such models will have a single
+  // time series as their data, but some will have many time series.  This class
+  // handles both jobs.
   template <class DATA, class SERIES = TimeSeries<DATA>>
   class TimeSeriesDataPolicy : virtual public Model {
-    // Data policy for time series models.  Many such models will have
-    // a single time series as their data, but some will have many
-    // time series.  This class handles both jobs.
 
    public:
     typedef DATA DataPointType;
@@ -44,17 +44,6 @@ namespace BOOM {
         : ts_(1, ts) {}
 
     TimeSeriesDataPolicy *clone() const = 0;
-
-    template <class FwdIt>
-    void set_data(FwdIt Beg, FwdIt End) {
-      NEW(DataSeriesType, ts)(Beg, End);
-      this->set_data(ts);
-    }
-
-    virtual void set_data(const Ptr<DataSeriesType> &ts) {
-      ts_.clear();
-      add_data_series(ts);
-    }
 
     virtual void add_data_series(const Ptr<DataSeriesType> &ts) {
       ts_.push_back(ts);
