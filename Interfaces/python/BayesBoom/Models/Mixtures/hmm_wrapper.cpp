@@ -85,22 +85,19 @@ namespace BayesBoom {
              "Args:\n\n"
              "  data_series:  A time-ordered list of BOOM Data objects "
              "comprising the data values for a single subject.")
-        .def("save_state_probs",
+        .def("save_state_draws",
              [](HiddenMarkovModel &hmm) {
-               hmm.save_state_probs();
+               hmm.save_state_draws();
              },
-             "Save the marginal probabilities of the hidden states at each "
-             "time point.")
-        .def("imputed_states",
+             "Save the imputed hidden states at each "
+             "time point for each Monte Carlo iteration.")
+        .def("imputed_state",
              [](const HiddenMarkovModel &hmm, int user_index) {
                // The HMM stores the imputed states in a map keyed by the user
                // data series.  That map is not available outside the C++
                // environment, so we have to do the mapping here between user 0,
                // user 1, etc and the respective data sets for those users.
-               Ptr<Data> user_data_series();
-               std::vector<int> state_draws = hmm.imputed_state(
-                   hmm.dat(user_index));
-               return Vector(state_draws.begin(), state_draws.end());
+               return hmm.imputed_state(user_index);
              },
              py::arg("user_index"),
              "Args:\n\n "
@@ -108,7 +105,20 @@ namespace BayesBoom {
              "their data was added to the HMM.\n\n"
              "Returns:\n"
              "  The state (hidden Markov chain) values imputed by the most "
-             "recent draw from the forward-backward sampling algorithm.\n ")
+             "recent draw from the forward-backward sampling algorithm.  "
+             "Returned as a list of integers.\n")
+        .def_property_readonly("imputed_state",
+             [](const HiddenMarkovModel &hmm) {
+               Int num_users = hmm.nseries();
+               std::vector<std::vector<int>> draws;
+               for (Int i = 0; i < num_users; ++i) {
+                 draws.push_back(hmm.imputed_state(i));
+               }
+               return draws;
+             },
+             "A list of lists of integers, containing the imputed hidden "
+             "Markov chain for each data series managed by the model.  This "
+             "is the draw from the most recent call to impute_latent_data.\n")
         .def("__repr__",
              [](const  HiddenMarkovModel &model) {
                std::ostringstream out;

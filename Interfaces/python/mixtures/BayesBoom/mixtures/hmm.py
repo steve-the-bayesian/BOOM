@@ -136,7 +136,7 @@ class HiddenMarkovModel:
         frame = frame.sort_values(by=["subject_id", "timestamp"])
         grouped = frame.groupby("subject_id")
         user_counter = 0
-        for subject, group in dict(tuple(grouped)).items():        
+        for subject, group in dict(tuple(grouped)).items():
             self._data[subject] = group["data"]
             self._user_index[subject] = user_counter
             user_counter += 1
@@ -218,11 +218,9 @@ class HiddenMarkovModel:
         for model in self._state_models:
             model.record_draw(iteration)
 
-        for user in self._marginal_state_distributions.keys():
-            user_index = self._user_index[user]
-            self._state_draws[user][iteration, :] = (
-                self._boom_hmm.imputed_state(user_index).to_numpy()
-            )
+        hidden_chain = self._boom_hmm.imputed_state
+        for user, chain in enumerate(hidden_chain):
+            self._state_draws[user][iteration, :] = chain
 
     def _assign_data_to_boom_model(self, boom_hmm, mixture_component):
         """

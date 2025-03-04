@@ -30,7 +30,7 @@ class TestHmm(unittest.TestCase):
 
     def test_fetal_lamb(self):
         print("testing fetail lamb data with Poisson models.")
-        
+
         hmm = mix.HiddenMarkovModel(2)
         hmm.add_data(self._fetal_lamb_data)
 
@@ -40,11 +40,13 @@ class TestHmm(unittest.TestCase):
 
         upper_poisson_model = R.PoissonModel()
         upper_poisson_model.set_prior(R.GammaModel(2.0, 1.0))
-        
+
         hmm.add_state_model(lower_poisson_model)
         hmm.add_state_model(upper_poisson_model)
 
         niter = 100
+        import pdb
+        pdb.set_trace()
         hmm.train(niter=niter, ping=None)
 
         self.assertEqual(hmm._log_likelihood_draws.shape[0], niter)
@@ -129,7 +131,7 @@ class TestHmm(unittest.TestCase):
         pdb.set_trace()
         print("foo")
 
-    
+
 _debug_mode = False
 
 if _debug_mode:
