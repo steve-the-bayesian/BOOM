@@ -48,7 +48,9 @@ namespace BOOM {
         mix_(Mix),
         filter_(new HmmFilter(mix_, mark_)),
         loglike_(new UnivParams(0.0)),
-        logpost_(new UnivParams(0.0)) {
+        logpost_(new UnivParams(0.0)),
+        save_state_draws_(false)
+  {
     ParamPolicy::set_models(mix_.begin(), mix_.end());
     ParamPolicy::add_model(mark_);
   }
@@ -61,7 +63,9 @@ namespace BOOM {
         mark_(rhs.mark_->clone()),
         mix_(rhs.state_space_size()),
         loglike_(new UnivParams(0.0)),
-        logpost_(new UnivParams(0.0)) {
+        logpost_(new UnivParams(0.0)),
+        save_state_draws_(rhs.save_state_draws_)
+  {
     for (uint i = 0; i < state_space_size(); ++i) {
       mix_[i] = rhs.mix_[i]->clone();
     }
@@ -110,6 +114,13 @@ namespace BOOM {
 
   uint HMM::state_space_size() const { return mix_.size(); }
 
+  void HMM::save_state_draws(bool save) {
+    save_state_draws_ = save;
+    if (!save) {
+      imputed_state_.clear();
+    }
+  }
+
   // Returns the likelihood of the TimeSeries<Data> pointed at by dp.
   double HMM::pdf(const Ptr<Data> &dp, bool logscale) const {
     Ptr<DataSeriesType> dat = DAT(dp);
@@ -132,10 +143,20 @@ namespace BOOM {
     }
   }
 
-  std::vector<Ptr<MixtureComponent>> HMM::mixture_components() { return mix_; }
-  Ptr<MixtureComponent> HMM::mixture_component(uint s) { return mix_[s]; }
+  const std::vector<Ptr<MixtureComponent>> &HMM::mixture_components() const {
+    return mix_;
+  }
+
+  Ptr<MixtureComponent> HMM::mixture_component(uint s) {
+    return mix_[s];
+  }
+
+  const Ptr<MixtureComponent> &HMM::mixture_component(uint s) const {
+    return mix_[s];
+  }
 
   Ptr<MarkovModel> HMM::mark() { return mark_; }
+  const Ptr<MarkovModel> &HMM::mark() const { return mark_; }
 
   double HMM::saved_loglike() const { return loglike_->value(); }
 
@@ -145,27 +166,6 @@ namespace BOOM {
     for (uint series = 0; series < ns; ++series) {
       const DataSeriesType &ts(dat(series));
       ans += filter_->loglike(ts);
-    }
-    return ans;
-  }
-
-  void HMM::save_state_probs() {
-    NEW(HmmSavePiFilter, filter)(mix_, mark_, prob_hist_);
-    set_filter(filter);
-  }
-
-  Matrix HMM::report_state_probs(const DataSeriesType &ts) const {
-    int n = ts.size();
-    int S = state_space_size();
-    Matrix ans(n, S);
-    Ptr<HmmSavePiFilter> filter(filter_.dcast<HmmSavePiFilter>());
-    if (!filter) {
-      report_error(
-          "filter could not be cast to SavePiFilter in "
-          "HMM::report_state_probs");
-    }
-    for (int i = 0; i < n; ++i) {
-      ans.row(i) = filter->state_probs(ts[i]);
     }
     return ans;
   }
@@ -228,29 +228,39 @@ namespace BOOM {
     set_Q(Q);
   }
 
-  double HMM::impute_latent_data() {
+  double HMM::impute_latent_data(RNG &rng) {
     if (nthreads() > 0) {
       return impute_latent_data_with_threads();
     }
-
+    uint ns = nseries();
     clear_client_data();
     double ans = 0;
-    uint ns = nseries();
+    imputed_state_.clear();
+    if (save_state_draws_) {
+      imputed_state_.reserve(nseries());
+    }
     for (uint series = 0; series < ns; ++series) {
       const DataSeriesType &ts(dat(series));
       ans += filter_->fwd(ts);
-      filter_->bkwd_sampling(ts);
+      filter_->bkwd_sampling_mt(ts, rng);
+      if (save_state_draws_) {
+        imputed_state_.push_back(filter_->imputed_states());
+      }
     }
     set_loglike(ans);
     set_logpost(ans + logpri());
     return ans;
   }
 
-  std::vector<int> HMM::imputed_state(
-      const std::vector<Ptr<Data>> &series) const {
-    return filter_->imputed_state(series);
+  const std::vector<int> &HMM::imputed_state(int series_index) const {
+    if (!save_state_draws_) {
+      report_error("Saved state draws are unavailable.  Call "
+                   "save_state_draws() prior to the next call to "
+                   "'impute_latent_data'.");
+    }
+    return imputed_state_[series_index];
   }
-  
+
   double HMM_EM::Estep(bool bayes) {
     clear_client_data();
     double ans = 0;

@@ -34,14 +34,14 @@ namespace BOOM {
 
   void HmmPosteriorSampler::draw() {
     if (first_time_) {
-      hmm_->impute_latent_data();
+      hmm_->impute_latent_data(rng());
       first_time_ = false;
     }
     hmm_->mark()->sample_posterior();
     draw_mixture_components();
     // by drawing latent data at the end, the log likelihood stored
     // int the model matches the current set of parameters.
-    hmm_->impute_latent_data();
+    hmm_->impute_latent_data(rng());
   }
 
   double HmmPosteriorSampler::logpri() const {

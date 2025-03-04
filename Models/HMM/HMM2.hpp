@@ -59,15 +59,13 @@ namespace BOOM {
     HiddenMarkovModel(const HiddenMarkovModel &rhs);
     HiddenMarkovModel *clone() const override;
 
-    template <class Fwd>  // needed for copy constructor
-    void set_mixture_components(Fwd b, Fwd e) {
-      mix_.assign(b, e);
-      ParamPolicy::set_models(b, e);
-      ParamPolicy::add_model(mark_);
-    }
-
     // The number of mixture components
     uint state_space_size() const;
+
+    // If 'save' then save the values of the hidden Markov chain that are
+    // simulated during a call to impute_latent_data.  If 'save' is false then
+    // clear any storage for the saved draws, and stop saving them in the future.
+    void save_state_draws(bool save = true);
 
     // Randomly assign values to the latent Markov chain, and set all Markov
     // transition probabilities to uniform.
@@ -91,25 +89,32 @@ namespace BOOM {
     void clear_client_data();
 
     // Access to the underlying mixture components or Markov model object.
-    std::vector<Ptr<MixtureComponent>> mixture_components();
+    const std::vector<Ptr<MixtureComponent>> &mixture_components() const;
+
     Ptr<MixtureComponent> mixture_component(uint s);
+    const Ptr<MixtureComponent> &mixture_component(uint s) const;
+
     Ptr<MarkovModel> mark();
+    const Ptr<MarkovModel> &mark() const;
 
     // Impute a value for each (subject, timestamp) location of the hidden
     // Markov chain(s), store the imputed values in the appropriate mixture
     // components or Markov model object.
     //
+    // Args:
+    //   rng:  A random number generator used to drive the imputation.
+    //
     // Returns:
     //   The log likelihood of the assigned data.
-    double impute_latent_data();
+    double impute_latent_data(RNG &rng);
 
     // Args:
-    //   series:  The time series of data for a specific subject.
+    //   series_index:  The
     //
     // Returns:
     //   The Markov chain values that were simulted for that subject by
     //   the most recent call to 'impute_latent_data'.
-    std::vector<int> imputed_state(const std::vector<Ptr<Data>> &series) const;
+    const std::vector<int> &imputed_state(int series_index = 0) const;
 
     // Compute (or recompute) the log likelihood of the assigned data.
     double loglike() const;
@@ -122,14 +127,12 @@ namespace BOOM {
     void randomly_assign_data(RNG &rng);
 
     // For managing the distribution of hidden states.
-    void save_state_probs();
     void clear_prob_hist();
-    Matrix report_state_probs(const DataSeriesType &ts) const;
 
     // The transition probability matrix of the hidden Markov chain.
     const Matrix &Q() const;
     void set_Q(const Matrix &Q);
-    
+
     // The initial distribution of the hidden Markov chain.
     const Vector &pi0() const;
     void set_pi0(const Vector &Pi0);
@@ -140,6 +143,13 @@ namespace BOOM {
     bool pi0_fixed() const;
 
    protected:
+    template <class Fwd>  // needed for copy constructor
+    void set_mixture_components(Fwd b, Fwd e) {
+      mix_.assign(b, e);
+      ParamPolicy::set_models(b, e);
+      ParamPolicy::add_model(mark_);
+    }
+
     void set_loglike(double);
     void set_logpost(double);
     void set_filter(const Ptr<HmmFilter> &f);
@@ -148,19 +158,23 @@ namespace BOOM {
     Ptr<MarkovModel> mark_;
     std::vector<Ptr<MixtureComponent>> mix_;
     Ptr<HmmFilter> filter_;
-    
+
     std::map<Ptr<Data>, Vector> prob_hist_;
-    
+
     Ptr<UnivParams> loglike_;
     Ptr<UnivParams> logpost_;
-    
+
+    // imputed_states_[series][time]
+    bool save_state_draws_;
+    std::vector<std::vector<int>> imputed_state_;
+
     std::vector<Ptr<HmmDataImputer>> workers_;
 
     ThreadWorkerPool thread_pool_;
 
     double impute_latent_data_with_threads();
   };
-  
+
   //===========================================================================
   // A hidden Markov model that can be estimated by the EM algorithm instead of
   // the data augmentation algorithm.

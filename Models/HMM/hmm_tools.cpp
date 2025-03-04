@@ -22,6 +22,8 @@
 #include "LinAlg/Vector.hpp"
 #include "uint.hpp"
 
+#include <iostream>
+
 namespace BOOM {
   using BOOM::uint;
 
@@ -50,6 +52,7 @@ namespace BOOM {
     double nc = P.abs_norm();
     P /= nc;
     pi = one * P;
+    std::cout << "pi = " << pi << std::endl;
     return m + log(nc);
   }
 
