@@ -4,6 +4,7 @@ import numpy as np
 import BayesBoom.boom as boom
 import BayesBoom.R as R
 
+import matplotlib.pyplot as plt
 
 class HiddenMarkovModel:
     """
@@ -12,17 +13,15 @@ class HiddenMarkovModel:
     subject has his own hidden Markov chain.
     """
     def __init__(self,
-                 state_size: int):
-        state_size = int(state_size)
-        if state_size <= 0:
-            raise Exception("state_size must be a positive integer")
-        self._state_size = state_size
+                 state_dim: int,
+                 save_state_draws: bool = False):
+        state_dim = int(state_dim)
+        if state_dim <= 0:
+            raise Exception("state_dim must be a positive integer")
+        self._state_dim = state_dim
 
         # A dict of data sets indexed by user id.
         self._data = {}
-
-        # A dict mapping user ID's to integer user numbers.
-        self._user_index = {}
 
         # A list of R "Model" objects corresponding to Boom Model objects.
         # Adding a state model to the list increases the size of the hidden
@@ -44,8 +43,11 @@ class HiddenMarkovModel:
 
         self._boom_hmm = None
 
+        self._save_state_draws = save_state_draws
+        self._state_draws = {}
+
     @property
-    def state_size(self):
+    def state_dim(self):
         """
         The dimension of the hidden Markov chain.
         """
@@ -86,7 +88,11 @@ class HiddenMarkovModel:
         """
         self._state_models.append(model)
 
-
+    def save_state_draws(self):
+        self._save_state_draws = True
+        if self._boom_hmm:
+            self._boom_hmm.save_state_draws()
+        
     def set_markov_prior(self, prior):
         """
         Args:
@@ -135,11 +141,12 @@ class HiddenMarkovModel:
 
         frame = frame.sort_values(by=["subject_id", "timestamp"])
         grouped = frame.groupby("subject_id")
-        user_counter = 0
-        for subject, group in dict(tuple(grouped)).items():
-            self._data[subject] = group["data"]
-            self._user_index[subject] = user_counter
-            user_counter += 1
+
+        self._data = {subject: group["data"]
+                      for subject, group in dict(tuple(grouped)).items()}
+        
+        # for subject, group in dict(tuple(grouped)).items():
+        #     self._data[subject] = group["data"]
 
     def train(self, niter, ping=100):
         """
@@ -195,22 +202,96 @@ class HiddenMarkovModel:
         self._boom_hmm.set_method(self._boom_hmm_sampler)
 
         self._assign_data_to_boom_model(self._boom_hmm, self._state_models[0])
-        self._boom_hmm.save_state_probs()
 
+        if self._save_state_draws:
+            self._boom_hmm.save_state_draws()
+        
         return self._boom_hmm
 
+    def imputed_state(self, user_id: int):
+        """
+        Args:
+          user_id: The user index (0, 1, 2, ...)
+
+        Returns:
+          A 2d numpy array with dimensions (iteration, time), containing the
+          imputed hidden Markov chain for the requested user.
+        """
+        if not self._save_state_draws:
+            raise Exception("Imputed state values are not available.  "
+                            "Please call save_state_draws() prior to "
+                            "training the model.")
+        return self._state_draws[user_id]
+
+    def plot_state_distribution(self, state_distribution, burn=0,
+                                time_window=None, ax=None):
+        """
+        
+        """
+        if burn < 0:
+            burn = 0
+        state_distribution = state_distribution[burn:, :]
+
+        if time_window:
+            state_distribution = state_distribution[:, time_window]
+
+        niter = state_distribution.shape[0]
+        time_dimension = state_distribution.shape[1]
+
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+
+        ax.set_xlim(0, time_dimension)
+        ax.set_ylim(0, 1)
+
+        counts = np.apply_along_axis(
+            np.bincount,
+            0,
+            state_distribution,
+            minlength=self.state_dim)
+
+        # counts.shape is (state_dim, time)
+        probs = counts / niter
+
+        times = np.arange(time_dimension)
+        cum_probs = np.zeros_like(probs[0, :])
+
+        grays = np.arange(self.state_dim) / self.state_dim
+
+        for s in range(self.state_dim):
+            current_probs = probs[s, :]
+            ax.bar(times,
+                   current_probs,
+                   width=1,
+                   bottom=cum_probs,
+                   color=str(grays[s]))
+            cum_probs += current_probs
+
+        return ax
+
+    def plot_components(self, burn=0, style="ts", fig=None, ax=None, **kwargs):
+        fig, ax = self._state_models[0].plot_components(
+            self._state_models,
+            burn=burn,
+            style=style,
+            fig=fig,
+            ax=ax,
+            **kwargs)
+
+        return ax
+    
     def _allocate_space(self, niter):
         self._log_likelihood_draws = np.empty(niter)
         self._markov_model.allocate_space(niter)
         for model in self._state_models:
             model.allocate_space(niter)
 
-        user_index = 0
         self._state_draws = {}
-        for user, data_series in self._data.items():
-            self._state_draws[user] = np.empty((niter, data_series.shape[0]))
-            self._user_index[user] = user_index
-            user_index += 1
+        if self._save_state_draws:
+            for user, data_series in self._data.items():
+                self._state_draws[user] = np.empty(
+                    (niter, data_series.shape[0]),
+                    dtype=int)
 
     def _record_draw(self, iteration):
         self._log_likelihood_draws[iteration] = self._boom_hmm.loglike
@@ -218,9 +299,10 @@ class HiddenMarkovModel:
         for model in self._state_models:
             model.record_draw(iteration)
 
-        hidden_chain = self._boom_hmm.imputed_state
-        for user, chain in enumerate(hidden_chain):
-            self._state_draws[user][iteration, :] = chain
+        if self._save_state_draws:
+            hidden_chain = self._boom_hmm.imputed_state
+            for user, chain in enumerate(hidden_chain):
+                self._state_draws[user][iteration, :] = chain
 
     def _assign_data_to_boom_model(self, boom_hmm, mixture_component):
         """
@@ -234,10 +316,10 @@ class HiddenMarkovModel:
 
     def _ensure_markov_model(self):
         if self._markov_model is None:
-            self._markov_model = R.MarkovModel(state_size=self.state_size)
+            self._markov_model = R.MarkovModel(state_size=self.state_dim)
 
         if self._markov_prior is None:
-            S = self.state_size
+            S = self.state_dim
             prior_transition_counts = np.ones((S, S))
 
             if self.number_of_users > 1:
