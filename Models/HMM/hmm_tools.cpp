@@ -52,7 +52,6 @@ namespace BOOM {
     double nc = P.abs_norm();
     P /= nc;
     pi = one * P;
-    std::cout << "pi = " << pi << std::endl;
     return m + log(nc);
   }
 
