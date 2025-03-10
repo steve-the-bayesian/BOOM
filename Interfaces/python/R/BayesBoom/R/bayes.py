@@ -2,6 +2,10 @@ import numpy as np
 from abc import ABC, abstractmethod
 import copy
 
+import matplotlib.pyplot as plt
+
+from .base import unique_match
+
 from .boom_py_utils import (
     to_boom_vector,
     to_boom_spd,
@@ -19,6 +23,10 @@ from .boom_data_builders import (
     UnlabelledMarkovDataBuilder,
     MultilevelCategoricalDataBuilder,
 )
+
+from .density import Density
+
+
 
 """
 Wrapper classes to encapsulate and expand models and prior distributions
@@ -76,6 +84,31 @@ class MixtureComponent(ABC):
         """
         Return a DataBuilder object that can convert Python data into the
         BOOM data of the format expected by the concrete (child) model.
+        """
+
+    @abstractmethod
+    def plot_components(self, components, burn, style: str, fig, ax, **kwargs):
+        """
+        Args:
+          components: A list of mixture components to plot.  It is expected that
+            each component will be the same concrete class as the class
+            implementing this function.  E.g. a NormalModel will implement
+            plot_components expecting to be passed other NormalModel objects.
+          burn: An integer giving the number of MCMC iterations to discard as
+            burn-in.
+          style:  A string giving the style of plot to produce.  Common choices are:
+            - "ts" a time series plot of MCMC iterations.
+            - "den" for a density plot
+            - "box" for boxplots
+          fig: The matplotlib Figure object, which is used if the desired plot
+            requires multiple axes.
+          ax: A matplotlib Axes object, used if the desired plot can be plotted
+            on a single set of axes.
+          **kwargs: Keyword arguments passed to concrete plotting functions for
+            child classes.
+        
+        Returns:
+          The (fig, ax) pair on which the plot is drawn.
         """
 
     
@@ -555,6 +588,55 @@ class MarkovModel(MixtureComponent):
         else:
             return ind
 
+    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+        """
+        A KxK array of plots, where K is self.state_size.  Each plot has S
+        entries, where S is the number of mixture components.
+        """
+
+        style = unique_match(style, ["ts", "density", "histogram", "boxplot"])
+        
+        K = self.state_size
+        S = len(components)
+        niter = self._transition_probability_draws.shape[0]
+        if burn < 0: 
+            burn = 0
+            
+        probs = np.empty((niter - burn, S, K, K))
+        for s in range(S):
+            probs[:, s, :, :] = components[s]._transition_probability_draws[burn:, :, :]
+        
+        if fig is None:
+            fig, ax = plt.subplots(K, K, sharex=True, sharey=True)
+        else:
+            ax = fig.subplots(K, K, sharex=True, sharey=True)
+
+        draw = range(burn, niter)
+            
+        if style == "ts":
+            # A KxK array of time series plots.
+            for source in range(K):
+                for dest in range(K):
+                    for s in range(S):
+                        ax[source, dest].plot(draw, probs[:, s, source, dest])
+
+        elif style == "density":
+            for source in range(K):
+                for dest in range(K):
+                    for s in range(S):
+                        den = Density(probs[:, s, source, dest])
+                        den.plot(ax=ax[source, dest])
+
+        elif style == "boxplot":
+            for source in range(K):
+                for dest in range(K):
+                    ax[source, dest].boxplot(probs[:, :, source, dest])
+
+        else:
+            raise Exception(f"Style argument '{style}' unrecognized. ")
+
+        return fig, ax
+
 
 class MultilevelMultinomialModel(MixtureComponent):
     def __init__(self, taxonomy, sep="/"):
@@ -603,6 +685,9 @@ class MultilevelMultinomialModel(MixtureComponent):
         
     def create_boom_data_builder(self):
         return MultilevelCategoricalDataBuilder(self._boom_taxonomy, self._sep)
+
+    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+        pass
     
     def _ensure_posterior_sampler(self):
         import BayesBoom.boom as boom
@@ -686,6 +771,10 @@ class MultinomialModel(MixtureComponent):
         else:
             return LabelledCategoricalDataBuilder(self._categories)
 
+    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+        pass
+
+    
 class MvnBase(ABC):
     @property
     @abstractmethod
@@ -885,6 +974,9 @@ class PoissonModel(MixtureComponent):
 
     def create_boom_data_builder(self):
         return IntDataBuilder()
+
+    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+        pass
     
         
 class RegSuf:

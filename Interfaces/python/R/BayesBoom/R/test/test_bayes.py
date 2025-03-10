@@ -2,6 +2,7 @@ import unittest
 import BayesBoom.R as R
 import BayesBoom.boom as boom
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class TestRegSuf(unittest.TestCase):
@@ -57,6 +58,26 @@ class TestMarkovModel(unittest.TestCase):
         model = R.MarkovModel(trans_probs, init)
         chain = model.sim(10)
         self.assertEqual(len(chain), 10)
+
+    def test_plots(self):
+        models = []
+        num_mix = 2
+        state_size = 3
+        for i in range(num_mix):
+            probs = np.random.randn(100, state_size, state_size)
+            probs = np.abs(probs)
+            totals = probs.sum(axis=2)
+            for s in range(state_size):
+                probs[:, :, s] = probs[:, :, s] / totals
+            # probs = probs / totals
+            model = R.MarkovModel(probs[0, :, :])
+            model._transition_probability_draws = probs
+            models.append(model)
+
+        fig_ts, ax_ts = models[0].plot_components(models)
+        fig_box, ax_box = models[0].plot_components(models, style="box")
+        fig_den, ax_den = models[0].plot_components(models, style="den")
+        # plt.show()
 
         
 class TestPoissonModel(unittest.TestCase):
