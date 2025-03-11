@@ -686,7 +686,14 @@ class MultilevelMultinomialModel(MixtureComponent):
     def create_boom_data_builder(self):
         return MultilevelCategoricalDataBuilder(self._boom_taxonomy, self._sep)
 
-    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+    def plot_components(self,
+                        components,
+                        burn=0,
+                        style="ts",
+                        fig=None,
+                        ax=None,
+                        parent_level="top",
+                        **kwargs):
         pass
     
     def _ensure_posterior_sampler(self):
@@ -728,7 +735,7 @@ class MultinomialModel(MixtureComponent):
         if self._boom_model:
             return self._boom_model.dim
         else:
-            return len(probs)
+            return len(self._probs)
         
     def allocate_space(self, niter):
         self._prob_draws = np.empty((niter, self.dim))
@@ -771,8 +778,79 @@ class MultinomialModel(MixtureComponent):
         else:
             return LabelledCategoricalDataBuilder(self._categories)
 
-    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
-        pass
+    def plot_components(self,
+                        components,
+                        burn=0,
+                        style="ts",
+                        levels=None,
+                        fig=None,
+                        ax=None,
+                        **kwargs):
+        S = len(components)
+        K = len(self._categories)
+
+        nrows = int(np.floor(np.sqrt(K)))
+        ncols = int(np.ceil(K / nrows))
+        if burn < 0:
+            burn = 0
+
+        niter = self._prob_draws.shape[0]
+        probs = np.empty((niter - burn, S, self.dim))
+        for s in range(S):
+            probs[:, s, :] = components[s]._prob_draws[burn:, :]
+
+        style = unique_match(
+            style,
+            ["ts", "boxplot", "barplot"]
+        )
+
+        if style == "ts" or style == "boxplot":
+            iteration = range(burn, niter)
+            if fig is None and ax is None:
+                fig, ax = plt.subplots(nrows, ncols, sharex=True, squeeze=False, sharey=True)
+            elif ax is None:
+                ax = fig.subplots(nrows, ncols, sharex=True, squeeze=False, sharey=True)
+
+            counter = 0
+            for i in range(nrows):
+                for j in range(ncols):
+                    if counter < K:
+                        if style == "ts":
+                            for s in range(S):
+                                ax[i, j].plot(iteration, probs[:, s, counter])
+                        elif style == "boxplot":
+                            ax[i, j].boxplot(probs[:, :, counter])
+                        ax[i, j].set_title(str(self._categories[counter]))
+                        counter += 1
+
+        elif style == "barplot":
+            if fig is None and ax is None:
+                fig, ax = plt.subplots(1, 1)
+            elif ax is None:
+                ax = fig.subplots(1, 1)
+
+            mean_probs = probs.mean(axis=0)
+            # mean_probs is an S x K matrix with rows summing to 1.
+            
+            states = np.arange(S)
+            cum_probs = np.zeros(S)
+            grays = np.arange(K) / K
+
+            for k in range(K):
+                ax.bar(states,
+                       mean_probs[:, k],
+                       bottom=cum_probs,
+                       width=.6,
+                       color=str(grays[k]))
+                cum_probs += mean_probs[:, k]
+
+            if S < 10:
+                ax.set_xticks(np.arange(S),
+                              [str(s) for s in range(S)])
+
+        else:
+            raise Exception(f"Style argument '{style}' unrecognized. ")
+        
 
     
 class MvnBase(ABC):
@@ -976,7 +1054,41 @@ class PoissonModel(MixtureComponent):
         return IntDataBuilder()
 
     def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
-        pass
+        S = len(components)
+        if burn < 0:
+            burn = 0
+
+        niter = self._lambda_draws.shape[0]
+        draws = np.empty((niter - burn, S))
+        for s in range(S):
+            draws[:, s] = components[s]._lambda_draws[burn:]
+
+        if fig is None and ax is None:
+            fig, ax = plt.subplots(1, 1)
+        elif ax is None:
+            ax = fig.subplots(1, 1)
+
+        style = unique_match(style, ["ts", "density", "boxplot"])
+            
+        if style == "ts":
+            iteration = range(burn, niter)
+            for s in range(S):
+                ax.plot(iteration, draws[:, s], label = str(s))
+            ax.legend(loc="upper right")
+
+        elif style == "density":
+            for s in range(S):
+                den = Density(draws[:, s])
+                den.plot(ax=ax, label = str(s))
+            ax.legend(loc = "upper right")
+
+        elif style == "boxplot":
+            ax.boxplot(draws)
+
+        else:
+            raise Exception(f"Style argument '{style}' unrecognized. ")
+
+        return fig, ax
     
         
 class RegSuf:

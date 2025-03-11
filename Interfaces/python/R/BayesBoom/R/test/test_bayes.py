@@ -77,7 +77,6 @@ class TestMarkovModel(unittest.TestCase):
         fig_ts, ax_ts = models[0].plot_components(models)
         fig_box, ax_box = models[0].plot_components(models, style="box")
         fig_den, ax_den = models[0].plot_components(models, style="den")
-        # plt.show()
 
         
 class TestPoissonModel(unittest.TestCase):
@@ -88,7 +87,39 @@ class TestPoissonModel(unittest.TestCase):
         model = R.PoissonModel(2.3)
         boom_model = model.boom()
         self.assertIsInstance(boom_model, boom.PoissonModel)
-        
+
+    def test_plots(self):
+        S = 3
+        niter = 1000
+        models = []
+        for s in range(S):
+            model = R.PoissonModel(1.0)
+            model._lambda_draws = np.random.randn(niter)**2
+            models.append(model)
+        fig_ts, ax_ts = models[0].plot_components(models)
+        fig_den, ax_den = models[0].plot_components(models, style="den")
+        fig_box, ax_box = models[0].plot_components(models, style="box")
+
+
+class TestMultinomialModel(unittest.TestCase):
+
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_plots(self):
+        models = []
+        models.append(R.MultinomialModel(np.array([.1, .3, .6])))
+        models.append(R.MultinomialModel(np.array([.3, .4, .3])))
+        models.append(R.MultinomialModel(np.array([.6, .2, .2])))
+
+        models[0]._prob_draws = np.random.dirichlet(np.array([100, 300, 600]), size=1000)
+        models[1]._prob_draws = np.random.dirichlet(np.array([300, 400, 300]), size=1000)
+        models[2]._prob_draws = np.random.dirichlet(np.array([600, 200, 200]), size=1000)
+
+        models[0].plot_components(models)
+        models[0].plot_components(models, style="box")
+        models[0].plot_components(models, style="bar")
+    
 
 class TestMultilevelMultinomialModel(unittest.TestCase):
     def setUp(self):
