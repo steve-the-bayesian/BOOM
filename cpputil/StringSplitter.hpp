@@ -42,6 +42,8 @@ namespace BOOM {
     // Split the string 's' into a vector of strings.
     std::vector<std::string> operator()(const std::string &s) const;
 
+    std::pair<std::string, std::string> pop_back(const std::string &s) const;
+
    private:
     // Returns 'true' if quoted fields are allowed, false otherwise.
     bool allow_quotes() const {

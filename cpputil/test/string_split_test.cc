@@ -86,4 +86,27 @@ namespace {
     EXPECT_EQ(expected, split(test));
   }
 
+  TEST(StringSplitTest, PopBack) {
+    std::string test = "foo/bar/baz";
+    StringSplitter split("/");
+    std::pair<std::string, std::string> result = split.pop_back(test);
+    EXPECT_EQ(result.first, "foo/bar");
+    EXPECT_EQ(result.second, "baz");
+
+    test = "";
+    result = split.pop_back(test);
+    EXPECT_EQ(result.first, "");
+    EXPECT_EQ(result.second, "");
+
+    test = "foo";
+    result = split.pop_back(test);
+    EXPECT_EQ(result.first, "");
+    EXPECT_EQ(result.second, "foo");
+    
+    test = "foo/";
+    result = split.pop_back(test);
+    EXPECT_EQ(result.first, "foo");
+    EXPECT_EQ(result.second, "");
+  }
+
 }  // namespace

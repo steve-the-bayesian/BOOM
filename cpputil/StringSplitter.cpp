@@ -75,6 +75,27 @@ namespace BOOM {
     return ans;
   }
 
+  // Split the string 's' into its leading and terminal parts.  So "foo/bar/baz"
+  // gets split into "foo/bar" and "baz".
+  //
+  // If r = pop_back(s) then r.first contains the leading (parent) string
+  // (e.g. "foo/bar") and r.second contains the terminal element ("baz").
+  std::pair<std::string, std::string> StringSplitter::pop_back(const std::string &s) const {
+    std::string parent;
+    std::string child;
+
+    for (Int n = s.size() - 1; n >= 0; --n) {
+      if (is_field_delimiter(s[n])) {
+        parent = s.substr(0, n);
+        child =s.substr(n + 1, s.size() - n);
+        return std::make_pair(parent, child);
+      }
+    }
+
+    child = s;
+    return std::make_pair(parent, child);
+  }
+
   std::vector<std::string> StringSplitter::split_space(const std::string &s) const {
     std::vector<std::string> ans;
     const char *start = s.data();
