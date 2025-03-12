@@ -19,8 +19,9 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "CategoricalData.hpp"
-#include "MultinomialModel.hpp"
+#include "Models/CategoricalData.hpp"
+#include "Models/MultilevelCategoricalData.hpp"
+#include "Models/MultinomialModel.hpp"
 
 #include "Models/ModelTypes.hpp"
 #include "Models/ParamTypes.hpp"

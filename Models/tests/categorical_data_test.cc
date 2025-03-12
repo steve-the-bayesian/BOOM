@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Models/CategoricalData.hpp"
+#include "Models/MultilevelCategoricalData.hpp"
 #include "distributions.hpp"
 
 #include "test_utils/check_derivatives.hpp"
