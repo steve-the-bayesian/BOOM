@@ -102,6 +102,7 @@ from .plots import (
     barplot,
     boxplot,
     BoxplotTrue,
+    compare_den,
     compare_dynamic_distributions,
     ensure_ax,
     hist,

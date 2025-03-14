@@ -764,6 +764,54 @@ def plot_dynamic_distribution(
 # Allow the same function name as R.
 PlotDynamicDistribution = plot_dynamic_distribution
 
+def compare_den(
+        x,
+        legend_text=None,
+        legend_location="topright",
+        legend_title=None,
+        xlim=None,
+        ylim=None,
+        xlab="parameter",
+        ylab="density",
+        main="",
+        lty=None,
+        col="black",
+        axes=True,
+#        na_rm=True,
+        ax=None):
+    from .density import Density
+    
+    legend_location = unique_match(
+        legend_location,
+        ["best",
+         "upper right", "upper left", "upper center",
+         "lower right", "lower left", "lower center",
+         "right", "center"
+         ])
+    
+    if legend_text is None:
+        if isinstance(x, pd.DataFrame):
+            legend_text = x.columns
+            x = np.array(x)
+        else:
+            legend_text = ["X." + str(i) for i in range(x.shape[1])]
+
+    fig, ax = ensure_ax(ax)
+
+    for i in range(x.shape[1]):
+        den = Density(x[:, i])
+        den.plot(ax=ax, label=legend_text[i])
+
+    ax.legend()
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
+    ax.set_title(main)
+        
+    if fig is None:
+        fig.show()
+        
+    return fig, ax
+
 
 def compare_dynamic_distributions(
         list_of_curves,
