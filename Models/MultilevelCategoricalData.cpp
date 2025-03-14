@@ -540,6 +540,30 @@ namespace BOOM {
     return ans;
   }
 
+  std::vector<std::string> Taxonomy::child_node_names(
+      const std::string &parent_level,
+      char sep) const {
+    StringSplitter split(std::string(1, sep));
+    return child_node_names(split(parent_level));
+  }
+
+  std::vector<std::string> Taxonomy::child_node_names(
+      const std::vector<std::string> &parent_level) const {
+    std::vector<std::string> ans;
+    if (parent_level.empty() ||
+        (parent_level.size() == 1 && parent_level[0] == "")) {
+      for (const auto &el : top_levels_) {
+        ans.push_back(el->value());
+      }
+    } else {
+      const TaxonomyNode *node = this->node(parent_level);
+      for (int i = 0; i < node->number_of_children(); ++i) {
+        ans.push_back(node->child(i)->value());
+      }
+    }
+    return ans;
+  }
+  
   Int Taxonomy::tree_size() const {
     Int ans = 0;
     for (const auto &top : top_levels_) {

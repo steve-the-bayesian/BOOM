@@ -340,6 +340,14 @@ namespace BOOM {
     // The names of all nodes in the taxonomy, including interior nodes.
     std::vector<std::string> node_names(char sep='/') const;
 
+    // The names of the levels of the immediate children of the parent node.  If
+    // the parent node is the empty string then the top level node names are
+    // returned.
+    std::vector<std::string> child_node_names(
+        const std::string &parent_level, char sep = '/') const;
+    std::vector<std::string> child_node_names(
+        const std::vector<std::string> &parent_level) const;
+    
     // The total number of nodes in the taxonomy, including interior nodes.
     Int tree_size() const;
 
@@ -359,8 +367,8 @@ namespace BOOM {
       return top_levels_[i].get();
     }
 
-    TaxonomyNode *node(const std::string &level, char sep='/');
-    const TaxonomyNode *node(const std::string &level, char sep='/') const;
+    TaxonomyNode *node(const std::string &level, char sep = '/');
+    const TaxonomyNode *node(const std::string &level, char sep = '/') const;
 
     TaxonomyNode *node(const std::vector<std::string> &levels);
     const TaxonomyNode *node(const std::vector<std::string> &levels) const;
