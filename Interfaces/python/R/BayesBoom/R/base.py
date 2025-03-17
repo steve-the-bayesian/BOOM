@@ -291,7 +291,8 @@ def scan(fname, sep="", skip=0, nmax=-1, dtype=float, what=None):
     if what is not None:
         dtype = what
         
-    ans = np.loadtxt(fname, delimiter=delimiter, skiprows=skiprows, max_rows=max_rows, dtype=dtype)
+    ans = np.loadtxt(fname, delimiter=delimiter, skiprows=skiprows,
+                     max_rows=max_rows, dtype=dtype)
     return ans
     
         

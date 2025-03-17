@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from abc import ABC, abstractmethod
 import copy
 
@@ -96,7 +97,8 @@ class MixtureComponent(ABC):
             plot_components expecting to be passed other NormalModel objects.
           burn: An integer giving the number of MCMC iterations to discard as
             burn-in.
-          style:  A string giving the style of plot to produce.  Common choices are:
+          style: A string giving the style of plot to produce.  Common choices
+            are:
             - "ts" a time series plot of MCMC iterations.
             - "den" for a density plot
             - "box" for boxplots
@@ -588,7 +590,8 @@ class MarkovModel(MixtureComponent):
         else:
             return ind
 
-    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+    def plot_components(self, components, burn=0, style="ts",
+                        fig=None, ax=None, **kwargs):
         """
         A KxK array of plots, where K is self.state_size.  Each plot has S
         entries, where S is the number of mixture components.
@@ -604,7 +607,8 @@ class MarkovModel(MixtureComponent):
             
         probs = np.empty((niter - burn, S, K, K))
         for s in range(S):
-            probs[:, s, :, :] = components[s]._transition_probability_draws[burn:, :, :]
+            probs[:, s, :, :] = components[s]._transition_probability_draws[
+                burn:, :, :]
         
         if fig is None:
             fig, ax = plt.subplots(K, K, sharex=True, sharey=True)
@@ -656,28 +660,85 @@ class MultilevelMultinomialModel(MixtureComponent):
         self._boom_model = None
         self._boom_sampler = None
 
+        # A list of strings containing all parent levels of the taxonomy.
+        self._model_levels = None
+
+        # A dict, keyed by the entries in self._model_levels, with each entry
+        # containing a np.ndarray containing the draws for the conditional model
+        # probabilities for a specific taxonomy parent level.
+        self._draws = None
+
     def probs(self, level=""):
         if self._boom_model is None:
             self.boom()
         
         if level:
-            return self._boom_model.conditional_model(level, self._sep).probs.to_numpy()
+            return self._boom_model.conditional_model(
+                level, self._sep).probs.to_numpy()
         else:
             return self._boom_model.top_level_model.probs.to_numpy()
+
+    def prob_draws(self, parent_level="", conditional=False, burn=0):
+        """
+        Args:
+          parent_level: The set of probabilities immediately underneath this
+            level of the taxonomy.  If 'parent_level' is the empty string then
+            the probs are the first level of the taxonomy.
+          conditional: If True then the returned probabilities sum to 1 within
+            each draw.  These are the conditional model probabilities of the
+            taxonomy child-levels conditional on the parent level occurring.
+ 
+        Returns:
+          A pd.DataFrame containing the set of model probabilities simulated
+          from the posterior distribution for the desired level.  The column
+          headings of the data frame are the child levels of the supplied parent
+          level.
+        """
+        levels = self._boom_taxonomy.child_levels(parent_level)
+        draws = pd.DataFrame(self._draws[parent_level],
+                             columns=levels)
+
+        if conditional:
+            return draws
+        
+        while parent_level:
+            parent_level, child = self._boom_taxonomy.pop_level(parent_level)
+            parent_probs = self._draws[parent_level]
+            parent_prob_levels = self._boom_taxonomy.child_levels(parent_level)
+            parent_probs = parent_probs[:, parent_prob_levels.index(child)]
+            draws *= parent_probs.reshape(-1, 1)
+
+        if burn > 0:
+            draws = draws[burn:, :]
+
+        return draws
+        
 
     def boom(self):
         import BayesBoom.boom as boom        
         if (self._boom_model is None):
-            self._boom_model = boom.MultilevelMultinomialModel(self._boom_taxonomy)
+            self._boom_model = boom.MultilevelMultinomialModel(
+                self._boom_taxonomy)
             self._ensure_posterior_sampler();
+
+        # A list of strings containing all parent levels of the taxonomy.
+        self._model_levels = self._boom_model.model_levels
 
         return self._boom_model
 
     def allocate_space(self, niter):
         self.boom()
-        self._model_levels = self._boom_model.model_levels
+
+        # params is a list of boom Vector's containing the conditional
+        # probabilities at each parent level of the taxonomy.  We need it here
+        # to get the parameter sizes.
         params = self._boom_model.parameters
-        self._draws = {x[0]: np.empty((niter, x[1].size)) for x in zip(self._model_levels, params)}
+
+        # params and self._model_levels are stored in the same order.
+        self._draws = {
+            x[0]: np.empty((niter, x[1].size))
+            for x in zip(self._model_levels, params)
+        }
 
     def record_draw(self, iteration):
         for draw in zip(self._model_levels, self._boom_model.parameters):
@@ -692,9 +753,86 @@ class MultilevelMultinomialModel(MixtureComponent):
                         style="ts",
                         fig=None,
                         ax=None,
-                        parent_level="top",
+                        parent_level="",
+                        conditional=False,
                         **kwargs):
-        pass
+        S = len(components)
+        if burn < 0:
+            burn = 0
+
+        niter = self._draws[self._model_levels[0]].shape[0]
+        levels = self._boom_taxonomy.child_levels(parent_level)
+        K = len(levels)
+        draws = np.empty((niter - burn, S, K))
+        for s in range(S):
+            draws[:, s, :] = components[s].prob_draws(
+                burn=burn,
+                parent_level=parent_level,
+                conditional=conditional)
+
+        style = unique_match(
+            style,
+            ["ts", "boxplot", "barplot", "density"]
+        )
+
+        if (style == "ts") or (style == "boxplot") or (style == "density"):
+            nrows = int(np.floor(np.sqrt(K)))
+            ncols = int(np.ceil(K / nrows))
+            
+            iteration = range(burn, niter)
+            if fig is None and ax is None:
+                fig, ax = plt.subplots(nrows, ncols, sharex=True,
+                                       squeeze=False, sharey=True)
+            elif ax is None:
+                ax = fig.subplots(nrows, ncols, sharex=True,
+                                  squeeze=False, sharey=True)
+            counter = 0
+            for i in range(nrows):
+                for j in range(ncols):
+                    if counter < K:
+                        if style == "ts":
+                            for s in range(S):
+                                ax[i, j].plot(iteration, draws[:, s, counter],
+                                              label=str(s))
+                        elif style == "boxplot":
+                            ax[i, j].boxplot(draws[:, :, counter])
+                        elif style == "density":
+                            for s in range(S):
+                                den = Density(draws[:, s, counter])
+                                den.plot(ax=ax[i, j], label=str(s))
+                        ax[i, j].set_title(levels[counter])
+                        if style != "boxplot":
+                            ax[i, j].legend()
+                        counter += 1
+
+        elif style == "barplot":
+            if fig is None and ax is None:
+                fig, ax = plt.subplots(1, 1)
+            elif ax is None:
+                ax = fig.subplots(1, 1)
+
+            mean_probs = draws.mean(axis=0)
+            # mean_probs is an S x K matrix with rows summing to 1.
+            
+            states = np.arange(S)
+            cum_probs = np.zeros(S)
+            grays = np.arange(K) / K
+
+            for k in range(K):
+                ax.bar(states,
+                       mean_probs[:, k],
+                       bottom=cum_probs,
+                       width=.6,
+                       color=str(grays[k]))
+                cum_probs += mean_probs[:, k]
+
+            if S < 10:
+                ax.set_xticks(np.arange(S),
+                              [str(s) for s in range(S)])
+        else:
+            raise Exception(f"Style {style} unrecognized.")
+
+        return fig, ax
     
     def _ensure_posterior_sampler(self):
         import BayesBoom.boom as boom
@@ -796,20 +934,25 @@ class MultinomialModel(MixtureComponent):
 
         niter = self._prob_draws.shape[0]
         probs = np.empty((niter - burn, S, self.dim))
+        if levels is None:
+            levels = [str(s) for s in self._categories]
         for s in range(S):
-            probs[:, s, :] = components[s]._prob_draws[burn:, :]
+            local_probs = components[s]._prob_draws[burn:, :]
+            probs[:, s, :] = np.array(local_probs)
 
         style = unique_match(
             style,
-            ["ts", "boxplot", "barplot"]
+            ["ts", "boxplot", "barplot", "density"]
         )
 
-        if style == "ts" or style == "boxplot":
+        if style == "ts" or style == "boxplot" or style == "density":
             iteration = range(burn, niter)
             if fig is None and ax is None:
-                fig, ax = plt.subplots(nrows, ncols, sharex=True, squeeze=False, sharey=True)
+                fig, ax = plt.subplots(nrows, ncols, sharex=True,
+                                       squeeze=False, sharey=True)
             elif ax is None:
-                ax = fig.subplots(nrows, ncols, sharex=True, squeeze=False, sharey=True)
+                ax = fig.subplots(nrows, ncols, sharex=True,
+                                  squeeze=False, sharey=True)
 
             counter = 0
             for i in range(nrows):
@@ -817,10 +960,19 @@ class MultinomialModel(MixtureComponent):
                     if counter < K:
                         if style == "ts":
                             for s in range(S):
-                                ax[i, j].plot(iteration, probs[:, s, counter])
+                                ax[i, j].plot(
+                                    iteration,
+                                    probs[:, s, counter],
+                                    label=str(s))
                         elif style == "boxplot":
                             ax[i, j].boxplot(probs[:, :, counter])
-                        ax[i, j].set_title(str(self._categories[counter]))
+                        elif style == "density":
+                            for s in range(S):
+                                den = Density(probs[:, s, counter])
+                                den.plot(ax=ax, label=str(s))
+                        ax[i, j].set_title(levels[counter])
+                        if style != "boxplot":
+                            ax[i, j].legend()
                         counter += 1
 
         elif style == "barplot":
@@ -849,7 +1001,7 @@ class MultinomialModel(MixtureComponent):
                               [str(s) for s in range(S)])
 
         else:
-            raise Exception(f"Style argument '{style}' unrecognized. ")
+            raise Exception(f"Style argument {style} unrecognized. ")
         
 
     
@@ -955,7 +1107,8 @@ class MvnGivenSigma(MvnBase):
 
     @property
     def variance(self):
-        raise Exception("MvnGivenSigma needs Sigma value to compute the variance.")
+        raise Exception("MvnGivenSigma needs Sigma value to compute the "
+                        "variance.")
 
     @property
     def mean(self):
@@ -1053,7 +1206,13 @@ class PoissonModel(MixtureComponent):
     def create_boom_data_builder(self):
         return IntDataBuilder()
 
-    def plot_components(self, components, burn=0, style="ts", fig=None, ax=None, **kwargs):
+    def plot_components(self,
+                        components,
+                        burn=0,
+                        style="ts",
+                        fig=None,
+                        ax=None,
+                        **kwargs):
         S = len(components)
         if burn < 0:
             burn = 0
@@ -1291,14 +1450,14 @@ class ScottZellnerMvnPrior(MvnBase):
 
 
 class SdPrior(DoubleModel):
-    """A prior distribution for a standard deviation 'sigma'.  This prior assumes
-    that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here 'df' is
-    the 'sample_size' and ss is the "sum of squares" equal to the sample size
-    times 'sigma_guess'**2.
+    """
+    A prior distribution for a standard deviation 'sigma'.  This prior
+    assumes that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here
+    'df' is the 'sample_size' and ss is the "sum of squares" equal to the sample
+    size times 'sigma_guess'**2.
 
     This prior allows an upper limit on the support of sigma, which is infinite
     by default.
-
     """
 
     def __init__(self, sigma_guess, sample_size=.01, initial_value=None,

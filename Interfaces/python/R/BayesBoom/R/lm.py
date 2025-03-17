@@ -66,11 +66,11 @@ class AnovaTable:
 
     def __repr__(self):
         return f"""
-           {"Sum of Sq":10}      {"DF"    :6}   {"Mean SQ   ":10}     {"F-stat":8}   p-value
-Model      {self.SSM :10.2}      {self.modelDF   :6}   {self.MSM  :10.4}     {self.F:8.4}   {self.pvalue:8.4}
-Error      {self.SSE :10.2}      {self.residualDF:6}   {self.MSE  :10.4}
-           ----------      ------
-Total      {self.SST :10.2}      {self.totalDF   :6}
+      {"Sum of Sq":10}   {"DF"    :6}   {"Mean SQ   ":10}  {"F-stat":8}  p-value
+Model {self.SSM :10.2}   {self.modelDF   :6}   {self.MSM  :10.4}  {self.F:8.4}  {self.pvalue:8.4}
+Error {self.SSE :10.2}   {self.residualDF:6}   {self.MSE  :10.4}
+      ----------      ------
+Total {self.SST :10.2}   {self.totalDF   :6}
 """
 
 

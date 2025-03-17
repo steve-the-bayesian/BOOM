@@ -8,6 +8,7 @@
 #include "Models/PosteriorSamplers/MultilevelMultinomialPosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
+#include "cpputil/StringSplitter.hpp"
 #include "uint.hpp"
 
 namespace py = pybind11;
@@ -63,6 +64,38 @@ namespace BayesBoom {
               return ans;
             },
             "A list of all leaf nodes in the taxonomy.\n")
+        .def("child_levels",
+             [](const Taxonomy &taxonomy, const std::string &parent_level, char sep) {
+               return taxonomy.child_node_names(parent_level, sep);
+             },
+             py::arg("parent_level"),
+             py::arg("sep") = '/',
+             "Args:\n\n"
+             "  parent_level:  The taxonomy value whose children are "
+             "desired.  If this is the empty string then the values from the "
+             "top level of the taxonomy are returned.\n"
+             "  sep:  The character separating taxonomy levels.\n\n"
+             "Returns:\n"
+             "  A list of strings giving the values of the taxonomy levels directly "
+             "underneath the parent node.  The parent node is not repeated.\n")
+        .def("pop_level",
+             [](const Taxonomy &tax, const std::string &level, char sep) {
+               StringSplitter split(std::string(1, sep));
+               return split.pop_back(level);
+             },
+             py::arg("level"),
+             py::arg("sep") = '/',
+             "Args:\n\n"
+             "  level:  A string describing a taxonomy level.\n"
+             "  sep:  The separator between levels.\n"
+             "\n"
+             "Returns:\n"
+             "  A pair: the leading (parent) and trailing (child) levels "
+             "in the argument.\n\n"
+             "Examples:  foo/bar/baz -> 'foo/bar', 'baz'\n"
+             "           foo         -> '', 'foo'\n"
+             "           foo/        -> 'foo', '' \n"
+             )
         ;
 
     py::class_<MultilevelCategoricalData,
@@ -118,6 +151,11 @@ namespace BayesBoom {
              "   values:  A sequence of strings indicating the taxonomy levels "
              "of each data point.\n"
              "   sep:  The field separator.\n")
+        .def("add_data",
+             [](MultilevelMultinomialModel &model,
+                MultilevelCategoricalData *data_point) {
+               model.add_data(Ptr<MultilevelCategoricalData>(data_point));
+             })
         .def_property_readonly(
             "parameters",
             [](const MultilevelMultinomialModel &model) {
@@ -136,7 +174,7 @@ namespace BayesBoom {
             "model_levels",
             [](const MultilevelMultinomialModel &model) {
               std::vector<std::string> ans;
-              ans.push_back("top");
+              ans.push_back("");
               for (auto it = model.conditional_model_begin();
                    it != model.conditional_model_end(); ++it) {
                 ans.push_back(it->first->path_from_root());
@@ -145,7 +183,8 @@ namespace BayesBoom {
             },
             "The list of taxonomy levels that have associated multinomial "
             "sub-models in this model.  This is all non-leaf taxonomy nodes, "
-            "and a 'top' level that notionally roots the taxonomy. \n")
+            "and a top level (denoted with the empty string) that notionally "
+            "roots the taxonomy. \n")
         .def_property_readonly(
             "top_level_model",
             [](MultilevelMultinomialModel &model) {

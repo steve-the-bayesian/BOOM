@@ -167,7 +167,8 @@ class MainEffectEncoder(Encoder):
     @abstractmethod
     def simulate(self, sample_size):
         """
-        Simulate 'sample_size' random observations independently from the encoder.
+        Simulate 'sample_size' random observations independently from the
+        encoder.
 
         This is primarily a tool for unit testing.
         """
@@ -878,12 +879,12 @@ class VariableMap:
         self._main_effects_map = main_effect_indices
         self._interaction_mask = None
 
-    # ---------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     def variable_names(self):
         return self._variable_names
 
-    # ---------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def included_variables(self, included_feature_matrix):
         """
         From a matrix of bools denoting included features (variables in the
@@ -913,7 +914,7 @@ class VariableMap:
 
         return pd.DataFrame(ans, columns=self._variable_names)
 
-    # ---------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def included_interactions(self, included_feature_matrix):
         """
         Returns a pandas DataFrame indicating which two-factor interactions are
@@ -934,7 +935,7 @@ class VariableMap:
             values[key] = np.any(included_feature_matrix[:, index], axis=1)
         return pd.DataFrame(values)
 
-    # ---------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def main_effect_indices(self, name: str = None):
         """
         Returns the indices in the encoded matrix of all the main effect columns
@@ -957,7 +958,7 @@ class VariableMap:
                 ans = ans + self._main_effects_map[key]
             return ans
 
-    # ---------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def interaction_indices(self, name1: str, name2: str):
         """
         The feature indices for the interaction between two variables.
@@ -976,7 +977,7 @@ class VariableMap:
         ans.sort()
         return ans
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     def _create_interaction_mask(self):
         """
         Binds self._interaction_mask to a dictionary, keyed by pairs of variable
