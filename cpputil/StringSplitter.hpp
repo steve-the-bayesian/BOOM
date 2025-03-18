@@ -35,6 +35,7 @@ namespace BOOM {
     //     in new fields.
     explicit StringSplitter(const std::string &sep = " ",
                             bool allow_quotes = true);
+    
     explicit StringSplitter(char sep, bool allow_quotes = true)
         : StringSplitter(std::string(1, sep), allow_quotes)
     {}
@@ -44,6 +45,9 @@ namespace BOOM {
 
     std::pair<std::string, std::string> pop_back(const std::string &s) const;
 
+    // Omit empty strings from the vector of output when calling operator().
+    void omit_empty() {omit_empty_ = true;}
+    
    private:
     // Returns 'true' if quoted fields are allowed, false otherwise.
     bool allow_quotes() const {
@@ -118,6 +122,9 @@ namespace BOOM {
     // The splitter is delimited if it uses something other than white space to
     // separate fields.
     bool delimited_;
+
+    // If true then empty fields are omitted from the output.  
+    bool omit_empty_;
   };
 
 }  // namespace BOOM
