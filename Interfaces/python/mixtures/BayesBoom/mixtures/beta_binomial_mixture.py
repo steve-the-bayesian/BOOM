@@ -298,7 +298,7 @@ class BetaBinomialMixture:
             component_means = np.mean(component_distribution[
                 "unweighted_components"], axis=0)
 
-        fig, ax = R.ensure_ax(ax)
+        fig, ax = R.ensure_ax(None, ax)
 
         x = np.arange(trials + 1)
         colors = ['#377eb8', '#ff7f00', '#4daf4a',

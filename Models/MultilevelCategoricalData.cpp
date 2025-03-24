@@ -406,6 +406,7 @@ namespace BOOM {
     std::string delim(1, sep);
     std::vector<std::vector<std::string>> unpacked;
     StringSplitter splitter(delim);
+    splitter.omit_empty();
     for (const auto &el : values) {
       std::vector<std::string> split = splitter(el);
       unpacked.push_back(split);
@@ -544,6 +545,7 @@ namespace BOOM {
       const std::string &parent_level,
       char sep) const {
     StringSplitter split(std::string(1, sep));
+    split.omit_empty();
     return child_node_names(split(parent_level));
   }
 
@@ -582,11 +584,13 @@ namespace BOOM {
 
   TaxonomyNode *Taxonomy::node(const std::string &level, char sep) {
     StringSplitter split(sep);
+    split.omit_empty();
     return node(split(level));
   }
 
   const TaxonomyNode *Taxonomy::node(const std::string &level, char sep) const {
     StringSplitter split(sep);
+    split.omit_empty();
     return node(split(level));
   }
 
@@ -703,6 +707,7 @@ namespace BOOM {
       : taxonomy_(taxonomy)
   {
     StringSplitter split(std::string(1, sep));
+    split.omit_empty();
     set(split(value));
   }
 

@@ -32,7 +32,7 @@ class Density:
         """
         import matplotlib.pyplot as plt
 
-        fig, ax = ensure_ax(ax)
+        fig, ax = ensure_ax(None, ax)
         plot_options, kwargs = _skim_plot_options(**kwargs)
         ax.plot(self._grid, self._density_values, **kwargs)
         _set_plot_options(ax, **plot_options)

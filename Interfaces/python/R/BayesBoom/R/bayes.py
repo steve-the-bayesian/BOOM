@@ -454,7 +454,154 @@ class MarkovConjugatePrior:
     def prior_initial_counts(self):
         return self._prior_initial_counts
 
+
+class MarkovSuf:
+    def __init__(self, categorical_data_sequence=None, levels=None, sort_levels=False):
+        """
+        Args:
+          categorical_data_sequence: the sequence of categorical data from which
+            to build the sufficient statistics.
+          levels: The sequence of unique level values from which the entries in
+            categorical_data_sequence take their values.  If None then the
+            levels will be created from the unique entries in
+            categorical_data_sequence.
+          sort_levels: If True then the levels will be sorted alphabetically.
+            If False then the levels appear in arbitrary order (likey the order
+            they appear in categorical_data_sequence.)
+        """
+
+        # The most recent value to have been observed.
+        self._last_value = None
+
+        # The value observed at time zero0.
+        self._initial_value = None
+
+        # self._levels is a pd.Series indexed by the text of the level.  The
+        # numeric value of the series is the
         
+        # /arts_&_entertainment/comics_&_animation/anime_&_manga                  2391
+        # /arts_&_entertainment/comics_&_animation/cartoons                        295
+        # /arts_&_entertainment/entertainment_industry/film_&_tv_industry          454
+        # /arts_&_entertainment/entertainment_industry/recording_industry        45594
+
+        self._levels = self._create_levels(levels, categorical_data_sequence, sort_levels)
+
+        # self._transition_counts is a data frame.  Rows and columns are indexed
+        # by categorical levels.
+        self._transition_counts = np.zeros((self.num_levels, self.num_levels))
+
+        if categorical_data_sequence is not None:
+            self.increment(categorical_data_sequence)
+
+    @property
+    def num_levels(self):
+        return len(self._levels)
+        
+    def increment(self, categorical_data_sequence):
+        if self._initial_value is None:
+            self._initial_value = np.array(categorical_data_sequence)[0]
+            self._last_value = self._initial_value
+            categorical_data_sequence = categorical_data_sequence[1:]
+
+        categorical_data_sequence = pd.Categorical(
+            categorical_data_sequence,
+            categories=self._levels.index)
+        numeric_codes = categorical_data_sequence.codes
+        previous_codes = numeric_codes[:-1]
+        next_codes = numeric_codes[1:]
+        sample_size = previous_codes.shape[0]
+        
+        X0 = np.zeros((sample_size, self.num_levels))
+        X0[np.arange(sample_size), previous_codes] = 1
+
+        X1 = np.zeros((sample_size, self.num_levels))
+        X1[np.arange(sample_size), next_codes] = 1
+
+        self._transition_counts += X0.T @ X1
+        last_value_code = self._levels[self._last_value]
+        self._transition_counts[last_value_code, previous_codes[0]] += 1
+
+        self._last_value = categorical_data_sequence[-1]
+
+    @property
+    def initial_value_counts(self):
+        if not hasattr(self, "_initial_value_counts"):
+            self._initial_value_counts = np.zeros(self.num_levels)
+            if self._initial_value is not None:
+                code = self._levels[self._initial_value]
+                self._initial_value_counts[code] = 1.0
+        return self._initial_value_counts
+
+    @property
+    def transition_counts(self):
+        return pd.DataFrame(self._transition_counts,
+                            index=self._levels.index,
+                            columns=self._levels.index)
+
+    def top_transitions(self, n, omit_self_transitions=False, probs=False):
+        """
+        Return the top n transitions in the transition count matrix.
+
+        Args:
+          n:  The number of transitions desired.
+          omit_self_transitions:  
+        """
+        trans = self.transition_counts.copy()
+        if probs:
+            row_totals = trans.sum(axis=1)
+            row_totals[row_totals <= 0] = 1
+            trans = trans.div(row_totals, axis="rows")
+        
+        if omit_self_transitions:
+            np.fill_diagonal(trans.values, 0)
+            
+        return trans.stack().nlargest(n)
+
+    def _create_levels(self, levels, categorical_data_sequence, sort_levels):
+        """
+        Return a pd.Series indexed by the levels of the 
+        """
+        if (levels is None) and (categorical_data_sequence is None):
+            raise Exception("At least one of 'categorical_data_sequence' "
+                            "or 'levels' is needed.")
+
+        if levels is not None:
+            level_info = np.unique(levels)
+        else:
+            level_info = np.unique(categorical_data_sequence)
+
+        if sort_levels:
+            level_info = np.sort(level_info)
+
+        level_info = pd.Series(level_info, index=None)
+            
+        return pd.Series(level_info.index, index=level_info)
+
+    def __add__(self, other):
+        if np.any(self._levels != other._levels):
+            raise Exception("Sufficient statistics created with different levels.")
+            
+        ans = MarkovSuf(levels=self._levels, sort_levels=False)
+        ans._transition_counts = self._transition_counts + other._transition_counts
+        ans._initial_value_counts = self.initial_value_counts + other.initial_value_counts
+        ans._last_value = other._last_value
+
+        return ans
+
+    def __iadd__(self, other):
+        """
+        Implements self += other
+        """
+        if np.any(self._levels != other._levels):
+            raise Exception("Sufficient statistics created with different levels.")
+
+        self._transition_counts += other._transition_counts
+        self._initial_value_counts = self.initial_value_counts + other.initial_value_counts
+        self._last_value = other._last_value
+
+        return self
+        
+    
 class MarkovModel(MixtureComponent):
     def __init__(self,
                  transition_matrix=None,
@@ -549,7 +696,7 @@ class MarkovModel(MixtureComponent):
                     self._boom_model,
                     to_boom_matrix(self._prior.prior_transition_counts),
                     boom.GlobalRng.rng)
-                self._boom_model.fix_pi0(self._boom_model.pi0)
+                self._boom_model.fix_pi0(self._boom_model.initial_distribution)
             else:
                 self._boom_sampler = boom.MarkovConjugateSampler(
                     self._boom_model,
@@ -806,10 +953,7 @@ class MultilevelMultinomialModel(MixtureComponent):
                         counter += 1
 
         elif style == "barplot":
-            if fig is None and ax is None:
-                fig, ax = plt.subplots(1, 1)
-            elif ax is None:
-                ax = fig.subplots(1, 1)
+            fig, ax = ensure_ax(fig, ax)
 
             mean_probs = draws.mean(axis=0)
             # mean_probs is an S x K matrix with rows summing to 1.
@@ -1118,7 +1262,7 @@ class MvnGivenSigma(MvnBase):
         return self.__dict__ == other.__dict__
 
 
-class NormalPrior(DoubleModel):
+class NormalPrior(DoubleModel, MixtureComponent):
     """
     A scalar normal prior distribution.
     """
@@ -1132,6 +1276,8 @@ class NormalPrior(DoubleModel):
             self.initial_value = mu
         else:
             self.initial_value = float(initial_value)
+
+        self._boom_model = None
 
     @property
     def mean(self):
@@ -1149,14 +1295,54 @@ class NormalPrior(DoubleModel):
         """
         Return the boom.GaussianModel corresponding to the object's parameters.
         """
-        import BayesBoom.boom as boom
-        return boom.GaussianModel(self.mu, self.sigma)
+        if self._boom_model is None:
+            import BayesBoom.boom as boom
+            self._boom_model = boom.GaussianModel(self.mu, self.sigma)
+            
+        return self._boom_model
 
+    def allocate_space(self, niter):
+        self._mu_draws = np.empty(niter)
+        self._sigma_draws = np.empty(niter)
+
+    def record_draw(self, iteration):
+        self._mu_draws[iteration] = self._boom_model.mu
+        self._sigma_draws[iteration] = self._boom_model.sigma
+    
+    def create_boom_data_builder(self):
+        return DoubleDataBuilder()
+
+
+    def plot_components(self,
+                        components,
+                        burn=0,
+                        style="ts",
+                        fig=None,
+                        ax=None,
+                        params="both",
+                        **kwargs):
+
+        params = unique_match(params, ["mu", "sigma", "both"])
+        style = unique_match(style, ["ts", "boxplot", "histogram", "density"])
+
+        if style == "ts":
+            pass
+
+        return fig, ax
+        
+    
     def __getstate__(self):
-        return self.__dict__
+        payload = {
+            "mu": self.mean,
+            "sigma": self.sd,
+            "initial_value": self.initial_value,
+        }
+        return payload
 
     def __setstate__(self, payload):
-        self.__dict__ = payload
+        self.mu = payload["mu"]
+        self.sigma = payload["sigma"]
+        self.initial_value = payload["initial_value"]
 
 
 class PoissonModel(MixtureComponent):

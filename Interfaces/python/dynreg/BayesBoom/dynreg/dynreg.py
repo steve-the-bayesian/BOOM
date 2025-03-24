@@ -197,7 +197,7 @@ class SparseDynamicRegressionModel:
         sd = self._residual_sd_draws[burn:]
 
         show_plot = False
-        fig, ax = R.ensure_ax(ax)
+        fig, ax = R.ensure_ax(None, ax)
 
         if kind == "density":
             density = R.Density(sd)
@@ -215,7 +215,7 @@ class SparseDynamicRegressionModel:
         return fig, ax
 
     def plot_size(self, ax=None, burn: int = None, **kwargs):
-        fig, ax = R.ensure_ax(ax)
+        fig, ax = R.ensure_ax(None, ax)
 
         size = np.sum(self._beta_draws != 0, axis=1)
         R.plot_dynamic_distribution(
@@ -315,7 +315,7 @@ class SparseDynamicRegressionModel:
         Returns:
           The axes object containing the plot.
         """
-        fig, ax = R.ensure_ax(ax)
+        fig, ax = R.ensure_ax(None, ax)
         R.plot_dynamic_distribution(beta,
                                     timestamps=self._unique_timestamps,
                                     ax=ax,

@@ -34,11 +34,6 @@ class HiddenMarkovModel:
         # Prior distribution for self._markov_model.
         self._markov_prior = None
 
-        # An R MarkovModel object.  This object will be created by a call to
-        # "allocate_space" so that it has the right dimension.
-        self._transition_model = None
-        self._transition_model_prior = None
-
         self._log_likelihood_draws = None
 
         self._boom_hmm = None
@@ -278,7 +273,21 @@ class HiddenMarkovModel:
             ax=ax,
             **kwargs)
 
-        return ax
+        return fig, ax
+
+    def plot_loglike(self, burn=0, fig=None, ax=None, **kwargs):
+        fig, ax = R.ensure_ax(fig, ax)
+        if burn < 0:
+            burn = 0
+
+        niter = self._log_likelihood_draws.shape[0]
+            
+        iteration = range(burn, niter)
+        ax.plot(iteration, self._log_likelihood_draws[burn:])
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Log likelihood")
+
+        return fig, ax
     
     def _allocate_space(self, niter):
         self._log_likelihood_draws = np.empty(niter)
@@ -311,6 +320,7 @@ class HiddenMarkovModel:
         """
         data_builder = mixture_component.create_boom_data_builder()
         for user, data in self._data.items():
+            # The data here are built one time series at a time.
             boom_data = data_builder.build_boom_data(data)
             boom_hmm.add_data(boom_data)
 

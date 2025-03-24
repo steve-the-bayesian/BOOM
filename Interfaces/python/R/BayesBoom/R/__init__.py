@@ -37,6 +37,7 @@ from .bayes import (
     GaussianSuf,
     MarkovModel,
     MarkovConjugatePrior,
+    MarkovSuf,
     MixtureComponent,
     MultilevelMultinomialModel,
     MultinomialModel,

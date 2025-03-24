@@ -888,7 +888,7 @@ class Bsts:
         if burn > 0:
             coef = coef[burn:, :]
 
-        fig, ax = R.ensure_ax(ax)
+        fig, ax = R.ensure_ax(None, ax)
 
         inc = spikeslab.compute_inclusion_probabilities(coef)
 

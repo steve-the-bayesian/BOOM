@@ -52,16 +52,17 @@ def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
         ax.set_title(title)
 
 
-def ensure_ax(ax):
+def ensure_ax(fig, ax):
     """
     Create new Figure and Axes objects, if needed.
 
     If ax already exists then the returned Figure is None.  Calling code can
     rely on this behavior when deciding whether to call plt.show().
     """
-    fig = None
-    if ax is None:
+    if fig is None and ax is None:
         fig, ax = plt.subplots(1, 1)
+    elif ax is None:
+        ax = fig.subplots(1, 1)
     return fig, ax
         
 
@@ -194,7 +195,7 @@ def plot(x, y=None, s=None, hexbin_threshold=1e+5, ax=None, **kwargs):
     For now, a 'plot' is a scatterplot.  At some point I will make 'plot'
     generic as with R.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
@@ -227,7 +228,7 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       x: The variable to be plotted.
       density: If True then the area of the histogram bars sums to 1.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
     plot_options, kwargs = _skim_plot_options(**kwargs)
     ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
             color=color, **kwargs)
@@ -251,7 +252,7 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
       kwargs: extra arguments passed to plt.subplots or plt.barh.
 
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     x = x[::-1]
     if labels is not None:
@@ -285,7 +286,7 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
 
 
 def boxplot(x, labels=None, ax=None, **kwargs):
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     if labels is None and isinstance(x, pd.DataFrame):
         labels = x.columns
@@ -373,7 +374,7 @@ def BoxplotTrue(x, truth=None, ax=None, vnames=None, center=False, **kwargs):
     Returns:
       The ax object.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
     _set_plot_options(ax, **plot_options)
@@ -422,7 +423,7 @@ def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
 
       **kwargs:  Extra arguments passed to 'boxplot'.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
     
     plot_options, kwargs = _skim_plot_options(**kwargs)
     _set_plot_options(ax, **plot_options)
@@ -451,7 +452,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
       timestamps: The time points (
       ax:  The Axes 
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     x = pd.Series(x)
     if timestamps is not None:
@@ -495,7 +496,7 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
         describing the relationship between two categorical variables.
       ax:
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     if not isinstance(ax, plt.Axes):
         raise Exception("ax must be a plt.Axes object")
@@ -732,7 +733,7 @@ def plot_dynamic_distribution(
 
       **kwargs: Extra arguments passed to _skim_plot_options.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
@@ -796,7 +797,7 @@ def compare_den(
         else:
             legend_text = ["X." + str(i) for i in range(x.shape[1])]
 
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
 
     for i in range(x.shape[1]):
         den = Density(x[:, i])
@@ -926,7 +927,7 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
         indexed by pd.Interval objects indicating the interval over which the
         means are averaged.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
     
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
         pd.qcut(predicted, 10),
@@ -968,7 +969,7 @@ def plot_gaussian_kde(kde, ax=None, **kwargs):
     """
     Add a kernel density estimate to the plot.
     """
-    fig, ax = ensure_ax(ax)
+    fig, ax = ensure_ax(None, ax)
     xlim = ax.get_xlim()
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)

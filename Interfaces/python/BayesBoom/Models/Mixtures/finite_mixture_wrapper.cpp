@@ -36,6 +36,26 @@ namespace BayesBoom {
              "'boom.MixtureComponent'.\n"
              "  mixing_weights:  A boom.MultinomialModel describing the mixing "
              "weights for the mixture.\n" )
+        .def("add_data",
+             [](FiniteMixtureModel *model, Data *data_point) {
+               model->add_data(Ptr<Data>(data_point));
+             })
+        .def_property_readonly(
+            "last_loglike",
+            [](const FiniteMixtureModel &model) {
+              return model.last_loglike();
+            },
+            "The log likelihood produced by the most recent call to "
+            "sample_posterior.")
+        .def_property_readonly(
+            "class_membership_probability",
+            [](const FiniteMixtureModel &model) {
+              return model.class_membership_probability();
+            },
+            "A matrix with rows corresponding to observations, and columns to "
+            "mixture components.\n"
+            "Element (i, j) is the probability that unit i is a member of "
+            "component j.\n")
         .def("__repr__",
              [](const FiniteMixtureModel &model) {
                std::ostringstream out;

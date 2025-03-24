@@ -447,7 +447,7 @@ class lm_spike:
         nonzero_coefs = [self._coefficient_draws[:, i].data for i in index]
         names = self.xnames[index]
 
-        fig, ax = R.ensure_ax(ax)
+        fig, ax = R.ensure_ax(None, ax)
 
         ax.boxplot(nonzero_coefs,
                    widths=.8 * inc,
