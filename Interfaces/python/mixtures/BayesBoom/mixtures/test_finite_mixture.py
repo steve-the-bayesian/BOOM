@@ -23,12 +23,33 @@ class TestFiniteMixture(unittest.TestCase):
         y = np.concat((y0, y1))
 
         model = mix.FiniteMixtureModel()
-        model.add_component(R.NormalPrior(0, 1))
-        model.add_component(R.NormalPrior(0, 1))
+        component0 = R.NormalPrior(0, 1)
+        component0.set_prior(R.NormalInverseGammaModel(
+            0.0, 1.0, 1.0, 1.0))
+        model.add_component(component0)
+
+        component1 = R.NormalPrior(0, 1)
+        component1.set_prior(R.NormalInverseGammaModel(
+            0.0, 1.0, 1.0, 1.0))
+        model.add_component(component1)
 
         model.add_data(y)
 
-        model.train(niter=1000)
+        niter = 1000
+        model.train(niter=niter)
+        self.assertEqual(
+            len(model._mixture_components[0]._mu_draws),
+            niter)
+        self.assertEqual(
+            len(model._mixture_components[0]._sigma_draws),
+            niter)
+
+        self.assertEqual(model._mixing_distribution._prob_draws.shape[0],
+                         niter)
+
+        fig, ax = model.plot_components()
+        self.assertIsInstance(fig, plt.Figure)
+        
         
 
 _debug_mode = False

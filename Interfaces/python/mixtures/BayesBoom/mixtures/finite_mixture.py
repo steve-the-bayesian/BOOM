@@ -63,6 +63,7 @@ class FiniteMixtureModel:
                 boom_component_list.append(model)
                 
             self._ensure_mixing_distribution()
+            self._mixing_distribution.boom()
             self._boom_model = boom.FiniteMixtureModel(
                 boom_component_list.values,
                 self._mixing_distribution.boom()
@@ -76,6 +77,78 @@ class FiniteMixtureModel:
             
         return self._boom_model
 
+    def plot_loglike(self, burn=0, fig=None, ax=None, style="ts", **kwargs):
+        style = unique_match(style, ["ts", "histogram", "density"])
+        
+        fig, ax = R.ensure_ax(fig, ax)
+        if burn < 0:
+            burn = 0
+
+        niter = self._log_likelihood_draws.shape[0]
+            
+        iteration = range(burn, niter)
+
+        if style == "ts":
+            ax.plot(iteration, self._log_likelihood_draws[burn:])
+            ax.set_xlabel("Iteration")
+            ax.set_ylabel("Log likelihood")
+
+        elif style == "histogram":
+            R.hist(self._log_likelihood_draws[burn:], ax=ax)
+            ax.set_xlabel("Log likelihood")
+
+        elif style == "density":
+            den = R.Density(self._log_likelihood_draws[burn:])
+            den.plot(ax=ax)
+            ax.set_xlabel("Log likelihood")
+            ax.set_ylabel("density")
+
+        return fig, ax
+
+    def plot_components(self, burn=0, style="ts", fig=None, ax=None, **kwargs):
+        fig, ax = self._mixture_components[0].plot_components(
+            self._mixture_components,
+            burn=burn,
+            style=style,
+            fig=fig,
+            ax=ax,
+            **kwargs)
+
+        return fig, ax
+
+    def plot_mixing_weights(self, burn=0, style="boxplot", fig=None, ax=None, **kwargs):
+        fig, ax = R.ensure_ax(fig, ax)
+        style = R.unique_match(style, ["boxplot", "ts", "density"])
+        if burn < 0:
+            burn = 0
+        probs = self._mixing_distribution._prob_draws[burn:, :]
+        niter = self._mixing_distribution._prob_draws.shape[0]
+        S = probs.shape[1]
+        
+        if style == "ts":
+            iteration = range(burn, niter)
+            for s in range(S):
+                ax.plot(iteration, probs[:, s], label=s)
+            ax.set_xlabel("Iteration")
+            ax.set_ylabel("Mixing Weights")
+            ax.legend()
+
+        elif style == "boxplot":
+            ax.boxplot(probs)
+            ax.set_xlabel("Mixture Component")
+            ax.set_ylabel("Mixing Weights")
+
+        elif style == "density":
+            for s in range(S):
+                den = R.Density(probs[:, s])
+                den.plot(ax=ax, label=s)
+            ax.set_xlabel("Mixing Weights")
+            ax.set_ylabel("density")
+            ax.legend()
+
+        return fig, ax
+        
+    
     def _assign_data_to_boom_model(self, boom_model, mixture_component):
         data_builder = mixture_component.create_boom_data_builder()
         boom_data = data_builder.build_boom_data(self._data)
@@ -87,6 +160,11 @@ class FiniteMixtureModel:
             dim = self.num_components
             uniform_probs = np.ones(dim) / dim
             self._mixing_distribution = R.MultinomialModel(uniform_probs)
+
+            self._mixing_distribution.set_prior(
+                R.DirichletPrior(uniform_probs * 1.0))
+
+            
     
     def _allocate_space(self, niter):
         for component in self._mixture_components:
