@@ -88,7 +88,7 @@ namespace BOOM {
 
     void set_Nu(const Matrix &Nu);
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
     double pdf(const Matrix &Pi, bool logscale) const;
     //    double Logp(const Vector &, Vector &, Matrix &, uint nd)const;
 

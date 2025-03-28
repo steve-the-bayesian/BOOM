@@ -197,16 +197,6 @@ namespace BOOM {
     return logscale ? logp_[i] : pi(i);
   }
 
-  double MM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    check_logp();
-    uint i = DAT(dp)->value();
-    if (i >= dim()) {
-      std::string msg = "too large a value passed to MultinomialModel::pdf";
-      report_error(msg);
-    }
-    return logscale ? logp_[i] : pi(i);
-  }
-
   double MM::entropy() const {
     double ans = pi().dot(logpi());
     if (!std::isnan(ans)) {

@@ -340,30 +340,24 @@ namespace BOOM {
     report_error("Bad data type passed to MarkovModel::pdf");
   }
 
-  double MarkovModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<MarkovData> dp1 = dp.dcast<MarkovData>();
-    double ans = 0;
-    if (!!dp1)
-      ans = pdf(*dp1, logscale);
-    else {
-      Ptr<TimeSeries<MarkovData>> dpn = dp.dcast<TimeSeries<MarkovData>>();
-      if (!!dpn)
-        ans = pdf(*dpn, logscale);
-      else
-        BadMarkovData();
-    }
-    return ans;
-  }
-
   double MarkovModel::pdf(const Data *dp, bool logscale) const {
-    const MarkovData *dp1 = dynamic_cast<const MarkovData *>(dp);
-    if (dp1) return pdf(*dp1, logscale);
-
-    const TimeSeries<MarkovData> *dp2 =
-        dynamic_cast<const TimeSeries<MarkovData> *>(dp);
-    if (dp2) return pdf(*dp2, logscale);
-    BadMarkovData();
-    return 0;
+    const MarkovData *dp1 = dynamic_cast<const MarkovData*>(dp);
+    if (dp1) {
+      return pdf(*dp1, logscale);
+    } else {
+      const TimeSeries<MarkovData> *dpn = dynamic_cast<const TimeSeries<MarkovData>*>(dp);
+      if (dpn) {
+        return pdf(*dpn, logscale);
+      } else {
+        const MarkovSuf *dps = dynamic_cast<const MarkovSuf *>(dp);
+        if (dps) {
+          return pdf(*dps, logscale);
+        } else {
+          BadMarkovData();
+          return negative_infinity();
+        }
+      }
+    }
   }
 
   double MarkovModel::pdf(const MarkovData &dat, bool logscale) const {
@@ -385,6 +379,12 @@ namespace BOOM {
     return logscale ? ans : exp(ans);
   }
 
+  double MarkovModel::pdf(const MarkovSuf &suf,
+                          bool logscale) const {
+    double ans = log_likelihood(pi0(), Q(), suf);
+    return logscale ? ans : exp(ans);
+  }
+
   void MarkovModel::mle() {
     Matrix Q(this->Q());
     for (uint i = 0; i < Q.nrow(); ++i) {
@@ -401,16 +401,18 @@ namespace BOOM {
     }
   }
 
+  double MarkovModel::log_likelihood(
+      const Vector &initial_distribution,
+      const Matrix &transition_probabilities,
+      const MarkovSuf &suf) const {
+    return suf.init().dot(log(initial_distribution))
+        + el_mult_sum(suf.trans(), log(transition_probabilities));
+  }
+  
   double MarkovModel::loglike(const Vector &serialized_params) const {
-    const Vector &initial_state_count(suf()->init());
-    const Matrix &transition_counts(suf()->trans());
-
-    Vector logpi0(log(pi0()));
-
-    double ans = initial_state_count.dot(logpi0);
-    ans += el_mult_sum(transition_counts,
-                       log_transition_probabilities());
-    return ans;
+    MarkovModel tmp_model(state_space_size());
+    tmp_model.unvectorize_params(serialized_params);
+    return log_likelihood(tmp_model.pi0(), tmp_model.Q(), *suf());
   }
 
   Vector MarkovModel::stat_dist() const { return get_stat_dist(Q()); }

@@ -73,7 +73,6 @@ namespace BOOM {
 
     void add_raw_data(const Vector &y);
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *, bool logscale) const override;
     double pdf(const Vector &x, bool logscale) const;
     int number_of_observations() const override { return dat().size(); }

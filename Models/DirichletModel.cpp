@@ -133,10 +133,6 @@ namespace BOOM {
   }
   double DM::pi(uint i) const { return nu(i) / nu().sum(); }
 
-  double DM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return pdf(DAT(dp)->value(), logscale);
-  }
-
   double DM::pdf(const Data *dp, bool logscale) const {
     return pdf(DAT(dp)->value(), logscale);
   }

@@ -192,7 +192,6 @@ namespace BOOM {
     Vector &fill_eta(const ChoiceData &, Vector &ans) const;
 
     //----------------------------------------------------------------------
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *dp, bool logscale) const override;
     virtual double logp(const ChoiceData &dp) const;
     int number_of_observations() const override { return dat().size(); }

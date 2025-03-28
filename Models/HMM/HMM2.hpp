@@ -82,7 +82,7 @@ namespace BOOM {
     //
     // Returns: If logscale is true then return the probability (density) of dp
     //   on the log scale.  Otherwise report on the probability scale.
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
 
     // Clear any latent data that has been stored by the data augmentation
     // algorithm in the mixture components or the hidden Markov chain.

@@ -94,11 +94,6 @@ namespace BOOM {
     return new ZeroInflatedGammaModel(*this);
   }
 
-  double ZIGM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);
-  }
-
   double ZIGM::pdf(const Data *dp, bool logscale) const {
     double ans = logp(dynamic_cast<const DoubleData *>(dp)->value());
     return logscale ? ans : exp(ans);

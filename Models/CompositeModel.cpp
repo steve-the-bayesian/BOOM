@@ -65,10 +65,6 @@ namespace BOOM {
     DataPolicy::clear_data();
   }
 
-  double CM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return pdf(*DAT(dp), logscale);
-  }
-
   double CM::pdf(const Data *dp, bool logscale) const {
     return pdf(*DAT(dp), logscale);
   }

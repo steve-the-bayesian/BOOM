@@ -97,10 +97,21 @@ namespace BOOM {
       return dp.dcast<DataSeriesType>();
     }
 
+    const SERIES *DAT(const Data *dp) const {
+      if (!dp) return nullptr;
+      return dynamic_cast<const SERIES *>(dp);
+    }
+
     Ptr<DATA> DAT_1(const Ptr<Data> &dp) const {
       if (!dp) return Ptr<DataPointType>();
       return dp.dcast<DataPointType>();
     }
+    
+    const DATA *DAT_1(const Data *dp) const {
+      if (!dp) return nullptr;
+      return dynamic_cast<const DATA *>(dp);
+    }
+    
    private:
     std::vector<Ptr<DataSeriesType> > ts_;  // model owns data;
   };

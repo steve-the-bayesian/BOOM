@@ -28,7 +28,6 @@ namespace BOOM {
     virtual double logp(double x) const = 0;
     virtual double sim(RNG &rng = GlobalRng::rng) const = 0;
     DoubleModel *clone() const override = 0;
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *dp, bool logscale) const override;
   };
 

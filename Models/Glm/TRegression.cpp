@@ -226,14 +226,14 @@ namespace BOOM {
     return loglike;
   }
 
-  double TRegressionModel::pdf(const Ptr<RegressionData> &dp,
+  double TRegressionModel::pdf(const RegressionData *dp,
                                bool logscale) const {
     double yhat = predict(dp->x());
     return dstudent(dp->y(), yhat, sigma(), nu(), logscale);
   }
 
-  double TRegressionModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return pdf(dp.dcast<DataType>(), logscale);
+  double TRegressionModel::pdf(const Data *dp, bool logscale) const {
+    return pdf(DAT(dp), logscale);
   }
 
   Ptr<RegressionData> TRegressionModel::sim(RNG &rng) const {

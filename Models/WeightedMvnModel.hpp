@@ -95,8 +95,8 @@ namespace BOOM {
     void mle() override;
     double loglike(const Vector &mu_siginv_triangle) const override;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
-    double pdf(const Ptr<DataType> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
+    double pdf(const DataType *dp, bool logscale) const;
   };
 }  // namespace BOOM
 #endif  // BOOM_WEIGHTED_MVN_MODEL_HPP

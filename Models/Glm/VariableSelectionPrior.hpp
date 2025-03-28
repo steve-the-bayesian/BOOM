@@ -188,7 +188,7 @@ namespace BOOM {
     StructuredVariableSelectionPrior *clone() const override;
 
     void mle();
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
     double logp(const Selector &included_coefficients) const override;
     void make_valid(Selector &inc) const override;
     const Ptr<Variable> &variable(uint i) const;

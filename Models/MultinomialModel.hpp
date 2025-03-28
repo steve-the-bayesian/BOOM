@@ -101,7 +101,6 @@ namespace BOOM {
     double log_likelihood() const override { return loglike(pi()); }
     void mle() override;
     double pdf(const Data *dp, bool logscale) const override;
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
     double logp(int index) const;
     
     void add_mixture_data(const Ptr<Data> &, double prob) override;

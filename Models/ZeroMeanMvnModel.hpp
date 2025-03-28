@@ -45,7 +45,7 @@ namespace BOOM {
 
     void mle() override;
     double loglike(const Vector &siginv_triangle) const override;
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
+    virtual double pdf(const Data *dp, bool logscale) const;
 
     Ptr<SpdParams> Sigma_prm();
     const Ptr<SpdParams> Sigma_prm() const;

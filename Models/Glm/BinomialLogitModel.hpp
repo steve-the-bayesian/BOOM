@@ -61,8 +61,7 @@ namespace BOOM {
     double failure_probability(const ConstVectorView &x) const;
 
     double pdf(const Data *dp, bool logscale) const override;
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
-    virtual double pdf(const Ptr<BinomialRegressionData> &, bool) const;
+    virtual double pdf(const BinomialRegressionData *dp, bool logscale) const;
     virtual double logp(double y, double n, const Vector &x,
                         bool logscale) const;
     virtual double logp_1(bool y, const Vector &x, bool logscale) const;

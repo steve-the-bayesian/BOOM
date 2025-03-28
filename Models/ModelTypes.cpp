@@ -191,12 +191,6 @@ namespace BOOM {
     }
   }
 
-  double DoubleModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double x = dp.dcast<DoubleData>()->value();
-    double ans = logp(x);
-    return logscale ? ans : exp(ans);
-  }
-
   double DoubleModel::pdf(const Data *dp, bool logscale) const {
     double x = dynamic_cast<const DoubleData *>(dp)->value();
     double ans = logp(x);

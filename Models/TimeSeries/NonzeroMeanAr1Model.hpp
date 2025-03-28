@@ -87,7 +87,7 @@ namespace BOOM {
     NonzeroMeanAr1Model *clone() const override;
 
     void mle() override;
-    virtual double pdf(const Ptr<Data> &, bool logscale) const;
+    virtual double pdf(const Data *data_point, bool logscale) const;
 
     double sigma() const;
     double sigsq() const;  // Var(y[t+1] | y[t], phi, mean);

@@ -93,8 +93,8 @@ namespace BOOM {
     // The MLE is computed using an EM algorithm.
     void mle() override;
 
-    double pdf(const Ptr<Data> &dp, bool) const;
-    double pdf(const Ptr<DataType> &dp, bool) const;
+    double pdf(const Data *dp, bool logscale) const;
+    double pdf(const DataType *dp, bool logscale) const;
 
     Ptr<RegressionData> sim(RNG &rng = GlobalRng::rng) const;
     Ptr<RegressionData> sim(const Vector &X,

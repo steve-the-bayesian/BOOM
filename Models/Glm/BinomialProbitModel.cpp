@@ -94,17 +94,13 @@ namespace BOOM {
     return probit_success_probability(x, coef(), false);
   }
 
-  double BPM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return pdf(DAT(dp), logscale);
-  }
-
   double BPM::pdf(const Data *dp, bool logscale) const {
     const BinomialRegressionData *rd =
         dynamic_cast<const BinomialRegressionData *>(dp);
     return logp(rd->y(), rd->n(), rd->x(), logscale);
   }
 
-  double BPM::pdf(const Ptr<BRD> &dp, bool logscale) const {
+  double BPM::pdf(const BinomialRegressionData *dp, bool logscale) const {
     return logp(dp->y(), dp->n(), dp->x(), logscale);
   }
 

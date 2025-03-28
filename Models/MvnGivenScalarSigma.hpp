@@ -95,7 +95,7 @@ namespace BOOM {
 
     void mle() override;
     double loglike(const Vector &mu_ominv) const override;
-    double pdf(const Ptr<Data> &dp, bool) const;
+    double pdf(const Data *dp, bool) const;
 
    private:
     // ominv_ is stored as SpdParams instead of as a raw SpdMatrix because

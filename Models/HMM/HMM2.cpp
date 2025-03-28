@@ -122,8 +122,8 @@ namespace BOOM {
   }
 
   // Returns the likelihood of the TimeSeries<Data> pointed at by dp.
-  double HMM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<DataSeriesType> dat = DAT(dp);
+  double HMM::pdf(const Data *dp, bool logscale) const {
+    const DataSeriesType *dat = DAT(dp);
     double ans = filter_->loglike(*dat);
     return logscale ? ans : exp(ans);
   }

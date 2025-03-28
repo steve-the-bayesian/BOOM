@@ -148,11 +148,6 @@ namespace BOOM {
 
   double GammaModelBase::variance() const { return alpha() / square(beta()); }
 
-  double GammaModelBase::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);
-  }
-
   double GammaModelBase::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
