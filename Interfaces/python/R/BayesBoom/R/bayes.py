@@ -13,6 +13,8 @@ from .boom_py_utils import (
     to_boom_matrix,
 )
 
+from .plots import ensure_ax
+
 from .boom_data_builders import (
     DataBuilder,
     IntDataBuilder,
@@ -1027,6 +1029,9 @@ class MultinomialModel(MixtureComponent):
             raise Exception("Object contains no boom model")
         self._prob_draws[iteration, :] = self.probs
 
+    def set_prior(self, prior):
+        self._prior = prior
+        
     def boom(self):
         import BayesBoom.boom as boom
         if self._boom_model:
@@ -1278,6 +1283,9 @@ class NormalPrior(DoubleModel, MixtureComponent):
             self.initial_value = float(initial_value)
 
         self._boom_model = None
+        self._prior = None
+        self._mean_prior = None
+        self._sd_prior = None
 
     @property
     def mean(self):
@@ -1291,14 +1299,37 @@ class NormalPrior(DoubleModel, MixtureComponent):
     def variance(self):
         return self.sigma ** 2
 
+    def set_prior(self, prior):
+        if isinstance(prior, NormalInverseGammaModel):
+            self._prior = prior
+        elif isinstance(prior, NormalPrior):
+            self._mean_prior = prior
+        elif isinstance(prior, GammaModelBase):
+            self._sd_prior = prior
+    
     def boom(self):
         """
         Return the boom.GaussianModel corresponding to the object's parameters.
         """
+        import BayesBoom.boom as boom
         if self._boom_model is None:
             import BayesBoom.boom as boom
             self._boom_model = boom.GaussianModel(self.mu, self.sigma)
-            
+
+            if (
+                    (self._prior is not None)
+                    and
+                    isinstance(self._prior, NormalInverseGammaModel)
+            ):
+                boom_sampler = boom.GaussianConjugateSampler(
+                    self._boom_model,
+                    self._prior.gaussian_given_sigma(self._boom_model.sigsq_parameter),
+                    self._prior.chisq())
+                self._boom_model.set_method(boom_sampler)
+
+            else:
+                raise Exception("Not sure how to build the posterior sampler.")
+                
         return self._boom_model
 
     def allocate_space(self, niter):
@@ -1322,15 +1353,103 @@ class NormalPrior(DoubleModel, MixtureComponent):
                         params="both",
                         **kwargs):
 
-        params = unique_match(params, ["mu", "sigma", "both"])
+        params = unique_match(params, ["mean", "sd", "both"])
         style = unique_match(style, ["ts", "boxplot", "histogram", "density"])
+        S = len(components)
 
+        numplots = 2 if params == "both" else 1
+        if fig is None and ax is None:
+            fig, ax = plt.subplots(1,numplots)
+        elif ax is None:
+            ax = fig.subplots(1,numplots)
+
+        if params == "both":
+            self._plot_params(components=components,
+                              burn=burn,
+                              style=style,
+                              fig=fig,
+                              ax=ax[0],
+                              what="means",
+                              **kwargs)
+            self._plot_params(components=components,
+                              burn=burn,
+                              style=style,
+                              fig=fig,
+                              ax=ax[1],
+                              what="sds",
+                              **kwargs)
+
+        elif params == "mean":
+            self._plot_params(components=components,
+                              burn=burn,
+                              style=style,
+                              fig=fig,
+                              ax=ax,
+                              what="means",
+                              **kwargs)
+
+        elif params == "sd":
+            self._plot_params(components=components,
+                              burn=burn,
+                              style=style,
+                              fig=fig,
+                              ax=ax,
+                              what="sds",
+                              **kwargs)
+
+        else:
+            raise Exception(f"Unknown value of params: {params}")
+        
+        return fig, ax
+
+    def _plot_params(self,
+                     components,
+                     burn=0,
+                     style="ts",
+                     fig=None,
+                     ax=None,
+                     what = "means",
+                     **kwargs):
+        fig, ax = ensure_ax(fig, ax)
+        style = unique_match(style, ["ts", "boxplot", "density"])
+        what = unique_match(what, ["means", "sds"])
+        S = len(components)
+        niter = components[0]._mu_draws.shape[0]
+        if burn < 0:
+            burn = 0
+        params = np.empty((niter - burn, S))
+        if what == "means":
+            for s in range(S):
+                params[:, s] = components[s]._mu_draws[burn:]
+            label = "means"
+        else:
+            for s in range(S):
+                params[:, s] = components[s]._sigma_draws[burn:]
+            label = "Standard Deviations"
+        
         if style == "ts":
-            pass
+            iteration = range(burn, niter)
+            for s in range(S):
+                ax.plot(iteration, params[:, s], label=s)
+            ax.legend()
+            ax.set_xlabel("Iteration")
+            ax.set_ylabel(label)
+
+        elif style == "density":
+            for s in range(S):
+                den = Density(params[:, s])
+                den.plot(ax=ax, label=s)
+            ax.legend()
+            ax.set_xlabel(label)
+            ax.set_ylabel("density")
+
+        elif style == "boxplot":
+            ax.boxplot(params)
+            ax.set_ylabel(label)
+            ax.set_xlabel("mixture component")
 
         return fig, ax
-        
-    
+
     def __getstate__(self):
         payload = {
             "mu": self.mean,
@@ -1345,6 +1464,38 @@ class NormalPrior(DoubleModel, MixtureComponent):
         self.initial_value = payload["initial_value"]
 
 
+class NormalInverseGammaModel:
+    def __init__(self,
+                 mean_guess,
+                 mean_prior_sample_size,
+                 sd_guess,
+                 sd_prior_sample_size): 
+        self._mean = mean_guess
+        self._mean_prior_sample_size = mean_prior_sample_size
+        self._df = sd_prior_sample_size
+        self._sd_estimate = sd_guess
+
+    @property
+    def sumsq(self):
+        return self._sd_estimate**2 * self._df
+        
+    def gaussian_given_sigma(self, sigsq_parameter):
+        """
+        Returns a BOOM GaussianModelGivenSigma model object.
+        """
+        import BayesBoom.boom as boom
+        return boom.GaussianModelGivenSigma(
+            sigsq_parameter,
+            self._mean,
+            self._mean_prior_sample_size)
+
+    def chisq(self):
+        import BayesBoom.boom as boom
+        return boom.ChisqModel(
+            self._df,
+            self._sd_estimate)
+        
+        
 class PoissonModel(MixtureComponent):
     def __init__(self, mean=1):
         self._lambda = mean

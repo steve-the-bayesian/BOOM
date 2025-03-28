@@ -45,6 +45,7 @@ from .bayes import (
     MvnPrior,
     MvnGivenSigma,
     NormalPrior,
+    NormalInverseGammaModel,
     PoissonModel,
     RegSuf,
     ScottZellnerMvnPrior,
