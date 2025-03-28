@@ -109,4 +109,31 @@ namespace {
     EXPECT_EQ(result.second, "");
   }
 
+  TEST(StringSplitTest, SkipEmpty) {
+    StringSplitter split("/");
+    std::string test = "/foo/bar/baz/";
+    std::vector<std::string> elements = split(test);
+    EXPECT_EQ(5, elements.size());
+    EXPECT_EQ("", elements[0]);
+    EXPECT_EQ("foo", elements[1]);
+    EXPECT_EQ("bar", elements[2]);
+    EXPECT_EQ("baz", elements[3]);
+    EXPECT_EQ("", elements[4]);
+
+    split.omit_empty();
+    elements = split(test);
+    EXPECT_EQ(3, elements.size());
+    EXPECT_EQ("foo", elements[0]);
+    EXPECT_EQ("bar", elements[1]);
+    EXPECT_EQ("baz", elements[2]);
+
+    test = "////foo///bar//baz////";
+    elements.clear();
+    elements = split(test);
+    EXPECT_EQ(3, elements.size());
+    EXPECT_EQ("foo", elements[0]);
+    EXPECT_EQ("bar", elements[1]);
+    EXPECT_EQ("baz", elements[2]);
+  }
+
 }  // namespace

@@ -30,17 +30,32 @@ namespace BOOM {
   StringSplitter::StringSplitter(const string &delimiters, bool allow_quotes)
       : delim_(delimiters),
         quotes_(allow_quotes ? "\"'" : ""),
-        delimited_(!is_all_white(delimiters)) {
+        delimited_(!is_all_white(delimiters)),
+        omit_empty_(false)
+  {
     if (delimiters == "\t") {
       delimited_ = true;
     }
   }
 
   std::vector<std::string> StringSplitter::operator()(const std::string &s) const {
+    std::vector<std::string> ans;
     if (delimited_) {
-      return split_delimited(s);
+      ans = split_delimited(s);
     } else {
-      return split_space(s);
+      ans = split_space(s);
+    }
+
+    if (omit_empty_) {
+      std::vector<std::string> return_value;
+      for (const auto &el : ans) {
+        if (el != "") {
+          return_value.push_back(el);
+        }
+      }
+      return return_value;
+    } else {
+      return ans;
     }
   }
 
