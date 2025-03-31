@@ -66,8 +66,13 @@ namespace BOOM {
     }
 
     virtual void add_data(const Ptr<Data> &d) {
-      Base::add_data(d);
-      this->suf()->update(d);
+      Ptr<SUF> suf = d.dcast<SUF>();
+      if (!!suf) {
+        this->suf()->combine(suf);
+      } else {
+        Base::add_data(d);
+        this->suf()->update(d);
+      }
     }
 
     virtual void clear_data() {
