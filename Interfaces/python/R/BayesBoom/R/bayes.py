@@ -90,10 +90,10 @@ class MixtureComponent(ABC):
         BOOM data of the format expected by the concrete (child) model.
 
         Args:
-
           data: Either a sequence of data or a matrix or dataframe containing
             the data needed for the component models.  Although the component
-            models know what type of data 
+            models know what type of data they require, some models can handle
+            multiple data types (e.g. raw data and sufficient statistics).
         """
 
     @abstractmethod
@@ -117,12 +117,12 @@ class MixtureComponent(ABC):
             on a single set of axes.
           **kwargs: Keyword arguments passed to concrete plotting functions for
             child classes.
-        
+
         Returns:
           The (fig, ax) pair on which the plot is drawn.
         """
 
-    
+
 class Ar1CoefficientPrior(DoubleModel):
     """
     Contains the information needed to create a prior distribution on an AR1
@@ -238,7 +238,7 @@ class DirichletPrior:
         if payload["_boom_model"]:
             self._boom_model = None
             self.boom()
-    
+
 
 class GammaModel(DoubleModel):
     def __init__(self, shape=None, scale=None, mu=None, a=None, b=None):
@@ -322,7 +322,7 @@ class GammaModel(DoubleModel):
     def record_draw(self, iteration):
         if self._boom_model is not None:
             self._a_draws[iteration] = self._boom_model.alpha()
-    
+
     def _refresh_params(self):
         if self._boom_model is not None:
             self._a = self._boom_model.a
@@ -338,7 +338,7 @@ class GammaModel(DoubleModel):
         if payload["_boom_model"]:
             self._boom_model = None
             self.boom()
-            
+
     def __repr__(self):
         ans = f"A GammaModel with shape = {self.shape} "
         ans += f"and scale = {self.scale}."
@@ -487,7 +487,7 @@ class MarkovSuf:
 
         # self._levels is a pd.Series indexed by the text of the level.  The
         # numeric value of the series is the
-        
+
         # /arts_&_entertainment/comics_&_animation/anime_&_manga                  2391
         # /arts_&_entertainment/comics_&_animation/cartoons                        295
         # /arts_&_entertainment/entertainment_industry/film_&_tv_industry          454
@@ -505,7 +505,7 @@ class MarkovSuf:
     @property
     def num_levels(self):
         return len(self._levels)
-        
+
     def increment(self, categorical_data_sequence):
         if self._initial_value is None:
             self._initial_value = np.array(categorical_data_sequence)[0]
@@ -519,7 +519,7 @@ class MarkovSuf:
         previous_codes = numeric_codes[:-1]
         next_codes = numeric_codes[1:]
         sample_size = previous_codes.shape[0]
-        
+
         X0 = np.zeros((sample_size, self.num_levels))
         X0[np.arange(sample_size), previous_codes] = 1
 
@@ -547,28 +547,34 @@ class MarkovSuf:
                             index=self._levels.index,
                             columns=self._levels.index)
 
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.MarkovSuf(
+            to_boom_matrix(self._transition_counts),
+            to_boom_vector(self.initial_value_counts))
+
     def top_transitions(self, n, omit_self_transitions=False, probs=False):
         """
         Return the top n transitions in the transition count matrix.
 
         Args:
           n:  The number of transitions desired.
-          omit_self_transitions:  
+          omit_self_transitions:
         """
         trans = self.transition_counts.copy()
         if probs:
             row_totals = trans.sum(axis=1)
             row_totals[row_totals <= 0] = 1
             trans = trans.div(row_totals, axis="rows")
-        
+
         if omit_self_transitions:
             np.fill_diagonal(trans.values, 0)
-            
+
         return trans.stack().nlargest(n)
 
     def _create_levels(self, levels, categorical_data_sequence, sort_levels):
         """
-        Return a pd.Series indexed by the levels of the 
+        Return a pd.Series indexed by the levels of the
         """
         if (levels is None) and (categorical_data_sequence is None):
             raise Exception("At least one of 'categorical_data_sequence' "
@@ -583,13 +589,13 @@ class MarkovSuf:
             level_info = np.sort(level_info)
 
         level_info = pd.Series(level_info, index=None)
-            
+
         return pd.Series(level_info.index, index=level_info)
 
     def __add__(self, other):
         if np.any(self._levels != other._levels):
             raise Exception("Sufficient statistics created with different levels.")
-            
+
         ans = MarkovSuf(levels=self._levels, sort_levels=False)
         ans._transition_counts = self._transition_counts + other._transition_counts
         ans._initial_value_counts = self.initial_value_counts + other.initial_value_counts
@@ -609,8 +615,8 @@ class MarkovSuf:
         self._last_value = other._last_value
 
         return self
-        
-    
+
+
 class MarkovModel(MixtureComponent):
     def __init__(self,
                  transition_matrix=None,
@@ -637,7 +643,7 @@ class MarkovModel(MixtureComponent):
         """
         if categories is not None:
             state_size = len(categories)
-        
+
         if transition_matrix is None:
             if state_size is None:
                 raise Exception("If transition_matrix is None then "
@@ -649,7 +655,7 @@ class MarkovModel(MixtureComponent):
             raise Exception(
                 f"The number of categories ({len(categories)}) does not match "
                 f"the state size ({state_size}).")
-        
+
         if initial_distribution is None:
             initial_distribution = np.ones(state_size) / state_size
 
@@ -663,7 +669,7 @@ class MarkovModel(MixtureComponent):
     @property
     def state_size(self):
         return self._transition_matrix.shape[0]
-        
+
     @property
     def transition_probabilities(self):
         if self._boom_model:
@@ -685,7 +691,7 @@ class MarkovModel(MixtureComponent):
         if not isinstance(prior, MarkovConjugatePrior):
             raise Exception("Prior must be of class MarkovConjugatePrior.")
         self._prior = prior
-    
+
     def boom(self):
         if self._boom_model is not None:
             return self._boom_model
@@ -698,7 +704,7 @@ class MarkovModel(MixtureComponent):
         # if self._data is not None:
         #     # Add the data to the boom model
         #     pass
-        
+
         if isinstance(self._prior, MarkovConjugatePrior):
             if self._prior.prior_initial_counts is None:
                 self._boom_sampler = boom.MarkovConjugateSampler(
@@ -712,7 +718,7 @@ class MarkovModel(MixtureComponent):
                     to_boom_matrix(self._prior.prior_transition_counts),
                     to_boom_vector(self._prior.prior_initial_counts),
                     boom.GlobalRng.rng)
-                
+
             self._boom_model.set_method(self._boom_sampler)
 
         return self._boom_model
@@ -756,25 +762,25 @@ class MarkovModel(MixtureComponent):
         """
 
         style = unique_match(style, ["ts", "density", "histogram", "boxplot"])
-        
+
         K = self.state_size
         S = len(components)
         niter = self._transition_probability_draws.shape[0]
-        if burn < 0: 
+        if burn < 0:
             burn = 0
-            
+
         probs = np.empty((niter - burn, S, K, K))
         for s in range(S):
             probs[:, s, :, :] = components[s]._transition_probability_draws[
                 burn:, :, :]
-        
+
         if fig is None:
             fig, ax = plt.subplots(K, K, sharex=True, sharey=True)
         else:
             ax = fig.subplots(K, K, sharex=True, sharey=True)
 
         draw = range(burn, niter)
-            
+
         if style == "ts":
             # A KxK array of time series plots.
             for source in range(K):
@@ -809,7 +815,7 @@ class MultilevelMultinomialModel(MixtureComponent):
             vary.  Each level of the taxonomy that has children will be assigned
             a sub-model.
         """
-        import BayesBoom.boom as boom        
+        import BayesBoom.boom as boom
         self._sep = sep
         if isinstance(taxonomy, boom.Taxonomy):
             self._boom_taxonomy = taxonomy
@@ -829,7 +835,7 @@ class MultilevelMultinomialModel(MixtureComponent):
     def probs(self, level=""):
         if self._boom_model is None:
             self.boom()
-        
+
         if level:
             return self._boom_model.conditional_model(
                 level, self._sep).probs.to_numpy()
@@ -845,7 +851,7 @@ class MultilevelMultinomialModel(MixtureComponent):
           conditional: If True then the returned probabilities sum to 1 within
             each draw.  These are the conditional model probabilities of the
             taxonomy child-levels conditional on the parent level occurring.
- 
+
         Returns:
           A pd.DataFrame containing the set of model probabilities simulated
           from the posterior distribution for the desired level.  The column
@@ -858,7 +864,7 @@ class MultilevelMultinomialModel(MixtureComponent):
 
         if conditional:
             return draws
-        
+
         while parent_level:
             parent_level, child = self._boom_taxonomy.pop_level(parent_level)
             parent_probs = self._draws[parent_level]
@@ -870,10 +876,10 @@ class MultilevelMultinomialModel(MixtureComponent):
             draws = draws[burn:, :]
 
         return draws
-        
+
 
     def boom(self):
-        import BayesBoom.boom as boom        
+        import BayesBoom.boom as boom
         if (self._boom_model is None):
             self._boom_model = boom.MultilevelMultinomialModel(
                 self._boom_taxonomy)
@@ -901,7 +907,7 @@ class MultilevelMultinomialModel(MixtureComponent):
     def record_draw(self, iteration):
         for draw in zip(self._model_levels, self._boom_model.parameters):
             self._draws[draw[0]][iteration, :] = draw[1].to_numpy()
-        
+
     def create_boom_data_builder(self, data=None):
         return MultilevelCategoricalDataBuilder(self._boom_taxonomy, self._sep)
 
@@ -936,7 +942,7 @@ class MultilevelMultinomialModel(MixtureComponent):
         if (style == "ts") or (style == "boxplot") or (style == "density"):
             nrows = int(np.floor(np.sqrt(K)))
             ncols = int(np.ceil(K / nrows))
-            
+
             iteration = range(burn, niter)
             if fig is None and ax is None:
                 fig, ax = plt.subplots(nrows, ncols, sharex=True,
@@ -968,7 +974,7 @@ class MultilevelMultinomialModel(MixtureComponent):
 
             mean_probs = draws.mean(axis=0)
             # mean_probs is an S x K matrix with rows summing to 1.
-            
+
             states = np.arange(S)
             cum_probs = np.zeros(S)
             grays = np.arange(K) / K
@@ -988,7 +994,7 @@ class MultilevelMultinomialModel(MixtureComponent):
             raise Exception(f"Style {style} unrecognized.")
 
         return fig, ax
-    
+
     def _ensure_posterior_sampler(self):
         import BayesBoom.boom as boom
         self._boom_sampler = boom.MultilevelMultinomialPosteriorSampler(
@@ -1015,8 +1021,8 @@ class MultinomialModel(MixtureComponent):
         self._boom_model = None
         self._boom_sampler = None
         self._prior = None
-    
-        
+
+
     @property
     def probs(self):
         if self._boom_model:
@@ -1029,7 +1035,7 @@ class MultinomialModel(MixtureComponent):
             return self._boom_model.dim
         else:
             return len(self._probs)
-        
+
     def allocate_space(self, niter):
         self._prob_draws = np.empty((niter, self.dim))
 
@@ -1040,12 +1046,12 @@ class MultinomialModel(MixtureComponent):
 
     def set_prior(self, prior):
         self._prior = prior
-        
+
     def boom(self):
         import BayesBoom.boom as boom
         if self._boom_model:
             return self._boom_model
-        
+
         if not self._boom_model:
             self._boom_model = boom.MultinomialModel(
                 to_boom_vector(self._probs))
@@ -1060,14 +1066,14 @@ class MultinomialModel(MixtureComponent):
                 raise Exception("Not sure how to create a posterior sampler.")
 
             self._boom_model.set_method(self._boom_sampler)
-                
+
         return self._boom_model
 
     def sim(self, sample_size = 1):
         rng = np.random.default_rng()
         values = rng.choice(a=self._categories, size=sample_size, p=self._probs)
         return values
-        
+
     def create_boom_data_builder(self, data=None):
         if isinstance(self._categories, range):
             return UnlabelledCategoricalDataBuilder(self.dim)
@@ -1141,7 +1147,7 @@ class MultinomialModel(MixtureComponent):
 
             mean_probs = probs.mean(axis=0)
             # mean_probs is an S x K matrix with rows summing to 1.
-            
+
             states = np.arange(S)
             cum_probs = np.zeros(S)
             grays = np.arange(K) / K
@@ -1160,9 +1166,9 @@ class MultinomialModel(MixtureComponent):
 
         else:
             raise Exception(f"Style argument {style} unrecognized. ")
-        
 
-    
+
+
 class MvnBase(ABC):
     @property
     @abstractmethod
@@ -1315,7 +1321,7 @@ class NormalPrior(DoubleModel, MixtureComponent):
             self._mean_prior = prior
         elif isinstance(prior, GammaModelBase):
             self._sd_prior = prior
-    
+
     def boom(self):
         """
         Return the boom.GaussianModel corresponding to the object's parameters.
@@ -1338,7 +1344,7 @@ class NormalPrior(DoubleModel, MixtureComponent):
 
             else:
                 raise Exception("Not sure how to build the posterior sampler.")
-                
+
         return self._boom_model
 
     def allocate_space(self, niter):
@@ -1348,7 +1354,7 @@ class NormalPrior(DoubleModel, MixtureComponent):
     def record_draw(self, iteration):
         self._mu_draws[iteration] = self._boom_model.mu
         self._sigma_draws[iteration] = self._boom_model.sigma
-    
+
     def create_boom_data_builder(self, data=None):
         return DoubleDataBuilder()
 
@@ -1407,7 +1413,7 @@ class NormalPrior(DoubleModel, MixtureComponent):
 
         else:
             raise Exception(f"Unknown value of params: {params}")
-        
+
         return fig, ax
 
     def _plot_params(self,
@@ -1434,7 +1440,7 @@ class NormalPrior(DoubleModel, MixtureComponent):
             for s in range(S):
                 params[:, s] = components[s]._sigma_draws[burn:]
             label = "Standard Deviations"
-        
+
         if style == "ts":
             iteration = range(burn, niter)
             for s in range(S):
@@ -1477,7 +1483,7 @@ class NormalInverseGammaModel:
                  mean_guess,
                  mean_prior_sample_size,
                  sd_guess,
-                 sd_prior_sample_size): 
+                 sd_prior_sample_size):
         self._mean = mean_guess
         self._mean_prior_sample_size = mean_prior_sample_size
         self._df = sd_prior_sample_size
@@ -1486,7 +1492,7 @@ class NormalInverseGammaModel:
     @property
     def sumsq(self):
         return self._sd_estimate**2 * self._df
-        
+
     def gaussian_given_sigma(self, sigsq_parameter):
         """
         Returns a BOOM GaussianModelGivenSigma model object.
@@ -1502,8 +1508,8 @@ class NormalInverseGammaModel:
         return boom.ChisqModel(
             self._df,
             self._sd_estimate)
-        
-        
+
+
 class PoissonModel(MixtureComponent):
     def __init__(self, mean=1):
         self._lambda = mean
@@ -1520,11 +1526,11 @@ class PoissonModel(MixtureComponent):
 
     def set_prior(self, prior):
         self._prior = prior
-    
+
     def boom(self):
         if self._boom_model is not None:
             return self._boom_model
-        
+
         import BayesBoom.boom as boom
         self._boom_model = boom.PoissonModel(self._lambda)
         if self._prior is not None:
@@ -1537,7 +1543,7 @@ class PoissonModel(MixtureComponent):
                 raise Exception(
                     f"PoissonModel has a prior of class {type(self._prior)}.  "
                     "I'm unclear how to create a sampler.")
-                    
+
             self._boom_model.set_method(self._boom_sampler)
 
         return self._boom_model
@@ -1573,7 +1579,7 @@ class PoissonModel(MixtureComponent):
             ax = fig.subplots(1, 1)
 
         style = unique_match(style, ["ts", "density", "boxplot"])
-            
+
         if style == "ts":
             iteration = range(burn, niter)
             for s in range(S):
@@ -1593,8 +1599,8 @@ class PoissonModel(MixtureComponent):
             raise Exception(f"Style argument '{style}' unrecognized. ")
 
         return fig, ax
-    
-        
+
+
 class RegSuf:
     """
     The sufficient statistics needed to specify a regression model.
@@ -1884,7 +1890,7 @@ class UniformPrior(DoubleModel):
         import BayesBoom.boom as boom
         return boom.UniformModel(self._lo, self._hi)
 
-    
+
 class WishartPrior:
     def __init__(self, df: float, variance_estimate: np.ndarray):
         """
@@ -1934,5 +1940,3 @@ class WishartPrior:
     def boom(self):
         import BayesBoom.boom as boom
         return boom.WishartModel(self.df, self.variance_estimate)
-
-

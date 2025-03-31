@@ -162,11 +162,18 @@ namespace BOOM {
         }
       }
     }
-    
+
     if (init_.empty()) {
       init_.resize(S);
       init_ = 0.0;
     } else {
+      if (init_.size() != S) {
+        std::ostringstream err;
+        err << "Initial counts had size " << init_.size()
+            << " but transition_counts had " << S << " rows.";
+        report_error(err.str());
+      }
+
       for (int s = 0; s < S; ++s) {
         if (init_[s] < 0) {
           std::ostringstream err;
@@ -181,7 +188,7 @@ namespace BOOM {
       }
     }
   }
-  
+
   MarkovSuf::MarkovSuf(const MarkovSuf &rhs)
       : Sufstat(rhs), SufTraits(rhs), trans_(rhs.trans_), init_(rhs.init_) {}
 
@@ -453,7 +460,7 @@ namespace BOOM {
     return suf.init().dot(log(initial_distribution))
         + el_mult_sum(suf.trans(), log(transition_probabilities));
   }
-  
+
   double MarkovModel::loglike(const Vector &serialized_params) const {
     MarkovModel tmp_model(state_space_size());
     tmp_model.unvectorize_params(serialized_params);

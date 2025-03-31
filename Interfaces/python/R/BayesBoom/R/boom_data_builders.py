@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import BayesBoom.boom as boom
 from abc import ABC, abstractmethod
 from .boom_py_utils import to_boom_vector, to_boom_matrix
 
@@ -13,19 +12,22 @@ class DataBuilder(ABC):
         """
         """
 
-        
+
 class IntDataBuilder(DataBuilder):
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         return [boom.IntData(int(x)) for x in data]
 
-    
+
 class DoubleDataBuilder(DataBuilder):
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         return [boom.DoubleData(float(x)) for x in data]
 
-    
+
 class VectorDataBuilder(DataBuilder):
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         if isinstance(data, np.ndarray):
             return [boom.VectorData(to_boom_vector(data[i, :]))
                     for i in range(data.shape[0])]
@@ -40,27 +42,33 @@ class VectorDataBuilder(DataBuilder):
 class LabelledCategoricalDataBuilder(DataBuilder):
     def __init__(self, categories):
         self._categories = categories
+        import BayesBoom.boom as boom
         self._boom_category_key = boom.CatKey([str(x) for x in categories])
-        
+
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         return [boom.CategoricalData(str(x), self._boom_category_key)
                 for x in data]
-        
+
 class UnlabelledCategoricalDataBuilder(DataBuilder):
     def __init__(self, nlevels):
+        import BayesBoom.boom as boom
         self._boom_category_key = boom.FixedSizeIntCatKey(int(nlevels))
-        
+
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         return [boom.CategoricalData(int(x), self._boom_category_key)
                 for x in data]
 
-    
+
 class LabelledMarkovDataBuilder(DataBuilder):
     def __init(self, categories):
+        import BayesBoom.boom as boom
         self._categories = categories
         self._boom_category_key = boom.CatKey([str(x) for x in categories])
 
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         ans = []
         for i in range(len(data)):
             if i == 0:
@@ -69,29 +77,22 @@ class LabelledMarkovDataBuilder(DataBuilder):
                 ans.append(boom.MarkovData(data[i], ans[i-1]))
         return ans
 
-    
+
 class MarkovSufDataBuilder(DataBuilder):
     def __init__(self):
         pass
 
     def build_boom_data(self, data):
-        from .bayes import MarkovSuf
-        ans = []
-        for x in data:
-            if isinstance(x, MarkovSuf):
-                ans.append(boom.MarkovSuf(
-                    to_boom_matrix(x.transition_counts),
-                    to_boom_vector(x.initial_value_counts)));
-            else:
-                raise Exception("All data must be of class MarkovSuf")
-        return ans
+        return [x.boom() for x in data]
 
-    
+
 class UnlabelledMarkovDataBuilder(DataBuilder):
     def __init__(self, nlevels):
+        import BayesBoom.boom as boom
         self._boom_category_key = boom.FixedSizeIntCatKey(int(nlevels))
-        
+
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         ans = []
         for i in range(len(data)):
             if i == 0:
@@ -107,9 +108,9 @@ class MultilevelCategoricalDataBuilder(DataBuilder):
         self._sep = sep
 
     def build_boom_data(self, data):
+        import BayesBoom.boom as boom
         ans = [
             boom.MultilevelCategoricalData(self._boom_taxonomy, x, self._sep)
             for x in data
         ]
         return ans;
-        

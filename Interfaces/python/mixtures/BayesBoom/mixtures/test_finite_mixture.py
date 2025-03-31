@@ -16,6 +16,7 @@ import BayesBoom.mixtures as mix
 class TestFiniteMixture(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
+        np.random.seed(7)
 
     def test_gaussians(self):
         y0 = np.random.randn(50) + 3 + 7
@@ -60,7 +61,7 @@ class TestFiniteMixture(unittest.TestCase):
         mixing_weights = np.array([.65, .35])
         num_users = 50
         sample_size_per_user = 20
-        
+
         suf_list = []
         for user in range(num_users):
             u = np.random.rand()
@@ -69,10 +70,9 @@ class TestFiniteMixture(unittest.TestCase):
             else:
                 sim_model = R.MarkovModel(P1, pi0)
             data = sim_model.sim(sample_size_per_user)
-            suf_list.append(R.MarkovSuf(data))
+            suf_list.append(R.MarkovSuf(data, levels=range(2)))
 
-
-        m0 = R.MarkovModel(state_size=2) 
+        m0 = R.MarkovModel(state_size=2)
         m1 = R.MarkovModel(state_size=2)
         model = mix.FiniteMixtureModel()
         model.add_component(m0)
@@ -80,11 +80,8 @@ class TestFiniteMixture(unittest.TestCase):
         model.add_data(suf_list)
 
         niter = 1000
-        import pdb
-        pdb.set_trace()
         model.train(niter)
-        
-        
+
 
 _debug_mode = False
 
