@@ -17,14 +17,15 @@ from .plots import ensure_ax
 
 from .boom_data_builders import (
     DataBuilder,
-    IntDataBuilder,
     DoubleDataBuilder,
-    VectorDataBuilder,
+    IntDataBuilder,
     LabelledCategoricalDataBuilder,
-    UnlabelledCategoricalDataBuilder,
     LabelledMarkovDataBuilder,
-    UnlabelledMarkovDataBuilder,
+    MarkovSufDataBuilder,
     MultilevelCategoricalDataBuilder,
+    UnlabelledCategoricalDataBuilder,
+    UnlabelledMarkovDataBuilder,
+    VectorDataBuilder,
 )
 
 from .density import Density
@@ -56,7 +57,7 @@ class DoubleModel(ABC):
         The mean of the distribution.
         """
 
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         return DoubleDataBuilder()
 
     def __eq__(self, other):
@@ -83,10 +84,16 @@ class MixtureComponent(ABC):
         """
 
     @abstractmethod
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         """
         Return a DataBuilder object that can convert Python data into the
         BOOM data of the format expected by the concrete (child) model.
+
+        Args:
+
+          data: Either a sequence of data or a matrix or dataframe containing
+            the data needed for the component models.  Although the component
+            models know what type of data 
         """
 
     @abstractmethod
@@ -719,8 +726,10 @@ class MarkovModel(MixtureComponent):
             self._boom_model.transition_probabilities.to_numpy()
         )
 
-    def create_boom_data_builder(self):
-        if self._categories:
+    def create_boom_data_builder(self, data=None):
+        if isinstance(data, list) and isinstance(data[0], MarkovSuf):
+            return MarkovSufDataBuilder()
+        elif self._categories:
             return LabelledMarkovDataBuilder(self._categories)
         else:
             return UnlabelledCategoricalDataBuilder(self._state_size)
@@ -893,7 +902,7 @@ class MultilevelMultinomialModel(MixtureComponent):
         for draw in zip(self._model_levels, self._boom_model.parameters):
             self._draws[draw[0]][iteration, :] = draw[1].to_numpy()
         
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         return MultilevelCategoricalDataBuilder(self._boom_taxonomy, self._sep)
 
     def plot_components(self,
@@ -1059,7 +1068,7 @@ class MultinomialModel(MixtureComponent):
         values = rng.choice(a=self._categories, size=sample_size, p=self._probs)
         return values
         
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         if isinstance(self._categories, range):
             return UnlabelledCategoricalDataBuilder(self.dim)
         else:
@@ -1182,7 +1191,7 @@ class MvnBase(ABC):
         """
 
     @property
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         return VectorDataBuilder()
 
 
@@ -1340,9 +1349,8 @@ class NormalPrior(DoubleModel, MixtureComponent):
         self._mu_draws[iteration] = self._boom_model.mu
         self._sigma_draws[iteration] = self._boom_model.sigma
     
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         return DoubleDataBuilder()
-
 
     def plot_components(self,
                         components,
@@ -1540,7 +1548,7 @@ class PoissonModel(MixtureComponent):
     def record_draw(self, iteration):
         self._lambda_draws[iteration] = self._boom_model.mean
 
-    def create_boom_data_builder(self):
+    def create_boom_data_builder(self, data=None):
         return IntDataBuilder()
 
     def plot_components(self,

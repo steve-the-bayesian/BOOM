@@ -164,12 +164,13 @@ from .boom_py_utils import (
 
 from .boom_data_builders import (
     DataBuilder,
-    IntDataBuilder,
     DoubleDataBuilder,
-    VectorDataBuilder,
+    IntDataBuilder,
     LabelledCategoricalDataBuilder,
-    UnlabelledCategoricalDataBuilder,
     LabelledMarkovDataBuilder,
-    UnlabelledMarkovDataBuilder,
+    MarkovSufDataBuilder,
     MultilevelCategoricalDataBuilder,
+    UnlabelledCategoricalDataBuilder,
+    UnlabelledMarkovDataBuilder,
+    VectorDataBuilder,
 )

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import BayesBoom.boom as boom
 from abc import ABC, abstractmethod
-from .boom_py_utils import to_boom_vector
+from .boom_py_utils import to_boom_vector, to_boom_matrix
 
 class DataBuilder(ABC):
     """
@@ -69,7 +69,24 @@ class LabelledMarkovDataBuilder(DataBuilder):
                 ans.append(boom.MarkovData(data[i], ans[i-1]))
         return ans
 
-                
+    
+class MarkovSufDataBuilder(DataBuilder):
+    def __init__(self):
+        pass
+
+    def build_boom_data(self, data):
+        from .bayes import MarkovSuf
+        ans = []
+        for x in data:
+            if isinstance(x, MarkovSuf):
+                ans.append(boom.MarkovSuf(
+                    to_boom_matrix(x.transition_counts),
+                    to_boom_vector(x.initial_value_counts)));
+            else:
+                raise Exception("All data must be of class MarkovSuf")
+        return ans
+
+    
 class UnlabelledMarkovDataBuilder(DataBuilder):
     def __init__(self, nlevels):
         self._boom_category_key = boom.FixedSizeIntCatKey(int(nlevels))
