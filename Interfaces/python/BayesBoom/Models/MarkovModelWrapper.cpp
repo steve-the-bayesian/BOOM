@@ -12,6 +12,26 @@ namespace BayesBoom {
 
   void MarkovModel_def(py::module &boom) {
 
+    py::class_<MarkovSuf,
+               Data,
+               BOOM::Ptr<MarkovSuf>>(boom, "MarkovSuf")
+        .def(py::init(
+            [](const Matrix &transition_counts,
+               const Vector &initial_counts) {
+              return new MarkovSuf(transition_counts, initial_counts);
+            }),
+             py::arg("transition_counts"),
+             py::arg("initial_counts"),
+             "Args:\n\n"
+             "  transition_counts:  A square matrix with element r,s containing "
+             "the number of transition from state r to state s.\n"
+             "  initial_counts:  A vector of the same dimension as "
+
+             "transition_counts containing the number of observations in each "
+             "state at time 0.  If there is only one data sequence then this "
+             "vector will be all 0's except for a single 1.  \n")
+             ;
+    
     py::class_<MarkovModel,
                PriorPolicy,
                MixtureComponent,
