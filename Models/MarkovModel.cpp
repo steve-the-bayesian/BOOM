@@ -137,6 +137,51 @@ namespace BOOM {
 
   MarkovSuf::MarkovSuf(uint S) : trans_(S, S, 0.0), init_(S, 0.0) {}
 
+  MarkovSuf::MarkovSuf(const Matrix &transition_counts,
+                       const Vector &initial_counts)
+      : trans_(transition_counts),
+        init_(initial_counts)
+  {
+    if (transition_counts.nrow() != transition_counts.ncol()) {
+      report_error("transition_counts must be a square matrix.");
+    }
+
+    int S = transition_counts.nrow();
+    for (int r = 0; r < S; ++r) {
+      for (int s = 0; s < S; ++s) {
+        if (transition_counts(r, s) < 0) {
+          std::ostringstream err;
+          err << "Element " << r << ", " << s << " of transition_counts "
+              << "is negative.";
+          report_error(err.str());
+        } else if (!std::isfinite(transition_counts(r, s))) {
+          std::ostringstream err;
+          err << "Element " << r << ", " << s << " of transition_counts "
+              << "is infinte or malformed.";
+          report_error(err.str());
+        }
+      }
+    }
+    
+    if (init_.empty()) {
+      init_.resize(S);
+      init_ = 0.0;
+    } else {
+      for (int s = 0; s < S; ++s) {
+        if (init_[s] < 0) {
+          std::ostringstream err;
+          err << "Element " << s << " of initial_counts is negative.";
+          report_error(err.str());
+        } else if (!std::isfinite(init_[s])) {
+          std::ostringstream err;
+          err << "Element " << s << " of initial_counts is infinte "
+              << "or malformed.";
+          report_error(err.str());
+        }
+      }
+    }
+  }
+  
   MarkovSuf::MarkovSuf(const MarkovSuf &rhs)
       : Sufstat(rhs), SufTraits(rhs), trans_(rhs.trans_), init_(rhs.init_) {}
 

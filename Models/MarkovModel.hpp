@@ -135,7 +135,19 @@ namespace BOOM {
   class MarkovSuf
       : public TimeSeriesSufstatDetails<MarkovData, TimeSeries<MarkovData>> {
    public:
-    explicit MarkovSuf(uint S);
+    // Args:
+    //   state_space_size:  The dimension of the state space.
+    explicit MarkovSuf(uint state_space_size);
+
+    // Args:
+    //   transition_counts: An SxS matrix (where S is the state space
+    //     dimension).  Element (r, s) contains the number of transitions from
+    //     state r to state s.
+    //   initial_counts: A vector of dimension S containing the number of
+    //     observations in each state at time 0.  This is only relevant if
+    //     multiple series of the Markov chain are observed.
+    explicit MarkovSuf(const Matrix &transition_counts,
+                       const Vector &initial_counts=Vector());
     MarkovSuf(const MarkovSuf &sf);
     MarkovSuf *clone() const override;
 
