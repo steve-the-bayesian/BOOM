@@ -49,6 +49,40 @@ class TestFiniteMixture(unittest.TestCase):
 
         fig, ax = model.plot_components()
         self.assertIsInstance(fig, plt.Figure)
+
+
+    def test_markov(self):
+        P0 = np.array([[.8, .2],
+                       [.1, .9]])
+        P1 = np.array([[.3333, .6667],
+                       [.3333, .6667]])
+        pi0 = np.array([.5, .5])
+        mixing_weights = np.array([.65, .35])
+        num_users = 50
+        sample_size_per_user = 20
+        
+        suf_list = []
+        for user in range(num_users):
+            u = np.random.rand()
+            if u < mixing_weights[0]:
+                sim_model = R.MarkovModel(P0, pi0)
+            else:
+                sim_model = R.MarkovModel(P1, pi0)
+            data = sim_model.sim(sample_size_per_user)
+            suf_list.append(R.MarkovSuf(data))
+
+
+        m0 = R.MarkovModel(state_size=2) 
+        m1 = R.MarkovModel(state_size=2)
+        model = mix.FiniteMixtureModel()
+        model.add_component(m0)
+        model.add_component(m1)
+        model.add_data(suf_list)
+
+        niter = 1000
+        import pdb
+        pdb.set_trace()
+        model.train(niter)
         
         
 

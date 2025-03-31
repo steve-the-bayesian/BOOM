@@ -150,7 +150,7 @@ class FiniteMixtureModel:
         
     
     def _assign_data_to_boom_model(self, boom_model, mixture_component):
-        data_builder = mixture_component.create_boom_data_builder()
+        data_builder = mixture_component.create_boom_data_builder(self._data)
         boom_data = data_builder.build_boom_data(self._data)
         for data_point in boom_data:
             boom_model.add_data(data_point)
