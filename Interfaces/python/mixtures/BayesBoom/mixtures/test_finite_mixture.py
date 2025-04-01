@@ -73,6 +73,7 @@ class TestFiniteMixture(unittest.TestCase):
             suf_list.append(R.MarkovSuf(data, levels=range(2)))
 
         m0 = R.MarkovModel(state_size=2)
+
         m1 = R.MarkovModel(state_size=2)
         model = mix.FiniteMixtureModel()
         model.add_component(m0)
@@ -81,6 +82,7 @@ class TestFiniteMixture(unittest.TestCase):
 
         niter = 1000
         model.train(niter)
+        fig, ax = model.plot_components()
 
 
 _debug_mode = False
