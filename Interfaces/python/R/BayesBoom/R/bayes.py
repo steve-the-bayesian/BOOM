@@ -692,6 +692,20 @@ class MarkovModel(MixtureComponent):
             raise Exception("Prior must be of class MarkovConjugatePrior.")
         self._prior = prior
 
+    def default_prior(self):
+        """
+        Return a MarkovConjugatePrior object that can be used as the default
+        prior for a MarkovModel object.  The default prior is a uniform prior
+        over the set of discrete probability distributions in each row of the
+        transition probability matrix, and an independent uniform prior over the
+        initial distribution.
+        """
+        S = self.state_size
+        prior_transition_counts = np.ones((S, S))
+        prior_initial_counts = np.ones(S)
+        return MarkovConjugatePrior(prior_transition_counts,
+                                    prior_initial_counts)
+        
     def boom(self):
         if self._boom_model is not None:
             return self._boom_model
@@ -705,6 +719,9 @@ class MarkovModel(MixtureComponent):
         #     # Add the data to the boom model
         #     pass
 
+        if self._prior is None:
+            self.set_prior(self.default_prior())
+        
         if isinstance(self._prior, MarkovConjugatePrior):
             if self._prior.prior_initial_counts is None:
                 self._boom_sampler = boom.MarkovConjugateSampler(
@@ -1047,6 +1064,9 @@ class MultinomialModel(MixtureComponent):
     def set_prior(self, prior):
         self._prior = prior
 
+    def default_prior(self):
+        return DirichletPrior(np.ones(self.dim))
+        
     def boom(self):
         import BayesBoom.boom as boom
         if self._boom_model:
@@ -1056,16 +1076,18 @@ class MultinomialModel(MixtureComponent):
             self._boom_model = boom.MultinomialModel(
                 to_boom_vector(self._probs))
 
-        if self._prior:
-            if isinstance(self._prior, DirichletPrior):
-                self._boom_sampler = boom.MultinomialDirichletSampler(
-                    self._boom_model,
-                    self._prior.boom(),
-                    boom.GlobalRng.rng)
-            else:
-                raise Exception("Not sure how to create a posterior sampler.")
+        if not self._prior:
+            self.set_prior(self.default_prior())
+            
+        if isinstance(self._prior, DirichletPrior):
+            self._boom_sampler = boom.MultinomialDirichletSampler(
+                self._boom_model,
+                self._prior.boom(),
+                boom.GlobalRng.rng)
+        else:
+            raise Exception("Not sure how to create a posterior sampler.")
 
-            self._boom_model.set_method(self._boom_sampler)
+        self._boom_model.set_method(self._boom_sampler)
 
         return self._boom_model
 
@@ -1322,6 +1344,9 @@ class NormalPrior(DoubleModel, MixtureComponent):
         elif isinstance(prior, GammaModelBase):
             self._sd_prior = prior
 
+    def default_prior(self):
+        return NormalInverseGammaModel(0, 1, 1, 1)
+            
     def boom(self):
         """
         Return the boom.GaussianModel corresponding to the object's parameters.
@@ -1331,6 +1356,9 @@ class NormalPrior(DoubleModel, MixtureComponent):
             import BayesBoom.boom as boom
             self._boom_model = boom.GaussianModel(self.mu, self.sigma)
 
+            if not self._prior:
+                self.set_prior(self.default_prior())
+            
             if (
                     (self._prior is not None)
                     and
@@ -1527,24 +1555,29 @@ class PoissonModel(MixtureComponent):
     def set_prior(self, prior):
         self._prior = prior
 
+    def default_prior(self):
+        return GammaModel(1, 1)
+        
     def boom(self):
         if self._boom_model is not None:
             return self._boom_model
 
         import BayesBoom.boom as boom
         self._boom_model = boom.PoissonModel(self._lambda)
-        if self._prior is not None:
-            if isinstance(self._prior, GammaModel):
-                self._boom_sampler = boom.PoissonGammaSampler(
-                    self._boom_model,
-                    self._prior.boom(),
-                    boom.GlobalRng.rng)
-            else:
-                raise Exception(
-                    f"PoissonModel has a prior of class {type(self._prior)}.  "
-                    "I'm unclear how to create a sampler.")
+        if self._prior is None:
+            self.set_prior(self.default_prior())
+        
+        if isinstance(self._prior, GammaModel):
+            self._boom_sampler = boom.PoissonGammaSampler(
+                self._boom_model,
+                self._prior.boom(),
+                boom.GlobalRng.rng)
+        else:
+            raise Exception(
+                f"PoissonModel has a prior of class {type(self._prior)}.  "
+                "I'm unclear how to create a sampler.")
 
-            self._boom_model.set_method(self._boom_sampler)
+        self._boom_model.set_method(self._boom_sampler)
 
         return self._boom_model
 
