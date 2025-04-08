@@ -6,7 +6,7 @@ import BayesBoom.R as R
 import scipy.sparse
 import matplotlib.pyplot as plt
 
-from .priors import RegressionSpikeSlabPrior
+from .priors import RegressionSpikeSlabPrior, RegressionSlabPrior
 
 
 def sparsify(glm_coefs):
@@ -122,11 +122,14 @@ class lm_spike:
         Create and a model object and run a specified number of MCMC iterations.
 
         Args:
-          formula: A model formula that can be interpreted by the 'patsy'
-            module to produce a model matrix from 'data'.
+          formula: A model formula that can be interpreted by the 'patsy' module
+            to produce a model matrix from 'data'.  The 'formula' argument is
+            required but is only accessed if 'data' is a data frame.  If 'data'
+            is an R.RegSuf object then 'formula' is not used.
           niter: The desired number of MCMC iterations.
-          data: A pd.DataFrame containing the data with which to train the
-            model.
+          data: In the typical case, this is a pd.DataFrame containing the data
+            with which to train the model.  The code also accepts 'data' as an
+            R.RegSuf containing the sufficient statistics for the model.
           prior: A SpikeSlabPrior object providing the prior distribution over
             the inclusion indicators, the coefficients, and the residual
             variance parameter.
@@ -135,7 +138,8 @@ class lm_spike:
           seed: The seed for the C++ random number generator, or None.
           xnames: If the model is begin built from sufficient statistics, these
             are the names that can be used for the columns of the predictor
-            matrix X.  Include a name for the intercept, if one is included.
+            matrix X.  Include a name for the intercept, if one is present in
+            the sufficient statistics object.
           **kwargs: Extra argumnts will be passed to SpikeSlabPrior.
 
         Returns:
@@ -180,21 +184,11 @@ class lm_spike:
                     "x" + str(i) for i in range(1, suf.xdim)]
             self._x_design_info = patsy.DesignInfo(xnames)
 
-        # xdim = predictors.shape[1]
-        # sample_size = predictors.shape[0]
-
         if seed is not None:
             boom.GlobalRng.rng.seed(int(seed))
 
-        sampler = boom.BregVsSampler(
-            self._model,
-            prior.slab(self._model.Sigsq_prm),
-            prior.residual_precision,
-            prior.spike)
-        if prior.max_flips > 0:
-            sampler.set_max_flips(prior.max_flips)
-        
-        self._model.set_method(sampler)
+        prior.create_sampler(self._model, assign=True)
+
         # A "lil" matrix is a "linked list" matrix.  This is an efficient method
         # for constructing matrices.  It should be converted to a different
         # matrix type before doing anything with it.
@@ -206,6 +200,7 @@ class lm_spike:
         self._model.coef.add(0)
 
         for i in range(niter):
+            R.print_timestamp(i, ping)
             self._model.sample_posterior()
             self._residual_sd[i] = self._model.sigma
             beta = self._model.coef
@@ -306,21 +301,39 @@ class lm_spike:
             self._coefficient_draws[burn:, :])
         return pd.Series(probs, index=self.xnames)
 
-    def plot(self, what=None, **kwargs):
-        """Plot an aspect of the model.
+    def plot(self, what=None, help="", **kwargs):
+        """
+        Plot an aspect of the model.
 
         Args:
-          what: The type of plot desired.  Acceptable choices are
-            "inclusion", "coefficients", "residual", and "predicted".
-
+          what: The type of plot desired.  Acceptable choices are "inclusion",
+            "coefficients", "residual", "predicted", "size", and "help".  An
+            unambiguous leading substring can be used in place of the full word.
+            Thus plot("inc") works in place of plot("inclusion").
+          help: If 'what' == "help" then this argument indicates the plotting
+            function for which help is desired.  It should be one of the legal
+            options for 'what'.
           kwargs: Extra arguments are passed to the specific plot function
             being called.
 
+        See Also:
+        - plot_coefficients
+        - plot_inclusion
+        - plot_residuals
+        - plot_predicted
+        - plot_model_size (a free function)
+
+        Returns:
+          The Figure and Axes objects on which the plot was drawn.  If 'ax' was
+          passed as a keyword argument then the returned Figure will be None.
         """
 
-        plot_types = ["inclusion", "coefficients", "residual", "predicted"]
+        plot_types = ["inclusion", "coefficients", "residual", "predicted",
+                      "size", "help"]
+        what_arg = what
         if what is None:
             what = plot_types[0]
+
         what = R.unique_match(what, plot_types)
         if what == "coefficients":
             return self.plot_coefficients(**kwargs)
@@ -330,17 +343,56 @@ class lm_spike:
             return self.plot_residual(**kwargs)
         elif what == "predicted":
             return self.plot_predicted(**kwargs)
+        elif what == "size":
+            return plot_model_size(self.dense_coefficients, **kwargs)
+        elif what == "help":
+            return self.print_plot_help(R.unique_match(help, plot_types))
         else:
-            raise Exception(f"Unknown plot type {what}.")
+            msg = f"Unknown plot type: {what_arg}.\n"
+            msg += f"Recognized options are {plot_types}\n"
+            msg += self.plot.__doc__
+            raise Exception(msg)
 
-    def plot_inclusion(self, burn=None, inclusion_threshold=0,
-                       unit_scale=True, number_of_variables=None,
-                       ax=None, **kwargs):
+    def print_plot_help(self, help_type):
+        if help_type == "coefficients":
+            print(self.plot_coefficients.__doc__)
+        elif help_type == "inclusion":
+            print(self.plot_inclusion.__doc__)
+        elif help_type == "residual":
+            print(self.plot_residual.__doc__)
+        elif help_type == "predicted":
+            print(self.plot_predicted.__doc__)
+        elif help_type == "size":
+            print(plot_model_size.__doc__)
+        else:
+            print(self.plot.__doc__)
+
+    def plot_inclusion(self,
+                       burn=None,
+                       inclusion_threshold=0,
+                       unit_scale=True,
+                       number_of_variables=None,
+                       ax=None,
+                       **kwargs):
         """
         A barplot showing the marginal inclusion probability of each variable.
 
         Args:
-          burn:
+          burn: The number of MCMC iterations to discard as burn-in.
+          inclusion_threshold: The probability value that must be exceeded to be
+            included in the plot.
+          unit_scale: If True then the probability axis will be scaled from 0 to
+            1.  Otherwise the axis will be scaled to the smallest and largest
+            observed probabilities.
+          number_of_variables: The number of inclusion probabilities to plot.
+            The largest available values will be plotted.
+          ax: The Axes object on which to draw the plot.  If None a new Figure
+            and Axes will be created.
+          **kwargs:  Extra keyword arguments will be passed to R.barplot.
+
+        Returns:
+          The Figure and Axes objects containing the plot.  The Figure will be
+          None if an Axes was passed in as 'ax'.
         """
         inc = self.inclusion_probs(burn=burn)
         pos = self.coefficient_positive_probability(burn=burn)
@@ -352,15 +404,14 @@ class lm_spike:
         inc = inc.iloc[index[:number_of_variables]]
         pos = pos.iloc[index[:number_of_variables]]
         colors = colors[index[:number_of_variables]]
-        ans = R.barplot(inc,
-                        ax=ax,
-                        color=colors[::-1],
-                        linewidth=.25,
-                        edgecolor="black",
-                        xlab="Marginal Inclusion Probability",
-                        ylab="Variable",
-                        **kwargs)
-        return ans
+        return R.barplot(inc,
+                         ax=ax,
+                         color=colors[::-1],
+                         linewidth=.25,
+                         edgecolor="black",
+                         xlab="Marginal Inclusion Probability",
+                         ylab="Variable",
+                         **kwargs)
 
     def plot_coefficients(self,
                           burn=None,
@@ -370,6 +421,20 @@ class lm_spike:
                           **kwargs):
         """
         A boxplot showing the values of the coefficients.
+
+        Args:
+          burn:  A number of MCMC iterations to discard as burn-in.
+          inclusion_threshold: The probability value that must be exceeded to be
+            included in the plot.
+          number_of_variables: The number of inclusion probabilities to plot.
+            The largest available values will be plotted.
+          ax: The Axes object on which to draw the plot.  If None a new Figure
+            and Axes will be created.
+          **kwargs:  Extra keyword arguments will be passed to plt.boxplot.
+
+        Returns:
+          The Figure and Axes objects containing the plot.  The Figure will be
+          None if an Axes was passed in as 'ax'.
         """
         inc = self.inclusion_probs(burn=burn)
         index = np.argsort(inc.values)[::-1]
@@ -382,24 +447,46 @@ class lm_spike:
         nonzero_coefs = [self._coefficient_draws[:, i].data for i in index]
         names = self.xnames[index]
 
-        if ax is None:
-            _, ax = plt.subplots(1, 1)
+        fig, ax = R.ensure_ax(None, ax)
 
         ax.boxplot(nonzero_coefs,
                    widths=.8 * inc,
+                   # orientation="horizontal",
                    vert=False,
                    tick_labels=names,
                    **kwargs)
-        return ax
+        return fig, ax
 
-    def plot_residual(self, hexbin_threshold=1e+5,
-                      xlab="fitted", ylab="residual"):
+    def plot_residual(self,
+                      hexbin_threshold=1e+5,
+                      xlab="fitted",
+                      ylab="residual",
+                      ax=None):
         """
         A plot of the residuals vs the predicted values.
+
+        Args:
+          hexbin_threshold: If more than this number of points are present the
+            plot will be rendered as a hexbin plot instead of a scatterplot.
+          xlab:  The label for the horizontal axis.
+          ylab:  The label for the vertical axis.
+
+          ax: The Axes object on which to draw the plot.  If None a new Figure
+            and Axes will be created.
+
+        Returns:
+          The Figure and Axes objects containing the plot.  The Figure will be
+          None if an Axes was passed in as 'ax'.
         """
-        fig, ax = R.plot(self.fitted_values, self.residuals,
+        fig, ax = R.plot(self.fitted_values,
+                         self.residuals,
                          hexbin_threshold=hexbin_threshold,
-                         xlab=xlab, ylab=ylab)
+                         xlab=xlab,
+                         ylab=ylab,
+                         ax=ax)
+
+        # If the hexbin threshold is exceeded, go ahead and plot the 100 largest
+        # (in absolute value) residuals on top of the hexbin plot.
         if len(self.residuals) > hexbin_threshold:
             abs_resid = np.abs(self.residuals)
             n = len(abs_resid) - 100
@@ -411,14 +498,33 @@ class lm_spike:
         ax.axhline(color="black", linewidth=.5)
         return fig, ax
 
-    def plot_predicted(self, xlab="fitted", ylab="actual"):
+    def plot_predicted(self,
+                       hexbin_threshold=1e+5,
+                       xlab="fitted",
+                       ylab="actual",
+                       ax=None):
         """
         A plot of predicted values vs actual values.
+
+        Args:
+          hexbin_threshold: If more than this number of points are present the
+            plot will be rendered as a hexbin plot instead of a scatterplot.
+          xlab:  The label for the horizontal axis.
+          ylab:  The label for the vertical axis.
+          ax: The Axes object on which to draw the plot.  If None a new Figure
+            and Axes will be created.
+
+        Returns:
+          The Figure and Axes objects containing the plot.  The Figure will be
+          None if an Axes was passed in as 'ax'.
+
         """
         fig, ax = R.plot(self.fitted_values,
                          self.residuals + self.fitted_values,
                          xlab=xlab,
-                         ylab=ylab)
+                         ylab=ylab,
+                         hexbin_threshold=hexbin_threshold,
+                         ax=ax)
         return fig, ax
 
     def predict(self, newdata, burn=None, seed=None):
@@ -618,12 +724,31 @@ def coefficient_positive_probability(coefficients):
     )
 
 
-def plot_inclusion_probs(coefficients, burn, xnames, inclusion_threshold=0,
-                         unit_scale=True, number_of_variables=None, ax=None,
+def plot_inclusion_probs(coefficients,
+                         burn=0,
+                         xnames=None,
+                         inclusion_threshold=0,
+                         unit_scale=True,
+                         number_of_variables=None,
+                         ax=None,
                          **kwargs):
     """
+    Args:
+      coefficients: A object convertiable to a numpy array, containing MCMC
+        draws of the model coefficients.  Rows are Monte Carlo draws.  Columns
+        are variables.
+      burn: The number of MCMC draws to discard as burn-in.
+      xnames:  The variable names describing the columns of 'coefficients'.
+      inclusion_threshold: The probability value that must be exceeded for a
+        coefficient to be plotted.
     """
-    coef = coefficients[burn:, :]
+    if (burn is None) or (burn < 0):
+        burn = 0
+
+    if (xnames is None) and hasattr(coefficients, columns):
+        xnames = coefficients.columns
+
+    coef = np.array(coefficients)[burn:, :]
     inc = compute_inclusion_probabilities(coef)
     pos = coefficient_positive_probability(coef)
     colors = np.array([str(x) for x in pos])
@@ -634,85 +759,56 @@ def plot_inclusion_probs(coefficients, burn, xnames, inclusion_threshold=0,
     inc = inc[index[:number_of_variables]]
     pos = pos[index[:number_of_variables]]
     colors = colors[index[:number_of_variables]]
-    ans = R.barplot(inc,
-                    ax=ax,
-                    color=colors[::-1],
-                    linewidth=.25,
-                    edgecolor="black",
-                    xlab="Marginal Inclusion Probability",
-                    ylab="Variable",
-                    **kwargs)
-    return ans
+    return R.barplot(inc,
+                     ax=ax,
+                     color=colors[::-1],
+                     linewidth=.25,
+                     edgecolor="black",
+                     xlab="Marginal Inclusion Probability",
+                     ylab="Variable",
+                     labels=xnames,
+                     **kwargs)
 
 
-def plot_model_size(coefficients, burn, ax=None, **kwargs):
+def plot_model_size(coefficients, burn=0, ax=None, style="hist", **kwargs):
+    """
+    Args:
+      coefficients: A dense array of MCMC coefficient draws.  Rows are
+        iterations.  Colummns are variables.
+      burn:  The number of MCMC iterations to discard as burn-in.
+      ax: A plt.Axes object on which to draw the plot.  If None then a new Axes
+        object will be created.
+      style: The style of plot to produce. Either 'hist' indicating a histogram of
+        model sizes, or 'ts' indicating a time series plot of model sizes.
+      **kwargs:  additional keyword arguments to be passed to 'R.hist()'.
+
+    Returns:
+      The Figure and Axes objects on which the plot was drawn.  If 'ax' was
+      passed then the Figure return value is None.
+    """
     ndraws = coefficients.shape[0]
-    size = np.array([
-        np.sum(coefficients[i, :] != 0)
-        for i in range(burn, ndraws)
-    ])
-    _, ax = R.hist(size, ax=ax, **kwargs)
-    return ax
+    if burn > 0:
+        coefs = coefficients[burn:ndraws, :]
+    else:
+        coefs = coefficients
 
+    if (
+            isinstance(coefs, scipy.sparse.sparray)
+            or isinstance(coefs, scipy.sparse.spmatrix)
+    ):
+        size = coefs.getnnz(axis=1)
+    else:
+        coefs = np.array(coefs)
+        nonzero = coefs != 0.0
+        size = np.sum(nonzero, axis=1)
 
-class RegressionSlabPrior:
-    """
-    A multivariate normal distribution intended to be the prior in a multiple
-    regression problem.  The prior is
-
-    beta ~ N(b, V)
-
-    where b = (ybar, 0, 0, 0, ....)
-    and V^{-1} = kappa * [(1 - alpha) * xtx + alpha * diag(xtx)] / n
-
-    The mean parameter shrinks the intercept towards the sample mean, and all
-    other coefficients towards zero.  In the literature it is more standard to
-    shrink all coefficients towards zero, but in practice this can inflate
-    estimates of the residual standard deviation.
-
-    The prior precision is defined in terms of xtx: the cross product matrix
-    from the regression problem.  We average xtx with its diagonal (with weight
-    alpha on the diagonal) to ensure that the overall matrix is full rank.  xtx
-    is the information matrix for the regression coefficients in a standard
-    regression problem, so dividing by 'n' (the sample size) turns the whole
-    thing into the "average information from a single observation."
-    Multiplying by 'kappa' means that the information content of the prior is
-    equivalent to 'kappa' prior observations.
-    """
-
-    def __init__(self, xtx, sample_mean, data_sample_size,
-                 prior_sample_size=1.0, diagonal_shrinkage=0.05):
-        """
-        Args:
-          Please see the class comments, above.
-          xtx:  The cross product matrix from the regression.
-          sample_mean: The mean of the response variable in the regression
-            problem ('ybar' above).
-          data_sample_size: The number of observations in the regression ('n'
-            above).
-          prior_sample_size: The number of observations of prior weight to
-            assign the prior.  ('kappa' above).
-          diagonal_shrinkage: The weight to assign the diagonal of xtx in the
-            full rank adjustment.  ('alpha' above).
-        """
-        self._xtx = xtx
-        self._sample_mean = sample_mean
-        self._data_sample_size = data_sample_size
-        self._prior_sample_size = prior_sample_size
-        self._diagonal_shrinkage = diagonal_shrinkage
-
-    def set_xtx(self, xtx: np.ndarray):
-        self._xtx = xtx
-
-    def boom(self, sigsq_param: boom.UnivParams):
-        xtx = self._xtx if self._xtx is not None else np.ones((1, 1))
-        return boom.RegressionSlabPrior(
-            boom.SpdMatrix(xtx),
-            sigsq_param,
-            self._sample_mean,
-            self._data_sample_size,
-            self._prior_sample_size,
-            self._diagonal_shrinkage)
+    if style == "hist":
+        fig, ax = R.hist(size, ax=ax, **kwargs)
+    elif style == "ts":
+        fig, ax = R.plot_ts(size, ax=ax, **kwargs)
+    else:
+        msg = "'style' argument must be either 'hist' or 'ts'."
+    return fig, ax
 
 
 class BigAssSpikeSlab:

@@ -105,7 +105,6 @@ namespace BOOM {
     double variance() const override { return sigsq(); }
     double sd() const {return sqrt(variance());}
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *dp, bool logscale) const override;
     double Logp(double x, double &g, double &h, uint nd) const override;
     double Logp(const Vector &x, Vector &g, Matrix &h, uint nd) const;

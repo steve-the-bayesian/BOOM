@@ -59,7 +59,7 @@ namespace BOOM {
                             bool update_complete_data_suf);
     double last_loglike() const;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
     uint number_of_mixture_components() const;
 
     const Vector &pi() const;

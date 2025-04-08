@@ -34,10 +34,10 @@ namespace BOOM {
       using NSMD = NodeSetMarginalDistribution;
 
 
-      inline bool is_in(const Ptr<Node> &node,
-                        const std::vector<Ptr<Node>> &nodes) {
-        return std::find(nodes.begin(), nodes.end(), node) != nodes.end();
-      }
+      // inline bool is_in(const Ptr<Node> &node,
+      //                   const std::vector<Ptr<Node>> &nodes) {
+      //   return std::find(nodes.begin(), nodes.end(), node) != nodes.end();
+      // }
     }  // namespace
 
     //===========================================================================

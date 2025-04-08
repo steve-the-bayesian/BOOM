@@ -178,7 +178,7 @@ namespace BOOM {
     set_sigsq(sigsq);
   }
 
-  double NonzeroMeanAr1Model::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double NonzeroMeanAr1Model::pdf(const Data *dp, bool logscale) const {
     double y = DAT(dp)->value();
     if (suf()->n() == 0) return dnorm(y, mu(), sigma(), logscale);
     double last = suf()->last_value();

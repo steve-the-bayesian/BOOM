@@ -281,8 +281,9 @@ class BetaBinomialMixture:
             Axes object will be created, and plt.show() will be called.
 
         Returns:
-          The Axes object containing the graph, and the posterior means of the
-          component densities being plotted.
+          The Figure object containing the graph (which is None if an existing
+          Axes was passed in as ax), the Axes object containing the graph, and
+          the posterior means of the component densities being plotted.
         """
 
         import matplotlib.pyplot as plt
@@ -297,11 +298,7 @@ class BetaBinomialMixture:
             component_means = np.mean(component_distribution[
                 "unweighted_components"], axis=0)
 
-        if ax is None:
-            _, ax = plt.subplots(1, 1)
-            call_show = True
-        else:
-            call_show = False
+        fig, ax = R.ensure_ax(None, ax)
 
         x = np.arange(trials + 1)
         colors = ['#377eb8', '#ff7f00', '#4daf4a',
@@ -317,10 +314,10 @@ class BetaBinomialMixture:
                    label="Component " + str(s))
         ax.legend()
 
-        if call_show:
-            plt.show()
+        if fig:
+            fig.show()
 
-        return ax, component_means
+        return fig, ax, component_means
 
     def _create_storage(self, niter: int):
         """

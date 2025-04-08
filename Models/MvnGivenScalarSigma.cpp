@@ -98,7 +98,7 @@ namespace BOOM {
     return MvnBase::log_likelihood(Vector(mu), siginv, *suf());
   }
 
-  double MGSS::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double MGSS::pdf(const Data *dp, bool logscale) const {
     const Vector &y(DAT(dp)->value());
     return dmvn(y, mu(), siginv(), ldsi(), logscale);
   }

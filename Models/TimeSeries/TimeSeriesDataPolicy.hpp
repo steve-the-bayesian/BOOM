@@ -26,12 +26,12 @@
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
-  //======================================================================
+  //===========================================================================
+  // A data policy for time series models.  Many such models will have a single
+  // time series as their data, but some will have many time series.  This class
+  // handles both jobs.
   template <class DATA, class SERIES = TimeSeries<DATA>>
   class TimeSeriesDataPolicy : virtual public Model {
-    // Data policy for time series models.  Many such models will have
-    // a single time series as their data, but some will have many
-    // time series.  This class handles both jobs.
 
    public:
     typedef DATA DataPointType;
@@ -44,17 +44,6 @@ namespace BOOM {
         : ts_(1, ts) {}
 
     TimeSeriesDataPolicy *clone() const = 0;
-
-    template <class FwdIt>
-    void set_data(FwdIt Beg, FwdIt End) {
-      NEW(DataSeriesType, ts)(Beg, End);
-      this->set_data(ts);
-    }
-
-    virtual void set_data(const Ptr<DataSeriesType> &ts) {
-      ts_.clear();
-      add_data_series(ts);
-    }
 
     virtual void add_data_series(const Ptr<DataSeriesType> &ts) {
       ts_.push_back(ts);
@@ -98,6 +87,8 @@ namespace BOOM {
 
     virtual DataSeriesType &dat(uint i = 0) { return *(ts_[i]); }
     virtual const DataSeriesType &dat(uint i = 0) const { return *(ts_[i]); }
+    Ptr<DataSeriesType> series_ptr(uint i) {return ts_[i];}
+    const Ptr<DataSeriesType> series_ptr(uint i) const {return ts_[i];}
 
     uint nseries() const { return ts_.size(); }
 
@@ -106,10 +97,21 @@ namespace BOOM {
       return dp.dcast<DataSeriesType>();
     }
 
+    const SERIES *DAT(const Data *dp) const {
+      if (!dp) return nullptr;
+      return dynamic_cast<const SERIES *>(dp);
+    }
+
     Ptr<DATA> DAT_1(const Ptr<Data> &dp) const {
       if (!dp) return Ptr<DataPointType>();
       return dp.dcast<DataPointType>();
     }
+    
+    const DATA *DAT_1(const Data *dp) const {
+      if (!dp) return nullptr;
+      return dynamic_cast<const DATA *>(dp);
+    }
+    
    private:
     std::vector<Ptr<DataSeriesType> > ts_;  // model owns data;
   };

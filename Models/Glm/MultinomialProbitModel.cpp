@@ -125,11 +125,12 @@ namespace BOOM {
     return ans;
   }
   //============================================================
-  double MNP::pdf(const Ptr<Data> &dp, bool logsc) const {
+  double MNP::pdf(const Data *dp, bool logsc) const {
     return pdf(DAT(dp), logsc);
   }
-  double MNP::pdf(const Ptr<ChoiceData> &, bool) const {
-    report_error("MultinomialProbit::pdf has not been defined");
+  
+  double MNP::pdf(const ChoiceData *dp, bool) const {
+    report_error("MultinomialProbit::pdf has not been implemented.");
     return 0.0;
   }
 

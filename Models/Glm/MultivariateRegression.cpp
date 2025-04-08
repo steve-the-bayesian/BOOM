@@ -286,8 +286,8 @@ namespace BOOM {
     return log_likelihood_ivar(Beta(), Siginv());
   }
 
-  double MvReg::pdf(const Ptr<Data> &dptr, bool logscale) const {
-    Ptr<MvRegData> dp = DAT(dptr);
+  double MvReg::pdf(const Data *dptr, bool logscale) const {
+    const MvRegData *dp = DAT(dptr);
     Vector mu = predict(dp->x());
     return dmvn(dp->y(), mu, Siginv(), ldsi(), logscale);
   }

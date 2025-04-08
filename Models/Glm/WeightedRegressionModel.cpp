@@ -270,16 +270,16 @@ namespace BOOM {
 
   WeightedRegressionModel *WRM::clone() const { return new WRM(*this); }
 
-  double WRM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<DataType> d = dp.dcast<DataType>();
+  double WRM::pdf(const Data *dp, bool logscale) const {
+    const DataType *d = dynamic_cast<const DataType *>(dp);
     return pdf(d, logscale);
   }
 
-  double WRM::pdf(const Ptr<WeightedRegressionData> &dp, bool logscale) const {
-    double mu = predict(dp->x());
+  double WRM::pdf(const WeightedRegressionData *data_point, bool logscale) const {
+    double mu = predict(data_point->x());
     double sigsq = this->sigsq();
-    double w = dp->weight();
-    return dnorm(dp->y(), mu, sqrt(sigsq / w), logscale);
+    double w = data_point->weight();
+    return dnorm(data_point->y(), mu, sqrt(sigsq / w), logscale);
   }
 
   GlmCoefs &WRM::coef() { return ParamPolicy::prm1_ref(); }

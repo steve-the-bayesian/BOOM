@@ -84,7 +84,6 @@ namespace BOOM {
     }
 
     // probability calculations
-    double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *dp, bool logscale) const override;
     double Loglike(const Vector &lambda_vector, Vector &g, Matrix &h,
                    uint nd) const override;

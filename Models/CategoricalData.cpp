@@ -24,6 +24,8 @@
 #include <sstream>
 #include <utility>
 #include "cpputil/report_error.hpp"
+#include "cpputil/StringSplitter.hpp"
+
 
 namespace BOOM {
 
@@ -377,7 +379,10 @@ namespace BOOM {
     }
     return value() >= rhs.value();
   }
+
   //======================================================================
+
+
   Ptr<CatKey> make_catkey(const std::vector<std::string> &sv) {
     std::vector<std::string> tmp(sv);
     std::sort(tmp.begin(), tmp.end());

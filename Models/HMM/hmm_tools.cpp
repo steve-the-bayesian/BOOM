@@ -22,6 +22,8 @@
 #include "LinAlg/Vector.hpp"
 #include "uint.hpp"
 
+#include <iostream>
+
 namespace BOOM {
   using BOOM::uint;
 

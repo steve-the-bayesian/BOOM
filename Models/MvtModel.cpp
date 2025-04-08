@@ -56,6 +56,7 @@ namespace BOOM {
   MVT::MvtModel(const MvtModel &rhs)
       : Model(rhs),
         VectorModel(rhs),
+        MixtureComponent(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
@@ -69,8 +70,6 @@ namespace BOOM {
   }
 
   MvtModel *MVT::clone() const { return new MvtModel(*this); }
-
-  void MVT::initialize_params() { mle(); }
 
   Ptr<VectorParams> MVT::Mu_prm() { return mvn->Mu_prm(); }
   Ptr<SpdParams> MVT::Sigma_prm() { return mvn->Sigma_prm(); }

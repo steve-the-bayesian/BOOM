@@ -197,9 +197,7 @@ class SparseDynamicRegressionModel:
         sd = self._residual_sd_draws[burn:]
 
         show_plot = False
-        if ax is None:
-            fig, ax = plt.subplots(1, 1)
-            show_plot = True
+        fig, ax = R.ensure_ax(None, ax)
 
         if kind == "density":
             density = R.Density(sd)
@@ -212,14 +210,12 @@ class SparseDynamicRegressionModel:
             ax.set_xlabel("Iteration")
             ax.set_ylabel("Residual SD")
 
-        if show_plot:
+        if fig:
             fig.show()
-        return ax
+        return fig, ax
 
     def plot_size(self, ax=None, burn: int = None, **kwargs):
-        fig = None
-        if ax is None:
-            fig, ax = plt.subplots(1, 1)
+        fig, ax = R.ensure_ax(None, ax)
 
         size = np.sum(self._beta_draws != 0, axis=1)
         R.plot_dynamic_distribution(
@@ -230,9 +226,10 @@ class SparseDynamicRegressionModel:
             ylab="Number Included Predictors",
         )
 
-        if fig is not None:
+        if fig:
             fig.show()
-        return ax
+            
+        return fig, ax
 
     def plot_coefficients(self, subset=None, fig=None, ylim=None,
                           same_scale: bool = True,
@@ -256,8 +253,10 @@ class SparseDynamicRegressionModel:
             False means each coefficient is plotted on its own scale.
           kw_args:  Additional keyword arguments are ignored.
           burn: The number of MCMC iteration to discard as burn-in.
+        
         Returns:
-          The Figure object on which the plots are drawn.
+          The Figure object on which the plots are drawn, and the Axes object
+          contained in the figure.
         """
         if subset is None:
             coef = self._beta_draws
@@ -270,7 +269,6 @@ class SparseDynamicRegressionModel:
         if burn > 0:
             coef = coef[burn:, :, :]
 
-        call_show = fig is None
         if fig is None:
             fig = plt.figure()
 
@@ -290,10 +288,12 @@ class SparseDynamicRegressionModel:
                         ax=ax[row][col],
                         ylim=ylim)
                 index += 1
-        if call_show:
-            fig.set_tight_layout(True)
+                
+        if fig:
+            fig.set_layout_engine("tight")
             fig.show()
-        return fig
+            
+        return fig, ax
 
     def plot_single_coefficient(self, beta, ylim=None, ax=None,
                                 highlight_median="green"):
@@ -315,17 +315,15 @@ class SparseDynamicRegressionModel:
         Returns:
           The axes object containing the plot.
         """
-        fig = None
-        if ax is None:
-            fig, ax = plt.subplots(1, 1)
+        fig, ax = R.ensure_ax(None, ax)
         R.plot_dynamic_distribution(beta,
                                     timestamps=self._unique_timestamps,
                                     ax=ax,
                                     ylim=ylim,
                                     highlight_median=highlight_median)
-        if fig is not None:
+        if fig:
             fig.show()
-        return ax
+        return fig, ax
 
     def _create_model(self):
         """

@@ -16,7 +16,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "cpputil/Split.hpp"
+#include "cpputil/StringSplitter.hpp"
 #include <cctype>
 #include <string>
 #include <vector>
@@ -30,17 +30,32 @@ namespace BOOM {
   StringSplitter::StringSplitter(const string &delimiters, bool allow_quotes)
       : delim_(delimiters),
         quotes_(allow_quotes ? "\"'" : ""),
-        delimited_(!is_all_white(delimiters)) {
+        delimited_(!is_all_white(delimiters)),
+        omit_empty_(false)
+  {
     if (delimiters == "\t") {
       delimited_ = true;
     }
   }
 
   std::vector<std::string> StringSplitter::operator()(const std::string &s) const {
+    std::vector<std::string> ans;
     if (delimited_) {
-      return split_delimited(s);
+      ans = split_delimited(s);
     } else {
-      return split_space(s);
+      ans = split_space(s);
+    }
+
+    if (omit_empty_) {
+      std::vector<std::string> return_value;
+      for (const auto &el : ans) {
+        if (el != "") {
+          return_value.push_back(el);
+        }
+      }
+      return return_value;
+    } else {
+      return ans;
     }
   }
 
@@ -73,6 +88,27 @@ namespace BOOM {
       start = std::min(pos + 1, end);
     }
     return ans;
+  }
+
+  // Split the string 's' into its leading and terminal parts.  So "foo/bar/baz"
+  // gets split into "foo/bar" and "baz".
+  //
+  // If r = pop_back(s) then r.first contains the leading (parent) string
+  // (e.g. "foo/bar") and r.second contains the terminal element ("baz").
+  std::pair<std::string, std::string> StringSplitter::pop_back(const std::string &s) const {
+    std::string parent;
+    std::string child;
+
+    for (Int n = s.size() - 1; n >= 0; --n) {
+      if (is_field_delimiter(s[n])) {
+        parent = s.substr(0, n);
+        child =s.substr(n + 1, s.size() - n);
+        return std::make_pair(parent, child);
+      }
+    }
+
+    child = s;
+    return std::make_pair(parent, child);
   }
 
   std::vector<std::string> StringSplitter::split_space(const std::string &s) const {

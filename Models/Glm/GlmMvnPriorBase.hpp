@@ -41,8 +41,8 @@ namespace BOOM {
 
    public:
     explicit GlmMvnPriorBase(uint dim);
-    virtual double pdf(const Ptr<Data> &, bool logscale) const = 0;
-    virtual double pdf(const const Ptr<GlmCoefs> &beta,
+    virtual double pdf(const Data *dp, bool logscale) const = 0;
+    virtual double pdf(const const GlmCoefs *beta,
                        bool logscale) const = 0;
 
     virtual double sigsq() const;  // default return is 1.0;

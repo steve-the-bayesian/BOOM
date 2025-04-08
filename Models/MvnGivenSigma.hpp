@@ -75,8 +75,8 @@ namespace BOOM {
     // The argument is a vector with the mean vector first, and then
     // the proportionalyity facctor 'kappa' second.
     double loglike(const Vector &mu_kappa) const override;
-    double pdf(const Ptr<Data> &dp, bool) const;
-    double pdf(const Ptr<DataType> &dp, bool) const;
+    double pdf(const Data *dp, bool) const;
+    double pdf(const DataType *dp, bool) const;
 
     double Logp(const Vector &x, Vector &g, Matrix &h, uint nd) const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;

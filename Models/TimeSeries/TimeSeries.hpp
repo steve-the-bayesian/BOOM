@@ -43,7 +43,9 @@ namespace BOOM {
   // A TimeSeries is a type of Data that holds vector of pointers to
   // a specific Data type.
   template <class D>
-  class TimeSeries : virtual public Data, public std::vector<Ptr<D>> {
+  class TimeSeries :
+      virtual public Data,
+      public std::vector<Ptr<D>> {
    public:
     typedef D DataPointType;
     typedef TimeSeries<D> ts_type;

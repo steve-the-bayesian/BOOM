@@ -66,7 +66,7 @@ namespace BOOM {
     void mle() override;
     double loglike(
         const Vector &beta_columns_siginv_triangle_nu) const override;
-    virtual double pdf(const Ptr<Data> &, bool) const;
+    double pdf(const Data *data_point, bool logscale) const;
     virtual Vector predict(const Vector &x) const;
 
     //---- simulate MV regression data ---

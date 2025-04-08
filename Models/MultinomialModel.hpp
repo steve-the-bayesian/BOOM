@@ -25,6 +25,7 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/SufstatDataPolicy.hpp"
 #include "Models/Sufstat.hpp"
+#include "Models/EmMixtureComponent.hpp"
 
 namespace BOOM {
 
@@ -64,7 +65,7 @@ namespace BOOM {
         public SufstatDataPolicy<CategoricalData, MultinomialSuf>,
         public PriorPolicy,
         public LoglikeModel,
-        public MixtureComponent {
+        public EmMixtureComponent {
    public:
     explicit MultinomialModel(uint Nlevels);
     explicit MultinomialModel(const Vector &probs);
@@ -100,8 +101,9 @@ namespace BOOM {
     double log_likelihood() const override { return loglike(pi()); }
     void mle() override;
     double pdf(const Data *dp, bool logscale) const override;
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
-    void add_mixture_data(const Ptr<Data> &, double prob);
+    double logp(int index) const;
+    
+    void add_mixture_data(const Ptr<Data> &, double prob) override;
     int number_of_observations() const override { return suf()->n().sum(); }
 
     uint sim(RNG &rng = GlobalRng::rng) const;

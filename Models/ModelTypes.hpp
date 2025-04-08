@@ -137,10 +137,6 @@ namespace BOOM {
     // Set the paramters to their maximum likelihood estimates.
     virtual void mle() = 0;
 
-    // Initialize an MCMC run by setting parameters to their maximum likelihood
-    // estimates.
-    virtual void initialize_params();
-
     enum MleStatus { NOT_CALLED = -1, FAILURE = 0, SUCCESS = 1 };
     MleStatus mle_status() const { return status_; }
     const std::string &mle_error_message() const { return error_message_; }
@@ -279,6 +275,9 @@ namespace BOOM {
     CorrelationModel *clone() const override = 0;
   };
   //======================================================================
+  //
+  // Classes that inherit from MixtureComponent need to do so virtually.
+  // 
   class MixtureComponent : virtual public Model {
    public:
     MixtureComponent() : component_(-1) {}

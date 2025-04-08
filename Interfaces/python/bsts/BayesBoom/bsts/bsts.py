@@ -748,20 +748,20 @@ class Bsts:
         residuals = self.residuals(burn)
 
         if style == "dynamic":
-            R.plot_dynamic_distribution(
+            fig, ax = R.plot_dynamic_distribution(
                 curves=residuals,
                 timestamps=time,
                 ax=ax,
                 **kwargs)
 
         elif style == "boxplot":
-            R.time_series_boxplot(
+            fig, ax = R.time_series_boxplot(
                 curves=residuals,
                 time=time,
                 ax=ax,
                 **kwargs)
 
-        return ax
+        return fig, ax
 
     def plot_forecast_distribution(
             self,
@@ -813,7 +813,7 @@ class Bsts:
             if implied_cutpoints[i] < len(timestamps):
                 vertical_cuts[i] = timestamps[implied_cutpoints[i]]
 
-        fig = R.compare_dynamic_distributions(
+        fig, ax = R.compare_dynamic_distributions(
             [forecast[key] for key in implied_cutpoints],
             timestamps=timestamps,
             style=style,
@@ -826,7 +826,7 @@ class Bsts:
             col_actuals=col_actuals,
             vertical_cuts=vertical_cuts)
 
-        return fig
+        return fig, ax
 
     def plot_prediction_errors(self, cutpoints=None, burn=None, xlab="Time",
                                ylab="", main="", fig=None, **kwargs):
@@ -881,22 +881,21 @@ class Bsts:
         """
         coef = getattr(self._observation_model_manager, "_coefficients", None)
         if coef is None:
-            return ax
+            return None, ax
 
         if burn is None:
             burn = self.suggest_burn()
         if burn > 0:
             coef = coef[burn:, :]
 
-        if ax is None:
-            _, ax = plt.subplots(1, 1)
+        fig, ax = R.ensure_ax(None, ax)
 
         inc = spikeslab.compute_inclusion_probabilities(coef)
 
         keep = inc >= inclusion_threshold
         if not np.any(keep):
             ax.set_title("No predictors above inclusion threshold.")
-            return ax
+            return fig, ax
 
         inc = inc[keep]
 
@@ -943,7 +942,7 @@ class Bsts:
         if show_legend:
             ax.legend()
 
-        return ax
+        return fig, ax
 
     def plot_size(self, burn=None, ax=None, **kwargs):
         coef = getattr(self._observation_model_manager,
@@ -952,8 +951,7 @@ class Bsts:
             raise Exception("Model has no coefficients.")
         if burn is None:
             burn = self.suggest_burn()
-        if ax is None:
-            _, ax = plt.subplots(1, 1)
+            
         return spikeslab.plot_model_size(
             coef, burn=burn, ax=ax, **kwargs)
 
@@ -1034,10 +1032,19 @@ class Bsts:
         """
         Allocate space in the model for 'niter' MCMC draws.
         """
+        # The parameter draws of the observation model are stored in the
+        # observation model manager object.
         self._observation_model_manager.allocate_space(
             niter, self.time_dimension)
+
+        # The parameter draws for each state model are stored inside the
+        # state model objects.
         for state_model in self._state_models:
             state_model.allocate_space(niter, self.time_dimension)
+
+        # self._find_state stores the MCMC draw of the state vector at the final
+        # time point.  It is needed for forecasting from the posterior
+        # predictive distribution.
         self._final_state = np.empty((niter, self.state_dimension))
 
         # self._one_step_prediction_errors is a dict keyed by the index of the
@@ -1056,6 +1063,7 @@ class Bsts:
         Args:
           iteration: The iteration (MCMC draw) number being recorded.
         """
+        # See _allocate_space for explanations of each storage element.
         state_matrix = self._model.state.to_numpy()
         for m in self._state_models:
             m.record_state(iteration, state_matrix)
@@ -1250,10 +1258,10 @@ class BstsPrediction:
                     self._original_series.index.dtype)
         ):
             plot_with_dates = True
-            original_timestaps = pd.Series(self._original_series.index,
-                                           dtype="datetime64[ns]")
-            extended_timestamps = extend_timestamps(
-                original_timestaps, num_steps=horizon)
+            original_timestaps = np.array(self._original_series.index,
+                                          dtype="datetime64[ns]")
+            extended_timestamps = np.array(extend_timestamps(
+                original_timestaps, num_steps=horizon))
 
         else:
             plot_with_dates = False
@@ -1267,9 +1275,9 @@ class BstsPrediction:
             plot_periods = len(self._original_series) + horizon
             original = R.to_numpy(self._original_series)
         elif isinstance(original_series, int):
-            start = original_timestaps.iloc[-original_series]
+            start = original_timestaps[-original_series]
             plot_periods = original_series + horizon
-            original = self._original_series.values[-original_series:]
+            original = np.array(self._original_series)[-original_series:]
         elif original_series is False:
             start = extended_timestamps[0]
             plot_periods = horizon

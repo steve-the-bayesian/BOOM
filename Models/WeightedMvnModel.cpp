@@ -216,7 +216,7 @@ namespace BOOM {
     return ans;
   }
 
-  double WeightedMvnModel::pdf(const Ptr<WeightedVectorData> &dp,
+  double WeightedMvnModel::pdf(const WeightedVectorData *dp,
                                bool logscale) const {
     double w = dp->weight();
     const Vector &y(dp->value());
@@ -225,7 +225,7 @@ namespace BOOM {
     return dmvn(y, mu(), w * siginv(), wldsi, logscale);
   }
 
-  double WeightedMvnModel::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double WeightedMvnModel::pdf(const Data *dp, bool logscale) const {
     return pdf(DAT(dp), logscale);
   }
 

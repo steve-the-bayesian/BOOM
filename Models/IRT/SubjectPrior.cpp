@@ -50,7 +50,7 @@ namespace BOOM {
       return mvn->pdf(s->Theta(), logsc);
     }
 
-    void MSP::initialize_params() { mvn->initialize_params(); }
+    void MSP::initialize_params() { mvn->mle(); }
 
     void MSP::clear_data() {
       mvn->clear_data();

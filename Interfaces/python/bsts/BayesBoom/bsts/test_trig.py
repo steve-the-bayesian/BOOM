@@ -51,6 +51,7 @@ _debug_mode = False
 
 if _debug_mode:
     # Turn warnings into errors.
+    # import warnings
     # warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,

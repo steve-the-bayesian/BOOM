@@ -743,13 +743,23 @@ namespace BayesBoom {
                    boom, "GeneralSeasonalLLTIndependenceSampler")
         .def(py::init(
             [] (GeneralSeasonalLLT *model,
-                const std::vector<Ptr<GammaModelBase>> &level_precision_priors,
-                const std::vector<Ptr<GammaModelBase>> &slope_precision_priors,
+                const std::vector<GammaModelBase *> &level_precision_priors,
+                const std::vector<GammaModelBase *> &slope_precision_priors,
                 RNG &seeding_rng) {
+
+              std::vector<Ptr<GammaModelBase>> level_precision_prior_ptrs;
+              for (const auto &el : level_precision_priors) {
+                level_precision_prior_ptrs.push_back(Ptr<GammaModelBase>(el));
+              }
+
+              std::vector<Ptr<GammaModelBase>> slope_precision_prior_ptrs;
+              for (const auto &el : slope_precision_priors) {
+                slope_precision_prior_ptrs.push_back(Ptr<GammaModelBase>(el));
+              }
               return new GeneralSeasonalLLTIndependenceSampler(
                   model,
-                  level_precision_priors,
-                  slope_precision_priors,
+                  level_precision_prior_ptrs,
+                  slope_precision_prior_ptrs,
                   seeding_rng);
             }),
              py::arg("model"),

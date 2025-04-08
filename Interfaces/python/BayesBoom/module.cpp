@@ -25,12 +25,15 @@ namespace BayesBoom {
   //   void BinomialModel_def(py::module &);
   void BetaBinomialModel_def(py::module &);
   void MultinomialModel_def(py::module &);
+  void MultilevelMultinomialModel_def(py::module &);
 
-  void GaussianModel_def(py::module &);
-  void GammaModel_def(py::module &);
+  void GaussianModel_def(py::module &m);
+  void GammaModel_def(py::module &m);
+  void MarkovModel_def(py::module &m);
+  void MvnModel_def(py::module &m);
+  void PoissonModel_def(py::module &m);
   void UniformModel_def(py::module &m);
-  void MvnModel_def(py::module &);
-  void WishartModel_def(py::module &);
+  void WishartModel_def(py::module &m);
 
   void GlmModel_def(py::module &);
   void GpModel_def(py::module &);
@@ -47,6 +50,9 @@ namespace BayesBoom {
   void DirichletProcessMvn_def(py::module &);
   void BetaBinomialMixture_def(py::module &);
 
+  void FiniteMixtureModel_def(py::module &);
+  void HMM_def(py::module &);
+  
   void FactorModel_def(py::module &);
 
   void test_utils_def(py::module &);
@@ -83,12 +89,15 @@ namespace BayesBoom {
     //    BinomialModel_def(boom);
     BetaBinomialModel_def(boom);
     MultinomialModel_def(boom);
+    MultilevelMultinomialModel_def(boom);
 
     GaussianModel_def(boom);
     GammaModel_def(boom);
     MvnModel_def(boom);
+    PoissonModel_def(boom);
     UniformModel_def(boom);
     WishartModel_def(boom);
+    MarkovModel_def(boom);
 
     GlmModel_def(boom);
     GpModel_def(boom);
@@ -107,6 +116,9 @@ namespace BayesBoom {
     DirichletProcessMvn_def(boom);
     BetaBinomialMixture_def(boom);
 
+    FiniteMixtureModel_def(boom);
+    HMM_def(boom);
+    
     FactorModel_def(boom);
 
     test_utils_def(boom);

@@ -77,7 +77,7 @@ namespace BOOM {
                                public PriorPolicy,
                                public GlmModel,
                                public NumOptModel,
-                               public MixtureComponent {
+                               virtual public MixtureComponent {
    public:
     // Initialize parameters to be 
     OrdinalCutpointModel(int xdim, int nlevels);
@@ -164,7 +164,11 @@ namespace BOOM {
     OrdinalCutpointBetaLogLikelihood beta_log_likelihood() const;
     OrdinalCutpointLogLikelihood cutpoint_log_likelihood() const;
 
-    void initialize_params() override;
+    // If data has been assigned to the model, then initialize using the MLE.
+    // Otherwise initialize all slopes to zero, initialize the intercept to
+    // match the count in the first bucket, and set the cutpoints to match the
+    // other histogram buckets.
+    void initialize_params();
     void initialize_params(const Vector &counts);
 
     Vector CDF(const Vector &x) const;  // Pr(Y<y)

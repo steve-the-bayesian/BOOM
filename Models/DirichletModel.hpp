@@ -65,7 +65,7 @@ namespace BOOM {
                          public PriorPolicy,
                          public DiffVectorModel,
                          public NumOptModel,
-                         public MixtureComponent {
+                         virtual public MixtureComponent {
    public:
     explicit DirichletModel(uint S, double Nu = 1.0);
     explicit DirichletModel(const Vector &Nu);
@@ -83,7 +83,6 @@ namespace BOOM {
     Vector pi() const;
     double pi(uint i) const;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *, bool logscale) const override;
     double pdf(const Vector &pi, bool logscale) const;
 

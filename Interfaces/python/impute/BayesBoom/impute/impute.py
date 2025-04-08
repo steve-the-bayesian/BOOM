@@ -1,6 +1,8 @@
 # import matplotlib.pyplot as plt
 # import seaborn as sns
 import BayesBoom.boom as boom
+import BayesBoom.R as R
+
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -269,7 +271,7 @@ class MixedDataImputer:
             atom_vector.append(boom.Vector(atoms.flatten().astype("float")))
 
         # The data table as a BOOM object.
-        data_table = boom.to_data_table(data)
+        data_table = R.to_boom_data_table(data)
 
         self._model = boom.MixedDataImputer(
             nclusters, data_table, atom_vector, boom.GlobalRng.rng)

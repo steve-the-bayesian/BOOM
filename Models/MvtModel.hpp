@@ -40,7 +40,7 @@ namespace BOOM {
                    public LatentVariableModel,
                    public LoglikeModel,
                    public LocationScaleVectorModel,
-                   public MixtureComponent {
+                   virtual public MixtureComponent {
    public:
     explicit MvtModel(uint p, double mu = 0.0, double sig = 1.0,
                       double nu = 30.0);
@@ -48,8 +48,6 @@ namespace BOOM {
     MvtModel(const MvtModel &m);
 
     MvtModel *clone() const override;
-
-    void initialize_params() override;
 
     Ptr<VectorParams> Mu_prm();
     Ptr<SpdParams> Sigma_prm();

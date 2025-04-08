@@ -64,14 +64,19 @@ namespace BOOM {
       elements_.erase(el, elements_.end());
     }
 
+    // Create a SortedVector of things from a std::vector of things.
     explicit SortedVector(const std::vector<T> &things)
         : SortedVector(things.begin(), things.end())
     {}
 
+    // Create a SortedVector of things from an initializer_list of things.
     explicit SortedVector(const std::initializer_list<T> &things)
         : SortedVector(std::vector<T>(things))
     {}
 
+    //---------------------------------------------------------------------------
+    // Iteration
+    //---------------------------------------------------------------------------
     iterator       begin()       { return elements_.begin(); }
     iterator       end()         { return elements_.end(); }
     const_iterator begin() const { return elements_.begin(); }
@@ -86,13 +91,32 @@ namespace BOOM {
 
     void clear() {elements_.clear();}
 
+    // Find an element of the set.  If the element is present an iterator to the
+    // element is returned.  If not present then end() is returned.
     const_iterator find(const T& t) const {
       const_iterator i = std::lower_bound(begin(), end(), t, cmp);
       return i == end() || cmp(t, *i) ? end() : i;
     }
 
-    int position(const T &element) const {
+    // Find an element of the set using a comparator function.  This is 
+    template <class VALUE, class FOREIGN_CMP>
+    const_iterator find(const VALUE &value, const FOREIGN_CMP &foreign_cmp) const {
+      const_iterator it = std::lower_bound(begin(), end(), value, foreign_cmp);
+      return it == end() || foreign_cmp(*it, value) ? end() : it;
+    }
+
+    Int position(const T &element) const {
       const_iterator it = find(element);
+      if (it == end()) {
+        return -1;
+      } else {
+        return it - begin();
+      }
+    }
+
+    template <class VALUE, class FOREIGN_CMP>
+    Int position(const VALUE &value, const FOREIGN_CMP &foreign_cmp) const {
+      const_iterator it = find(value, foreign_cmp);
       if (it == end()) {
         return -1;
       } else {

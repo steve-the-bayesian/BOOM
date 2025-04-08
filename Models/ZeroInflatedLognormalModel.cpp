@@ -57,11 +57,6 @@ namespace BOOM {
     return new ZeroInflatedLognormalModel(*this);
   }
 
-  double ZILM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);
-  }
-
   double ZILM::pdf(const Data *dp, bool logscale) const {
     double ans = logp(dynamic_cast<const DoubleData *>(dp)->value());
     return logscale ? ans : exp(ans);
