@@ -55,7 +55,7 @@ namespace BOOM {
     }
 
     double mean_positive =
-        success_count > 0 ? success_prob_sum / success_count : 0.0;
+        success_count > 0 ? success_prob_sum / success_count : 1.0;
     double mean_negative =
         failure_count > 0 ? failure_prob_sum / failure_count : 0.0;
 

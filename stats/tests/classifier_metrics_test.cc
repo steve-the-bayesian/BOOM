@@ -100,7 +100,40 @@ namespace {
       total += p_hat;
     }
     double R2 = TjurR2(truth, pred);
-    EXPECT_NEAR(R2, total / n, .0001);
+    EXPECT_NEAR(R2, 1 - (total / n), .0001);
   }
+
+  TEST_F(TjurTest, TestAllPositivesPerfect) {
+    int n = 100;
+    std::vector<bool> truth;
+    Vector probs;
+
+    for (int i = 0; i < n; ++i) {
+      truth.push_back(true);
+      probs.push_back(1.0);
+    }
+
+    double R2 = TjurR2(truth, probs);
+    EXPECT_NEAR(R2, 1.0, .0001);
+    EXPECT_GE(R2, 0.0);
+    EXPECT_LE(R2, 1.0);
+  }
+  
+  TEST_F(TjurTest, TestAllNegativesPerfect) {
+    int n = 100;
+    std::vector<bool> truth;
+    Vector probs;
+
+    for (int i = 0; i < n; ++i) {
+      truth.push_back(false);
+      probs.push_back(0.0);
+    }
+
+    double R2 = TjurR2(truth, probs);
+    EXPECT_NEAR(R2, 1.0, .0001);
+    EXPECT_GE(R2, 0.0);
+    EXPECT_LE(R2, 1.0);
+  }
+  
 
 }  // namespace
