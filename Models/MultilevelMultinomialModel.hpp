@@ -74,6 +74,9 @@ namespace BOOM {
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
+    //---------------------------------------------------------------------------
+    // Access to conditional models.
+    //---------------------------------------------------------------------------
     // There are three ways of getting at the conditional models:
     // 1) 'restaurants/fancy/steak', '/'
     // 2) ["restaurants", "fancy", "steak"]
@@ -101,9 +104,7 @@ namespace BOOM {
     MultinomialModel *top_level_model() {return top_level_model_.get();}
     const MultinomialModel *top_level_model() const {return top_level_model_.get();}
 
-    Taxonomy *taxonomy() {return taxonomy_.get();}
-    const Taxonomy *taxonomy() const {return taxonomy_.get();}
-
+    // Iterating across conditional models
     std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::iterator
     conditional_model_begin() {return conditional_models_.begin();}
     std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::iterator
@@ -114,6 +115,10 @@ namespace BOOM {
     std::map<const TaxonomyNode *, Ptr<MultinomialModel>>::const_iterator
     conditional_model_end() const {return conditional_models_.end();}
     
+    // The taxonomy describing the model categories.
+    Taxonomy *taxonomy() {return taxonomy_.get();}
+    const Taxonomy *taxonomy() const {return taxonomy_.get();}
+
    private:
     // The taxonomy describes the potential values of the data supported by the
     // model.  The taxonomy's role is analogous to the 'cat key' in a flat

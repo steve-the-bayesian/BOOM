@@ -24,8 +24,9 @@ def _skim_plot_options(xlab="", ylab="", xlim=None, ylim=None, title="",
     kwargs.  This allows the remaining options to be later passed to pyplot.
 
     Returns:
-      plot_options:  The options expected by R plotting functions.a
-      kwargs:  Everything not pulled into plot_options.
+      The return value is a pair:
+      - plot_options:  The options expected by R plotting functions.
+      - remaining_kwargs:  Everything not pulled into plot_options.
     """
     plot_options = {'xlab': xlab,
                     'ylab': ylab,
@@ -55,9 +56,6 @@ def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
 def ensure_ax(fig, ax):
     """
     Create new Figure and Axes objects, if needed.
-
-    If ax already exists then the returned Figure is None.  Calling code can
-    rely on this behavior when deciding whether to call plt.show().
     """
     if fig is None and ax is None:
         fig, ax = plt.subplots(1, 1)

@@ -677,6 +677,25 @@ namespace BOOM {
     return out.str();
   }
 
+  std::vector<int> Taxonomy::level_indices(
+      const std::vector<std::string> &level_names) const {
+    std::vector<int> ans;
+    if (level_names.empty()) {
+      return ans;
+    }
+    ans.reserve(level_names.size());
+
+    std::vector<std::string> local_names;
+    local_names.reserve(level_names.size());
+
+    for (int i = 0; i < level_names.size(); ++i) {
+      local_names.push_back(level_names[0]);
+      const TaxonomyNode *node = this->node(local_names);
+      ans.push_back(node->position());
+    }
+    return ans;
+  }
+  
   //======================================================================
 
   MultilevelCategoricalData::MultilevelCategoricalData(

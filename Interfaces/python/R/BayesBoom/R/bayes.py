@@ -651,7 +651,7 @@ class MarkovModel(MixtureComponent):
             transition_matrix = np.ones((state_size, state_size)) / state_size
 
         state_size = transition_matrix.shape[0]
-        if categories and (state_size != len(categories)):
+        if (categories is not None) and (state_size != len(categories)):
             raise Exception(
                 f"The number of categories ({len(categories)}) does not match "
                 f"the state size ({state_size}).")
@@ -893,7 +893,6 @@ class MultilevelMultinomialModel(MixtureComponent):
             draws = draws[burn:, :]
 
         return draws
-
 
     def boom(self):
         import BayesBoom.boom as boom

@@ -124,6 +124,11 @@ from .plots import (
     time_series_boxplot,
     )
 
+from .plot_multilevel_probabilities import (
+    plot_multilevel_probabilities,
+    BarInfo,
+)
+
 from .probability import (
     dmvn, rmvn,
     dnorm, pnorm, qnorm, rnorm,

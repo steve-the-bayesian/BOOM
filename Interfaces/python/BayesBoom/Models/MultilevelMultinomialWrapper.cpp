@@ -33,6 +33,19 @@ namespace BayesBoom {
              "  levels: element [i] is a single taxonomy element of the form "
              "shopping/clothes/shoes.\n\n"
              "  sep: The field delimiter used to separate values in 'levels'.")
+        .def(py::init(
+            [](const std::vector<std::vector<std::string>> &levels) {
+              return new Taxonomy(levels);
+            }),
+             py::arg("levels"),
+             "Args:\n\n"
+             "  levels:  A list of lists of strings, with each list of strings"
+             " defining a single taxonomy level.\n"
+             "  Example:\n"
+             "  [['Food', 'Meat', 'Steak'],\n"
+             "   ['Food', 'Meat', 'Chicken'],\n"
+             "   ['Food', 'Veggies', 'Lettuce'],\n"
+             "   ['Food', 'Veggies', 'Corn']]\n" )
         .def_property_readonly(
             "number_of_leaves",
             [](const Taxonomy &tax) {
@@ -94,8 +107,24 @@ namespace BayesBoom {
              "in the argument.\n\n"
              "Examples:  foo/bar/baz -> 'foo/bar', 'baz'\n"
              "           foo         -> '', 'foo'\n"
-             "           foo/        -> 'foo', '' \n"
-             )
+             "           foo/        -> 'foo', '' \n")
+        .def("index",
+             [](const Taxonomy &taxonomy,
+                const std::vector<std::string> &level_names) {
+               return taxonomy.index(level_names);
+             },
+             py::arg("level_names"),
+             "Args:\n\n"
+             "  level_names:  A single spot in the taxonomy, encoded as a "
+             "list of names.  ['first', 'second', 'third', etc]. \n\n"
+             "Returns:\n"
+             "  A list of integers of the same length as the input list.  "
+             "Each list element inidcates where the corresponding input occurs "
+             "relative to its parent.   For example, if the return value is "
+             "[3, 1, 5], then the top taxonomy category is in position 3 of "
+             "the top level categories.  The second element is in position 1 "
+             "among the sub-categories of 'first', and the third is in "
+             "position 5 among the sub-categories of ['first', 'second'].\n")
         ;
 
     py::class_<MultilevelCategoricalData,

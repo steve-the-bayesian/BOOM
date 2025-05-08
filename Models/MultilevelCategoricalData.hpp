@@ -165,7 +165,7 @@ namespace BOOM {
 
     // The index of this node's value in the parent node of the taxonomy.
     int position() const {return position_;}
-
+   
     // Fill the next entry in the vector of integer positions/indexes describing
     // the numerical value
     void fill_position(const std::vector<std::string> &values,
@@ -306,11 +306,18 @@ namespace BOOM {
     //   levels:  The taxonomy levels identifying an observation.
     //
     // Returns:
-    //   The numeric indices of each supplied level.
+    //   The numeric indices of each supplied level, relevant to that level's
+    //   parent.
     //
     // Throws:
     //   If a taxonomy level is supplied, but that level is not present in the
     //   taxonomy then an exception is thrown.
+    //
+    // Example:
+    //   index({"foo", "bar", "baz"}) asks for the position of "foo/bar/baz".
+    //   If the return value is {3, 1, 5} then "foo" is in position 3 among the
+    //   top-level taxonomy categories, "bar" is in position 1 underneath "foo"
+    //   and "baz" in position 5 underneath "foo/bar".
     std::vector<int> index(const std::vector<std::string> &levels) const;
 
     // Args:
@@ -382,6 +389,9 @@ namespace BOOM {
     std::ostream &print(std::ostream &out) const;
     std::string to_string() const;
 
+    std::vector<int> level_indices(
+        const std::vector<std::string> &level_names) const;
+    
    private:
     // The first levels of the taxonomy tree.
     SortedVector<Ptr<TaxonomyNode>, TaxNodeLess> top_levels_;
