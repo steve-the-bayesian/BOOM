@@ -73,4 +73,34 @@ namespace {
     EXPECT_GE(R2, 0.0);
   }
 
+  TEST_F(TjurTest, TestAllPositives) {
+    std::vector<bool> truth;
+    Vector pred;
+    Int n = 100;
+    double total = 0.0;
+    for (Int i = 0; i < n; ++i) {
+      truth.push_back(true);
+      double p_hat = runif_mt(GlobalRng::rng, 0, 1);
+      pred.push_back(p_hat);
+      total += p_hat;
+    }
+    double R2 = TjurR2(truth, pred);
+    EXPECT_NEAR(R2, total / n, .0001);
+  }
+  
+  TEST_F(TjurTest, TestAllNegatives) {
+    std::vector<bool> truth;
+    Vector pred;
+    Int n = 100;
+    double total = 0.0;
+    for (Int i = 0; i < n; ++i) {
+      truth.push_back(false);
+      double p_hat = runif_mt(GlobalRng::rng, 0, 1);
+      pred.push_back(p_hat);
+      total += p_hat;
+    }
+    double R2 = TjurR2(truth, pred);
+    EXPECT_NEAR(R2, total / n, .0001);
+  }
+
 }  // namespace

@@ -50,21 +50,16 @@ namespace BOOM {
       }
     }
 
-    if (success_count == 0 || failure_count == 0) {
-      report_error("There must be ast least one success and one "
-                   "failure to compute Tjur R2.");
+    if (success_count + failure_count == 0) {
+      report_error("There are no successes or failures in call to TjurR2.");
     }
 
-    double ans = (success_prob_sum / success_count)
-                 - (failure_prob_sum / failure_count);
-    if (ans > 1.0) {
-      ans = 1.0;
-    } else if (ans < 0.0) {
-      ans = 0.0;
-    }
+    double mean_positive =
+        success_count > 0 ? success_prob_sum / success_count : 0.0;
+    double mean_negative =
+        failure_count > 0 ? failure_prob_sum / failure_count : 0.0;
 
-    return ans;
-    
+    return fabs(mean_positive - mean_negative);
   }
 
 }  // namespace BOOM

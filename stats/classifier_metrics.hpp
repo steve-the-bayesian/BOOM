@@ -23,6 +23,10 @@
 
 namespace BOOM {
 
+  // The Tjur R-square statistic measures the explanatory power of a
+  // probabilistic binary classifier.  It is the average of the success
+  // probabilities among the "success" cases, minus the average of the success
+  // probabilities under the "failure" cases.
   double TjurR2(const std::vector<bool> &truth,
                 const Vector &predicted_probabilities);
   
