@@ -20,18 +20,24 @@ class FrequencyDistribution:
         if variable is None:
             return
 
-        if isinstance(variable, np.ndarray):
+        if not categories:
             variable = pd.Series(variable, dtype="category")
+        else:
+            variable = pd.Series(variable, dtype=pd.CategoricalDtype(categories))
+                
         nans = variable.isna()
 
         if not nans.all():
             counts = variable.value_counts(dropna=True)
         else:
+            # If the input sequence was all nan's then counts is an empty series.
             counts = pd.Series(dtype=int)
 
         self._other_category_name = "[Other]"
-        self._non_nan = counts
-        self._nan_counts = nans.sum()
+
+        # Put the counts in the order of the categories, if one was given.
+        self._non_nan = counts[variable.cat.categories]
+        self._nan_counts = int(nans.sum())
 
     @classmethod
     def from_counts(cls, non_nan_counts, nan_count: int = None,
@@ -53,10 +59,21 @@ class FrequencyDistribution:
         """
         obj = cls(None)
         obj._non_nan_counts = non_nan_counts
-        obj._nan_counts = nan_count
+        obj._nan_counts = int(nan_count)
         obj._other_category_name = "[Other]"
         return obj
 
+    @property
+    def counts(self):
+        """
+        The count of missing levels other than NaN's
+        """
+        return self._non_nan
+
+    @property
+    def nan_count(self):
+        return self._nan_counts
+    
     @property
     def levels(self):
         ans = self._non_nan.index.tolist()
@@ -73,8 +90,13 @@ class FrequencyDistribution:
     def other_category_name(self):
         return self._other_category_name
 
+    @property
+    def sample_size(self):
+        return int(self._non_nan.sum() + self._nan_counts)
+    
     def __repr__(self):
         ans = str(self._non_nan)
-        if ans._nan_counts > 0:
+        if self._nan_counts > 0:
             ans += f"nan: {self._nan_counts}"
         return ans
+
