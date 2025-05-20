@@ -116,6 +116,27 @@ class TestFrequencyDistribution(unittest.TestCase):
         self.assertEqual(dist.nan_count, 3)
         self.assertEqual(list_dist.nan_count, 3)
         self.assertEqual(numpy_dist.nan_count, 3)
+
+
+    def test_collapse(self):
+        data = (
+            ["red"] * 10
+            + ["orange"] * 11
+            + ["yellow"] * 8
+            + ["green"] * 9
+            + ["blue"] * 5
+            + ["indigo"] * 3
+            + ["violet"]
+        )
+        sample_size = len(data)
+        dist = R.FrequencyDistribution(data)
+        self.assertEqual(dist.sample_size, sample_size)
+        dist.collapse(5, '[Other]')
+        self.assertEqual(dist.sample_size, sample_size)
+        self.assertEqual(dist["red"], 10)
+        self.assertEqual(dist["yellow"], 8)
+        self.assertEqual(dist["green"], 9)
+        self.assertEqual(dist["[Other]"], 4)
         
 
 _debug_mode = False

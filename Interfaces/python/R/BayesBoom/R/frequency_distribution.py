@@ -93,6 +93,29 @@ class FrequencyDistribution:
     @property
     def sample_size(self):
         return int(self._non_nan.sum() + self._nan_counts)
+
+    def collapse(self, max_levels, other_name):
+        """
+        Keep the 'max_levels' most frequent levels of the frequency
+        distribution unchanged.  If more levels exist, combine them into an
+        "other" category with a name given by 'other_name'.
+
+        """
+        if self._non_nan.shape[0] <= max_levels:
+            return
+
+        top_k_values = self._non_nan.nlargest(max_levels)
+        other_sum = self._non_nan[~self._non_nan.isin(top_k_values)].sum()
+        collapsed = self._non_nan.copy()
+        collapsed[~collapsed.isin(top_k_values)] = 0
+        collapsed[self._other_category_name] = other_sum
+        self._non_nan = collapsed
+
+    def __getitem__(self, index):
+        if isinstance(index, (int, float, np.number)) and np.isnan(index):
+            return self._nan_counts
+        else:
+            return self._non_nan[index]
     
     def __repr__(self):
         ans = str(self._non_nan)
