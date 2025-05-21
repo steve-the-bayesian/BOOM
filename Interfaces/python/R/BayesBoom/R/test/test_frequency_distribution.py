@@ -137,6 +137,13 @@ class TestFrequencyDistribution(unittest.TestCase):
         self.assertEqual(dist["yellow"], 8)
         self.assertEqual(dist["green"], 9)
         self.assertEqual(dist["[Other]"], 4)
+
+    def test_other_category_name_always_works(self):
+        stooges = self._data["stooges"].copy()
+        dist = R.FrequencyDistribution(stooges)
+        other_category_name = dist.other_category_name
+        self.assertEqual(other_category_name, "[Other]")
+        self.assertEqual(dist[other_category_name], 0)
         
 
 _debug_mode = False
