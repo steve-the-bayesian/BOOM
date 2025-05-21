@@ -145,6 +145,7 @@ from .summary import (
     UnivariateSummary,
     NumericSummary,
     CategoricalSummary,
+    HighCardinalitySummary,
     DateTimeSummary,
 )
 
