@@ -83,7 +83,7 @@ DynamicRegressionArOptions(lags = 1, sigma.prior = SdPrior(1, 1))
 
   \item{sigma.mean.prior.DEPRECATED}{ This option should be set using
     model.options.  It will be removed in a future release.}
-    
+
   \item{shrinkage.parameter.prior}{An object of class
     \code{\link[Boom]{GammaPrior}} describing the shrinkage parameter, a
     (see details below).}
@@ -101,7 +101,7 @@ DynamicRegressionArOptions(lags = 1, sigma.prior = SdPrior(1, 1))
 
   \item{sigma.max.DEPRECATED}{ This option should be set using
     model.options.  It will be removed in a future release.}
-  
+
   \item{contrasts}{An optional list. See the \code{contrasts.arg} of
     \code{model.matrix.default}.  This argument is only used if a model
     formula is specified.  It can usually be ignored even then.}
@@ -119,17 +119,18 @@ DynamicRegressionArOptions(lags = 1, sigma.prior = SdPrior(1, 1))
   \item{sdx}{The vector of standard deviations of each predictor
     variable in the dynamic regression.  Used only to scale the default
     prior.  This argument is not used if a prior is specified directly.}
-  
+
   \item{lags}{The number of lags in the autoregressive process for the
     coefficients.}
 
-  \item{sigma.prior}{Either an object of class \code{\link{SdPrior}} or
-    a list of such objects.  If a single \code{\link{SdPrior}} is given
-    then it specifies the prior on the innovation variance for all the
-    coefficients.  If a list of \code{\link{SdPrior}} objects is given,
-    then each element gives the prior distribution for the corresponding
-    regression coefficient.  The length of such a list must match the
-    number of predictors in the dynamic regression part of the model.  }
+  \item{sigma.prior}{Either an object of class
+    \code{\link[Boom]{SdPrior}} or a list of such objects.  If a single
+    \code{\link[Boom]{SdPrior}} is given then it specifies the prior on
+    the innovation variance for all the coefficients.  If a list of
+    \code{\link[Boom]{SdPrior}} objects is given, then each element gives the
+    prior distribution for the corresponding regression coefficient.
+    The length of such a list must match the number of predictors in the
+    dynamic regression part of the model.  }
 
 }
 

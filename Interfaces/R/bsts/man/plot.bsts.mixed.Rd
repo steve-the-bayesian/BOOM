@@ -81,7 +81,8 @@
   \item{ylim}{Limits for the vertical axis.  Optional.}
 
   \item{...}{Additional arguments to be passed to
-    \code{\link[Boom]{PlotDynamicDistribution}} or \code{\link{TimeSeriesBoxplot}}}
+    \code{\link[Boom]{PlotDynamicDistribution}} or
+    \code{\link[Boom]{TimeSeriesBoxplot}}}
 
 }
 

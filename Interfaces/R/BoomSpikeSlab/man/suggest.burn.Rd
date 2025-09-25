@@ -20,10 +20,10 @@ SuggestBurn(model)
 
 \details{
 
-  See \code{\link{SuggestBurnLogLikelihood}} for details of the on how
+  See \code{\link[Boom]{SuggestBurnLogLikelihood}} for details of the on how
   the burn-in period is suggested.  In this case the negative the
   residual standard deviation is used as a proxy for log likelihood.
-  
+
 }
 
 \value{
@@ -37,4 +37,3 @@ SuggestBurn(model)
 \seealso{
   \code{\link[Boom]{SuggestBurnLogLikelihood}}
 }
-

@@ -1,14 +1,17 @@
 Package: bsts
-Version: 0.9.10
-Date: 2024-01-16
+Version: 0.9.11
+Date: 2025-09-04
 Title: Bayesian Structural Time Series
-Author: Steven L. Scott <steve.the.bayesian@gmail.com>
-Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
+Authors@R: c(person(
+               given=c("Steven", "L."),
+               family = "Scott",
+               role = c("aut", "cre"),
+               email = "steve.the.bayesian@gmail.com"))
 Description: Time series regression using dynamic linear models fit using
   MCMC. See Scott and Varian (2014) <DOI:10.1504/IJMMNO.2014.059942>, among many
   other sources.
-Depends: BoomSpikeSlab (>= 1.2.6), zoo (>= 1.8), xts, Boom (>= 0.9.13), R(>= 3.4.0)
+Depends: BoomSpikeSlab (>= 1.2.7), zoo (>= 1.8), xts, Boom (>= 0.9.16), R(>= 4.5.0)
 Suggests: testthat
-LinkingTo: Boom (>= 0.9.13)
+LinkingTo: Boom (>= 0.9.16)
 License: LGPL-2.1 | MIT + file LICENSE
 Encoding: UTF-8

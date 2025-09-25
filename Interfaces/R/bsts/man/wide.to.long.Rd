@@ -15,7 +15,7 @@
   by columns.  In "long" format there is one row per observation, with
   variables indicating the series and time point to which an observation
   belongs.
-  
+
 }
 
 \usage{
@@ -27,7 +27,7 @@
 
   \item{response}{For \code{WideToLong} this is a matrix, with rows
     representing time and columns representing variables.  This can be a
-    \code{\link{zoo}} matrix with timestamps as an index.
+    \code{\link[zoo]{zoo}} matrix with timestamps as an index.
 
     For \code{LongToWide}, \code{response} is a vector.}
 
@@ -40,7 +40,7 @@
     observation belongs. }
 
   \item{timestamps}{A variable of the same length as \code{response},
-    indicating the time period to which each observation belongs.}  
+    indicating the time period to which each observation belongs.}
 }
 
 \value{
@@ -57,4 +57,3 @@ data(gdp)
 gdp.wide <- LongToWide(gdp$GDP, gdp$Country, gdp$Time)
 gdp.long <- WideToLong(gdp.wide)
 }
-

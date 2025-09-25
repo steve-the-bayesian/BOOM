@@ -16,9 +16,9 @@
 \arguments{
 
   \item{y}{A time series to plot.  Must be of class \code{\link{ts}}, or
-    \code{\link{zoo}}.  If a zoo object then the timestamps must be of
-    type \code{\link{Date}}, \code{\link{yearmon}}, or \code{\link{POSIXt}}.
-  }
+    \code{\link[zoo]{zoo}}.  If a zoo object then the timestamps must be
+    of type \code{\link{Date}}, \code{\link[zoo]{yearmon}}, or
+    \code{\link{POSIXt}}.  }
 
   \item{seasonal.identifier}{
     A function that takes a vector of class \code{\link{POSIXt}}
@@ -31,7 +31,7 @@
   \item{colors}{A vector of colors to use for the lines.}
 
   \item{legend}{Logical.  If \code{TRUE} then a legend is added to the plot.}
-  
+
   \item{ylab}{Label for the vertical axis.}
 
   \item{ylim}{Limits for the vertical axis. (a 2-vector)}
@@ -50,7 +50,7 @@
   on the same set of axes.
 
   Both sets of plots help visualize seasonal patterns.
-  
+
 }
 
 \value{
@@ -71,6 +71,6 @@ YearPlot(turkish)
 DayPlot(turkish)
 
 }
-  
+
 \seealso{ \code{\link{monthplot}} is a base R function for plotting time
   series of type \code{\link{ts}}.  }

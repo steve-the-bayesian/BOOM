@@ -101,10 +101,11 @@ mbsts(formula,
     the series to which each observation in "long" format belongs.  This
     argument is ignored for data in "wide" format.  }
 
-  \item{prior}{A list of \code{\link{SpikeSlabPrior}} objects, one for
-    each time series.  Or this argument can be NULL in which case a
-    default prior will be used.  Note that the prior is on both the
-    regression coefficients and the residual sd for each time series. }
+  \item{prior}{A list of \code{\link[BoomSpikeSlab]{SpikeSlabPrior}}
+    objects, one for each time series.  Or this argument can be NULL in
+    which case a default prior will be used.  Note that the prior is on
+    both the regression coefficients and the residual sd for each time
+    series. }
 
   \item{opts}{A list containing model options.  This is currently only
     used for debugging, so leave this as \code{NULL}.}

@@ -1,9 +1,12 @@
 Package: BoomSpikeSlab
-Version: 1.2.6
-Date: 2023-12-14
+Version: 1.2.7
+Date: 2025-09-03
 Title: MCMC for Spike and Slab Regression
-Author: Steven L. Scott <steve.the.bayesian@gmail.com>
-Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
+Authors@R: c(person(
+               given=c("Steven", "L."),
+               family = "Scott",
+               role = c("aut", "cre"),
+               email = "steve.the.bayesian@gmail.com"))
 Description: Spike and slab regression with a variety of residual error
   distributions corresponding to Gaussian, Student T, probit, logit, SVM, and a
   few others.  Spike and slab regression is Bayesian regression with prior
@@ -14,7 +17,7 @@ Description: Spike and slab regression with a variety of residual error
   to handle Bayesian variable selection and model averaging.  See
   <DOI:10.1504/IJMMNO.2014.059942> for an explanation of the Gaussian case.
 License: LGPL-2.1 | file LICENSE
-Depends: Boom (>= 0.9.13) , R (>= 3.5.0)
-LinkingTo: Boom(>= 0.9.13)
+Depends: Boom (>= 0.9.16) , R (>= 4.5.0)
+LinkingTo: Boom(>= 0.9.16)
 Suggests: MASS, testthat, mlbench, igraph
 Encoding: UTF-8

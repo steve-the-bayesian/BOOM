@@ -66,7 +66,7 @@ AddMonthlyAnnualCycle(state.specification,
 
   \item{date.of.first.observation}{The time stamp of the first
     observation in \code{y}, as a \code{\link{Date}} or
-    \code{\link{POSIXt}} object.  If \code{y} is a \code{\link{zoo}}
+    \code{\link{POSIXt}} object.  If \code{y} is a \code{\link[zoo]{zoo}}
     object with appropriate time stamps then this argument will be
     deduced.}
 

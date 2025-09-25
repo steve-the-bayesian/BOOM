@@ -22,7 +22,7 @@ BayesNnet(formula,
           drop.unused.levels = TRUE,
           contrasts = NULL,
           ping = niter / 10,
-          seed = NULL) 
+          seed = NULL)
 
 HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
 
@@ -41,12 +41,12 @@ HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
     \code{formula} argument.  The terminal layer is a linear regression
     on the outputs of the final hidden layer.
   }
-  
+
   \item{niter}{
     The number of MCMC iterations to run.  Be sure to include enough so
     you can throw away a burn-in set.
   }
-  
+
   \item{data}{
     An optional data frame, list or environment (or object coercible by
     'as.data.frame' to a data frame) containing the variables in the
@@ -54,7 +54,7 @@ HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
     'environment(formula)', typically the environment from which
     \code{BayesNnet} is called.
   }
-  
+
   \item{subset}{
     an optional vector specifying a subset of observations to be used in
     the fitting process.
@@ -71,7 +71,7 @@ HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
     output node, and the same prior is used for all nodes.  You can
     think of each hidden layer output node as a logistic regression
     model where the predictors are the outputs of the previous layer.
-    This must be an object of class \code{\link{MvnPrior}},
+    This must be an object of class \code{\link[Boom]{MvnPrior}},
     \code{\link{SpikeSlabGlmPrior}}, or
     \code{\link{SpikeSlabGlmPriorDirect}}.
   }
@@ -91,8 +91,8 @@ HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
   }
 
   \item{drop.unused.levels}{Logical indicating whether unobserved factor
-    levels should be dropped when forming the model matrix. } 
-  
+    levels should be dropped when forming the model matrix. }
+
   \item{contrasts}{ An optional list. See the \code{contrasts.arg}
     argument of \code{\link{model.matrix.default}}.  }
 
@@ -117,7 +117,7 @@ HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
   distribution.  Then conditional on the imputed data an MCMC draw is
   done on each latent logistic regression and on the regression model
   defining the terminal node.
-  
+
 }
 
 \value{
@@ -137,7 +137,7 @@ HiddenLayer(number.of.nodes, prior = NULL, expected.model.size = Inf)
       \item MCMC iteration
       \item Input node.  For the first hidden layer each 'input node' is
       a predictor variable.
-      \item Output node.  
+      \item Output node.
     }
     You can think of hidden.layer.coefficients[[i]][, , j] as the
     posterior distribution of the logistic regression model defining
@@ -179,7 +179,7 @@ if (require(mlbench)) {
 
   par(mfrow = c(1, 2))
   plot(model)  # plots predicted vs actual.
-  plot(model, "residual") # plots 
+  plot(model, "residual") # plots
   par(mfrow = c(1,1))
   plot(model, "structure")
   ## Examine all partial dependence plots.

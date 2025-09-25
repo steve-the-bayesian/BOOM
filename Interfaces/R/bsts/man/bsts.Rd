@@ -155,8 +155,8 @@ bsts(formula,
     per time point.  If the response is a "regular" time series with a
     single observation per time point then you can leave this argument
     as \code{NULL}.  In that case, if either the response or the
-    \code{data} argument is a type convertible to \code{\link{zoo}} then
-    timestamps will be inferred.}
+    \code{data} argument is a type convertible to \code{\link[zoo]{zoo}}
+    then timestamps will be inferred.}
 
   \item{seed}{An integer to use as the random seed for the underlying
     C++ code.  If \code{NULL} then the seed will be set using the
