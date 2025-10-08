@@ -135,7 +135,19 @@ namespace BOOM {
   class MarkovSuf
       : public TimeSeriesSufstatDetails<MarkovData, TimeSeries<MarkovData>> {
    public:
-    explicit MarkovSuf(uint S);
+    // Args:
+    //   state_space_size:  The dimension of the state space.
+    explicit MarkovSuf(uint state_space_size);
+
+    // Args:
+    //   transition_counts: An SxS matrix (where S is the state space
+    //     dimension).  Element (r, s) contains the number of transitions from
+    //     state r to state s.
+    //   initial_counts: A vector of dimension S containing the number of
+    //     observations in each state at time 0.  This is only relevant if
+    //     multiple series of the Markov chain are observed.
+    explicit MarkovSuf(const Matrix &transition_counts,
+                       const Vector &initial_counts=Vector());
     MarkovSuf(const MarkovSuf &sf);
     MarkovSuf *clone() const override;
 
@@ -205,10 +217,6 @@ namespace BOOM {
 
   //======================================================================
 
-  class ProductDirichletModel;
-  class DirichletModel;
-  class MarkovConjSampler;
-
   class MarkovModel
       : public ParamPolicy_2<MatrixParams, VectorParams>,
         public TimeSeriesSufstatDataPolicy<MarkovData,
@@ -242,13 +250,13 @@ namespace BOOM {
     void fix_pi0_stationary();
     bool pi0_fixed() const;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *dp, bool logscale) const override;
     double pdf(const Ptr<DataPointType> &dp, bool logscale) const;
     double pdf(const Ptr<DataSeriesType> &dp, bool logscale) const;
     double pdf(const DataPointType &dat, bool logscale) const;
     double pdf(const DataSeriesType &dat, bool logscale) const;
-
+    double pdf(const MarkovSuf &suf, bool logscale) const;
+    
     int number_of_observations() const override { return dat().size(); }
 
     void add_mixture_data(const Ptr<Data> &, double prob) override;
@@ -276,6 +284,15 @@ namespace BOOM {
     // The first S * (S-1) elements are the first (S-1) columns of the
     // transition probability matrix.  The final
     double loglike(const Vector &serialized_params) const override;
+
+    using LoglikeModel::log_likelihood;
+    
+    // Evaluate the log likelihood of a Markov model with the given parameters
+    // and sufficient statistics.
+    double log_likelihood(const Vector &initial_distribution,
+                          const Matrix &transition_probabilities,
+                          const MarkovSuf &suf) const;
+               
     Vector stat_dist() const;
 
    protected:

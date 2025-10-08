@@ -91,7 +91,6 @@ namespace BOOM {
     double variance() const override;
 
     void add_mixture_data(const Ptr<Data> &, double prob) override;
-    double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *dp, bool logscale) const override;
     int number_of_observations() const override { return dat().size(); }
 

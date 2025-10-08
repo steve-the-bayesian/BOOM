@@ -1,5 +1,5 @@
 import numpy as np
-from .plots import _skim_plot_options, _set_plot_options
+from .plots import _skim_plot_options, _set_plot_options, ensure_ax
 
 
 class Density:
@@ -32,16 +32,13 @@ class Density:
         """
         import matplotlib.pyplot as plt
 
-        fig = None
-        if ax is None:
-            fig, ax = plt.subplots(1, 1)
-
+        fig, ax = ensure_ax(None, ax)
         plot_options, kwargs = _skim_plot_options(**kwargs)
         ax.plot(self._grid, self._density_values, **kwargs)
         _set_plot_options(ax, **plot_options)
         if fig is not None:
             fig.show()
-        return ax
+        return fig, ax
 
     def __call__(self, x):
         """

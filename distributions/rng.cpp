@@ -41,7 +41,7 @@ namespace BOOM {
     while (ans <= 2) {
       double u = runif_mt(rng) * static_cast<double>(
           std::numeric_limits<RNG::RngIntType>::max());
-      ans = lround(u);
+      ans = llround(u);
     }
     return ans;
   }

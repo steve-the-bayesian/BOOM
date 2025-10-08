@@ -28,9 +28,9 @@ namespace BOOM {
 
   MUCM *MUCM::clone() const { return new MUCM(*this); }
 
-  double MUCM::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double MUCM::pdf(const Data *dp, bool logscale) const {
     // un-normalized!!!
-    Ptr<SpdParams> d = DAT(dp);
+    const SpdParams *d = DAT(dp);
     double ans = logp(CorrelationMatrix(d->value()));
     return logscale ? ans : exp(ans);
   }

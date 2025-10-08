@@ -41,7 +41,7 @@ namespace BOOM {
     return m.is_pos_def() ? 0.0 : BOOM::negative_infinity();
   }
 
-  double UCM::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double UCM::pdf(const Data *dp, bool logscale) const {
     double ans = logp(CorrelationMatrix(DAT(dp)->value()));
     return logscale ? ans : exp(ans);
   }

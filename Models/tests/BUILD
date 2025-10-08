@@ -17,6 +17,14 @@ cc_test(
 )
 
 cc_test(
+    name = "categorical_data_test",
+    size = "small",
+    srcs = ["categorical_data_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "constrained_vector_params_test",
     size = "small",
     srcs = ["constrained_vector_params_test.cc"],
@@ -63,6 +71,15 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "multilevel_multinomial_test",
+    size = "small",
+    srcs = ["multilevel_multinomial_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
 
 cc_test(
     name = "multinomial_test",

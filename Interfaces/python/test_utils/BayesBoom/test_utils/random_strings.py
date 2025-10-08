@@ -21,9 +21,17 @@ def random_strings(num_strings, length, ensure_unique: bool = True):
                               1,
                               letters)
 
+    if not ensure_unique:
+        return ans
+    
+    trial_counter = 0
     while len(np.unique(ans)) < num_strings:
         levels, counts = np.unique(ans, return_counts=True)
         duplicates = levels[counts > 1]
         dup_counts = counts[counts > 1]
         ans[ans == duplicates[0]] = random_strings(dup_counts[0], length)
+        trial_counter += 1
+        if trial_counter > 100:
+            raise Exception("Uniqueness is possible but it over 100 retries "
+                            "have been attempted.")
     return ans

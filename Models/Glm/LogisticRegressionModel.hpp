@@ -49,7 +49,6 @@ namespace BOOM {
     Ptr<GlmCoefs> coef_prm() override { return ParamPolicy::prm(); }
     const Ptr<GlmCoefs> coef_prm() const override { return ParamPolicy::prm(); }
 
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *dp, bool logscale) const override;
     double logp(bool y, const Vector &x) const;
     int number_of_observations() const override { return dat().size(); }

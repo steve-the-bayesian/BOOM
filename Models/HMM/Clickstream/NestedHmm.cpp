@@ -157,7 +157,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void NestedHmm::print_event(std::ostream &out, const char *msg,
-                              const Ptr<Stream> &u, const Ptr<Session> &session,
+                              const Stream *u, const Ptr<Session> &session,
                               const Ptr<Event> &event, int j) const {
     out << msg << " for stream "
         << "The numerical value of this event is " << event->value() << endl
@@ -178,7 +178,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double NestedHmm::fwd(const Ptr<Stream> &u) const {
+  double NestedHmm::fwd(const Stream *u) const {
     double ans = 0;
     int Nsessions = u->nsessions();
     int stream_nevents = u->number_of_events_including_eos();
@@ -224,7 +224,7 @@ namespace BOOM {
     mix(H, h)->suf()->add_mixture_data(event, p);
   }
   //----------------------------------------------------------------------
-  void NestedHmm::bkwd_smoothing(const Ptr<Stream> &u) {
+  void NestedHmm::bkwd_smoothing(const Stream *u) {
     // check this.  make sure now-then correctly updated, and do
     // boundary cases.
 
@@ -444,9 +444,8 @@ namespace BOOM {
   }
 
   Matrix NestedHmm::report_session_type_distribution(
-      const Ptr<Stream> &stream) const {
-    std::map<Ptr<Stream>, Matrix>::const_iterator it =
-        session_type_distribution_.find(stream);
+      const Stream *stream) const {
+    auto it = session_type_distribution_.find(stream);
     if (it == session_type_distribution_.end()) {
       report_error(
           "Invalid stream passed to NestedHmm::"
@@ -464,7 +463,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void NestedHmm::bkwd_sampling(const Ptr<Stream> &u) {
+  void NestedHmm::bkwd_sampling(const Stream *u) {
     int Nsessions = u->nsessions();
     int event_num = u->number_of_events_including_eos();
     // be sure to grab the terminal state before you start the loop,
@@ -533,7 +532,7 @@ namespace BOOM {
     H = state / S1_;
   }
   //----------------------------------------------------------------------
-  Ptr<Clickstream::Stream> NestedHmm::stream(int i) { return this->dat()[i]; }
+  Clickstream::Stream *NestedHmm::stream(int i) { return this->dat()[i].get(); }
   //----------------------------------------------------------------------
   double NestedHmm::impute_latent_data() {
     if (!workers_.empty()) {
@@ -543,7 +542,7 @@ namespace BOOM {
     double ans = 0;
     fill_big_Q();
     for (int i = 0; i < Nstreams(); ++i) {
-      Ptr<Stream> u(stream(i));
+      const Stream *u(stream(i));
       ans += fwd(u);
       bkwd_sampling(u);
     }
@@ -689,7 +688,7 @@ namespace BOOM {
     }
   }
   //----------------------------------------------------------------------
-  double NestedHmm::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double NestedHmm::pdf(const Data *dp, bool logscale) const {
     double ans = fwd(DAT(dp));
     return logscale ? ans : exp(ans);
   }

@@ -37,7 +37,7 @@ namespace BOOM {
     UniformCorrelationModel *clone() const override;
 
     void initialize_params();
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
     double logp(const CorrelationMatrix &) const override;
 
     uint dim() const;

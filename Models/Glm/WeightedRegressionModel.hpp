@@ -158,8 +158,8 @@ namespace BOOM {
     // final element sigsq.
     double Loglike(const Vector &beta_sigsq, Vector &g, Matrix &h,
                    uint nd) const override;
-    double pdf(const Ptr<Data> &, bool) const;
-    double pdf(const Ptr<data_type> &, bool) const;
+    double pdf(const Data *data_point, bool logscale) const;
+    double pdf(const data_type *data_point, bool logscale) const;
   };
 
 }  // namespace BOOM

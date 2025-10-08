@@ -48,8 +48,8 @@ namespace BOOM {
     set_Sigma(suf()->center_sumsq(mu_) / (n - 1));
   }
 
-  double ZMMM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<VectorData> dpp = DAT(dp);
+  double ZMMM::pdf(const Data *dp, bool logscale) const {
+    const VectorData *dpp = DAT(dp);
     return dmvn_zero_mean(dpp->value(), siginv(), ldsi(), logscale);
   }
 

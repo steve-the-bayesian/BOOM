@@ -72,13 +72,14 @@ class TestPlots(unittest.TestCase):
 
         # print(counts)
         fig, ax = plt.subplots()
-        foo = mosaic_plot(counts, ax=ax)
-
-        if _debug_mode:
-            fig.show()
+        _, foo = mosaic_plot(counts, ax=ax)
 
         self.assertIsInstance(foo, plt.Axes)
 
+        fig2, ax2 = mosaic_plot(counts)
+        self.assertIsInstance(fig2, plt.Figure)
+        self.assertIsInstance(ax2, plt.Axes)
+        
         if _show_figs:
             fig.show()
 
@@ -104,11 +105,25 @@ class TestPlots(unittest.TestCase):
         rnd = np.random.uniform(0, 1, 1000)
         y = rnd < x
         fig, ax = plt.subplots()
-        ax, group_means = hosmer_lemeshow_plot(y, x, main="Hosmer-Lemeshow plot", ax=ax)
+        _, ax, group_means = hosmer_lemeshow_plot(y, x, main="Hosmer-Lemeshow plot", ax=ax)
         self.assertIsInstance(ax, plt.Axes)
         self.assertIsInstance(group_means, pd.Series)
         if _show_figs:
             fig.show()
+
+    def test_plot_ts(self):
+        x = np.random.randn(20)
+        fig, ax = R.plot_ts(x)
+
+        dates = pd.date_range(start='2024-12-20', periods=20)
+        fig, ax = R.plot_ts(x, timestamps=dates)
+
+        x = pd.Series(x, index=dates)
+        fig, ax = R.plot_ts(x)
+
+        fig, ax = R.plot_ts(x, main="A time series plot")
+        
+        fig, ax = R.plot_ts(x, main="A time series plot", xlab = "time axis", ylab = "Value axis")
 
 
 _debug_mode = False
@@ -134,7 +149,7 @@ if _debug_mode:
 
     # rig.test_plot_points()
     # rig.test_mosaic_plot()
-    rig.test_hosmer()
+    rig.test_plot_ts()
     # rig.test_lty()
     # rig.test_fill_between()
 

@@ -44,7 +44,7 @@ def to_boom_vector(v):
 
     if hasattr(v, "values"):
         # Handle pd.Series and similar.
-        return boom.Vector(np.array(v.values, dtype="float"))
+        return boom.Vector(v.to_numpy(dtype="float"))
 
     if isinstance(v, Number):
         return boom.Vector(np.array([v], dtype="float"))
@@ -314,3 +314,5 @@ def to_pd_dataframe(obj, columns=None, index=None):
     else:
         raise Exception(f"Unrecognized type {type(obj)} passed "
                         "to 'to_pd_dataframe'.")
+
+

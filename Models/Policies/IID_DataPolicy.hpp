@@ -46,6 +46,7 @@ namespace BOOM {
 
     virtual void clear_data();
     virtual void set_data(const std::vector<Ptr<DataType>> &data_set);
+    
     virtual void add_data(const Ptr<Data> &dp);
     virtual void add_data(DataType *dp) { add_data(Ptr<DataType>(dp)); }
     virtual void add_data(const Ptr<DataType> &dp);

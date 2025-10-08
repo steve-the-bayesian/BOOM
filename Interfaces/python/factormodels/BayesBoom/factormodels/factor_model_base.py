@@ -5,11 +5,19 @@ import BayesBoom.R as R
 
 
 class Visitor:
+    """
+    A Visitor captures the data from a user who visits multiple sites.  The
+    python Visitor class is a wrapper around the C++ Visitor class, with methods
+    to access the C++ object's data.
+    """
     def __init__(self, boom_vistor_object):
         self._boom_visitor = boom_vistor_object
 
     @property
     def visits(self):
+        """
+        The number visits to each site that the Visitor has visited.
+        """
         return pd.Series(self._boom_visitor.visits)
 
     @property
@@ -18,6 +26,9 @@ class Visitor:
 
     @property
     def imputed_class(self):
+        """
+        The latent class that was imputed for this visitor.
+        """
         return self._boom_visitor.imputed_class
 
     def __str__(self):
@@ -273,16 +284,18 @@ class FactorModelBase:
             ans = ans.ravel()
         return ans
 
-    def user_distribution(self, burn=None):
-        """
-        Returns a matrix [num_users x num_categories] giving the Monte Carlo
-        estimate of the posterior probability that each user is in each
-        category.
-        """
-        levels = np.arange(self.num_categories, dtype="float")
-        user_counts = [R.table(self._user_draws[:, x]).reindex(
-            levels, fill_value=0)
-                       for x in range(self._user_draws.shape[1])]
-        user_counts = pd.DataFrame(user_counts, index=self._user_ids)
-        totals = user_counts.sum(axis=1)
-        return user_counts.div(totals, axis=0)
+    # This function is deprecated.
+    # 
+    # def user_distribution(self, burn=None):
+    #     """
+    #     Returns a matrix [num_users x num_categories] giving the Monte Carlo
+    #     estimate of the posterior probability that each user is in each
+    #     category.
+    #     """
+    #     levels = np.arange(self.num_categories, dtype="float")
+    #     user_counts = [R.table(self._user_draws[:, x]).reindex(
+    #         levels, fill_value=0)
+    #                    for x in range(self._user_draws.shape[1])]
+    #     user_counts = pd.DataFrame(user_counts, index=self._user_ids)
+    #     totals = user_counts.sum(axis=1)
+    #     return user_counts.div(totals, axis=0)

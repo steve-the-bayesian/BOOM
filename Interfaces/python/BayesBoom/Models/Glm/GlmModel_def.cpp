@@ -657,6 +657,16 @@ namespace BayesBoom {
              "  prior_inclusion_probabilities: boom.Vector containing the "
              "prior probability that each variable is to be included. "
              )
+        .def("set_max_size",
+             [](VariableSelectionPrior &prior,
+                int max_size) {
+               prior.set_max_model_size(max_size);
+             },
+             py::arg("max_size"),
+             "Args:\n\n"
+             "  max_size:  models with more than this many nonzero coefficients "
+             "are given zero prior probability."
+             )
         ;
 
     py::class_<RegressionConjugateSampler,
@@ -789,6 +799,13 @@ namespace BayesBoom {
              "  seeding_rng:  The random number generator used to set the seed "
              "of the RNG owned by this sampler."
              )
+        .def("limit_model_selection",
+             [](BregVsSampler *sampler, int max_flips) {
+               sampler->limit_model_selection(max_flips);
+             },
+             "Args:\n\n"
+             "  max_flips:  At most this many model exploration steps will be "
+             "attempted each iteration.\n")
         ;
 
     py::class_<TRegressionSampler,
@@ -837,7 +854,7 @@ namespace BayesBoom {
              "parameter to (0, sigma_max).\n\n"
              "Args:\n\n"
              "  sigma_max:  Any non-negative value, including zero and "
-             "infinity() is allowed.")
+             "infinity() is allowed.")       
         ;
 
     py::class_<TRegressionSpikeSlabSampler,
@@ -890,8 +907,7 @@ namespace BayesBoom {
              },
              "Args:\n\n"
              "  max_flips:  At most this many model exploration steps will be "
-             "attempted each iteration.\n"
-             "")
+             "attempted each iteration.\n")
         ;
 
     py::class_<BinomialLogitSpikeSlabSampler,
@@ -931,8 +947,7 @@ namespace BayesBoom {
              },
              "Args:\n\n"
              "  max_flips:  At most this many model exploration steps will be "
-             "attempted each iteration.\n"
-             "")
+             "attempted each iteration.\n")
         .def("set_prior_inclusion_probability",
              [](BinomialLogitSpikeSlabSampler *sampler, double prob) {
                if (prob < 0 || prob > 1) {
@@ -983,8 +998,7 @@ namespace BayesBoom {
              },
              "Args:\n\n"
              "  max_flips:  At most this many model exploration steps will be "
-             "attempted each iteration.\n"
-             "")
+             "attempted each iteration.\n")
         ;
 
     py::class_<BigAssSpikeSlabSampler,

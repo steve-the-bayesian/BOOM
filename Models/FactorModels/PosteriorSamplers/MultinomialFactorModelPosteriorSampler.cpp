@@ -48,7 +48,7 @@ namespace BOOM {
     }
   }
 
-  namespace MfmThreading {
+  namespace MultinomialFactorModelThreading {
     using Visitor = FactorModels::MultinomialVisitor;
     using Site = FactorModels::MultinomialSite;
 
@@ -77,14 +77,14 @@ namespace BOOM {
       }
     }
 
-  }  // namespace MfmThreading
+  }  // namespace MultinomialFactorModelThreading
 
   namespace {
     using Sampler = MultinomialFactorModelPosteriorSampler;
     using Visitor = FactorModels::MultinomialVisitor;
     using Site = FactorModels::MultinomialSite;
 
-    using VisitorImputer = MfmThreading::VisitorImputer;
+    using VisitorImputer = MultinomialFactorModelThreading::VisitorImputer;
   }  // namespace
 
   Sampler::MultinomialFactorModelPosteriorSampler(

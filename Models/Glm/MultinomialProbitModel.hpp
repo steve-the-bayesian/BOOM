@@ -62,8 +62,8 @@ namespace BOOM {
     void impute_latent_data(RNG &rng) override;
     virtual double complete_data_loglike() const;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
-    double pdf(const Ptr<ChoiceData> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
+    double pdf(const ChoiceData *dp, bool logscale) const;
     virtual void initialize_params();
 
     const Vector &beta() const;

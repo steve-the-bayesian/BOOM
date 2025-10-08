@@ -168,14 +168,14 @@ namespace BOOM {
     }
   }
 
-  double FMM::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double FMM::pdf(const Data *dp, bool logscale) const {
     if (!logpi_current_) {
       logpi_ = log(pi());
     }
     uint S = number_of_mixture_components();
     wsp_.resize(S);
     for (uint s = 0; s < S; ++s) {
-      wsp_[s] = logpi_[s] + mixture_components_[s]->pdf(dp.get(), true);
+      wsp_[s] = logpi_[s] + mixture_components_[s]->pdf(dp, true);
     }
     if (logscale) {
       return lse(wsp_);

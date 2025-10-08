@@ -114,8 +114,8 @@ namespace BOOM {
     return ans;
   }
 
-  double MVTR::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<DataType> d = DAT(dp);
+  double MVTR::pdf(const Data *data_point, bool logscale) const {
+    const DataType *d = DAT(data_point);
     const Vector &y(d->y());
     const Vector &X(d->x());
     double ans = dmvt(y, X * Beta(), Siginv(), nu(), ldsi(), true);

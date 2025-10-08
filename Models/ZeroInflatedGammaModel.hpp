@@ -54,7 +54,6 @@ namespace BOOM {
     ZeroInflatedGammaModel(const ZeroInflatedGammaModel &rhs);
     ZeroInflatedGammaModel *clone() const override;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *, bool logscale) const override;
     double logp(double x) const override;
     double sim(RNG &rng = GlobalRng::rng) const override;

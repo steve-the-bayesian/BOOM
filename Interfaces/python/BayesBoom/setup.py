@@ -11,7 +11,7 @@ MAJOR = 0
 MINOR = 1
 
 # Bump the patch version when making bug fixes.
-PATCH = 32
+PATCH = 34
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -264,8 +264,8 @@ boom_library_sources = (
     + factor_sources
     + glm_sources
     + gp_sources
-    + hmm_sources
     + hierarchical_sources
+    + hmm_sources
     + impute_sources
     + irt_sources
     + mixture_sources

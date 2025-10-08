@@ -148,11 +148,6 @@ namespace BOOM {
 
   double GaussianModelBase::sigma() const { return sqrt(sigsq()); }
 
-  double GaussianModelBase::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);
-  }
-
   double GaussianModelBase::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);

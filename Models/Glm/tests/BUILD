@@ -87,7 +87,7 @@ cc_test(
     name = "mlogit_test",
     size = "large",
     srcs = ["mlogit_test.cc"],
-    copts = COPTS + ["-lprofiler"],
+    copts = COPTS
     data = [":test_data"],
     #     linkopts = ["-lprofiler"],
     deps = COMMON_DEPS,

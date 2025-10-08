@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 from numbers import Number
-
+import inspect
+import pdb
 
 def _cbind_numpy(*args):
     """
@@ -40,24 +41,43 @@ def _cbind_pandas(*args):
     nrows = nrows[0]
 
     names = []
-    pos = 0
     for i, arg in enumerate(args):
+        # Get the name used to pass 'arg' into the function.  This code gets
+        # the current frame, moves back up two frames (to the frame that
+        # called cbind) and then checks the pointer to 'arg' (using 'is' and
+        # not '==' for comparison) against everything in that frame.
+        #
+        # This can fail if there is more than one name pointing to the same
+        # memory in the calling frame.  
+        callers_local_vars = inspect.currentframe().f_back.f_back.f_locals.items()
+        try:
+            argname = next(var_name for var_name, var_val in callers_local_vars
+                           if var_val is arg)
+        except StopIteration:
+            argname = None
+            
         if isinstance(arg, Number):
-            names.append(f"X{pos + 1}")
-            pos += 1
+            # If a number was passed as an argument, use the value of that
+            # number as a column heading if no name is found in the calling
+            # environment.
+            names.append(argname if argname else str(arg))
         elif isinstance(arg, np.ndarray):
             if len(arg.shape) == 1:
-                names.append(f"X{pos + 1}")
-                pos += 1
+                # If a 1-dimensional numpy array is found, use the name of that
+                # numpy array as column heading.
+                names.append(argname)
             elif len(arg.shape) == 2:
-                names += [f"X{pos + i + 1}" for i in range(arg.shape[1])]
-                pos += arg.shape[1]
+                # If a 2D numpy array is found, then use the name of the array
+                # as column headings, with column numbers appended for each
+                # column.
+                names += [argname + str(i) for i in range(arg.shape[1])]
             else:
                 raise Exception(
                     "Can't call cbind on arrays with dimension more than 2")
+                
         elif isinstance(arg, pd.Series):
-            names.append(f"X{pos + 1}")
-            pos += 1
+            names.append(argname)
+
         elif isinstance(arg, pd.DataFrame):
             names += list(arg.columns)
 

@@ -91,7 +91,6 @@ namespace BOOM {
 
     void set_sufficient_statistics(const ZeroInflatedPoissonSuf &suf);
 
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *dp, bool logscale) const override;
     double logp(int y) const;
     double sim(RNG &rng = GlobalRng::rng) const;

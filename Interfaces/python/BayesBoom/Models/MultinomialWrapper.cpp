@@ -32,6 +32,7 @@ namespace BayesBoom {
 
     py::class_<MultinomialModel,
                PriorPolicy,
+               MixtureComponent,
                BOOM::Ptr<MultinomialModel>>(boom,
                                             "MultinomialModel",
                                             py::multiple_inheritance())
@@ -51,6 +52,11 @@ namespace BayesBoom {
              py::arg("probs"),
              "Args:\n\n"
              "  probs:  A discrete probability distribution.\n")
+        .def_property_readonly(
+            "dim",
+            [](const MultinomialModel &model) {
+              return model.dim();
+            })
         .def_property_readonly(
             "probs",
             [](const MultinomialModel &model) {

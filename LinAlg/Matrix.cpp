@@ -44,7 +44,7 @@
 #include "LinAlg/EigenMap.hpp"
 
 // other BOOM
-#include "cpputil/Split.hpp"
+#include "cpputil/StringSplitter.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/string_utils.hpp"
 #include "distributions.hpp"
