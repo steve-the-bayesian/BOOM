@@ -1,4 +1,4 @@
-from setuptools import setup, Extension, find_packages, find_namespace_packages
+ from setuptools import setup, Extension, find_packages, find_namespace_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
@@ -452,7 +452,7 @@ def FindPackagesAndBlab():
 
 
 setup(
-    name='BayesBoom',
+    name='bayesboom',
     packages=FindPackagesAndBlab(),
     version=__version__,
     author='Steven L. Scott',
