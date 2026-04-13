@@ -37,7 +37,17 @@ namespace BOOM {
   class FunctionParams : public Params {
    public:
     virtual FunctionParams * clone() const override = 0;
+
+    // Apply the function to the inputs 'x'.
     virtual double operator()(const ConstVectorView &x) const = 0;
+    
+    // Apply the function call operator to each row of the matrix X.
+    //
+    // Args:
+    //   X:  Function arguments.  Each row of X is to be evaluated.
+    //
+    // Returns:
+    //   A vector y, where y[i] = f(X.row(i)).
     virtual Vector operator()(const Matrix &X) const;
   };
 
