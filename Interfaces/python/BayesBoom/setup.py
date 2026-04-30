@@ -1,4 +1,4 @@
- from setuptools import setup, Extension, find_packages, find_namespace_packages
+from setuptools import setup, Extension, find_packages, find_namespace_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools

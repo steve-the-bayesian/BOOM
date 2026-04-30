@@ -265,6 +265,65 @@ class MultinomialFactorModelTest(unittest.TestCase):
         self.assertTrue(np.allclose(probs, probs2))
         print("Done with model run!")
 
+    def test_format_inference_priors(self):
+        model = self.build_model()
+        user_ids = random_strings(10, 10, ensure_unique=True)
+        
+        priors = model._format_inference_priors(user_ids, None)
+        self.assertIsInstance(priors, pd.DataFrame)
+        self.assertEqual(priors.shape[0], 10)
+        self.assertEqual(priors.shape[1], model.num_categories)
+        for i in range(10):
+            self.assertTrue(np.allclose(priors.iloc[i, :], priors.iloc[0, :]))
+
+        prior_list = [1.0 / model.num_categories] * model.num_categories
+        priors = model._format_inference_priors(user_ids, prior_list)
+        self.assertIsInstance(priors, pd.DataFrame)
+        self.assertEqual(priors.shape[0], 10)
+        self.assertEqual(priors.shape[1], model.num_categories)
+        for i in range(model.num_categories):
+            self.assertAlmostEqual(priors.iloc[0, i], prior_list[i])
+        for i in range(10):
+            self.assertTrue(np.allclose(priors.iloc[i, :], priors.iloc[0, :]))
+        
+        prior_array = np.array(prior_list)
+        priors = model._format_inference_priors(user_ids, prior_list)
+        self.assertIsInstance(priors, pd.DataFrame)
+        self.assertEqual(priors.shape[0], 10)
+        self.assertEqual(priors.shape[1], model.num_categories)
+        for i in range(model.num_categories):
+            self.assertAlmostEqual(priors.iloc[0, i], prior_list[i])
+        for i in range(10):
+            self.assertTrue(np.allclose(priors.iloc[i, :], priors.iloc[0, :]))
+
+        prior_series = pd.Series(prior_array)
+        self.assertIsInstance(priors, pd.DataFrame)
+        self.assertEqual(priors.shape[0], 10)
+        self.assertEqual(priors.shape[1], model.num_categories)
+        for i in range(model.num_categories):
+            self.assertAlmostEqual(priors.iloc[0, i], prior_list[i])
+        for i in range(10):
+            self.assertTrue(np.allclose(priors.iloc[i, :], priors.iloc[0, :]))
+
+        tmp = np.abs(np.random.randn(10, model.num_categories))
+        totals = tmp.sum(axis=1)
+        probs = (tmp.T / totals).T
+        self.assertAlmostEqual(probs[0, :].sum(), 1.0)
+        self.assertAlmostEqual(probs[2, :].sum(), 1.0)
+        prior_frame = pd.DataFrame(probs, index=user_ids)
+        priors = model._format_inference_priors(user_ids, prior_frame)
+        self.assertIsInstance(priors, pd.DataFrame)
+        self.assertEqual(priors.shape[0], 10)
+        self.assertEqual(priors.shape[1], model.num_categories)
+
+        #======================================================================
+        # Check that calling 'infer_posterior_distributions' with 1.0 priors
+        # produces the expected solutions.
+        #======================================================================
+        probs.iloc[0:model.num_categories, :] = 0.0
+        for i in range(model.num_categories):
+            probs.iloc[i, i] = 1.0
+
     def test_json(self):
         model = self.build_model()
         num_known = 800

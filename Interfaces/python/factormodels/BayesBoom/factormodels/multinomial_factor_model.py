@@ -69,36 +69,36 @@ class MultinomialFactorModel(FactorModelBase):
             as 'sites_visited'.
           sites_visited: A vector of strings giving the names of the sites
             visited by each user.
-          priors: A pd.DataFrame indexed by user_id.  If a user_id in user_ids
-            is present in priors, then that row is used as the prior
-            distribution when computing that user's posterior distribution of
-            class membership.  If a user_id is not present (or if priors is
-            None) then the default demographic prior from the model is used
-            instead.
+          priors: Can be one of three options:
+        
+            (1) A pd.DataFrame indexed by user_id.  If a user_id in user_ids is
+                present in priors, then that row is used as the prior
+                distribution when computing that user's posterior distribution
+                of class membership.  If a user_id is not present then the
+                default demographic prior from the model is used instead.
+
+            (2) A pd.Series, one-dimensional numpy array, or a list containing a
+                discrete probability distribution over the demographic
+                categories.  In this case the same prior distribution will be
+                used for all users.
+
+            (3) None, in which case the default demographic prior from the model
+                is used for all users.
+        
           burn:  The number of initial MCMC iterations to discard as burn-in.
 
         Returns:
           A pd.DataFrame, indexed by the unique values in user_ids, containing
           the posterior probabilities of class membership for that user in the
           columns.
+
+        Example:
+          If user A visited a.com and b.com, while user B visited x.com and
+          z.com, then this function might be called with user_ids = ["A", "A",
+          "B", "B"] and sites.visited = ["a.com", "b.com", "x.com", "y.com"].
         """
 
-        unique_user_ids = np.unique(user_ids)
-        default_prior = self._prior_class_membership_probabilites
-        if priors is None:
-            priors = pd.DataFrame(
-                np.array([default_prior] * len(unique_user_ids)),
-                index=unique_user_ids)
-
-        if not isinstance(priors, pd.DataFrame):
-            raise Exception("'priors' must be a pandas DataFrame.")
-
-        if not (priors.shape[0] == len(unique_user_ids)):
-            raise Exception("Each user ID needs a distinct prior.")
-
-        if not (default_prior.shape[0] == priors.shape[1]):
-            raise Exception("The dimension of default prior must match the "
-                            "number of columns in priors.")
+        priors = self._format_inference_priors(user_ids, priors)
 
         # get default_site_name, default_prior
         if (burn < 0) or (not burn):
@@ -198,6 +198,38 @@ class MultinomialFactorModel(FactorModelBase):
         model.set_method(posterior_sampler)
         return posterior_sampler
 
+    def _format_inference_priors(self, user_ids, priors):
+        unique_user_ids = np.unique(user_ids)
+        if isinstance(priors, pd.Series):
+            default_prior = priors.values
+            priors = None
+        elif isinstance(priors, np.ndarray) and len(priors.shape) == 1:
+            default_prior = priors
+            priors = None
+        elif isinstance(priors, list):
+            default_prior = np.array(priors)
+            priors = None
+        else:
+            default_prior = self._prior_class_membership_probabilites
+            
+        if priors is None:
+            priors = pd.DataFrame(
+                np.array([default_prior] * len(unique_user_ids)),
+                index=unique_user_ids)
+
+        if not isinstance(priors, pd.DataFrame):
+            raise Exception("'priors' must be a pandas DataFrame, series, "
+                            "numpy array, list, nor None.")
+
+        if not (priors.shape[0] == len(unique_user_ids)):
+            raise Exception("Each user ID needs a distinct prior.")
+
+        if not (default_prior.shape[0] == priors.shape[1]):
+            raise Exception("The dimension of default prior must match the "
+                            "number of columns in priors.")
+
+        return priors
+    
     def __getstate__(self):
         payload = {
             "omit_data": self._omit_data_when_serializing,
