@@ -395,7 +395,7 @@ namespace BOOM {
   }
 
   DataTable ToBoomDataTable(SEXP r_data_frame) {
-    if (!Rf_isFrame(r_data_frame)) {
+    if (!Rf_isDataFrame(r_data_frame)) {
       report_error("r_data_frame must be a data.frame");
     }
     DataTable table;
