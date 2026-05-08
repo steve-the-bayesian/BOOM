@@ -200,16 +200,30 @@ echo `which $PYTHON`
 echo `which pip`
 echo `which $PIP`
 
-cd python_package
-$PYTHON setup.py sdist bdist_wheel
+# OLD WAY:
+# cd python_package
+# $PYTHON setup.py sdist bdist_wheel
+# echo "======================================================================"
+# cd dist
+# echo "Installing the package with pip"
+# $PIP install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
+
 # python -m pip install dist/BayesBoom-*.whl
 # CC="ccache clang++" CXX="ccache"
 # pip --verbose install ./BayesBoom
 
+# NEW WAY
+# NEW WAY (PEP 517 Compliant)
+cd python_package
+$PYTHON -m pip install build  # Ensure the build tool is present
+$PYTHON -m build              # This replaces 'setup.py sdist bdist_wheel'
+
 echo "======================================================================"
 cd dist
 echo "Installing the package with pip"
-$PIP install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
+$PIP install $(ls -t bayesboom-*.whl | head -1) --force-reinstall --use-pep517
+
+
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages

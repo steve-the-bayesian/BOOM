@@ -351,8 +351,7 @@ ext_modules = [
         sources=boom_sources,
         depends=boom_headers,
         include_dirs=[
-            "./BayesBoom/boom",
-            # Path to pybind11 headers
+            BOOM_DIR, 
             get_pybind_include(),
             get_pybind_include(user=True)
         ],
