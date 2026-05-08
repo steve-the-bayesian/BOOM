@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 TOP_HDRS = glob(["*.hpp"])
 
 BMATH_HDRS = glob(["Bmath/*.hpp"])
