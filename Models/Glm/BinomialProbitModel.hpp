@@ -63,8 +63,7 @@ namespace BOOM {
     double failure_probability(const ConstVectorView &x) const;
 
     double pdf(const Data *dp, bool logscale) const override;
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
-    double pdf(const Ptr<BinomialRegressionData> &, bool) const;
+    double pdf(const BinomialRegressionData *dp, bool logscale) const;
     int number_of_observations() const override { return dat().size(); }
 
     // Returns the log of the binomial probability of y successes in n

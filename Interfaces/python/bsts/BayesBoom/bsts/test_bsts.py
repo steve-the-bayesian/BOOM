@@ -4,6 +4,7 @@ import pandas as pd
 import pickle
 
 # pylint: disable=unused-import
+import sys
 import pdb
 
 import matplotlib.pyplot as plt
@@ -46,9 +47,9 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertIsInstance(m2, Bsts)
         np.testing.assert_array_equal(m2._final_state, model._final_state)
 
-        errors = model.one_step_prediction_errors()
+        errors = model.one_step_prediction_errors(burn=0)
         self.assertIsInstance(errors, np.ndarray)
-        self.assertEqual(errors.shape, (9, 100))
+        self.assertEqual(errors.shape, (10, 100))
 
         errors = model.one_step_prediction_errors(burn=7)
         self.assertEqual(errors.shape, (3, 100))
@@ -59,10 +60,10 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertEqual(100, model.time_dimension)
 
         cutpoints = [60, 80, 100]
-        errors = model.one_step_prediction_errors(cutpoints=cutpoints)
+        errors = model.one_step_prediction_errors(cutpoints=cutpoints, burn=0)
         self.assertIsInstance(errors, dict)
         self.assertEqual(len(errors), len(cutpoints))
-        self.assertEqual(errors[60].shape,  (9, 100))
+        self.assertEqual(errors[60].shape,  (10, 100))
         self.assertEqual(errors[80].shape,  (10, 100))
         self.assertEqual(errors[100].shape,  (10, 100))
         self.assertEqual(model.time_dimension, 100)
@@ -296,41 +297,41 @@ class TestPlots(unittest.TestCase):
 
     def test_plot_residuals(self):
         fig, ax = plt.subplots()
-        foo = self._model.plot_residuals(ax=ax)
+        _, foo = self._model.plot_residuals(ax=ax)
         self.assertIsInstance(foo, plt.Axes)
 
         fig, ax = plt.subplots()
-        foo = self._regression_model.plot_residuals(ax=ax)
+        _, foo = self._regression_model.plot_residuals(ax=ax)
         self.assertIsInstance(foo, plt.Axes)
 
         if _show_figs:
             fig.show()
 
     def test_plot_forecast_distribution(self):
-        fig = self._model.plot("forecast_distribution", cex_actuals=1)
+        fig, ax = self._model.plot("forecast_distribution", cex_actuals=1)
         self.assertIsInstance(fig, plt.Figure)
         if _show_figs:
             fig.show()
 
-        fig2 = self._model.plot("forecast_distribution",
+        fig2, ax2 = self._model.plot("forecast_distribution",
                                 cutpoints=(50, 80, 100))
         if _show_figs:
             fig2.show()
 
     def test_plot_size(self):
         fig, ax = plt.subplots()
-        foo = self._regression_model.plot_size(ax=ax)
+        blah, foo = self._regression_model.plot_size(ax=ax)
         if _show_figs:
             fig.show()
         self.assertIsInstance(foo, plt.Axes)
 
     def test_plot_predictors(self):
         fig, ax = plt.subplots()
-        foo = self._regression_model.plot(
+        foo, bar = self._regression_model.plot(
             "predictors", ax=ax, short_names=False)
         if _show_figs:
             fig.show()
-        self.assertIsInstance(foo, plt.Axes)
+        self.assertIsInstance(bar, plt.Axes)
 
     def test_compare_bsts_models(self):
         fig = plt.figure()
@@ -357,14 +358,14 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = TestPlots()
+    rig = TestGaussianTimeSeries()
 
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plot_size()
+    rig.test_local_level()
 
     print("Goodbye, cruel world!")
 

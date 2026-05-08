@@ -126,8 +126,6 @@ namespace BOOM {
   }
 
   //============================================================
-  void MLE_Model::initialize_params() { mle(); }
-
   MLE_Model::MLE_Model(MLE_Model &&rhs)
       : Model(rhs),
         status_(rhs.status_),
@@ -191,12 +189,6 @@ namespace BOOM {
       MLE_Model::set_status(FAILURE, error_message);
       return negative_infinity();
     }
-  }
-
-  double DoubleModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double x = dp.dcast<DoubleData>()->value();
-    double ans = logp(x);
-    return logscale ? ans : exp(ans);
   }
 
   double DoubleModel::pdf(const Data *dp, bool logscale) const {

@@ -53,6 +53,19 @@ namespace BOOM {
       public LoglikeModel
   {
    public:
+    // Args:
+    //   mean_function: A function object giving the mean value 'Y' of a set of
+    //     inputs 'X'.  This function can be viewed as the "structural" or
+    //     "prior" component of the GP regression model.  It can include
+    //     parameters to be estimated by the posterior sampler or other
+    //     parameter learning method.
+    //   kernel_function: A two-argument function giving the covariance K(x1,
+    //     x2) of the y values (y1, and y2) observed at locations x1 and x2.
+    //     The kernel function may include parameters to be estimated by the
+    //     posterior sampler or other parameter learning method.
+    //   residual_variance: The residual variance of the observed Y values
+    //     around the posterior mean function.
+    
     GaussianProcessRegressionModel(
         const Ptr<FunctionParams> &mean_function,
         const Ptr<KernelParams> &kernel_function,

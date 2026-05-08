@@ -154,11 +154,6 @@ namespace BOOM {
     set_lam(number_of_observations / sum_of_durations);
   }
 
-  double ExponentialModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);
-  }
-
   double ExponentialModel::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);

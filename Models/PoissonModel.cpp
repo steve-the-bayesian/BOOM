@@ -182,9 +182,6 @@ namespace BOOM {
     return dpois(x, lam(), logscale);
   }
   double PoissonModel::logp(int x) const { return dpois(x, lam(), true); }
-  double PoissonModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return dpois(DAT(dp)->value(), lam(), logscale);
-  }
   double PoissonModel::pdf(const Data *dp, bool logscale) const {
     return dpois(DAT(dp)->value(), lam(), logscale);
   }

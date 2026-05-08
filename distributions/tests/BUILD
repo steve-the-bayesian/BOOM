@@ -1,3 +1,6 @@
+load("@rules_cc//cc:defs.bzl", "cc_test") 
+load("@rules_cc//cc:defs.bzl", "cc_library") 
+
 COPTS = ["-std=c++17"]
 
 COMMON_DEPS = [

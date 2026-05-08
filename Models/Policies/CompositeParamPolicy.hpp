@@ -1,3 +1,6 @@
+#ifndef BOOM_COMPOSITE_MODEL_PARAM_POLICY
+#define BOOM_COMPOSITE_MODEL_PARAM_POLICY
+
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
@@ -16,8 +19,6 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#ifndef BOOM_COMPOSITE_MODEL_PARAM_POLICY
-#define BOOM_COMPOSITE_MODEL_PARAM_POLICY
 
 /*======================================================================
   Use this policy when the Model is defined as a composite of several

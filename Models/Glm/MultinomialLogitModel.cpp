@@ -321,11 +321,6 @@ namespace BOOM {
   }
 
   //------------------------------------------------------------
-  double MLM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(*DAT(dp));
-    return logscale ? ans : exp(ans);
-  }
-
   double MLM::pdf(const Data *dp, bool logscale) const {
     double ans = logp(*DAT(dp));
     return logscale ? ans : exp(ans);

@@ -1,19 +1,13 @@
-###############################################################################
-# Bazel now uses Bzlmod by default to manage external dependencies.
-# Please consider migrating your external dependencies from WORKSPACE to MODULE.bazel.
-#
-# For more details, please check https://github.com/bazelbuild/bazel/issues/18958
-###############################################################################
-bazel_dep(name = "googletest", version = "1.15.2")
+# This file works with bazel 9.1 (Homebrew), but the BAZEL environment is very
+# unstable.  Very specific versions of googletest and rules_cc need to be given
+# here.  This file may need to be edited to work on Linux or with other versions
+# of bazel.  Hopefully Google will fix this soon!
 
+bazel_dep(name = "googletest", version = "1.16.0")
+bazel_dep(name = "rules_cc", version = "0.2.17")  
 
-# Hedron's Compile Commands Extractor for Bazel
-# https://github.com/hedronvision/bazel-compile-commands-extractor
-bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
-    module_name = "hedron_compile_commands",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    commit = "0e990032f3c5a866e72615cf67e5ce22186dcb97",
-    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
-    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+    module_name = "googletest",
+    remote = "https://github.com/google/googletest.git",
+    branch = "main",
 )

@@ -96,10 +96,11 @@ namespace BOOM {
     Ptr<UnivParams> Lam();
     const Ptr<UnivParams> Lam() const;
     double lam() const;
+    double lambda() const {return lam();}
     void set_lam(double);
+    void set_lambda(double x) {set_lam(x);}
 
     // probability calculations
-    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *x, bool logscale) const override;
     double pdf(uint x, bool logscale) const;
     double logp(int x) const override;

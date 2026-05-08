@@ -33,6 +33,14 @@ namespace BOOM {
     return ans;
   }
 
+  Vector sd(const Matrix &m) {
+    Vector ans(m.ncol());
+    for (int i = 0; i < m.ncol(); ++i) {
+      ans[i] = sd(m.col(i));
+    }
+    return ans;
+  }
+
   SpdMatrix var(const Matrix &m) {
     SpdMatrix ans(m.ncol(), 0.0);
     Vector mu = mean(m);

@@ -189,8 +189,8 @@ class SpikeSlabTest(unittest.TestCase):
         formula = "y ~ " + dot(data, ["y"])
 
         model = lm_spike(formula, niter=niter, data=data)
-        ax1 = model.plot_inclusion(inclusion_threshold=.1)
-        ax2 = model.plot_coefficients(inclusion_threshold=.1)
+        fig1, ax1 = model.plot_inclusion(inclusion_threshold=.1)
+        fig2, ax2 = model.plot_coefficients(inclusion_threshold=.1)
         self.assertIsInstance(ax1, plt.Axes)
         self.assertIsInstance(ax2, plt.Axes)
 
@@ -259,6 +259,33 @@ class SpikeSlabTest(unittest.TestCase):
         beta_size = np.sum(beta != 0, axis=1)
         self.assertLessEqual(np.max(beta_size), 2)
 
+    def test_max_flips(self):
+        """
+        Check that when max_flips == 2 no more than 2 coefficients are
+        flipped from 0 to nonzero (or vice versa) in each MCMC iteration.
+        """
+        sample_size = 1000
+        nvars = 100
+        max_flips = 2
+
+        X = pd.DataFrame(np.random.randn(sample_size, nvars),
+                         columns=["X" + str(x+1) for x in range(nvars)])
+        errors = np.random.randn(sample_size) * .1
+        beta = np.random.randn(nvars)
+        y = 23 + X @ beta + errors
+        
+        model = lm_spike("y ~ " + dot(X), data = R.cbind(y, X), niter=1000, max_flips=max_flips)
+        
+        draws = model.dense_coefficients
+        nonzero_flags = np.array(draws != 0.0)
+
+        current_nonzero_flags = nonzero_flags[1: , :]
+        previous_nonzero_flags = nonzero_flags[:-1, :]
+        flag_changes = (current_nonzero_flags != previous_nonzero_flags)
+        num_changes = np.sum(flag_changes, axis=1)
+
+        self.assertTrue(np.all(num_changes <= max_flips))
+        
 
 class BigAssSpikeSlabTest(unittest.TestCase):
     def setUp(self):
@@ -309,7 +336,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plots()
+    rig.test_student_spike_slab_prior()
 
     print("Goodbye, cruel world!")
 

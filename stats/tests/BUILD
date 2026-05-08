@@ -1,3 +1,6 @@
+load("@rules_cc//cc:defs.bzl", "cc_test") 
+load("@rules_cc//cc:defs.bzl", "cc_library") 
+
 COPTS = ["-Wno-sign-compare"]
 
 DEPS = [
@@ -21,6 +24,15 @@ cc_test(
     size = "small",
     srcs = ["ascii_distribution_compare_test.cc"],
     copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "classifier_metrics_test",
+    size = "small",
+    srcs = ["classifier_metrics_test.cc"],
+    copts = COPTS,
+    data = [":test_data"],
     deps = DEPS,
 )
 

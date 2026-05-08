@@ -22,9 +22,11 @@
 
 #include <set>
 #include <vector>
+#include <list>
 #include "Models/DataTypes.hpp"
 #include "cpputil/RefCounted.hpp"
 #include "stats/FreqDist.hpp"
+#include "uint.hpp"
 
 namespace BOOM {
 
@@ -290,6 +292,7 @@ namespace BOOM {
     bool operator>(const std::string &rhs) const;
     bool operator>=(const std::string &rhs) const;
   };
+
   //======================================================================
 
   // Create a vector of pointers to CategoricalData from a variety of sources,

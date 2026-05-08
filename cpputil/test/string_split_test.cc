@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "cpputil/Split.hpp"
+#include "cpputil/StringSplitter.hpp"
 #include "test_utils/test_utils.hpp"
 
 namespace {
@@ -84,6 +84,56 @@ namespace {
     test = "8, 6, 7,\"53   09\"";
     expected = {"8", "6", "7", "53   09"};
     EXPECT_EQ(expected, split(test));
+  }
+
+  TEST(StringSplitTest, PopBack) {
+    std::string test = "foo/bar/baz";
+    StringSplitter split("/");
+    std::pair<std::string, std::string> result = split.pop_back(test);
+    EXPECT_EQ(result.first, "foo/bar");
+    EXPECT_EQ(result.second, "baz");
+
+    test = "";
+    result = split.pop_back(test);
+    EXPECT_EQ(result.first, "");
+    EXPECT_EQ(result.second, "");
+
+    test = "foo";
+    result = split.pop_back(test);
+    EXPECT_EQ(result.first, "");
+    EXPECT_EQ(result.second, "foo");
+    
+    test = "foo/";
+    result = split.pop_back(test);
+    EXPECT_EQ(result.first, "foo");
+    EXPECT_EQ(result.second, "");
+  }
+
+  TEST(StringSplitTest, SkipEmpty) {
+    StringSplitter split("/");
+    std::string test = "/foo/bar/baz/";
+    std::vector<std::string> elements = split(test);
+    EXPECT_EQ(5, elements.size());
+    EXPECT_EQ("", elements[0]);
+    EXPECT_EQ("foo", elements[1]);
+    EXPECT_EQ("bar", elements[2]);
+    EXPECT_EQ("baz", elements[3]);
+    EXPECT_EQ("", elements[4]);
+
+    split.omit_empty();
+    elements = split(test);
+    EXPECT_EQ(3, elements.size());
+    EXPECT_EQ("foo", elements[0]);
+    EXPECT_EQ("bar", elements[1]);
+    EXPECT_EQ("baz", elements[2]);
+
+    test = "////foo///bar//baz////";
+    elements.clear();
+    elements = split(test);
+    EXPECT_EQ(3, elements.size());
+    EXPECT_EQ("foo", elements[0]);
+    EXPECT_EQ("bar", elements[1]);
+    EXPECT_EQ("baz", elements[2]);
   }
 
 }  // namespace

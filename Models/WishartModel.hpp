@@ -104,9 +104,9 @@ namespace BOOM {
     WishartModel(const WishartModel &m);
     WishartModel *clone() const override;
 
-    // Set model parameters to default values.  The mean is set using
-    // the method of moments.  nu is set to a default.
-    void initialize_params() override;
+    // Set model parameters to default values.  The mean is set using the method
+    // of moments.  nu is set to twice the model dimension.
+    void initialize_params();
 
     Ptr<UnivParams> Nu_prm();
     Ptr<SpdParams> Sumsq_prm();

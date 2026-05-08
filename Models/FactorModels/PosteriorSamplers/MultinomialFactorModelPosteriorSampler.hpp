@@ -28,7 +28,7 @@
 
 namespace BOOM {
 
-  namespace MfmThreading {
+  namespace MultinomialFactorModelThreading {
 
     //=========================================================================
     // A worker to help implement multi-threading.  Each thread in the pro
@@ -64,7 +64,7 @@ namespace BOOM {
       std::vector<Ptr<Visitor>> visitors_;
     };
 
-  }  // namespace MfmThreading
+  }  // namespace MultinomialFactorModelThreading
 
   
   //===========================================================================
@@ -117,7 +117,7 @@ namespace BOOM {
     // Raise an exception if any elements of logprob are non-finite.
     // void check_logprob(const Vector &logprob) const;
 
-    std::vector<MfmThreading::VisitorImputer> visitor_imputers_;
+    std::vector<MultinomialFactorModelThreading::VisitorImputer> visitor_imputers_;
     ThreadWorkerPool pool_;
 
     // Fill the unknown_visitors_ object and recompute known_site_visit_counts_.

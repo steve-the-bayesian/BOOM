@@ -42,7 +42,7 @@ class TestDynamicRegression(unittest.TestCase):
             for t in range(time_dimension):
                 prev = 0 if t == 0 else coefficients[j, t-1]
                 coefficients[j, t] = inclusion[j, t] * (
-                    prev + np.random.randn(1) * sd
+                    prev + np.random.randn(1)[0] * sd
                 )
 
         data = []
@@ -120,8 +120,8 @@ _debug_mode = False
 
 if _debug_mode:
     # Turn warnings into errors.
-    #    import warnings
-    #    warnings.simplefilter("error")
+    # import warnings
+    # warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an

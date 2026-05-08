@@ -24,7 +24,6 @@ def summary(x, max_levels: int = 10, numeric_min_unique: int = 10, **kwargs):
     if isinstance(x, pd.DataFrame):
         ans = {}
         for column in x.columns:
-            print(f"summarizing variable: {column}")
             ans[column] = summary(
                 x[column],
                 max_levels=max_levels,
@@ -45,7 +44,11 @@ def summary(x, max_levels: int = 10, numeric_min_unique: int = 10, **kwargs):
         elif is_datetime64_any_dtype(x):
             return DateTimeSummary(x, **kwargs)
         else:
-            return CategoricalSummary(x, max_levels, **kwargs)
+            ans = CategoricalSummary(x, max_levels, **kwargs)
+            if ans.is_high_cardinality:
+                return HighCardinalitySummary(x, **kwargs)
+            else:
+                return ans
 
 
 def pad(series, nspaces=4):
@@ -482,7 +485,7 @@ class CategoricalSummary(UnivariateSummary):
     """
 
     def __init__(self, x, max_levels: int = 10,
-                 other_name: str = "[Missing]"):
+                 other_name: str = "[Other]"):
         """
         Args:
           x: The categorical variable to summarize.  This will be coerced to a
@@ -506,7 +509,7 @@ class CategoricalSummary(UnivariateSummary):
     def from_counts(cls,
                     counts,
                     max_levels=None,
-                    other_name: str = "[Missing]"):
+                    other_name: str = "[Other]"):
         """
         Generate a CategoricalSummary from a pd.Series of category counts, or a
         FrequencyDistribution.
@@ -544,24 +547,24 @@ class CategoricalSummary(UnivariateSummary):
         """
         The total length of the variable being summarized.
         """
-        return self._number_missing + self._number_observed
+        return self.number_missing + self.number_observed
 
     @property
     def number_missing(self):
-        return self._number_missing
+        return self._frequency_distribution.nan_count
 
     @property
     def number_observed(self):
-        return self._number_observed
+        return self._frequency_distribution.counts.sum()
 
     @property
     def number_unique(self):
         """
-        The number of distinct values.  Missing values count as a separate
-        category.  If the summary was computed by merging two distributed
-        summaries then this number may be a lower bound.
+        The number of distinct values.  Missing values are ignored.  Because
+        of "[Other]" categories, if the summary was computed by merging two
+        distributed summaries then this number may be a lower bound.
         """
-        return self._number_unique
+        return len(self.frequencydistribution.counts)
 
     @property
     def is_binary(self):
@@ -581,7 +584,11 @@ class CategoricalSummary(UnivariateSummary):
 
     @property
     def cardinality_limit(self):
-        limit = max(5, int(self.sample_size ** (10.0 / 37)))
+        """
+        The largest number of categories a variable can have before we call
+        it "high cardinality."  This is a heuristic.
+        """
+        limit = max(5, int(np.cbrt(self.sample_size)))
         return int(limit)
 
     @classmethod
@@ -614,11 +621,11 @@ class CategoricalSummary(UnivariateSummary):
         Returns:
             List of the most frequent levels, up to max_levels.
         """
-        fd = self.frequency_distribution
+        fd = self.frequency_distribution.counts
         if omit_zero_frequency:
             fd = fd[fd > 0]
         ans = fd.index.tolist()
-        if include_missing and self.frequency_distribution.has_missing_data:
+        if include_missing and (self.frequency_distribution.nan_count > 0):
             ans.append(missing_code)
         return ans
 
@@ -632,16 +639,17 @@ class CategoricalSummary(UnivariateSummary):
     @property
     def relative_frequency_distribution(self):
         """
-        The distribution of categories, expressed as probabilities.
+        The distribution of categories, expressed as probabilities.  This
+        calculation ignores missing values (NaN's).
         """
-        return self.frequency_distribution / self.sample_size
+        return self.frequency_distribution.counts / self.sample_size
 
     def __repr__(self):
         return f"""
 
 
-    Nobs:       {self._number_observed}
-    Nmis:       {self._number_missing}
+    Nobs:       {self.number_observed}
+    Nmis:       {self.number_missing}
     Nunique:    {self._number_unique}
 
 Frequency Distribution:
@@ -672,17 +680,10 @@ Frequency Distribution:
           levels exceed max_levels.
         """
 
-        if self._frequency_distribution.has_missing_data:
-            self._number_missing = self._frequency_distribution[np.nan]
-        else:
-            self._number_missing = 0
-        sample_size = np.sum(self._frequency_distribution)
-        self._number_observed = sample_size - self._number_missing
-
         # The number of unique values in the original data, prior to
         # collapsing.  The "missing value" level, if present, is included in
         # the count.
-        self._number_unique = len(self._frequency_distribution)
+        self._number_unique = len(self._frequency_distribution.counts)
         self._frequency_distribution.collapse(max_levels, other_name)
 
     def _summarize(self,
@@ -720,7 +721,9 @@ Frequency Distribution:
 
             self._frequency_distribution = FrequencyDistribution(x)
             self._promote_frequency_distribution(
-                max_levels=max_levels, other_name=other_name)
+                max_levels=max_levels,
+                other_name=other_name
+            )
 
         except Exception as e:
             message = "Could not summarize a categorical variable with "
@@ -730,6 +733,73 @@ Frequency Distribution:
             raise Exception(message)
 
 
+class HighCardinalitySummary(UnivariateSummary):
+    """
+    Summarize a univariate categorical variable with values that repeat
+    infrequently.  An example of a high cardinality variable is a user id in a
+    databasse of users.  There is very little structure to take advantage of for
+    modeling.  The main thing to look at is how many levels reapeat one, two,
+    three, .... times.
+    """
+    
+    def __init__(self, x):
+        if x is None:
+            return
+        
+        self._summarize(x)
+
+    def _summarize(self, x):
+        from .frequency_distribution import FrequencyDistribution
+        try:
+            # Calling with x as None should only be done by a specialized
+            # constructor, when the goal is to fill the slots manually.
+            if x is None:
+                return
+
+            if (
+                    isinstance(x, np.ndarray)
+                    and len(x.shape) == 2
+                    and x.shape[1] == 1
+            ): 
+                x = x.ravel()
+
+            x = pd.Series(x)
+            num_missing = int(np.sum(x.isna()))
+            counts = pd.Series(x).value_counts()
+            self._count_distribution = FrequencyDistribution(
+                counts.values)
+            self._count_distribution._nan_counts = num_missing
+            
+        except Exception as e:
+            message = "Could not summarize a high cardinality variable "
+            message += " with initial values "
+            message += f" {x.head()} and dtype {x.dtype}.\n"
+            message += "Original error message: " + str(e)
+            raise Exception(message)
+
+    @property
+    def sample_size(self):
+        return self.number_missing + self.number_observed
+        
+    @property
+    def number_missing(self):
+        return self._count_distribution.nan_count
+
+    @property
+    def number_observed(self):
+        return np.dot(self._count_distribution.counts.index,
+                     self._count_distribution.counts.values)        
+
+    @property
+    def number_unique(self):
+        return self._frequency_distribution.counts.sum()
+
+    def __repr__(self):
+        return f"""
+        {pad(self._count_distribution)}
+        """
+
+        
 class DateTimeSummary(UnivariateSummary):
     """
     A summary of a DateTime variable.
@@ -763,14 +833,14 @@ class DateTimeSummary(UnivariateSummary):
 
             self._weekday_counts = FrequencyDistribution.from_counts(
                 pd.Series(weekday(x)).value_counts()[day_names],
-                self._number_missing if self._number_missing > 0 else None,
+                nan_count=self._number_missing,
                 categories=day_names,
             )
 
             self._month_counts = FrequencyDistribution.from_counts(
-                pd.Series(month(x)).value_counts()[month_names],
-                self._number_missing if self._number_missing > 0 else None,
-                categories=month_names,
+                non_nan_counts=pd.Series(month(x)).value_counts()[month_names],
+                nan_count=self._number_missing,
+                categories=month_names
             )
 
             self._compute_intensity(x)

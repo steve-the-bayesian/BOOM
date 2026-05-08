@@ -11,7 +11,7 @@ MAJOR = 0
 MINOR = 1
 
 # Bump the patch version when making bug fixes.
-PATCH = 32
+PATCH = 34
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -264,8 +264,8 @@ boom_library_sources = (
     + factor_sources
     + glm_sources
     + gp_sources
-    + hmm_sources
     + hierarchical_sources
+    + hmm_sources
     + impute_sources
     + irt_sources
     + mixture_sources
@@ -351,8 +351,7 @@ ext_modules = [
         sources=boom_sources,
         depends=boom_headers,
         include_dirs=[
-            "./BayesBoom/boom",
-            # Path to pybind11 headers
+            BOOM_DIR, 
             get_pybind_include(),
             get_pybind_include(user=True)
         ],
@@ -452,7 +451,7 @@ def FindPackagesAndBlab():
 
 
 setup(
-    name='BayesBoom',
+    name='bayesboom',
     packages=FindPackagesAndBlab(),
     version=__version__,
     author='Steven L. Scott',

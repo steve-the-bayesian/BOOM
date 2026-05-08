@@ -616,12 +616,6 @@ namespace BOOM {
     set_sigsq(suf()->SSE() / suf()->n());
   }
 
-  double RM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<RegressionData> rd = DAT(dp);
-    const Vector &x = rd->x();
-    return dnorm(rd->y(), predict(x), sigma(), logscale);
-  }
-
   double RM::pdf(const Data *dp, bool logscale) const {
     const RegressionData *rd = dynamic_cast<const RegressionData *>(dp);
     return dnorm(rd->y(), predict(rd->x()), sigma(), logscale);

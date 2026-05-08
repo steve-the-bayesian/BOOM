@@ -26,6 +26,8 @@
 
 namespace BOOM {
 
+  // A UniformMaPrior is a prior distribution that is uniform over the set of
+  // "causal" MA coefficients.
   class UniformMaPrior : public VectorModel,
                          public NullParamPolicy,
                          public NullDataPolicy,
@@ -33,13 +35,22 @@ namespace BOOM {
    public:
     explicit UniformMaPrior(int dim) : dim_(dim) {}
     UniformMaPrior *clone() const override { return new UniformMaPrior(*this); }
+
+    // Return 0 if x corresponds to a set of causal MA coefficients, and return
+    // negative infinity otherwise.
     double logp(const Vector &x) const override;
+
+    // Simulate MA coefficients uniformly from the [-1, 1] box until a causal
+    // set is obtained.  This can fail (resulting in an exception) if the
+    // maximum number of simulation attempts is exceeded.
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
    private:
     int dim_;
   };
 
+  // A UniformArPrior is a prior distribution over the set of invertible AR
+  // coefficients.  
   class UniformArPrior : public VectorModel,
                          public NullParamPolicy,
                          public NullDataPolicy,
@@ -47,7 +58,14 @@ namespace BOOM {
    public:
     explicit UniformArPrior(int dim) : dim_(dim) {}
     UniformArPrior *clone() const override { return new UniformArPrior(*this); }
+
+    // Return 0 if x corresponds to a set of invertible AR coefficients,
+    // negative infinity otherwise.
     double logp(const Vector &x) const override;
+
+    // Simulate AR coefficients by rejection sampling uniformly from the [-1, 1]
+    // box until an invertible set is obtained.  This can fail (resulting in an
+    // exception) if the maximum number of simulation attempts is exceeded.
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
    private:

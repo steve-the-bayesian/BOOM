@@ -117,12 +117,12 @@ namespace BOOM {
 
   OCM::OrdinalCutpointModel(const OCM &rhs)
       : Model(rhs),
+        MixtureComponent(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         GlmModel(rhs),
-        NumOptModel(rhs),
-        MixtureComponent(rhs)
+        NumOptModel(rhs)
   {}
 
   double OCM::pdf(const Data *dp, bool logscale) const {

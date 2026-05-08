@@ -26,8 +26,8 @@ class ImputerTest(unittest.TestCase):
 
     def test_fit_imputation_model(self):
         data = self.data
-        data["X1"][:10] = np.nan
-        data["X2"][5:15] = np.nan
+        data.loc[data.index[:10], "X1"] = np.nan
+        data.loc[data.index[5:15], "X2"] = np.nan
         self.model.find_atoms(data)
         num_clusters = 5
         niter = 100
@@ -43,7 +43,7 @@ class ImputerTest(unittest.TestCase):
                          (niter, num_clusters, 1))
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb

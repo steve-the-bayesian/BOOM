@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include "LinAlg/Vector.hpp"
+
 #include "Models/GP/GaussianProcessRegressionModel.hpp"
 #include "Models/GP/PosteriorSamplers/MahalanobisKernelSampler.hpp"
 #include "Models/GP/PosteriorSamplers/LinearMeanFunctionSampler.hpp"
@@ -58,6 +60,46 @@ namespace {
     }
   }
 
+  TEST_F(GpTest, Sinusoid) {
+    
+    NEW(ZeroFunction, prior_mean)();
+    NEW(RadialBasisFunction, kernel)();
+    NEW(UnivParams, residual_variance)(square(.8));
+    NEW(GaussianProcessRegressionModel, model)(
+        prior_mean,
+        kernel,
+        residual_variance);
+    
+    int sample_size = 20;
+    Matrix X(sample_size, 1);
+    X.randomize();
+    X *= 12;
+
+    Vector y(sample_size);
+    for (int i = 0; i < sample_size; ++i) {
+      y[i] = sin(X(i, 0)) + rnorm(0, .8);
+      NEW(RegressionData, dp)(y[i], X.row(i));
+      model->add_data(dp);
+    }
+
+    int grid_size = 1000;
+    double x_value = 0.0;
+    double dx = 12.0 / grid_size;
+    Vector yhat(grid_size);
+    Vector sigma_f(grid_size);
+    Vector sigma_y(grid_size);
+    
+    for (int i = 0; i < grid_size; ++i) {
+      Vector x(1, x_value);
+      yhat[i] = model->predict(x);
+      sigma_f[i] = model->kernel(x, x);
+      sigma_y[i] = sqrt(square(sigma_f[i]) + residual_variance->value());
+      x_value += dx;
+    }
+
+  }
+
+  
   // Verify that the log likelihood calculation is being done correctly.
   TEST_F(GpTest, LogLikelihood) {
 
@@ -101,7 +143,7 @@ namespace {
 
   }
 
-  // Check that MCMC for model parameters is
+  // Check that MCMC for model parameters is working.
   TEST_F(GpTest, McmcTest_MahalanobisKernel) {
     int sample_size = 50;
     Matrix X(sample_size, 2);

@@ -43,11 +43,6 @@ namespace BOOM {
     this->add_data(dp);
   }
 
-  double MvnModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);
-  }
-
   double MvnModel::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
@@ -96,8 +91,6 @@ namespace BOOM {
     set_mu(suf()->ybar());
     set_Sigma(suf()->var_hat());
   }
-
-  void MvnModel::initialize_params() { mle(); }
 
   void MvnModel::add_mixture_data(const Ptr<Data> &dp, double prob) {
     suf()->add_mixture_data(DAT(dp)->value(), prob);

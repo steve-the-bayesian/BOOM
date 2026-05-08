@@ -55,17 +55,6 @@ namespace BOOM {
     using Base::DAT;
     using Base::DAT_1;
 
-    template <class FwdIt>
-    void set_data(FwdIt Beg, FwdIt End) {
-      Base::set_data(Beg, End);
-      refresh_suf();
-    }
-
-    virtual void set_data(const Ptr<DataSeriesType> &d) {
-      Base::set_data(d);
-      refresh_suf();
-    }
-
     virtual void add_data_series(const Ptr<DataSeriesType> &d) {
       Base::add_data_series(d);
       update_suf(d);
@@ -77,8 +66,13 @@ namespace BOOM {
     }
 
     virtual void add_data(const Ptr<Data> &d) {
-      Base::add_data(d);
-      this->suf()->update(d);
+      Ptr<SUF> suf = d.dcast<SUF>();
+      if (!!suf) {
+        this->suf()->combine(suf);
+      } else {
+        Base::add_data(d);
+        this->suf()->update(d);
+      }
     }
 
     virtual void clear_data() {

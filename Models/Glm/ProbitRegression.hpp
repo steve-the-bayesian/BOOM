@@ -47,9 +47,13 @@ namespace BOOM {
     Ptr<GlmCoefs> coef_prm() override;
     const Ptr<GlmCoefs> coef_prm() const override;
 
-    virtual double pdf(const Ptr<Data> &, bool) const;
-    virtual double pdf(const Ptr<BinaryRegressionData> &, bool) const;
-    virtual double pdf(bool y, const Vector &x, bool logscale) const;
+    virtual double pdf(const Data *data_point,
+                       bool logscale) const;
+    virtual double pdf(const BinaryRegressionData *data_point,
+                       bool logscale) const;
+    virtual double pdf(bool y,
+                       const Vector &x,
+                       bool logscale) const;
 
     // The dimension here and in log_likelihood is the number of
     // included variables.

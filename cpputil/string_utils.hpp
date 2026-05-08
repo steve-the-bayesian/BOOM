@@ -24,7 +24,7 @@
 #include <ostream>
 
 #include "uint.hpp"
-#include "cpputil/Split.hpp"
+#include "cpputil/StringSplitter.hpp"
 
 namespace BOOM {
 

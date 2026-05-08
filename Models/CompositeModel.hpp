@@ -61,7 +61,6 @@ namespace BOOM {
     void clear_data() override;
 
     double pdf(const CompositeData &, bool logscale) const;
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
     double pdf(const Data *, bool logscale) const override;
     int number_of_observations() const override { return dat().size(); }
 

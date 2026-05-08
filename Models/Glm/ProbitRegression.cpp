@@ -55,11 +55,11 @@ namespace BOOM {
   Ptr<GlmCoefs> PRM::coef_prm() { return ParamPolicy::prm(); }
   const Ptr<GlmCoefs> PRM::coef_prm() const { return ParamPolicy::prm(); }
 
-  double PRM::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double PRM::pdf(const Data *dp, bool logscale) const {
     return pdf(DAT(dp), logscale);
   }
 
-  double PRM::pdf(const Ptr<BinaryRegressionData> &dp, bool logscale) const {
+  double PRM::pdf(const BinaryRegressionData *dp, bool logscale) const {
     return pdf(dp->y(), dp->x(), logscale);
   }
 

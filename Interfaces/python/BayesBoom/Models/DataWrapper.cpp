@@ -37,6 +37,17 @@ namespace BayesBoom {
              "Set the value of the data point.")
         ;
 
+    py::class_<IntData, Data, Ptr<IntData>>(boom, "IntData")
+        .def(py::init<int>(),
+             py::arg("x"),
+             "Args:\n"
+             "  x:  The value of the data point.")
+        .def_property_readonly("value", &IntData::value)
+        .def("set",
+             [](IntData &dp, int x) {dp.set(x);},
+             "Set the value of the data point.")
+        ;
+
 
     py::class_<CatKeyBase, Ptr<CatKeyBase>>
         (boom, "CatKeyBase")

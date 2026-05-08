@@ -29,12 +29,12 @@ namespace BOOM {
 
   class MixtureComponentSampler {
    public:
-    explicit MixtureComponentSampler(Model *m) : m_(m) {}
-    void operator()() { m_->sample_posterior(); }
-    // m_ must have been assigned a thread safe PosteriorSampler, or this
+    explicit MixtureComponentSampler(Model *model) : model_(model) {}
+    void operator()() { model_->sample_posterior(); }
+    // model__ must have been assigned a thread safe PosteriorSampler, or this
     // will result in a race condition on the random seed of the RNG
    private:
-    Model *m_;
+    Model *model_;
   };
 
   class HmmPosteriorSampler : public PosteriorSampler {

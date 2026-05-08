@@ -140,6 +140,7 @@ bsts <- function(formula,
 
   ## Do some error checking before we get started.
   check.nonnegative.scalar(niter)
+  ping <- round(ping)
   check.scalar.integer(ping)
   stopifnot(is.null(seed) || length(seed) == 1)
   if (!is.null(seed)) {

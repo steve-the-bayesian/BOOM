@@ -216,7 +216,7 @@ namespace BOOM {
     double log_likelihood_ivar(const Matrix &Beta, const SpdMatrix &Siginv) const;
     double log_likelihood() const override;
 
-    virtual double pdf(const Ptr<Data> &, bool) const;
+    virtual double pdf(const Data *data_point, bool logscale) const;
 
     // Returns x * Beta();
     virtual Vector predict(const Vector &x) const;

@@ -198,7 +198,7 @@ class HierarchicalGaussianProcessRegression:
         # side, the hierarchical model will replace the given mean function
         # with the prior.
         zero_fun = ZeroFunction()
-        unique_groups = self._group.unique().to_list()
+        unique_groups = self._group.unique().tolist()
         for group in unique_groups:
             py_data_model = GaussianProcessRegression(
                 zero_fun,

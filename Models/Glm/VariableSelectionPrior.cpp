@@ -425,8 +425,8 @@ namespace BOOM {
     for (uint i = 0; i < n; ++i) vars_[i]->model()->mle();
   }
 
-  double SVSP::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<GlmCoefs> d(DAT(dp));
+  double SVSP::pdf(const Data *dp, bool logscale) const {
+    const GlmCoefs *d(DAT(dp));
     double ans = logp(d->inc());
     return logscale ? ans : exp(ans);
   }

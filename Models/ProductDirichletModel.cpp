@@ -123,7 +123,7 @@ namespace BOOM {
 
   void PDM::set_Nu(const Matrix &Nu) { Nu_prm()->set(Nu); }
 
-  double PDM::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double PDM::pdf(const Data *dp, bool logscale) const {
     return pdf(DAT(dp)->value(), logscale);
   }
 

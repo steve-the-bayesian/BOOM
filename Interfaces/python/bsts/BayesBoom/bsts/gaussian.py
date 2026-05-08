@@ -30,13 +30,11 @@ class GaussianStateSpaceModelFactory:
           A boom.StateSpaceModel object.
         """
         if data is not None:
-            if (isinstance(data, np.ndarray)):
-                boom_data = boom.Vector(data.ravel().astype(float))
-                is_observed = np.isfinite(data)
-            else:
-                boom_data = boom.Vector(data.values.astype(float))
-                is_observed = np.isfinite(data)
-            self._model = boom.StateSpaceModel(boom_data, is_observed)
+            boom_data = R.to_boom_vector(data)
+            is_observed = np.isfinite(data)
+            # is_observed must be converted to a list to avoid pybind11
+            # accessing elements by integer index.
+            self._model = boom.StateSpaceModel(boom_data, is_observed.tolist())
         else:
             self._model = boom.StateSpaceModel()
 

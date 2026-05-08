@@ -90,11 +90,11 @@ namespace BOOM {
     return MvnBase::log_likelihood(mu, Sigma_->ivar() * kappa, *suf());
   }
 
-  double MGS::pdf(const Ptr<Data> &dp, bool logsc) const {
+  double MGS::pdf(const Data *dp, bool logsc) const {
     return this->pdf(DAT(dp), logsc);
   }
 
-  double MGS::pdf(const Ptr<DataType> &dp, bool logsc) const {
+  double MGS::pdf(const DataType *dp, bool logsc) const {
     check_Sigma();
     double k = kappa();
     double ldsi = Sigma_->ldsi();

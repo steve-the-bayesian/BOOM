@@ -62,12 +62,6 @@ namespace BOOM {
   typedef LogisticRegressionModel LRM;
   typedef BinaryRegressionData BRD;
 
-  double LRM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<BRD> d = DAT(dp);
-    double ans = logp(d->y(), d->x());
-    return logscale ? ans : exp(ans);
-  }
-
   double LRM::pdf(const Data *dp, bool logscale) const {
     const BRD *d = DAT(dp);
     double ans = logp(d->y(), d->x());

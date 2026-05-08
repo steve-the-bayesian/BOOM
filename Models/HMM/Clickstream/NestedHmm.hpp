@@ -69,7 +69,7 @@ namespace BOOM {
     int S0() const;
 
     int Nstreams() const;
-    Ptr<Stream> stream(int i);
+    Stream *stream(int i);
 
     // Encode_state and decode state map between the state spaces H* =
     // (H,h) and S* = (0, ... , S1xS2-1).  encode_state moves from H* to
@@ -77,7 +77,7 @@ namespace BOOM {
     int encode_state(int H, int h) const;
     void decode_state(int state, int &H, int &h) const;
 
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const;
 
     double loglike();
     double last_loglike() const;
@@ -100,9 +100,9 @@ namespace BOOM {
     virtual std::vector<Ptr<Sufstat> > suf_vec() const;
 
     double fwd_bkwd(bool bayes = false, bool find_mode = true);
-    double fwd(const Ptr<Stream> &u) const;
-    void bkwd_sampling(const Ptr<Stream> &u);
-    void bkwd_smoothing(const Ptr<Stream> &u);
+    double fwd(const Stream *u) const;
+    void bkwd_sampling(const Stream *u);
+    void bkwd_smoothing(const Stream *u);
 
     virtual void complete_data_mode(bool bayes);
     virtual double logp(const Ptr<Event> &event, int H, int h) const;
@@ -125,8 +125,11 @@ namespace BOOM {
     Vector augmented_pi0(int H) const;
 
     void print_params(std::ostream &out) const;  // for debugging
-    void print_event(std::ostream &out, const char *msg, const Ptr<Stream> &u,
-                     const Ptr<Session> &session, const Ptr<Event> &event,
+    void print_event(std::ostream &out,
+                     const char *msg,
+                     const Stream *u,
+                     const Ptr<Session> &session,
+                     const Ptr<Event> &event,
                      int event_number) const;
     void print_filter(std::ostream &out, int j) const;
     //------------------------------------------------------------
@@ -138,7 +141,7 @@ namespace BOOM {
     //
     // Args:
     //   stream:  The stream for which the distribution is desired.
-    Matrix report_session_type_distribution(const Ptr<Stream> &stream) const;
+    Matrix report_session_type_distribution(const Stream *stream) const;
 
     // This function is to facilitate burn-in.  It removes all
     // elements from session_type_distribution_.  They will be
@@ -163,7 +166,7 @@ namespace BOOM {
     // session type latent variables (the H's).  It is invariant to
     // label switching among the event-level latent variables (the
     // h's).
-    std::map<Ptr<Stream>, Matrix> session_type_distribution_;
+    std::map<const Stream *, Matrix> session_type_distribution_;
 
     Ptr<MarkovModel> session_model_;
     std::vector<Ptr<MarkovModel> > event_model_;

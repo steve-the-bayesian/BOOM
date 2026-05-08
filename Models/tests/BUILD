@@ -1,3 +1,6 @@
+load("@rules_cc//cc:defs.bzl", "cc_test") 
+load("@rules_cc//cc:defs.bzl", "cc_library") 
+
 COPTS = [
     "-Wno-sign-compare",
 ]
@@ -12,6 +15,14 @@ cc_test(
     name = "beta_binomial_test",
     size = "small",
     srcs = ["beta_binomial_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
+    name = "categorical_data_test",
+    size = "small",
+    srcs = ["categorical_data_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
 )
@@ -63,6 +74,15 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "multilevel_multinomial_test",
+    size = "small",
+    srcs = ["multilevel_multinomial_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
 
 cc_test(
     name = "multinomial_test",

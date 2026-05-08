@@ -15,10 +15,16 @@ namespace BayesBoom {
     py::class_<GammaModelBase,
                DiffDoubleModel,
                BOOM::Ptr<GammaModelBase>>(boom, "GammaModelBase")
-        .def("alpha", &GammaModelBase::alpha)
-        .def("beta", &GammaModelBase::beta)
-        .def("mean", &GammaModelBase::mean)
-        .def("variance", &GammaModelBase::variance)
+        .def_property_readonly("alpha", &GammaModelBase::alpha)
+        .def_property_readonly("beta", &GammaModelBase::beta)
+        .def_property_readonly("mean", &GammaModelBase::mean)
+        .def_property_readonly("variance", &GammaModelBase::variance)
+        .def_property_readonly(
+            "a",
+            [](const GammaModelBase &model) {return model.alpha();})
+        .def_property_readonly(
+            "b",
+            [](const GammaModelBase &model) {return model.beta();})
         ;
 
     py::class_<GammaModel,

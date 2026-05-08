@@ -20,21 +20,29 @@ class FrequencyDistribution:
         if variable is None:
             return
 
-        if isinstance(variable, np.ndarray):
+        if not categories:
             variable = pd.Series(variable, dtype="category")
+        else:
+            variable = pd.Series(variable, dtype=pd.CategoricalDtype(categories))
+                
         nans = variable.isna()
 
         if not nans.all():
             counts = variable.value_counts(dropna=True)
         else:
+            # If the input sequence was all nan's then counts is an empty series.
             counts = pd.Series(dtype=int)
 
         self._other_category_name = "[Other]"
-        self._non_nan = counts
-        self._nan_counts = nans.sum()
+
+        # Put the counts in the order of the categories, if one was given.
+        self._non_nan = counts[variable.cat.categories]
+        self._nan_counts = int(nans.sum())
 
     @classmethod
-    def from_counts(cls, non_nan_counts, nan_count: int = None,
+    def from_counts(cls,
+                    non_nan_counts,
+                    nan_count: int = 0,
                     categories=None):
         """
         Construct a FrequencyDistribution from a set of counts and categories.
@@ -44,8 +52,7 @@ class FrequencyDistribution:
             A pd.Series containing counts of the non_nan category values.
 
           nan_count: The number of observations in the nan category.  If 0 is
-            entered then nan will be present with a count of zero.  If None is
-            entered then nan will not be a category.
+            entered then nan will be present with a count of zero.  
 
           categories: Array-like list of category labels, with the same length
             as 'non_nan'.  If 'None' then the index of non_nan will be used,
@@ -53,14 +60,27 @@ class FrequencyDistribution:
         """
         obj = cls(None)
         obj._non_nan_counts = non_nan_counts
-        obj._nan_counts = nan_count
+        obj._nan_counts = int(nan_count)
         obj._other_category_name = "[Other]"
         return obj
 
     @property
+    def counts(self):
+        """
+        The count of levels other than NaN's
+        """
+        return self._non_nan
+
+    @property
+    def nan_count(self):
+        """
+        The number of NaN's observed in the data.
+        """
+        return self._nan_counts
+    
+    @property
     def levels(self):
-        ans = self._non_nan.index.tolist()
-        return ans
+        return self._non_nan.index.tolist()
 
     @property
     def dtype(self):
@@ -73,8 +93,49 @@ class FrequencyDistribution:
     def other_category_name(self):
         return self._other_category_name
 
+    @property
+    def sample_size(self):
+        return int(self._non_nan.sum() + self._nan_counts)
+
+    def collapse(self, max_levels, other_name):
+        """
+        Keep the 'max_levels' most frequent levels of the frequency
+        distribution unchanged.  If more levels exist, combine them into an
+        "other" category with a name given by 'other_name'.
+
+        """
+        if self._non_nan.shape[0] <= max_levels:
+            return
+
+        top_k_values = self._non_nan.nlargest(max_levels)
+        other_sum = self._non_nan[~self._non_nan.isin(top_k_values)].sum()
+        collapsed = self._non_nan.copy()
+        collapsed[~collapsed.isin(top_k_values)] = 0
+        collapsed[self._other_category_name] = other_sum
+        self._non_nan = collapsed
+
+    def __getitem__(self, index):
+        if isinstance(index, (int, float, np.number)) and np.isnan(index):
+            # Check to see if the index was NaN.
+            return self._nan_counts
+        else:
+            if (
+                    # Ensure that other_category_name can always be checked,
+                    # even if there is no [Other] category.
+                    (index == self._other_category_name)
+                    and
+                    (self._other_category_name not in self._non_nan.index)
+            ):
+                return 0
+            else:
+                return self._non_nan[index]
+
+    def __len__(self):
+        return len(self._non_nan)
+            
     def __repr__(self):
         ans = str(self._non_nan)
-        if ans._nan_counts > 0:
+        if self._nan_counts > 0:
             ans += f"nan: {self._nan_counts}"
         return ans
+

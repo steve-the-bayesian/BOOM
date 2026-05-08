@@ -399,7 +399,6 @@ namespace BOOM {
         const Vector &posterior_mean,
         const Matrix &unscaled_posterior_precision_cholesky);
 
-    virtual double pdf(const Ptr<Data> &, bool) const;
     double pdf(const Data *, bool) const override;
 
     int number_of_observations() const override { return dat().size(); }

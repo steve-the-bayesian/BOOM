@@ -3,6 +3,66 @@ import BayesBoom.boom as boom
 import BayesBoom.R as R
 
 
+class RegressionSlabPrior:
+    """
+    A multivariate normal distribution intended to be the prior in a multiple
+    regression problem.  The prior is
+
+    beta ~ N(b, V)
+
+    where b = (ybar, 0, 0, 0, ....)
+    and V^{-1} = kappa * [(1 - alpha) * xtx + alpha * diag(xtx)] / n
+
+    The mean parameter shrinks the intercept towards the sample mean, and all
+    other coefficients towards zero.  In the literature it is more standard to
+    shrink all coefficients towards zero, but in practice this can inflate
+    estimates of the residual standard deviation.
+
+    The prior precision is defined in terms of xtx: the cross product matrix
+    from the regression problem.  We average xtx with its diagonal (with weight
+    alpha on the diagonal) to ensure that the overall matrix is full rank.  xtx
+    is the information matrix for the regression coefficients in a standard
+    regression problem, so dividing by 'n' (the sample size) turns the whole
+    thing into the "average information from a single observation."
+    Multiplying by 'kappa' means that the information content of the prior is
+    equivalent to 'kappa' prior observations.
+    """
+
+    def __init__(self, xtx, sample_mean, data_sample_size,
+                 prior_sample_size=1.0, diagonal_shrinkage=0.05):
+        """
+        Args:
+          Please see the class comments, above.
+          xtx:  The cross product matrix from the regression.
+          sample_mean: The mean of the response variable in the regression
+            problem ('ybar' above).
+          data_sample_size: The number of observations in the regression ('n'
+            above).
+          prior_sample_size: The number of observations of prior weight to
+            assign the prior.  ('kappa' above).
+          diagonal_shrinkage: The weight to assign the diagonal of xtx in the
+            full rank adjustment.  ('alpha' above).
+        """
+        self._xtx = xtx
+        self._sample_mean = sample_mean
+        self._data_sample_size = data_sample_size
+        self._prior_sample_size = prior_sample_size
+        self._diagonal_shrinkage = diagonal_shrinkage
+
+    def set_xtx(self, xtx: np.ndarray):
+        self._xtx = xtx
+
+    def boom(self, sigsq_param: boom.UnivParams):
+        xtx = self._xtx if self._xtx is not None else np.ones((1, 1))
+        return boom.RegressionSlabPrior(
+            boom.SpdMatrix(xtx),
+            sigsq_param,
+            self._sample_mean,
+            self._data_sample_size,
+            self._prior_sample_size,
+            self._diagonal_shrinkage)
+
+
 class RegressionSpikeSlabPrior:
     """
     Components of spike and slab priors that are shared regardless of the model
@@ -51,7 +111,9 @@ class RegressionSpikeSlabPrior:
             to use as the prior mean of the regression coefficients.  This can
             also be None, in which case the prior mean for the intercept will
             be set to mean.y, and the prior mean for all slopes will be 0.
-          mean.y: The mean of the response variable.  Used to create a sensible
+          max_flips: The maximum number of coefficients to investigate (in
+            random order) each iteration.
+          mean_y: The mean of the response variable.  Used to create a sensible
             default prior mean for the regression coefficients when
             optional_coefficient_estimate is None.
           sdy: Used along with expected_r2 to create a prior guess at the
@@ -118,28 +180,6 @@ class RegressionSpikeSlabPrior:
 
         self._max_size = max_size
 
-    def __getstate__(self):
-        """
-        Allows objects to be pickled.
-        """
-        ans = self.__dict__.copy()
-        if hasattr(self, "_residual_precision_prior"):
-            prior = self._residual_precision_prior
-            ans["prior_df"] = 2.0 * prior.alpha()
-            ans["prior_ss"] = 2.0 * prior.beta()
-        del ans["_residual_precision_prior"]
-        return ans
-
-    def __setstate__(self, payload):
-        """
-        Allows objects to be unpickled.
-        """
-        self.__dict__.update(payload)
-        self._residual_precision_prior = boom.ChisqModel(
-            self.prior_df, np.sqrt(self.prior_ss / self.prior_df))
-        del self.prior_df
-        del self.prior_ss
-
     def slab(self, boom_sigsq_prm):
         """Return a boom.MvnGivenScalarSigma model.
 
@@ -158,8 +198,13 @@ class RegressionSpikeSlabPrior:
     @property
     def spike(self):
         ans = boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
-        if (self._max_size is not None) and (self._max_size > 0):
-            ans.set_max_size(int(self._max_size))
+        if (
+                (self.max_size is not None)
+                and (self.max_size > 0)
+                and np.isfinite(self.max_size)
+        ):
+            ans.set_max_size(int(self.max_size))
+
         return ans
 
     @property
@@ -186,6 +231,29 @@ class RegressionSpikeSlabPrior:
         """
         return self._max_size
 
+    def create_sampler(self, model, assign=False):
+        """
+        Args:
+          model:  A boom.RegressionModel object.
+          assign:  If True then the created sampler is assigned to 'model'.
+
+        Returns:
+          A boom.BregVsSampler object.
+        """
+        sampler = boom.BregVsSampler(model,
+                                     self.slab(model.Sigsq_prm),
+                                     self.residual_precision,
+                                     self.spike)
+        if ((self.max_flips is not None)
+            and (self.max_flips > 0)
+            and (np.isfinite(self.max_flips))):
+            sampler.limit_model_selection(self.max_flips)
+
+        if assign:
+            model.set_method(sampler)
+
+        return sampler
+                                          
     def _init_from_data(self, x, y):
         x = np.array(x)
         xtx = x.T @ x
@@ -207,6 +275,29 @@ class RegressionSpikeSlabPrior:
             suf.sample_sd,
             suf.sample_size
         )
+    
+    def __getstate__(self):
+        """
+        Allows objects to be pickled.
+        """
+        ans = self.__dict__.copy()
+        if hasattr(self, "_residual_precision_prior"):
+            prior = self._residual_precision_prior
+            ans["prior_df"] = 2.0 * prior.alpha
+            ans["prior_ss"] = 2.0 * prior.beta
+        del ans["_residual_precision_prior"]
+        return ans
+
+    def __setstate__(self, payload):
+        """
+        Allows objects to be unpickled.
+        """
+        self.__dict__.update(payload)
+        self._residual_precision_prior = boom.ChisqModel(
+            self.prior_df, np.sqrt(self.prior_ss / self.prior_df))
+        del self.prior_df
+        del self.prior_ss
+
 
 
 class StudentSpikeSlabPrior(RegressionSpikeSlabPrior):

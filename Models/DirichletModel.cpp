@@ -108,12 +108,13 @@ namespace BOOM {
   DM::DirichletModel(const DirichletModel &rhs)
       : Model(rhs),
         VectorModel(rhs),
+        MixtureComponent(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         DiffVectorModel(rhs),
-        NumOptModel(rhs),
-        MixtureComponent(rhs) {}
+        NumOptModel(rhs)
+  {}
 
   DM *DM::clone() const { return new DirichletModel(*this); }
 
@@ -131,10 +132,6 @@ namespace BOOM {
     return ans / nc;
   }
   double DM::pi(uint i) const { return nu(i) / nu().sum(); }
-
-  double DM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return pdf(DAT(dp)->value(), logscale);
-  }
 
   double DM::pdf(const Data *dp, bool logscale) const {
     return pdf(DAT(dp)->value(), logscale);
