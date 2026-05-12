@@ -6,6 +6,10 @@ BMATH_HDRS = glob(["Bmath/*.hpp"])
 
 BMATH_SRCS = glob(["Bmath/*.cpp"])
 
+BANDIT_HDRS = glob(["Bandits/*hpp"])
+
+BANDIT_SRCS = glob(["Bandits/*cpp"])
+
 LINALG_SRCS = glob(["LinAlg/*.cpp"])
 
 LINALG_HDRS = glob(["LinAlg/*.hpp"])
@@ -212,6 +216,7 @@ TIMESERIES_HDRS = glob([
 ])
 
 BOOM_SRCS = BMATH_SRCS + \
+	    BANDIT_SRCS + \
             LINALG_SRCS + \
             SAMPLER_SRCS + \
             TARGETFUN_SRCS + \
@@ -237,6 +242,7 @@ BOOM_SRCS = BMATH_SRCS + \
 
 BOOM_HDRS = TOP_HDRS + \
             BMATH_HDRS + \
+	    BANDIT_HDRS + \
             LINALG_HDRS + \
             EIGEN_HDRS + \
             SAMPLER_HDRS + \

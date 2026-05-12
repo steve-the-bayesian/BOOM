@@ -114,6 +114,22 @@ namespace BOOM {
   }
 
   void BS::batch_update(double n, double y) {
+    if (n < 0) {
+      report_error("Number of trials 'n' must be non-negative.");
+    }
+
+    if (y < 0) {
+      report_error("Number of successes 'y' must be non-negative.");
+    }
+
+    if (n < y) {
+      std::ostringstream msg;
+      msg << "Number of successes ("
+          << y << ") cannot exceed number of trials ("
+          << n << ").";
+      report_error(msg.str());
+    }
+    
     sum_ += y;
     nobs_ += n;
   }

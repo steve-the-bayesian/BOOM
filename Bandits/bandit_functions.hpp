@@ -1,3 +1,5 @@
+#ifndef BOOM_BANDITS_BANDIT_FUNCTIONS_HPP_
+#define BOOM_BANDITS_BANDIT_FUNCTIONS_HPP_
 /*
   Copyright (C) 2005-2026 Steven L. Scott
 
@@ -15,3 +17,18 @@
   with this library; if not, write to the Free Software Foundation, Inc., 51
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
+
+#include "LinAlg/Matrix.hpp"
+#include "distributions/rng.hpp"
+
+namespace BOOM {
+  
+  Vector ComputeOptimalArmProbabilities(const Matrix &values,
+                                        RNG &rng = GlobalRng::rng);
+
+  Vector ValueRemainingDistribution(const Matrix &values,
+                                    RNG &rng = GlobalRng::rng);
+  
+}
+
+#endif  // BOOM_BANDITS_BANDIT_FUNCTIONS_HPP_
