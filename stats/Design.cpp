@@ -156,6 +156,16 @@ namespace BOOM {
     }
   }
 
+  void ExperimentStructure::add_factor(
+      const std::string &factor_name,
+      const std::vector<std::string> &factor_levels) {
+    factor_names_.push_back(factor_name);
+    level_names_.push_back(factor_levels);
+    nlevels_.push_back(factor_levels.size());
+
+    // Add a check to ensure that no singleton levels are added???
+  }
+  
   int ExperimentStructure::nfactors() const { return factor_names_.size(); }
 
   int ExperimentStructure::nlevels(int factor) const {

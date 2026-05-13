@@ -46,6 +46,14 @@ cc_test(
 )
 
 cc_test(
+    name = "design_test",
+    size = "small",
+    srcs = ["design_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
     name = "ecdf_test",
     size = "small",
     srcs = ["ecdf_test.cc"],

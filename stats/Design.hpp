@@ -1,6 +1,8 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_DESIGN_HPP
 #define BOOM_DESIGN_HPP
+
+// Copyright 2018 Google LLC. All Rights Reserved.
+
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -99,6 +101,14 @@ namespace BOOM {
   // that is to be turned into a design matrix by a RowBuilder.
   class ExperimentStructure {
    public:
+
+    // A default constructor to use when you want to build the experiment
+    // incrementally.
+    ExperimentStructure() {}
+
+    void add_factor(const std::string &factor_name,
+                    const std::vector<std::string> &factor_levels);
+    
     // Use this constructor if you know the number of levels for each
     // factor and don't care about names.  (The names will be
     // automatically generated).
@@ -142,7 +152,13 @@ namespace BOOM {
     // The name of the specified level for the specified factor.  The
     // factor name is prepended to the level name, separated by
     // 'separator'.
-    std::string full_level_name(int factor, int level,
+    //
+    // Args:
+    //   factor:  Which factor is desired.
+    //   level:  Which level of the given factor.
+    //   separator:  The separator to use between the factor and level names.
+    std::string full_level_name(int factor,
+                                int level,
                                 const std::string &separator = ".") const;
 
     const std::vector<std::string> &factor_names() const {
