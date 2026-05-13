@@ -17,3 +17,10 @@ cc_test(
     deps = COMMON_DEPS,
 )
 
+cc_test(
+    name = "linear_bandit_encoder_test",
+    size = "small",
+    srcs = ["linear_bandit_encoder_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)

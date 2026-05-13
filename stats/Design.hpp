@@ -156,7 +156,7 @@ namespace BOOM {
     // Args:
     //   factor:  Which factor is desired.
     //   level:  Which level of the given factor.
-    //   separator:  The separator to use between the factor and level names.
+    //   separator:  The separator to use between the factor and level names
     std::string full_level_name(int factor,
                                 int level,
                                 const std::string &separator = ".") const;
