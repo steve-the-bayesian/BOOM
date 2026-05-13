@@ -29,6 +29,8 @@ namespace BOOM {
 
     // double OptimalArmProbabilities(const Par) const;
 
+    virtual int NumberOfArms() const = 0;
+    
     virtual double Value(int arm,
                          const Params *model_params,
                          const Data *user_data,

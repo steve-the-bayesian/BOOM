@@ -75,11 +75,35 @@ namespace {
     bandit.ObserveData(1, 400, 600);
     bandit.ObserveData(2, 200, 900);
 
-    bandit.UpdatePosterior();
+    bandit.UpdatePosterior(1000);
 
     EXPECT_GT(bandit.Value(1), bandit.Value(0));
     EXPECT_GT(bandit.Value(1), bandit.Value(2));
     EXPECT_GT(bandit.Value(0), bandit.Value(2));
+
+    for (auto &model : models) {
+      model->clear_data();
+    }
+    
+    bandit.ObserveData(0, 3, 7);
+    bandit.ObserveData(1, 4, 6);
+    bandit.ObserveData(2, 2, 9);
+    int ndraws = 100000;
+    bandit.UpdatePosterior(ndraws);
+
+    EXPECT_EQ(3, bandit.OptimalArmProbabilities().size());
+    
+    EXPECT_GT(bandit.OptimalArmProbabilities()[0], .15);
+    EXPECT_LT(bandit.OptimalArmProbabilities()[0], .25);
+
+    EXPECT_GT(bandit.OptimalArmProbabilities()[1], .7);
+    EXPECT_LT(bandit.OptimalArmProbabilities()[1], .8);
+    
+    EXPECT_GT(bandit.OptimalArmProbabilities()[2], .01);
+    EXPECT_LT(bandit.OptimalArmProbabilities()[2], .04);
+
+    const Vector &value(bandit.ValueRemainingDistribution());
+    EXPECT_EQ(value.size(), ndraws);
   }
 
 }  // namespace

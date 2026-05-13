@@ -17,8 +17,11 @@
 */
 
 #include "Bandits/BinomialBandit.hpp"
-#include "Models/ParamTypes.hpp"
+#include "Bandits/bandit_functions.hpp"
+
 #include "Models/DataTypes.hpp"
+#include "Models/ParamTypes.hpp"
+
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -58,10 +61,37 @@ namespace BOOM {
     models_[arm]->suf()->batch_update(numTrials, numSuccess);
   }
   
-  void BinomialBandit::UpdatePosterior() {
-    for (auto &model : models_) {
-      model->sample_posterior();
+  void BinomialBandit::UpdatePosterior(int ndraws) {
+    probability_draws_.resize(ndraws, NumberOfArms());
+    for (int i = 0; i < ndraws; ++i) {
+      for (int j = 0; j < NumberOfArms(); ++j) { 
+        models_[j]->sample_posterior();
+        probability_draws_(i, j) = models_[j]->prob();
+      }
     }
+
+    optimal_arm_probabilities_ = ComputeOptimalArmProbabilities(
+        probability_draws_);
+
+    value_remaining_distribution_ = BOOM::ValueRemainingDistribution(
+        probability_draws_);
   }
+
+  const Vector &BinomialBandit::OptimalArmProbabilities() const {
+    if (optimal_arm_probabilities_.empty()) {
+      report_error("You must call UpdatePosterior before calling "
+                   "OptimalArmProbabilities.");
+    }
+    return optimal_arm_probabilities_;
+  }
+
+  const Vector &BinomialBandit::ValueRemainingDistribution() const {
+    if (value_remaining_distribution_.empty()) {
+      report_error("You must call UpdatePosterior before calling "
+                   "ValueRemainingDistribution.");
+    }
+    return value_remaining_distribution_;
+  }
+  
   
 }  // namespace BOOM

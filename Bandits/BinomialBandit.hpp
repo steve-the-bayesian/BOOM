@@ -27,11 +27,18 @@
 
 namespace BOOM {
 
+  // A classroom example multi-armed bandit for success/failure outcomes.  Each
+  // arm has an independent success probability.  Data for arms are communicated
+  // by counts of successes and trials.
   class BinomialBandit : public GenericBanditBase {
    public:
 
     BinomialBandit(const std::vector<Ptr<BinomialModel>> &models);
 
+    int NumberOfArms() const override {
+      return models_.size();
+    }
+    
     // Return the success probability for the requested arm.
     // Args:
     //   arm:  The arm for which the success probability is desired.
@@ -51,21 +58,31 @@ namespace BOOM {
     //
     // Args:
     //   arm:  The index of the targeted arm.
-    //   num_successes:  The number of incremental successes to add to the indicated arm.
-    //   num_trials:  The number of incremental trials to add to the indicated arm.
+    //   num_successes: The number of incremental successes to add to the
+    //     indicated arm.
+    //   num_trials: The number of incremental trials to add to the indicated
+    //     arm.
     //
     // Effetcts:
     //   The model indicated by 'arm' gets the number of successes and trials
     //   added.
     void ObserveData(int arm, int num_successes, int num_trials);
     
-    // Take one draw from the posterior distribution given all observed data.
-    void UpdatePosterior();
+    // Take ndraws samples from the posterior distribution given all observed
+    // data.
+    void UpdatePosterior(int ndraws);
     
-  
+    const Vector &OptimalArmProbabilities() const;
+    const Vector &ValueRemainingDistribution() const;
+    
    private:
-  
     std::vector<Ptr<BinomialModel>> models_;
+
+    // The following data elements are populated by a call to UpdatePosterior.
+    Matrix probability_draws_;
+    Vector optimal_arm_probabilities_;
+    Vector value_remaining_distribution_;
+    
   };   
   
 }  // namespace BOOM
