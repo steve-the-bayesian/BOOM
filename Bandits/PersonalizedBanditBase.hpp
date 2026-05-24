@@ -1,5 +1,5 @@
-#ifndef BOOM_BANDITS_GENERIC_BANDIT_BASE_HPP_
-#define BOOM_BANDITS_GENERIC_BANDIT_BASE_HPP_
+#ifndef BOOM_BANDITS_PERSONALIZED_BANDIT_BASE_HPP_
+#define BOOM_BANDITS_PERSONALIZED_BANDIT_BASE_HPP_
 /*
   Copyright (C) 2005-2026 Steven L. Scott
 
@@ -18,28 +18,17 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/ParamTypes.hpp"
-#include "Models/DataTypes.hpp"
-#include "distributions/rng.hpp"
-
 namespace BOOM {
+ public:
 
-  class GenericBanditBase {
-   public:
+  // Simulate (or depending )the value of a specific arm.
+  virtual double Value(int arm,
+                       const Params *model_params = nullptr,
+                       const Data *user_data = nullptr,
+                       RNG *rng = nullptr) const;
+ private:
+}; 
 
-    // double OptimalArmProbabilities(const Par) const;
 
-    virtual int number_of_arms() const = 0;
-    
-    virtual double value(int arm,
-                         const Params *model_params,
-                         const Data *user_data,
-                         const RNG *rng) const = 0;
-    
-   private:
-  };
 
-  
-}  // namespace BOOM
-
-#endif  //  BOOM_BANDITS_GENERIC_BANDIT_BASE_HPP_
+#endif  // BOOM_BANDITS_PERSONALIZED_BANDIT_BASE_HPP_

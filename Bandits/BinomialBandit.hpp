@@ -35,7 +35,7 @@ namespace BOOM {
 
     BinomialBandit(const std::vector<Ptr<BinomialModel>> &models);
 
-    int NumberOfArms() const override {
+    int number_of_arms() const override {
       return models_.size();
     }
     
@@ -49,7 +49,7 @@ namespace BOOM {
     //
     // Returns:
     //   The arm probability for the requested arm.
-    double Value(int arm,
+    double value(int arm,
                  const Params *model_params = nullptr,
                  const Data *user_data = nullptr,
                  const RNG *rng = nullptr) const override;
@@ -66,19 +66,19 @@ namespace BOOM {
     // Effetcts:
     //   The model indicated by 'arm' gets the number of successes and trials
     //   added.
-    void ObserveData(int arm, int num_successes, int num_trials);
+    void observe_data(int arm, int num_successes, int num_trials);
     
     // Take ndraws samples from the posterior distribution given all observed
     // data.
-    void UpdatePosterior(int ndraws);
+    void update_posterior(int ndraws);
     
-    const Vector &OptimalArmProbabilities() const;
-    const Vector &ValueRemainingDistribution() const;
+    const Vector &optimal_arm_probabilities() const;
+    const Vector &value_remaining_distribution() const;
     
    private:
     std::vector<Ptr<BinomialModel>> models_;
 
-    // The following data elements are populated by a call to UpdatePosterior.
+    // The following data elements are populated by a call to update_posterior.
     Matrix probability_draws_;
     Vector optimal_arm_probabilities_;
     Vector value_remaining_distribution_;

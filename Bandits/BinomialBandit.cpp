@@ -44,7 +44,7 @@ namespace BOOM {
     }
   }
 
-  double BinomialBandit::Value(int arm,
+  double BinomialBandit::value(int arm,
                                const Params *model_params,
                                const Data *user_data,
                                const RNG *rng) const {
@@ -57,14 +57,14 @@ namespace BOOM {
     }
   }
   
-  void BinomialBandit::ObserveData(int arm, int numSuccess, int numTrials) {
+  void BinomialBandit::observe_data(int arm, int numSuccess, int numTrials) {
     models_[arm]->suf()->batch_update(numTrials, numSuccess);
   }
   
-  void BinomialBandit::UpdatePosterior(int ndraws) {
-    probability_draws_.resize(ndraws, NumberOfArms());
+  void BinomialBandit::update_posterior(int ndraws) {
+    probability_draws_.resize(ndraws, number_of_arms());
     for (int i = 0; i < ndraws; ++i) {
-      for (int j = 0; j < NumberOfArms(); ++j) { 
+      for (int j = 0; j < number_of_arms(); ++j) { 
         models_[j]->sample_posterior();
         probability_draws_(i, j) = models_[j]->prob();
       }
@@ -77,17 +77,17 @@ namespace BOOM {
         probability_draws_);
   }
 
-  const Vector &BinomialBandit::OptimalArmProbabilities() const {
+  const Vector &BinomialBandit::optimal_arm_probabilities() const {
     if (optimal_arm_probabilities_.empty()) {
-      report_error("You must call UpdatePosterior before calling "
+      report_error("You must call update_posterior before calling "
                    "OptimalArmProbabilities.");
     }
     return optimal_arm_probabilities_;
   }
 
-  const Vector &BinomialBandit::ValueRemainingDistribution() const {
+  const Vector &BinomialBandit::value_remaining_distribution() const {
     if (value_remaining_distribution_.empty()) {
-      report_error("You must call UpdatePosterior before calling "
+      report_error("You must call update_posterior before calling "
                    "ValueRemainingDistribution.");
     }
     return value_remaining_distribution_;

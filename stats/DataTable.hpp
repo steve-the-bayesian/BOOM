@@ -201,6 +201,7 @@ namespace BOOM {
     const std::vector<std::string> &vnames() const {
       return type_index_->variable_names();
     }
+    const std::vector<std::string> &variable_names() const { return vnames(); }
 
     // The number of numeric variables.
     int numeric_dim() const {
@@ -432,7 +433,6 @@ namespace BOOM {
     // returned for categorical variables.
     int nlevels(uint i) const;
 
-
     //--- look inside ---
     std::ostream &print(std::ostream &out, uint from = 0,
                         uint to = std::numeric_limits<uint>::max()) const;
@@ -445,6 +445,7 @@ namespace BOOM {
     // The names of the variables stored in the table.  These are the "column
     // names."
     const std::vector<std::string> &vnames() const;
+    const std::vector<std::string> &variable_names() const {return vnames();}
 
     //--- extract variables ---
     // Get column 'which_column' from the table.

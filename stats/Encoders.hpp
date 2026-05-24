@@ -69,11 +69,8 @@ namespace BOOM {
 
   //===========================================================================
 
-
-
-  // There are 2 cases to consider here -- with and without names.
-  // Should have a base class and two concrete classes.
-
+  // There are 2 cases to consider for effect encoders -- with and without
+  // names.  Thus we have two classes, with a common base to share code.
   class EffectsEncoderBase : public MainEffectEncoder{
    public:
     EffectsEncoderBase(const std::string &variable_name)
@@ -123,7 +120,8 @@ namespace BOOM {
     void encode(const CategoricalData &data_point, VectorView view) const;
 
     Vector encode_row(const MixedMultivariateData &data_point) const override;
-    void encode_row(const MixedMultivariateData &data_point, VectorView) const override;
+    void encode_row(const MixedMultivariateData &data_point,
+                    VectorView) const override;
 
    private:
     Ptr<CatKeyBase> key_;

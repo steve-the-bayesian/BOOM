@@ -32,15 +32,15 @@ namespace {
 
     BinomialBandit bandit(models);
     
-    EXPECT_DOUBLE_EQ(bandit.Value(0), .3);
-    EXPECT_DOUBLE_EQ(bandit.Value(1), .5);
-    EXPECT_DOUBLE_EQ(bandit.Value(2), .1);
+    EXPECT_DOUBLE_EQ(bandit.value(0), .3);
+    EXPECT_DOUBLE_EQ(bandit.value(1), .5);
+    EXPECT_DOUBLE_EQ(bandit.value(2), .1);
 
     NEW(VectorParams, probs)({.1, .2, .7});
     
-    EXPECT_DOUBLE_EQ(bandit.Value(0, probs.get()), .1);
-    EXPECT_DOUBLE_EQ(bandit.Value(1, probs.get()), .2);
-    EXPECT_DOUBLE_EQ(bandit.Value(2, probs.get()), .7);
+    EXPECT_DOUBLE_EQ(bandit.value(0, probs.get()), .1);
+    EXPECT_DOUBLE_EQ(bandit.value(1, probs.get()), .2);
+    EXPECT_DOUBLE_EQ(bandit.value(2, probs.get()), .7);
   }
 
   TEST_F(BinomialBanditTest, ObserveDataTest) {
@@ -51,11 +51,11 @@ namespace {
 
     BinomialBandit bandit(models);
 
-    bandit.ObserveData(0, 3, 7);
-    bandit.ObserveData(1, 4, 6);
-    bandit.ObserveData(2, 2, 9);
+    bandit.observe_data(0, 3, 7);
+    bandit.observe_data(1, 4, 6);
+    bandit.observe_data(2, 2, 9);
 
-    bandit.ObserveData(0, 0, 0);
+    bandit.observe_data(0, 0, 0);
   }
 
   TEST_F(BinomialBanditTest, UpdatePosteriorTest) {
@@ -71,38 +71,38 @@ namespace {
     }
 
     BinomialBandit bandit(models);
-    bandit.ObserveData(0, 300, 700);
-    bandit.ObserveData(1, 400, 600);
-    bandit.ObserveData(2, 200, 900);
+    bandit.observe_data(0, 300, 700);
+    bandit.observe_data(1, 400, 600);
+    bandit.observe_data(2, 200, 900);
 
-    bandit.UpdatePosterior(1000);
+    bandit.update_posterior(1000);
 
-    EXPECT_GT(bandit.Value(1), bandit.Value(0));
-    EXPECT_GT(bandit.Value(1), bandit.Value(2));
-    EXPECT_GT(bandit.Value(0), bandit.Value(2));
+    EXPECT_GT(bandit.value(1), bandit.value(0));
+    EXPECT_GT(bandit.value(1), bandit.value(2));
+    EXPECT_GT(bandit.value(0), bandit.value(2));
 
     for (auto &model : models) {
       model->clear_data();
     }
     
-    bandit.ObserveData(0, 3, 7);
-    bandit.ObserveData(1, 4, 6);
-    bandit.ObserveData(2, 2, 9);
+    bandit.observe_data(0, 3, 7);
+    bandit.observe_data(1, 4, 6);
+    bandit.observe_data(2, 2, 9);
     int ndraws = 100000;
-    bandit.UpdatePosterior(ndraws);
+    bandit.update_posterior(ndraws);
 
-    EXPECT_EQ(3, bandit.OptimalArmProbabilities().size());
+    EXPECT_EQ(3, bandit.optimal_arm_probabilities().size());
     
-    EXPECT_GT(bandit.OptimalArmProbabilities()[0], .15);
-    EXPECT_LT(bandit.OptimalArmProbabilities()[0], .25);
+    EXPECT_GT(bandit.optimal_arm_probabilities()[0], .15);
+    EXPECT_LT(bandit.optimal_arm_probabilities()[0], .25);
 
-    EXPECT_GT(bandit.OptimalArmProbabilities()[1], .7);
-    EXPECT_LT(bandit.OptimalArmProbabilities()[1], .8);
+    EXPECT_GT(bandit.optimal_arm_probabilities()[1], .7);
+    EXPECT_LT(bandit.optimal_arm_probabilities()[1], .8);
     
-    EXPECT_GT(bandit.OptimalArmProbabilities()[2], .01);
-    EXPECT_LT(bandit.OptimalArmProbabilities()[2], .04);
+    EXPECT_GT(bandit.optimal_arm_probabilities()[2], .01);
+    EXPECT_LT(bandit.optimal_arm_probabilities()[2], .04);
 
-    const Vector &value(bandit.ValueRemainingDistribution());
+    const Vector &value(bandit.value_remaining_distribution());
     EXPECT_EQ(value.size(), ndraws);
   }
 
