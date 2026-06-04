@@ -93,7 +93,15 @@ namespace BOOM {
   void CatKey::Register(CategoricalData *dp) {
     CatKeyBase::Register(dp);
     if (dp->value() >= labs_.size()) {
-      report_error("Illegal value passed to CatKey::Register");
+      std::ostringstream err;
+      err << "Illegal value: "
+          << dp->value()
+          << " passed to CatKey::Register "
+          << " with labels: ";
+      for (const std::string &label :  labs_) {
+        err << "\n" << label;
+      }
+      report_error(err.str());
     }
   }
 
@@ -109,7 +117,7 @@ namespace BOOM {
         add_label(label);
         dp->set(findstr_safe(label, found));
       } else {
-        report_error("illegal label passed to CatKey::Register");
+        report_error("illegal label passed to CatKey::RegisterWithLabel");
       }
     }
   }
