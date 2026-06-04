@@ -16,4 +16,6 @@ qux
 */python/*/build
 .bazelrc
 *#*#
+#*
+.#*
 MODULE.bazel.lock
