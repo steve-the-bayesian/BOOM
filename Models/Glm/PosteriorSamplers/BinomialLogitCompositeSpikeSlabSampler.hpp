@@ -61,9 +61,13 @@ namespace BOOM {
       : public BinomialLogitSpikeSlabSampler {
    public:
     BinomialLogitCompositeSpikeSlabSampler(
-        BinomialLogitModel *model, const Ptr<MvnBase> &prior,
-        const Ptr<VariableSelectionPrior> &vpri, int clt_threshold, double tdf,
-        int max_tim_chunk_size, int max_rwm_chunk_size = 1,
+        BinomialLogitModel *model,
+        const Ptr<MvnBase> &prior,
+        const Ptr<VariableSelectionPrior> &vpri,
+        int clt_threshold,
+        double tdf,
+        int max_tim_chunk_size,
+        int max_rwm_chunk_size = 1,
         double rwm_variance_scale_factor = 1.0,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
@@ -79,7 +83,8 @@ namespace BOOM {
     // The three samplers will be used in proportion to the weights
     // supplied here.  Weights must be non-negative, and at least one
     // must be positive.
-    void set_sampler_weights(double da_weight, double rwm_weight,
+    void set_sampler_weights(double da_weight,
+                             double rwm_weight,
                              double tim_weight);
 
     std::ostream &time_report(std::ostream &out) const;
