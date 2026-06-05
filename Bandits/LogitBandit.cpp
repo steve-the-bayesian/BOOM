@@ -17,14 +17,17 @@
 */
 
 #include "Bandits/LogitBandit.hpp"
+#include "Bandits/bandit_functions.hpp"
+#include "stats/logit.hpp"
 
 namespace BOOM {
 
-  double LogitBandit::value(int arm, const MixedMultivariateData &context) const {
-    Vector predictor_vector = encoder_->encode_row(arm, context);
-    return model_->predict(predictor_vector);
-  }
-
+  LogitBandit::LogitBandit(const Ptr<BinomialLogitModel> &model,
+                           const Ptr<LinearBanditEncoder> &encoder)
+      : model_(model),
+        encoder_(encoder)
+  {}
+  
   void LogitBandit::observe_data(int arm,
                                  int num_successes,
                                  int num_trials,
@@ -43,8 +46,37 @@ namespace BOOM {
     }
   }
 
-  // Vector OptimalArmProbabilities(const MixedMultivariateData &context) const {
-  //   // TODO
-  // }
+  double LogitBandit::value(int arm, const MixedMultivariateData &context) const {
+    return model_->predict(encoder_->encode_row(arm, context));
+  }
+
+  Matrix LogitBandit::arm_predictors(const MixedMultivariateData &context) const {
+    Matrix ans(number_of_arms(), model_->xdim());
+    for (int i = 0; i < number_of_arms(); ++i) {
+      ans.row(i) = encoder_->encode_row(i, context);
+    }
+    return ans;
+  }
+  
+  Vector LogitBandit::optimal_arm_probabilities(
+      const MixedMultivariateData &context,
+      RNG &rng) const {
+    Matrix predictors = arm_predictors(context);
+    Matrix value_draws = coefficient_draws_.multT(predictors);
+    return ComputeOptimalArmProbabilities(value_draws, rng);
+  }
+
+  Vector LogitBandit::value_remaining_distribution(
+      const MixedMultivariateData &context,
+      RNG &rng) const {
+    Matrix predictors = arm_predictors(context);
+    Matrix value_draws = coefficient_draws_.multT(predictors);
+    for (int i = 0; i < value_draws.nrow(); ++i) {
+      for (int j = 0; j < value_draws.ncol(); ++j) {
+        value_draws(i, j) = logit_inv(value_draws(i, j));
+      }
+    }
+    return ValueRemainingDistribution(value_draws, rng);
+  }
   
 }  // namespace BOOM

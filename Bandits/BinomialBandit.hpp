@@ -39,21 +39,15 @@ namespace BOOM {
       return models_.size();
     }
     
-    // Return the success probability for the requested arm.
     // Args:
     //   arm:  The arm for which the success probability is desired.
-    //   model_params: If used, get the arm probabilities from here.  Must be
-    //     VectorParams or VectorData.
-    //   user_data:  Not used.
-    //   rng: Not used.
     //
     // Returns:
     //   The arm probability for the requested arm.
-    double value(int arm,
-                 const Params *model_params = nullptr,
-                 const Data *user_data = nullptr,
-                 const RNG *rng = nullptr) const override;
-
+    double value(int arm) const {
+      return models_[arm]->prob();
+    }
+    
     // Add the indicated number of successes and trials to the indicated arm.
     //
     // Args:

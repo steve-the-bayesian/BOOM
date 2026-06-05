@@ -18,8 +18,10 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "cpputil/RefCounted.hpp"
 #include "stats/Design.hpp"
 #include "stats/Encoders.hpp"
+#include <ostream>
 
 namespace BOOM {
 
@@ -58,6 +60,9 @@ namespace BOOM {
         delete am;
       }
     }
+
+    std::string to_string() const;
+    std::ostream &print(std::ostream &out) const;
     
    private:
     void FillArmValues_(const ExperimentStructure &xp);
@@ -68,6 +73,10 @@ namespace BOOM {
     std::vector<std::vector<int>> arm_values_;
   };
 
+  inline std::ostream &operator<<(std::ostream &out, const ArmMap &arm_map) {
+    return arm_map.print(out);
+  }
+  
   //===========================================================================
   // An ExperimentArmEncoder is a wrapper around an EffectsEncoder.  It is
   // designed to owned by a LinearBanditEncoder and encode the value of an
@@ -120,7 +129,7 @@ namespace BOOM {
   // The LinearBanditEncoder generalizes a 'DatasetEncoder'.  A DatasetEncoder
   // assumes that all the relevant variables are present in the data_table being
   // encoded.  A LinearBanditEncoder
-  class LinearBanditEncoder {
+  class LinearBanditEncoder : private RefCounted {
    public:
 
     // Args:
@@ -131,6 +140,10 @@ namespace BOOM {
     LinearBanditEncoder(const Ptr<ArmMap> &arm_map,
                         const Ptr<DatasetEncoder> &dataset_encoder);
     Vector encode_row(int arm, const MixedMultivariateData &context);
+
+    int number_of_arms() const {
+      return arm_map_->number_of_arms();
+    }
     
    private:
     // Loop over all the encoders in the data encoder.  Find all the
@@ -145,6 +158,13 @@ namespace BOOM {
     Ptr<ArmMap> arm_map_;
     Ptr<DatasetEncoder> dataset_encoder_;
     std::map<std::string, Ptr<ExperimentArmEncoder>> experiment_encoders_;
+
+    friend void intrusive_ptr_add_ref(LinearBanditEncoder *d) { d->up_count(); }
+    friend void intrusive_ptr_release(LinearBanditEncoder *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
+
   };
 
   

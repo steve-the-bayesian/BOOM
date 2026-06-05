@@ -24,21 +24,19 @@
 
 namespace BOOM {
 
-  class GenericBanditBase {
+  class GenericBanditBase : private RefCounted {
    public:
-
-    // double OptimalArmProbabilities(const Par) const;
-
     virtual int number_of_arms() const = 0;
-    
-    virtual double value(int arm,
-                         const Params *model_params,
-                         const Data *user_data,
-                         const RNG *rng) const = 0;
-    
-   private:
-  };
 
+    friend void intrusive_ptr_add_ref(GenericBanditBase *b) {b->up_count();}
+    friend void intrusive_ptr_release(GenericBanditBase *b) {
+      b->down_count();
+      if (b->ref_count() == 0) {
+        delete b;
+      }
+    }
+
+  };
   
 }  // namespace BOOM
 

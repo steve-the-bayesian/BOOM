@@ -43,19 +43,6 @@ namespace BOOM {
       }
     }
   }
-
-  double BinomialBandit::value(int arm,
-                               const Params *model_params,
-                               const Data *user_data,
-                               const RNG *rng) const {
-    if (model_params) {
-      const VectorParams *arm_probs(
-          dynamic_cast<const VectorParams *>(model_params));
-      return (*arm_probs)[arm];
-    } else {
-      return models_[arm]->prob();
-    }
-  }
   
   void BinomialBandit::observe_data(int arm, int numSuccess, int numTrials) {
     models_[arm]->suf()->batch_update(numTrials, numSuccess);

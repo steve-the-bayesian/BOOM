@@ -35,6 +35,14 @@ namespace BOOM {
     LogitBandit(const Ptr<BinomialLogitModel> &model,
                 const Ptr<LinearBanditEncoder> &encoder); 
 
+    // The number of arms the bandit is tracking.  This is determined by the
+    // ArmMap component of the encoder.
+    int number_of_arms() const override {return encoder_->number_of_arms();}
+
+    // The number of draws representing the posterior distribution.  This is
+    // determined by the most recent call to update_posterior().
+    int ndraws() const {return coefficient_draws_.nrow();}
+    
     // Record the outcomes of a particular arm being used with a particular set
     // of context.
     //
@@ -47,22 +55,29 @@ namespace BOOM {
     
     double value(int arm, const MixedMultivariateData &context) const;
     
-    double value(int arm,
-                 const Params *model_params,
-                 const Data *user_data,
-                 const RNG *rng = nullptr) const override;
-
     void update_posterior(int ndraws);
 
-    Vector optimal_arm_probabilities(const MixedMultivariateData &context);
-    Vector value_remaining_distribution(const MixedMultivariateData &context);
+    // Args:
+    //   context:  The context data describing an individual subject.
+    //
+    // Returns:
+    //   A matrix, where row i contains the predictor vector for arm i under the
+    //   supplied context.
+    Matrix arm_predictors(const MixedMultivariateData &context) const;
+    
+    // This can probably be optimized if it uses too much memory.  It also
+    // encodes the same things over and over again, so serilization might help.
+    Vector optimal_arm_probabilities(const MixedMultivariateData &context,
+                                     RNG &rng = GlobalRng::rng) const;
+    
+    Vector value_remaining_distribution(const MixedMultivariateData &context,
+                                        RNG &rng = GlobalRng::rng) const;
     
    private:
     Ptr<BinomialLogitModel> model_;
     Ptr<LinearBanditEncoder> encoder_;
 
     Matrix coefficient_draws_;
-    
   };
   
 }  // namespace BOOM

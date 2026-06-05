@@ -1,5 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_test") 
-load("@rules_cc//cc:defs.bzl", "cc_library") 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 COPTS = ["-Wno-sign-compare"]
 
@@ -21,6 +20,14 @@ cc_test(
     name = "linear_bandit_encoder_test",
     size = "small",
     srcs = ["linear_bandit_encoder_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
+    name = "logit_bandit_test",
+    size = "small",
+    srcs = ["logit_bandit_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
 )

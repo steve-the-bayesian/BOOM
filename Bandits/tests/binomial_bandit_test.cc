@@ -36,11 +36,6 @@ namespace {
     EXPECT_DOUBLE_EQ(bandit.value(1), .5);
     EXPECT_DOUBLE_EQ(bandit.value(2), .1);
 
-    NEW(VectorParams, probs)({.1, .2, .7});
-    
-    EXPECT_DOUBLE_EQ(bandit.value(0, probs.get()), .1);
-    EXPECT_DOUBLE_EQ(bandit.value(1, probs.get()), .2);
-    EXPECT_DOUBLE_EQ(bandit.value(2, probs.get()), .7);
   }
 
   TEST_F(BinomialBanditTest, ObserveDataTest) {

@@ -156,27 +156,77 @@ namespace {
     NEW(IdentityEncoder, x1_encoder)("x1");
     dataset_encoder_->add_encoder(x1_encoder);
 
+    NEW(CatKey, stooge_key)({"Larry", "Moe", "Curly"});
+    NEW(EffectsEncoder, stooge_encoder)("stooge", stooge_key);
+    dataset_encoder_->add_encoder(stooge_encoder);
+    
     NEW(InteractionEncoder, x1_pos)(x1_encoder, button_position_encoder_);
     dataset_encoder_->add_encoder(x1_pos);
-    
+
     NEW(InteractionEncoder, x1_color)(x1_encoder, button_color_encoder_);
     dataset_encoder_->add_encoder(x1_color);
 
     LinearBanditEncoder encoder(arm_map_, dataset_encoder_);
     DataTable data;
-    Vector x1(10);
+    int sample_size = 10;
+    Vector x1(sample_size);
     x1.randomize();
     data.append_variable(x1, "x1");
 
-    Vector encoded_row = encoder.encode_row(1, *data.row(0));
+    std::vector<int> stooge_index = rmulti_vector_mt(
+        GlobalRng::rng,
+        sample_size,
+        Vector{.3333, .3333, .3333});
+    CategoricalVariable stooge_data(stooge_index, stooge_key);
+    data.append_variable(stooge_data, "stooge");
+
+    std::cout << "arm_map: \n" << *arm_map_ << std::endl;
+    std::cout << "data = \n" << data;
+    int which_arm = 1;
+
+    Ptr<MixedMultivariateData> data_row(data.row(0));
+    Vector encoded_row = encoder.encode_row(which_arm, *data_row);
     EXPECT_EQ(encoded_row.size(),
               1
               + button_position_encoder_->dim()
               + button_color_encoder_->dim()
               + x1_encoder->dim()
+              + stooge_encoder->dim()
               + x1_pos->dim()
               + x1_color->dim());
-        
+
+    std::cout << encoded_row << std::endl;
+    
+    // Check the intercept term.
+    EXPECT_DOUBLE_EQ(encoded_row[0], 1.0); 
+    
+    // Check that the results of each encoder appear in the correct positions.
+    Vector button_encoding = button_position_encoder_->encode_row(*data_row);
+    int pos = 1;
+    for (int i = 0; i < button_encoding.size(); ++i, ++pos) {
+      EXPECT_DOUBLE_EQ(encoded_row[pos], button_encoding[i]);
+    }
+
+    Vector button_color_encoding = button_color_encoder_->encode_row(*data_row);
+    for (int i = 0; i < button_color_encoding.size(); ++i, ++pos) {
+      EXPECT_DOUBLE_EQ(encoded_row[pos], button_color_encoding[i]);
+    }
+
+    EXPECT_DOUBLE_EQ(encoded_row[pos++], x1[0]);
+    Vector stooge_encoding = stooge_encoder->encode_row(*data_row);
+    for (int i = 0; i < stooge_encoding.size(); ++i, ++pos) {
+      EXPECT_DOUBLE_EQ(encoded_row[pos], stooge_encoding[i]);
+    }
+
+    Vector x1_pos_encoding = x1_pos->encode_row(*data_row);
+    for (int i = 0; i < x1_pos_encoding.size(); ++i, ++pos) {
+      EXPECT_DOUBLE_EQ(encoded_row[pos], x1_pos_encoding[i]);
+    }
+    
+    Vector x1_color_encoding = x1_color->encode_row(*data_row);
+    for (int i = 0; i < x1_color_encoding.size(); ++i, ++pos) {
+      EXPECT_DOUBLE_EQ(encoded_row[pos], x1_color_encoding[i]);
+    }
   }
 
   

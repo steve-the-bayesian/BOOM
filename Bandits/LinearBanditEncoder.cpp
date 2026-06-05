@@ -20,6 +20,8 @@
 #include "cpputil/report_error.hpp"
 #include <algorithm>
 
+#include <sstream>
+
 namespace BOOM {
 
   ArmMap::ArmMap(const ExperimentStructure &xp)
@@ -46,6 +48,33 @@ namespace BOOM {
     return ans;
   }
 
+  std::string ArmMap::to_string() const {
+    std::ostringstream out;
+    out << *this;
+    return out.str();
+  }
+
+  std::ostream & ArmMap::print(std::ostream &out) const {
+    int col_width = 4;
+    for (const auto &name : factor_names()) {
+      col_width = std::max<int>(col_width, name.size() + 1);
+    }
+    out << std::setw(5) << "arm";
+    for (const auto &name : factor_names()) {
+      out << std::setw(col_width) << name;
+    }
+    out << std::endl;
+    
+    for (int i = 0; i < number_of_arms(); ++i) {
+      out << std::setw(5) << i;
+      for (int j = 0; j < number_of_factors(); ++j) {
+        out << std::setw(col_width) << arm_values_[i][j];
+      }
+      out << std::endl;
+    }
+    return out;
+  }
+  
   //===========================================================================
 
   ExperimentArmEncoder::ExperimentArmEncoder(
