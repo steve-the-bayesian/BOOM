@@ -1,0 +1,5 @@
+A python wrapper around the BOOM library's implementation of multi-armed
+bandits.
+
+For an academic paper see:
+https://www.economics.uci.edu/files/docs/micro/s11/Scott.pdf

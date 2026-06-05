@@ -245,6 +245,10 @@ boom_headers += time_series_headers
 
 test_utils_sources = glob(BOOM_DIR + "test_utils/*.cpp")
 
+bandits_sources = glob(BOOM_DIR + "Bandits/*.cpp")
+bandits_headers = glob(BOOM_DIR + "Bandits/*.hpp")
+boom_headers += bandits_headers
+
 
 boom_library_sources = (
     distributions_sources
@@ -258,6 +262,7 @@ boom_library_sources = (
     + utils_sources
     + models_sources
     + bart_sources
+    + bandits_sources
     + factor_sources
     + glm_sources
     + gp_sources
@@ -275,6 +280,7 @@ boom_library_sources = (
 
 boom_extension_sources = (
     [BOOM_DIR + "pybind11/module.cpp"]
+    + glob(BOOM_DIR + "pybind11/Bandits/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/GP/*.cpp")

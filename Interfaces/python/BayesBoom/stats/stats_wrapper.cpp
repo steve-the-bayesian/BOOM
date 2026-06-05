@@ -9,6 +9,7 @@
 
 #include "stats/Bspline.hpp"
 #include "stats/DataTable.hpp"
+#include "stats/Design.hpp"
 #include "stats/Encoders.hpp"
 #include "stats/IQagent.hpp"
 #include "stats/Spline.hpp"
@@ -235,6 +236,89 @@ namespace BayesBoom {
 
 
     //==========================================================================
+    // MixedMultivariateData: a single row from a DataTable, holding a mix of
+    // numeric and categorical variables.  Create via DataTable.row(i).
+    py::class_<MixedMultivariateData, Data, Ptr<MixedMultivariateData>>(
+        boom, "MixedMultivariateData")
+        .def(py::init([]() { return new MixedMultivariateData(); }),
+             "Default constructor for an empty context row (no variables).")
+        .def("add_numeric",
+             [](MixedMultivariateData &data,
+                double value,
+                const std::string &name) {
+               data.add_numeric(new DoubleData(value), name);
+             },
+             py::arg("value"),
+             py::arg("name") = "",
+             "Add a numeric variable to this data row.\n\n"
+             "Args:\n"
+             "  value: The numeric value.\n"
+             "  name: Optional variable name.\n")
+        .def_property_readonly(
+            "dim", &MixedMultivariateData::dim,
+            "Total number of variables (numeric + categorical + other).")
+        .def_property_readonly(
+            "numeric_dim", &MixedMultivariateData::numeric_dim,
+            "Number of numeric variables.")
+        .def_property_readonly(
+            "categorical_dim", &MixedMultivariateData::categorical_dim,
+            "Number of categorical variables.")
+        .def("__repr__",
+             [](const MixedMultivariateData &data) {
+               std::ostringstream out;
+               data.display(out);
+               return out.str();
+             })
+        ;
+
+    // =========================================================================
+    // ExperimentStructure: metadata describing the factors and levels of an
+    // experiment.  Used to build an ArmMap.
+    py::class_<ExperimentStructure>(boom, "ExperimentStructure")
+        .def(py::init([]() { return new ExperimentStructure(); }),
+             "Default constructor.  Add factors via add_factor().")
+        .def(py::init(
+            [](const std::vector<std::string> &factor_names,
+               const std::vector<std::vector<std::string>> &level_names) {
+              return new ExperimentStructure(factor_names, level_names);
+            }),
+             py::arg("factor_names"),
+             py::arg("level_names"),
+             "Args:\n\n"
+             "  factor_names: Names of the experimental factors.\n"
+             "  level_names: The levels of each factor.  len(level_names) "
+             "must equal len(factor_names).\n")
+        .def("add_factor",
+             [](ExperimentStructure &xp,
+                const std::string &name,
+                const std::vector<std::string> &levels) {
+               xp.add_factor(name, levels);
+             },
+             py::arg("factor_name"),
+             py::arg("factor_levels"),
+             "Add a factor and its levels to the experiment structure.\n\n"
+             "Args:\n"
+             "  factor_name: Name of the factor to add.\n"
+             "  factor_levels: The set of levels for this factor.\n")
+        .def_property_readonly("nfactors", &ExperimentStructure::nfactors,
+             "Number of experimental factors.")
+        .def("nlevels",
+             [](const ExperimentStructure &xp, int factor) {
+               return xp.nlevels(factor);
+             },
+             py::arg("factor"),
+             "Args:\n"
+             "  factor: The index of the factor.\n\n"
+             "Returns the number of levels available for the specified factor.")
+        .def_property_readonly(
+            "nconfigurations", &ExperimentStructure::nconfigurations,
+            "Total number of arm configurations (product of all level counts).")
+        .def_property_readonly(
+            "factor_names", &ExperimentStructure::factor_names,
+            "The names of the experimental factors.")
+        ;
+
+    //==========================================================================
     py::class_<DataTable,
                Data,
                Ptr<DataTable>>(boom, "DataTable")
@@ -291,6 +375,20 @@ namespace BayesBoom {
              "  dt: A list of boom.DateTime objects.  \n"
              "      See to_boom_datetime_vector.\n"
              "  name:  The name of the new datetime variable.\n")
+        .def("add_high_cardinality",
+             [](DataTable &table,
+                const std::vector<std::string> &values,
+                const std::string &name) {
+               table.append_variable(HighCardinalityVariable(values), name);
+             },
+             py::arg("values"),
+             py::arg("name"),
+             "Add a high-cardinality string variable (e.g. a user ID) to the "
+             "table.  High-cardinality variables are stored as raw strings and "
+             "are not expanded into indicator variables.\n\n"
+             "Args:\n"
+             "  values: A list of strings, one per row.\n"
+             "  name: The name of the variable.\n")
         .def_property_readonly(
             "nrow", &DataTable::nobs,
             "Number of rows (observations) in the table.")
@@ -324,6 +422,10 @@ namespace BayesBoom {
 
                  case VariableType::datetime:
                    return "datetime";
+                   break;
+
+                 case VariableType::high_cardinality:
+                   return "high_cardinality";
                    break;
 
                  default:
@@ -368,6 +470,28 @@ namespace BayesBoom {
              "is not a DateTime variable.\n\n"
              "Returns:\n"
              "  The requested column as a list of boom.DateTime objects.\n")
+        .def("get_high_cardinality",
+             [](DataTable &table, int i) {
+               HighCardinalityVariable var = table.get_high_cardinality(i);
+               return var.data();
+             },
+             py::arg("i"),
+             "Args:\n\n"
+             "  i: The column index to get.  This is an error if column i "
+             "is not a high-cardinality variable.\n\n"
+             "Returns:\n"
+             "  The requested column as a list of strings.\n")
+        .def("row",
+             [](const DataTable &table, int row_index) {
+               return table.row(row_index);
+             },
+             py::arg("row_index"),
+             "Extract a single row as a MixedMultivariateData object.\n\n"
+             "Args:\n"
+             "  row_index: The 0-based row index to extract.\n\n"
+             "Returns:\n"
+             "  A MixedMultivariateData containing all variables for that "
+             "row.\n")
         ;
 
     //===========================================================================

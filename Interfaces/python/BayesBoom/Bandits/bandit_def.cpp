@@ -1,0 +1,421 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/eigen.h>
+
+#include "Bandits/BinomialBandit.hpp"
+#include "Bandits/LogitBandit.hpp"
+#include "Bandits/LinearBanditEncoder.hpp"
+#include "Bandits/bandit_functions.hpp"
+
+#include "Models/BinomialModel.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+
+#include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp"
+
+#include "stats/DataTable.hpp"
+#include "stats/Encoders.hpp"
+
+#include "cpputil/Ptr.hpp"
+
+namespace py = pybind11;
+PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
+
+namespace BayesBoom {
+  using namespace BOOM;
+
+  void Bandit_def(py::module &boom) {
+
+    // =========================================================================
+    // ArmMap: bijective mapping between arm indices and factor-level
+    // combinations.
+    py::class_<ArmMap, Ptr<ArmMap>>(boom, "ArmMap")
+        .def(py::init(
+            [](const ExperimentStructure &xp) {
+              return new ArmMap(xp);
+            }),
+             py::arg("experiment_structure"),
+             "Args:\n\n"
+             "  experiment_structure: An ExperimentStructure describing the "
+             "factors and levels in the experiment.  The number of arms equals "
+             "the product of the number of levels for each factor.\n")
+        .def_property_readonly("number_of_arms", &ArmMap::number_of_arms,
+             "The total number of arms in the experiment.")
+        .def_property_readonly("number_of_factors", &ArmMap::number_of_factors,
+             "The number of experimental factors.")
+        .def_property_readonly("factor_names", &ArmMap::factor_names,
+             "The names of the experimental factors.")
+        .def("integer_factor_levels",
+             [](const ArmMap &am, int arm) {
+               return am.integer_factor_levels(arm);
+             },
+             py::arg("arm"),
+             "Args:\n"
+             "  arm: The arm index (0-based).\n\n"
+             "Returns the integer factor level indices for the given arm.")
+        .def("factor_level_names",
+             [](const ArmMap &am, int arm) {
+               return am.factor_level_names(arm);
+             },
+             py::arg("arm"),
+             "Args:\n"
+             "  arm: The arm index (0-based).\n\n"
+             "Returns the string factor level names for the given arm.")
+        .def("__repr__",
+             [](const ArmMap &am) { return am.to_string(); })
+        ;
+
+    // =========================================================================
+    // ExperimentArmEncoder: encodes one experimental factor as effects-coded
+    // predictors for a LinearBanditEncoder.
+    py::class_<ExperimentArmEncoder,
+               MainEffectEncoder,
+               Ptr<ExperimentArmEncoder>>(boom, "ExperimentArmEncoder")
+        .def(py::init(
+            [](const std::string &variable_name,
+               const Ptr<ArmMap> &arm_map,
+               const std::string &baseline_level) {
+              return new ExperimentArmEncoder(
+                  variable_name, arm_map, baseline_level);
+            }),
+             py::arg("variable_name"),
+             py::arg("arm_map"),
+             py::arg("baseline_level") = "",
+             "Args:\n\n"
+             "  variable_name: The name of the experimental factor this "
+             "encoder handles.  Must match a factor name in arm_map.\n"
+             "  arm_map: The ArmMap describing the experiment.\n"
+             "  baseline_level: The reference level for effects coding.  "
+             "If empty, the last level is used as the baseline.\n")
+        .def_property_readonly("dim", &ExperimentArmEncoder::dim,
+             "The number of encoded predictor columns for this factor "
+             "(nlevels - 1 for effects coding).")
+        ;
+
+    // =========================================================================
+    // LinearBanditEncoder: combines per-arm and context encoders into a single
+    // predictor vector suitable for a generalized linear model.
+    py::class_<LinearBanditEncoder, Ptr<LinearBanditEncoder>>(
+        boom, "LinearBanditEncoder")
+        .def(py::init(
+            [](const Ptr<ArmMap> &arm_map,
+               const Ptr<DatasetEncoder> &dataset_encoder) {
+              return new LinearBanditEncoder(arm_map, dataset_encoder);
+            }),
+             py::arg("arm_map"),
+             py::arg("dataset_encoder"),
+             "Args:\n\n"
+             "  arm_map: The ArmMap describing the experiment arms.\n"
+             "  dataset_encoder: A DatasetEncoder combining the arm encoders "
+             "(ExperimentArmEncoder objects) and any context encoders.\n")
+        .def_property_readonly("number_of_arms",
+             &LinearBanditEncoder::number_of_arms,
+             "The number of arms in the experiment.")
+        .def("encode_row",
+             [](LinearBanditEncoder &enc,
+                int arm,
+                const MixedMultivariateData &context) {
+               return enc.encode_row(arm, context);
+             },
+             py::arg("arm"),
+             py::arg("context"),
+             "Encode the arm and context into a single predictor vector.\n\n"
+             "Args:\n"
+             "  arm: The arm index (0-based).\n"
+             "  context: A MixedMultivariateData with the context variables "
+             "for this observation.\n\n"
+             "Returns:\n"
+             "  A boom.Vector suitable as input to the logistic regression "
+             "model.\n")
+        ;
+
+    // =========================================================================
+    // BinomialModel: models a binomial success probability.
+    py::class_<BinomialModel,
+               PriorPolicy,
+               Ptr<BinomialModel>>(boom, "BinomialModel",
+                                   py::multiple_inheritance())
+        .def(py::init(
+            [](double p) {
+              return new BinomialModel(p);
+            }),
+             py::arg("p") = 0.5,
+             "Args:\n\n"
+             "  p: Initial value for the success probability.  "
+             "Must satisfy 0 < p < 1.\n")
+        .def_property(
+            "prob",
+            [](const BinomialModel &m) { return m.prob(); },
+            [](BinomialModel &m, double p) { m.set_prob(p); },
+            "The current success probability parameter.")
+        .def("clear_data",
+             [](BinomialModel &m) { m.clear_data(); },
+             "Remove all observed data from the model.")
+        .def("log_likelihood",
+             [](const BinomialModel &m) { return m.log_likelihood(); },
+             "Log likelihood of the observed data given the current parameters.")
+        .def("__repr__",
+             [](const BinomialModel &m) {
+               std::ostringstream out;
+               out << "BinomialModel(p=" << m.prob() << ")";
+               return out.str();
+             })
+        ;
+
+    // =========================================================================
+    // BetaBinomialSampler: Beta-conjugate posterior sampler for BinomialModel.
+    py::class_<BetaBinomialSampler,
+               PosteriorSampler,
+               Ptr<BetaBinomialSampler>>(boom, "BetaBinomialSampler")
+        .def(py::init(
+            [](BinomialModel *model,
+               BetaModel *prior,
+               RNG &seeding_rng) {
+              return new BetaBinomialSampler(
+                  model, Ptr<BetaModel>(prior), seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("prior"),
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The BinomialModel to be sampled.\n"
+             "  prior: A BetaModel serving as the conjugate prior on the "
+             "success probability.  The parameters a and b are interpretable "
+             "as prior successes and failures respectively.\n"
+             "  seeding_rng: Optional RNG used to seed this sampler's own "
+             "RNG.\n")
+        ;
+
+    // =========================================================================
+    // BinomialLogitAuxmixSampler: auxiliary mixture sampler for
+    // BinomialLogitModel, used as the posterior sampler in LogitBandit.
+    py::class_<BinomialLogitAuxmixSampler,
+               PosteriorSampler,
+               Ptr<BinomialLogitAuxmixSampler>>(
+                   boom, "BinomialLogitAuxmixSampler")
+        .def(py::init(
+            [](BinomialLogitModel *model,
+               MvnBase *prior,
+               int clt_threshold,
+               RNG &seeding_rng) {
+              return new BinomialLogitAuxmixSampler(
+                  model, Ptr<MvnBase>(prior), clt_threshold, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("prior"),
+             py::arg("clt_threshold") = 10,
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The BinomialLogitModel to be sampled.\n"
+             "  prior: An MvnBase prior on the logistic regression "
+             "coefficients.\n"
+             "  clt_threshold: When the number of trials for an observation "
+             "exceeds this threshold, the central limit theorem approximation "
+             "is used for data augmentation instead of imputing each trial "
+             "individually.  Larger values are more accurate but slower.\n"
+             "  seeding_rng: Optional RNG used to seed this sampler's own "
+             "RNG.\n")
+        ;
+
+    // =========================================================================
+    // GenericBanditBase: abstract base class for all bandit types.
+    py::class_<GenericBanditBase, Ptr<GenericBanditBase>>(
+        boom, "GenericBanditBase")
+        .def_property_readonly("number_of_arms",
+             &GenericBanditBase::number_of_arms,
+             "The number of arms in the bandit.")
+        ;
+
+    // =========================================================================
+    // BinomialBandit: multi-armed bandit for independent success/failure arms.
+    //
+    // Each arm maintains an independent BinomialModel with a Beta conjugate
+    // prior.  Thompson sampling is performed by calling update_posterior(),
+    // which draws from each arm's posterior and accumulates statistics about
+    // which arm is most likely to be optimal.
+    py::class_<BinomialBandit, GenericBanditBase, Ptr<BinomialBandit>>(
+        boom, "BinomialBandit")
+        .def(py::init(
+            [](const std::vector<Ptr<BinomialModel>> &models) {
+              return new BinomialBandit(models);
+            }),
+             py::arg("models"),
+             "Args:\n\n"
+             "  models: A list of BinomialModel objects, one per arm.  Each "
+             "model should have a BetaBinomialSampler set via "
+             "model.set_method() before update_posterior() is called.\n")
+        .def("observe_data",
+             [](BinomialBandit &bandit,
+                int arm,
+                int num_successes,
+                int num_trials) {
+               bandit.observe_data(arm, num_successes, num_trials);
+             },
+             py::arg("arm"),
+             py::arg("num_successes"),
+             py::arg("num_trials"),
+             "Record an observed batch outcome for the specified arm.\n\n"
+             "Args:\n"
+             "  arm: The arm index (0-based).\n"
+             "  num_successes: Number of successes in this batch.\n"
+             "  num_trials: Number of trials in this batch.\n")
+        .def("update_posterior",
+             [](BinomialBandit &bandit, int ndraws) {
+               bandit.update_posterior(ndraws);
+             },
+             py::arg("ndraws"),
+             "Draw samples from the posterior distribution of each arm's "
+             "success probability and compute optimal arm probabilities.\n\n"
+             "Args:\n"
+             "  ndraws: Number of posterior samples to draw.\n")
+        .def("value",
+             [](const BinomialBandit &bandit, int arm) {
+               return bandit.value(arm);
+             },
+             py::arg("arm"),
+             "Return the current posterior mean success probability for the "
+             "specified arm.\n\n"
+             "Args:\n"
+             "  arm: The arm index (0-based).\n")
+        .def_property_readonly(
+            "optimal_arm_probabilities",
+            [](const BinomialBandit &bandit) {
+              return bandit.optimal_arm_probabilities();
+            },
+            "A Vector giving the probability that each arm is optimal, "
+            "estimated from the most recent call to update_posterior().  "
+            "Element i is the fraction of posterior draws in which arm i "
+            "had the highest success probability.  Requires a prior call to "
+            "update_posterior().")
+        .def_property_readonly(
+            "value_remaining_distribution",
+            [](const BinomialBandit &bandit) {
+              return bandit.value_remaining_distribution();
+            },
+            "A Vector of length ndraws giving the value-remaining statistic "
+            "for each posterior draw from the most recent update_posterior() "
+            "call.  Element i is the success probability of the best arm "
+            "minus the success probability of arm 0 in that draw.  Requires "
+            "a prior call to update_posterior().")
+        ;
+
+    // =========================================================================
+    // LogitBandit: contextual multi-armed bandit using logistic regression.
+    //
+    // Models the arm-specific success probability as a logistic regression on
+    // the arm indicator variables and optional context covariates.  Thompson
+    // sampling is performed by drawing from the posterior distribution of the
+    // regression coefficients.
+    py::class_<LogitBandit, GenericBanditBase, Ptr<LogitBandit>>(
+        boom, "LogitBandit")
+        .def(py::init(
+            [](const Ptr<BinomialLogitModel> &model,
+               const Ptr<LinearBanditEncoder> &encoder) {
+              return new LogitBandit(model, encoder);
+            }),
+             py::arg("model"),
+             py::arg("encoder"),
+             "Args:\n\n"
+             "  model: A BinomialLogitModel whose xdim matches the output "
+             "dimension of encoder.  A BinomialLogitAuxmixSampler (or other "
+             "suitable sampler) must be attached via model.set_method() before "
+             "update_posterior() is called.\n"
+             "  encoder: A LinearBanditEncoder that maps (arm, context) pairs "
+             "to predictor vectors for the logistic regression model.\n")
+        .def("observe_data",
+             [](LogitBandit &bandit,
+                int arm,
+                int num_successes,
+                int num_trials,
+                const MixedMultivariateData &context) {
+               bandit.observe_data(arm, num_successes, num_trials, context);
+             },
+             py::arg("arm"),
+             py::arg("num_successes"),
+             py::arg("num_trials"),
+             py::arg("context"),
+             "Record an observed outcome for the specified arm and context.\n\n"
+             "Args:\n"
+             "  arm: The arm index (0-based).\n"
+             "  num_successes: Number of successes observed.\n"
+             "  num_trials: Number of trials observed.\n"
+             "  context: A MixedMultivariateData with the context variables "
+             "for this observation.  Use an empty MixedMultivariateData() when "
+             "there are no context variables.\n")
+        .def("value",
+             [](const LogitBandit &bandit,
+                int arm,
+                const MixedMultivariateData &context) {
+               return bandit.value(arm, context);
+             },
+             py::arg("arm"),
+             py::arg("context"),
+             "Return the predicted success probability for the given arm and "
+             "context given the current model parameters.\n\n"
+             "Args:\n"
+             "  arm: The arm index (0-based).\n"
+             "  context: The context data for this subject.\n")
+        .def("update_posterior",
+             [](LogitBandit &bandit, int ndraws) {
+               bandit.update_posterior(ndraws);
+             },
+             py::arg("ndraws"),
+             "Draw samples from the posterior distribution of the logistic "
+             "regression coefficients.\n\n"
+             "Args:\n"
+             "  ndraws: Number of posterior samples to draw.\n")
+        .def_property_readonly("ndraws", &LogitBandit::ndraws,
+             "The number of posterior draws from the most recent call to "
+             "update_posterior().")
+        .def("arm_predictors",
+             [](const LogitBandit &bandit,
+                const MixedMultivariateData &context) {
+               return bandit.arm_predictors(context);
+             },
+             py::arg("context"),
+             "Return the predictor matrix for all arms given the context.\n\n"
+             "Args:\n"
+             "  context: The context data for this subject.\n\n"
+             "Returns:\n"
+             "  A boom.Matrix with one row per arm and one column per "
+             "predictor variable.\n")
+        .def("optimal_arm_probabilities",
+             [](const LogitBandit &bandit,
+                const MixedMultivariateData &context,
+                RNG &rng) {
+               return bandit.optimal_arm_probabilities(context, rng);
+             },
+             py::arg("context"),
+             py::arg("rng") = BOOM::GlobalRng::rng,
+             "Compute the Thompson sampling probability that each arm is "
+             "optimal for the given context, using the posterior draws from "
+             "the most recent update_posterior() call.\n\n"
+             "Args:\n"
+             "  context: The context data for this subject.\n"
+             "  rng: Optional boom random number generator.\n\n"
+             "Returns:\n"
+             "  A boom.Vector of probabilities, one per arm, summing to 1.\n")
+        .def("value_remaining_distribution",
+             [](const LogitBandit &bandit,
+                const MixedMultivariateData &context,
+                RNG &rng) {
+               return bandit.value_remaining_distribution(context, rng);
+             },
+             py::arg("context"),
+             py::arg("rng") = BOOM::GlobalRng::rng,
+             "Compute the distribution of value remaining given context.\n\n"
+             "Args:\n"
+             "  context: The context data for this subject.\n"
+             "  rng: Optional boom random number generator.\n\n"
+             "Returns:\n"
+             "  A boom.Vector of length ndraws, where each element is the "
+             "difference between the best arm's predicted success probability "
+             "and arm 0's predicted success probability in that posterior "
+             "draw.\n")
+        ;
+
+  }  // Bandit_def
+
+}  // namespace BayesBoom

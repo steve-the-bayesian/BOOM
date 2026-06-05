@@ -7,7 +7,8 @@ from pandas.api.types import (
     is_numeric_dtype,
     is_object_dtype,
     is_bool_dtype,
-    is_datetime64_any_dtype
+    is_datetime64_any_dtype,
+    is_string_dtype,
 )
 
 import BayesBoom.boom as boom
@@ -225,8 +226,14 @@ def to_pd_datetime64(boom_datetime_vector):
 
 def to_boom_data_table(data: pd.DataFrame):
     """
-    Create a BOOM DataTable object from a pandas DataFrame.  The categories of
-    any categorical variables will be handled as strings.
+    Create a BOOM DataTable object from a pandas DataFrame.
+
+    Pandas dtype → BOOM DataTable column type mapping:
+      numeric / bool          → numeric
+      pd.CategoricalDtype     → categorical (effects-encoded)
+      object (string-like)    → categorical (from labels)
+      pd.StringDtype          → high_cardinality (raw strings, not expanded)
+      datetime64              → datetime
     """
     dtypes = data.dtypes
     ans = boom.DataTable()
@@ -235,23 +242,27 @@ def to_boom_data_table(data: pd.DataFrame):
         vname = data.columns[i]
         y = data.iloc[:, i]
         if is_numeric_dtype(dt) or is_bool_dtype(dt):
-            ans.add_numeric(boom.Vector(y.values.astype("float")),
-                            vname)
+            ans.add_numeric(boom.Vector(y.values.astype("float")), vname)
         elif isinstance(dt, pd.CategoricalDtype):
             # Note the pandas function is_categorical_dtype is deprecated in
             # favor of the isinstance call above.
             ans.add_categorical(y.cat.codes, y.cat.categories, vname)
+        elif isinstance(dt, pd.StringDtype):
+            # Explicit pandas StringDtype signals high-cardinality data (e.g.
+            # user IDs) that should be stored as raw strings rather than
+            # expanded into indicator variables.
+            ans.add_high_cardinality(y.tolist(), vname)
         elif is_object_dtype(dt):
+            # Object columns are treated as low-cardinality categoricals whose
+            # levels are their unique string values.
             labels = y.astype("str")
             ans.add_categorical_from_labels(labels.values, vname)
         elif is_datetime64_any_dtype(dt):
-            ans.add_datetime(
-                to_boom_datetime_vector(y),
-                vname)
+            ans.add_datetime(to_boom_datetime_vector(y), vname)
         else:
             raise Exception(
-                f"Only numeric, categorical, or datetime data are supported.  "
-                f"Column {i} ({data.columns[i]}) has dtype {dt}."
+                f"Only numeric, categorical, string, or datetime data are "
+                f"supported.  Column {i} ({data.columns[i]}) has dtype {dt}."
             )
     return ans
 
@@ -297,8 +308,13 @@ def _boom_data_table_to_pd_dataframe(data: boom.DataTable, columns=None, index=N
             ans_as_dict[vname] = pd.Categorical.from_codes(values, levels)
         elif vtype == "datetime":
             ans_as_dict[vname] = to_pd_datetime64(data.get_datetime(i))
+        elif vtype == "high_cardinality":
+            ans_as_dict[vname] = pd.array(
+                data.get_high_cardinality(i), dtype=pd.StringDtype())
         else:
-            raise Exception("Only numeric or categorical values are supported.")
+            raise Exception(
+                f"Unrecognized variable type '{vtype}' for column {i} "
+                f"({vname}).")
 
     return pd.DataFrame(ans_as_dict, index=index)
 
