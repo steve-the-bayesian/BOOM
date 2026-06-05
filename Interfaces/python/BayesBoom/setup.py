@@ -75,9 +75,6 @@ rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
 rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
 boom_headers += rmath_headers
 
-rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
-rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
-
 samplers_sources = glob(BOOM_DIR + "Samplers/*.cpp")
 samplers_sources += [BOOM_DIR + "Samplers/Gilks/arms.cpp"]
 samplers_headers = glob(BOOM_DIR + "Samplers/*.hpp")

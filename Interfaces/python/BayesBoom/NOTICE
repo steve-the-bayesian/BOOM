@@ -1,0 +1,9 @@
+BayesBoom
+Copyright 2018-2026 Steven L. Scott
+
+This product includes software developed under multiple licences.
+
+The BOOM C++ library is released under the GNU lesser GPL.  The Python interface
+to this code and accompanying Python packages, are released under the Apache 2.0
+license (see the accompanying LICENSE file).
+
