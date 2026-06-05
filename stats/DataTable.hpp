@@ -50,9 +50,16 @@ namespace BOOM {
   // types (instead of vectors of integers and DateTime objects) allows for
   // observation-by-observation data missingness.
 
-  enum class VariableType {unknown = -1, numeric, categorical, datetime};
+  enum class VariableType {
+    unknown = -1,
+    numeric,
+    categorical,
+    datetime,
+    high_cardinality
+  };
 
   using DateTimeData = UnivData<DateTime>;
+  using StringData = UnivData<std::string>;
 
   //===========================================================================
   // Tracks the data types in a mixed data settting.  A DataTable stores its
@@ -66,6 +73,7 @@ namespace BOOM {
   class DataTypeIndex : public RefCounted {
    public:
 
+    // Creates an empty index with no variables.
     DataTypeIndex();
 
     // Make the index aware that the DataTable it supports has added a variable
@@ -83,22 +91,26 @@ namespace BOOM {
     // type_map(2): numeric, 1
     std::pair<VariableType, int> type_map(int i) const;
 
-    // Fill the type_map_ mapping according to whether each element of 'fields'
-    // can be converted to a numeric value.
+    // Fill the type_map_ mapping based on the content of each field.
     //
     // Args:
     //   fields: Each element is a string version of a field in a data table.
     //
     // Effects:
     //   The internal data structures of this object are inferred from the
-    //   fields.  If a field is a numeric value, the corresponding column will
-    //   be labelled as numeric.  Otherwise a field will be labelled as
-    //   categorical. There is no (as of late 2024) check for whether a field is
-    //   datetime.
+    //   fields.  Numeric strings are labelled numeric, ISO 8601 date/datetime
+    //   strings (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS) are labelled datetime, and
+    //   everything else is labelled categorical.  High-cardinality detection
+    //   requires the full dataset and is only done in DataTable::read_file.
     void diagnose_types(const std::vector<std::string> &fields);
 
+    // Set the names of the variables tracked by this index.
+    //
+    // Args:
+    //   variable_names: Names in column order.
     void set_names(const std::vector<std::string> &variable_names);
 
+    // The VariableType of the variable in column col.
     VariableType variable_type(int col) const {
       return type_map_.find(col)->second.first;
     }
@@ -112,11 +124,13 @@ namespace BOOM {
     int number_of_numeric_fields() const {return numeric_count_;}
     int number_of_categorical_fields() const {return categorical_count_;}
     int number_of_datetime_fields() const {return datetime_count_;}
+    int number_of_high_cardinality_fields() const {return high_cardinality_count_;}
     int number_of_unknown_fields() const {return unknown_count_;}
     int total_number_of_fields() const {
       return numeric_count_
           + categorical_count_
           + datetime_count_
+          + high_cardinality_count_
           + unknown_count_;
     }
 
@@ -139,6 +153,7 @@ namespace BOOM {
     int numeric_count_;
     int categorical_count_;
     int datetime_count_;
+    int high_cardinality_count_;
     int unknown_count_;
 
     // To find the variable in slot i, get its type and its index in private
@@ -196,6 +211,8 @@ namespace BOOM {
                          const std::string &name = "");
     void add_datetime(const Ptr<DateTimeData> &dt,
                       const std::string &name = "");
+    void add_high_cardinality(const Ptr<StringData> &value,
+                              const std::string &name = "");
 
     // Variable names.
     const std::vector<std::string> &vnames() const {
@@ -212,6 +229,11 @@ namespace BOOM {
     // columns in the "data frame", not its dummy variable expansion.
     int categorical_dim() const {
       return type_index_->number_of_categorical_fields();
+    }
+
+    // The number of high-cardinality string variables.
+    int high_cardinality_dim() const {
+      return type_index_->number_of_high_cardinality_fields();
     }
 
     // The total number of variables.
@@ -250,6 +272,11 @@ namespace BOOM {
     const DateTimeData &datetime(const std::string &variable_name) const;
     Ptr<DateTimeData> mutable_datetime(const std::string &variable_name);
 
+    const StringData &high_cardinality(int i) const;
+    Ptr<StringData> mutable_high_cardinality(int i);
+    const StringData &high_cardinality(const std::string &variable_name) const;
+    Ptr<StringData> mutable_high_cardinality(const std::string &variable_name);
+
     // Collapse all the numeric data into a vector.
     Vector numeric_data() const;
 
@@ -270,6 +297,7 @@ namespace BOOM {
     std::vector<Ptr<DoubleData>> numeric_data_;
     std::vector<Ptr<LabeledCategoricalData>> categorical_data_;
     std::vector<Ptr<DateTimeData>> datetime_data_;
+    std::vector<Ptr<StringData>> high_cardinality_data_;
   };
 
   //===========================================================================
@@ -333,10 +361,31 @@ namespace BOOM {
       return data_;
     }
 
+    void push_back(const DateTime &dt) { data_.push_back(dt); }
+
    private:
     std::vector<DateTime> data_;
   };
 
+  //===========================================================================
+  class HighCardinalityVariable {
+   public:
+    HighCardinalityVariable(const std::vector<std::string> &values)
+        : data_(values)
+    {}
+
+    int size() const {return data_.size();}
+
+    const std::vector<std::string> &data() const {
+      return data_;
+    }
+
+    void push_back(const std::string &s) { data_.push_back(s); }
+
+   private:
+    std::vector<std::string> data_;
+  };
+  
   //===========================================================================
   // class OrdinalVariable {
   //   public:
@@ -393,6 +442,8 @@ namespace BOOM {
     void append_variable(const CategoricalVariable &cv,
                          const std::string &name);
     void append_variable(const DateTimeVariable &dt,
+                         const std::string &name);
+    void append_variable(const HighCardinalityVariable &id,
                          const std::string &name);
     
     DataTable &cbind(const Vector &v, const std::string &name) {
@@ -453,8 +504,10 @@ namespace BOOM {
       return type_index_->variable_type(which_column);
     }
 
-    // For numeric data
+    // For accessing numeric data.  Calling getvar() on non-numeric data will
+    // return its numeric equivalent.  
     Vector getvar(uint which_column) const;
+    
     Vector get_numeric(const std::string &vname) const;
     Vector get_numeric(uint which_column) const {
       return getvar(which_column);
@@ -477,6 +530,11 @@ namespace BOOM {
     DateTimeVariable get_datetime(uint which_column) const;
     DateTimeVariable get_datetime(const std::string &vname) const;
 
+    // For high cardinality data
+    HighCardinalityVariable get_high_cardinality(uint which_column) const;
+    HighCardinalityVariable get_high_cardinality(
+        const std::string &vname) const;
+    
     // Accessing a row of data involves memory allocations and copies.  If you
     // plan to repeatedly iterate through the rows consider saving a std::vector
     // of rows.
@@ -512,6 +570,7 @@ namespace BOOM {
     std::vector<Vector> numeric_variables_;
     std::vector<CategoricalVariable> categorical_variables_;
     std::vector<DateTimeVariable> datetime_variables_;
+    std::vector<HighCardinalityVariable> high_cardinality_variables_;
     Ptr<DataTypeIndex> type_index_;
   };
 
@@ -525,6 +584,41 @@ namespace BOOM {
     ans.cbind(rhs);
     return ans;
   }
+
+  // Produce a randomized DataTable.  This is intended for testing purposes.
+  //
+  // Args:
+  //   sample_size: The number of desired rows in the table.
+  //   numeric_field_names: The names of numeric variables in the table.  These
+  //     will be filled with U[0, 1] data.
+  //   categorical_levels: a map, keyed by variable names.  The values are the
+  //     levels associated with each categorical variable.
+  //   datetime_fields: a map, keyed by variable name.  The entries are the
+  //     beginnings and ends of time intervals.  The values in the data table
+  //     are random time points uinformly between the beginning and end values.
+  //   high_cardinality_fields: A map keyed by variable name.  The values in the
+  //     table are random strings.  The length of the string is the map entry.
+  //
+  // Returns:
+  //   A DataTable with the requested elements.
+  //
+  // Example:
+  // DataTable my_data = simulate_fake_data_table(
+  //     100,                                        // sample size
+  //     {"height", "weight"},                       // numeric 
+  //     {{"color", {"red", "blue", "green"}},
+  //      {"stooge", {"larry", "moe", "curly"}}},    // categorical
+  //     {{"birthday", {DateTime(173.5),
+  //          DateTime(5000.3)}}},                   // datetime
+  //     {{"user_id", 6}});                          // high_cardinality
+  
+  DataTable simulate_fake_data_table(
+      int sample_size,
+      const std::vector<std::string> &numeric_field_names = {},
+      const std::map<std::string, std::vector<std::string>> &categorical_levels = {},
+      const std::map<std::string, std::pair<DateTime, DateTime>> &datetime_fields = {},
+      const std::map<std::string, int> high_cardinality_fields = {});
+      
 
 }  // namespace BOOM
 #endif  // BOOM_DATA_TABLE_HPP
