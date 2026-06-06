@@ -22,7 +22,7 @@ namespace BayesBoom {
   void DirichletModel_def(py::module &);
   void BetaModel_def(py::module &);
 
-  //   void BinomialModel_def(py::module &);
+  void BinomialModel_def(py::module &);
   void BetaBinomialModel_def(py::module &);
   void MultinomialModel_def(py::module &);
   void MultilevelMultinomialModel_def(py::module &);

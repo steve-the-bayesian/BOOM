@@ -910,6 +910,40 @@ namespace BayesBoom {
              "attempted each iteration.\n")
         ;
 
+    // =========================================================================
+    // BinomialLogitAuxmixSampler: auxiliary mixture sampler for
+    // BinomialLogitModel, used as the posterior sampler in LogitBandit.
+    py::class_<BinomialLogitAuxmixSampler,
+               PosteriorSampler,
+               Ptr<BinomialLogitAuxmixSampler>>(
+                   boom, "BinomialLogitAuxmixSampler")
+        .def(py::init(
+            [](BinomialLogitModel *model,
+               MvnBase *prior,
+               int clt_threshold,
+               RNG &seeding_rng) {
+              return new BinomialLogitAuxmixSampler(
+                  model, Ptr<MvnBase>(prior), clt_threshold, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("prior"),
+             py::arg("clt_threshold") = 10,
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The BinomialLogitModel to be sampled.\n"
+             "  prior: An MvnBase prior on the logistic regression "
+             "coefficients.\n"
+             "  clt_threshold: When the number of trials for an observation "
+             "exceeds this threshold, the central limit theorem approximation "
+             "is used for data augmentation instead of imputing each trial "
+             "individually.  Larger values are more accurate but slower.\n"
+             "  seeding_rng: Optional RNG used to seed this sampler's own "
+             "RNG.\n")
+        ;
+
+    // =========================================================================
+    // BinomialLogitAuxmixSampler: spike and slab sampler for
+    // BinomialLogitModel.
     py::class_<BinomialLogitSpikeSlabSampler,
                PosteriorSampler,
                Ptr<BinomialLogitSpikeSlabSampler>>(
