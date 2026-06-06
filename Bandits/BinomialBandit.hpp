@@ -68,6 +68,11 @@ namespace BOOM {
     
     const Vector &optimal_arm_probabilities() const;
     const Vector &value_remaining_distribution() const;
+
+    // The MCMC draws of the arm-level probabilities.
+    const Matrix &probability_draws() const {
+      return probability_draws_;
+    }
     
    private:
     std::vector<Ptr<BinomialModel>> models_;
