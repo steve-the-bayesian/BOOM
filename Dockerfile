@@ -33,7 +33,7 @@ RUN cd python_package/dist && find . -name "*.whl" -print \
 # The wheel in the output dirctory is specific to this platform.  Run the
 #  'auditwheel' utility to produce the manylinux wheel from this
 #  platform-specific wheel.
-RUN auditwheel repair /output/BayesBoom*.whl -w /output
+RUN auditwheel repair /output/bayesboom*.whl -w /output
 
 
 
@@ -51,6 +51,6 @@ RUN auditwheel repair /output/BayesBoom*.whl -w /output
 # Once the job is done run
 #      docker run -v /tmp:/export -i -t pyboom /bin/bash
 #      cd /output
-#      mv BayesBoom-0.1.14-cp310-cp310-*.whl /export
+#      mv BayesBoom-0.2.0-cp310-cp310-*.whl /export
 #      exit
 # Then the wheels will be in /tmp
