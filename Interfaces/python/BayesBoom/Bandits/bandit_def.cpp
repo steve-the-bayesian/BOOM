@@ -55,6 +55,19 @@ namespace BayesBoom {
              "Args:\n"
              "  arm: The arm index (0-based).\n\n"
              "Returns the integer factor level indices for the given arm.")
+        .def_property_readonly(
+            "factor_level_matrix",
+            [](const ArmMap &am) {
+              Matrix ans(am.number_of_arms(), am.number_of_factors());
+              for (int i = 0; i < am.number_of_arms(); ++i) {
+                const std::vector<int> &levels(am.integer_factor_levels(i));
+                for (int j = 0; j < am.number_of_factors(); ++j) {
+                  ans(i, j) = levels[j];
+                }
+              }
+              return ans;
+            },
+            "The full matrix of arm mappings.")
         .def("factor_level_names",
              [](const ArmMap &am, int arm) {
                return am.factor_level_names(arm);

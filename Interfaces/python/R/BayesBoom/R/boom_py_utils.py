@@ -267,6 +267,36 @@ def to_boom_data_table(data: pd.DataFrame):
     return ans
 
 
+def to_boom_mixed_data(row) -> "boom.MixedMultivariateData":
+    """
+    Convert a single-row pandas DataFrame or Series to a
+    boom.MixedMultivariateData.
+
+    Column dtype mapping follows to_boom_data_table:
+      numeric / bool          → numeric
+      pd.CategoricalDtype     → categorical
+      pd.StringDtype          → high_cardinality
+      object (string-like)    → categorical
+      datetime64              → datetime
+
+    Args:
+      row: A single-row pd.DataFrame, or a pd.Series (treated as one row
+        whose index becomes the column names).
+
+    Returns:
+      A boom.MixedMultivariateData holding the same data.
+
+    Raises:
+      ValueError: if row has more than one row.
+    """
+    if isinstance(row, pd.Series):
+        row = row.to_frame().T
+    if len(row) != 1:
+        raise ValueError(
+            f"Expected a single-row DataFrame, got {len(row)} rows.")
+    return to_boom_data_table(row).row(0)
+
+
 def _boom_data_table_to_pd_dataframe(data: boom.DataTable, columns=None, index=None):
     """
     Convert a boom.DataTable to a pd.DataFrame.

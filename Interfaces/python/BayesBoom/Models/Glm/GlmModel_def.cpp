@@ -570,6 +570,25 @@ namespace BayesBoom {
              "Args:\n\n"
              "  data_point: An object of class BinomialRegressionData "
              "containing the data for a single observation.\n")
+        .def("add_dataset",
+             [](BinomialLogitModel &model,
+                const Vector &successes,
+                const Vector &trials,
+                const Matrix &predictors) {
+               size_t sample_size = successes.size();
+               for (size_t i = 0; i < sample_size; ++i) {
+                 NEW(BinomialRegressionData, data_point)(
+                     lround(successes[i]),
+                     lround(trials[i]),
+                     predictors.row(i));
+                 model.add_data(data_point);
+               }
+             },
+             "Args:\n\n"
+             "  successes: A boom.Vector containing success counts.\n"
+             "  trials:  A boom.Vector containing trial counts.\n"
+             "  predictors:  A boom.Matrix containing (as rows) the "
+             "predictors for each observation.\n\n")
         ;
 
     py::class_<PoissonRegressionModel,

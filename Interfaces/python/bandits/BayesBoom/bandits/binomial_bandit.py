@@ -32,14 +32,12 @@ class BinomialBandit:
                 int(np.round(incremental_trials)))
 
     def update_posterior(self, ndraws):
-        if not self._boom_bandit:
-            self.boom()
+        self.boom()
         self._boom_bandit.update_posterior(int(ndraws))
 
     @property
     def optimal_arm_probabilities(self):
-        if not self._boom_bandit:
-            self.boom()
+        self.boom()
         return R.to_numpy(self._boom_bandit.optimal_arm_probabilities)
     
     def boom(self):
@@ -47,25 +45,25 @@ class BinomialBandit:
         Instantiate any missing Boom objects and populate them with data
         from this class.
         """
-        number_of_arms = self._prior_probs.shape[0]
-        
-        models = []
-        for i in range(number_of_arms):
-            prob = self._prior_probs[i]
-            n = self._prior_sample_sizes[i]
-            a = n * prob
-            b = n - a
-            prior = boom.BetaModel(a, b)
-            model = boom.BinomialModel(prob)
-            sampler = boom.BetaBinomialSampler(model, prior)
-            model.set_method(sampler)
-            models.append(model)
+        if (not self._boom_bandit):
+            number_of_arms = self._prior_probs.shape[0]
+            models = []
+            for i in range(number_of_arms):
+                prob = self._prior_probs[i]
+                n = self._prior_sample_sizes[i]
+                a = n * prob
+                b = n - a
+                prior = boom.BetaModel(a, b)
+                model = boom.BinomialModel(prob)
+                sampler = boom.BetaBinomialSampler(model, prior)
+                model.set_method(sampler)
+                models.append(model)
+            self._boom_bandit = boom.BinomialBandit(models)
+            for i in range(number_of_arms):
+                self._boom_bandit.observe_data(
+                    int(i),
+                    int(np.round(self._successes[i])),
+                    int(np.round(self._trials[i])))
 
-        self._boom_bandit = boom.BinomialBandit(models)
-        for i in range(number_of_arms):
-            self._boom_bandit.observe_data(
-                int(i),
-                int(np.round(self._successes[i])),
-                int(np.round(self._trials[i])))
-
+        return self._boom_bandit
     

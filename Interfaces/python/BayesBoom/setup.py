@@ -8,10 +8,10 @@ from glob import glob
 MAJOR = 0
 
 # Bump the minor version when adding backwards compatible features.
-MINOR = 1
+MINOR = 2
 
 # Bump the patch version when making bug fixes.
-PATCH = 34
+PATCH = 0
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -113,6 +113,20 @@ bart_headers = (
     )
 boom_headers += bart_headers
 
+bandits_sources = glob(BOOM_DIR + "Bandits/*.cpp")
+bandits_headers = glob(BOOM_DIR + "Bandits/*.hpp")
+boom_headers += bandits_headers
+
+factor_sources = (
+    glob(BOOM_DIR + "Models/FactorModels/*.cpp")
+    + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.cpp")
+)
+factor_headers = (
+    glob(BOOM_DIR + "Models/FactorModels/*.hpp")
+    + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.hpp")
+)
+boom_headers += factor_headers
+
 glm_sources = (
     glob(BOOM_DIR + "Models/Glm/*.cpp")
     + glob(BOOM_DIR + "Models/Glm/PosteriorSamplers/*.cpp")
@@ -133,15 +147,15 @@ gp_headers = (
     )
 boom_headers += gp_headers
 
-factor_sources = (
-    glob(BOOM_DIR + "Models/FactorModels/*.cpp")
-    + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.cpp")
-)
-factor_headers = (
-    glob(BOOM_DIR + "Models/FactorModels/*.hpp")
-    + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.hpp")
-)
-boom_headers += factor_headers
+hierarchical_sources = (
+    glob(BOOM_DIR + "Models/Hierarchical/*.cpp")
+    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.cpp")
+    )
+hierarchical_headers = (
+    glob(BOOM_DIR + "Models/Hierarchical/*.hpp")
+    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.hpp")
+    )
+boom_headers += hierarchical_headers
 
 hmm_sources = (
     glob(BOOM_DIR + "Models/HMM/*.cpp")
@@ -156,16 +170,6 @@ hmm_headers = (
     + glob(BOOM_DIR + "Models/HMM/PosteriorSamplers/*.hpp")
     )
 boom_headers += hmm_headers
-
-hierarchical_sources = (
-    glob(BOOM_DIR + "Models/Hierarchical/*.cpp")
-    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.cpp")
-    )
-hierarchical_headers = (
-    glob(BOOM_DIR + "Models/Hierarchical/*.hpp")
-    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.hpp")
-    )
-boom_headers += hierarchical_headers
 
 impute_sources = (
     glob(BOOM_DIR + "Models/Impute/*.cpp")
@@ -245,24 +249,11 @@ boom_headers += time_series_headers
 
 test_utils_sources = glob(BOOM_DIR + "test_utils/*.cpp")
 
-bandits_sources = glob(BOOM_DIR + "Bandits/*.cpp")
-bandits_headers = glob(BOOM_DIR + "Bandits/*.hpp")
-boom_headers += bandits_headers
-
 
 boom_library_sources = (
     distributions_sources
-    + linalg_sources
-    + math_sources
-    + numopt_sources
-    + rmath_sources
-    + samplers_sources
-    + stats_sources
-    + targetfun_sources
-    + utils_sources
-    + models_sources
-    + bart_sources
     + bandits_sources
+    + bart_sources
     + factor_sources
     + glm_sources
     + gp_sources
@@ -270,12 +261,21 @@ boom_library_sources = (
     + hmm_sources
     + impute_sources
     + irt_sources
+    + linalg_sources
+    + math_sources
     + mixture_sources
+    + models_sources
     + nnet_sources
+    + numopt_sources
     + point_process_sources
+    + rmath_sources
+    + samplers_sources
     + state_space_sources
-    + time_series_sources
+    + stats_sources
+    + targetfun_sources
     + test_utils_sources
+    + time_series_sources
+    + utils_sources
 )
 
 boom_extension_sources = (

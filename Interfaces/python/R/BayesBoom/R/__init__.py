@@ -158,6 +158,7 @@ from .boom_py_utils import (
     to_boom_data_table,
     to_boom_date,
     to_boom_datetime_vector,
+    to_boom_mixed_data,
     to_pd_datetime64,
     to_boom_vector,
     to_boom_matrix,

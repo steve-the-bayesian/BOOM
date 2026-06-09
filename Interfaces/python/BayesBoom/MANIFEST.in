@@ -16,6 +16,7 @@ include BayesBoom/boom/test_utils/*.hpp
 recursive-include BayesBoom/boom/numopt *.hpp
 recursive-include BayesBoom/boom/math *.hpp
 recursive-include BayesBoom/boom/Models *.hpp
+recursive-include BayesBoom/boom/Bandits *.hpp
 recursive-include BayesBoom/boom/Samplers *.hpp
 
 # The Eigen directory has 'include' files with no subscript, so we need to
