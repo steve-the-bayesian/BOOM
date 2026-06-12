@@ -69,7 +69,8 @@ namespace BayesBoom {
             },
             "The full matrix of arm mappings.")
         .def("factor_level_names",
-             [](const ArmMap &am, int arm) {
+             [](const ArmMap &am,
+                int arm) {
                return am.factor_level_names(arm);
              },
              py::arg("arm"),
@@ -126,6 +127,17 @@ namespace BayesBoom {
         .def_property_readonly("number_of_arms",
              &LinearBanditEncoder::number_of_arms,
              "The number of arms in the experiment.")
+        .def("encode_dataset",
+             [](LinearBanditEncoder &enc,
+                const DataTable &input_data) {
+               return enc.encode_dataset(input_data);
+             },
+             py::arg("input"),
+             "Encode the input data from a past run.  Past action variables "
+             "are assumed present in the data.  The column names of any "
+             "ExperimentArmEncoder's must be present in the column names of "
+             "the data table, and any table values must match those expected "
+             "by the encoders.")
         .def("encode_row",
              [](LinearBanditEncoder &enc,
                 int arm,

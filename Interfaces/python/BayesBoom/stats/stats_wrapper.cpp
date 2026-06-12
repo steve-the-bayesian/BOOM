@@ -316,6 +316,13 @@ namespace BayesBoom {
         .def_property_readonly(
             "factor_names", &ExperimentStructure::factor_names,
             "The names of the experimental factors.")
+        .def("levels",
+             [](const ExperimentStructure &xp,
+                const std::string &factor_name) {
+               return xp.levels(factor_name);
+             },
+             "The levels associated with the requested factor.  It is an error "
+             "to request a name that is not part of the experiment.") 
         ;
 
     //==========================================================================

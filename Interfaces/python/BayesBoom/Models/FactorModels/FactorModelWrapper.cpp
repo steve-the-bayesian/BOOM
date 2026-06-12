@@ -191,9 +191,11 @@ namespace BayesBoom {
 
         return posterior / (niter - burn);
       } catch(std::exception &e) {
-        std::cout << "Exception encountered in compute_multinomial_posterior_"
+        std::ostringstream msg;
+        msg << "Exception encountered in compute_multinomial_posterior_"
             "class_probabilities_without_model.  "
                   << e.what() << std::endl;
+        report_warning(msg.str());
         throw e;
       }
     }
@@ -741,10 +743,10 @@ namespace BayesBoom {
                    }
 
                    std::string user_id = el.first;
-                   if (output_index % 1000 == 0) {
-                     std::cout << "i = " << output_index << " of " << num_users
-                               << std::endl;
-                   }
+                   // if (output_index % 1000 == 0) {
+                   //   std::cout << "i = " << output_index << " of " << num_users
+                   //             << std::endl;
+                   // }
                    ordered_unique_user_ids.push_back(user_id);
                    Vector posterior_distribution =
                        compute_multinomial_posterior_class_probabilities_without_model(
@@ -760,10 +762,12 @@ namespace BayesBoom {
                                       ordered_unique_user_ids,
                                       std::vector<std::string>());
                } catch (std::exception &e) {
-                 std::cout << "Exception in FactorModelWrapper::"
-                           << "infer_posterior_distributions.  \n"
-                           << e.what()
-                           << std::endl;
+                 std::ostringstream msg;
+                 msg << "Exception in FactorModelWrapper::"
+                     << "infer_posterior_distributions.  \n"
+                     << e.what()
+                     << std::endl;
+                 report_warning(msg.str());
                  return LabeledMatrix(Matrix(),
                                       std::vector<std::string>(),
                                       std::vector<std::string>());
