@@ -165,6 +165,12 @@ namespace BOOM {
       return factor_names_;
     }
 
+    // The levels associated with a specific factor.  It is an error to call
+    // this function with a name that is not part of the experiment.
+    const std::vector<std::string> &levels(
+        const std::string &factor_name) const;
+    
+
    private:
     std::vector<std::string> factor_names_;
     std::vector<std::vector<std::string> > level_names_;

@@ -187,6 +187,19 @@ namespace BOOM {
     return level_names_[factor][level];
   }
 
+  const std::vector<std::string> &ExperimentStructure::levels(
+      const std::string &factor_name) const {
+    for (int i = 0; i < factor_names_.size(); ++i) {
+      if (factor_names_[i] == factor_name) {
+        return level_names_[i];
+      }
+    }
+    std::ostringstream err;
+    err << "No factor named " << factor_name << " found in the experiment.";
+    report_error(err.str());
+    return level_names_[0];
+  }
+
   std::string ExperimentStructure::full_level_name(
       int factor, int level, const std::string &separator) const {
     std::ostringstream name;
