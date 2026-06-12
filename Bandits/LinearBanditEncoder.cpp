@@ -101,20 +101,18 @@ namespace BOOM {
       report_error(err.str());
     }
 
-    key_.reset(new CatKey(arm_map_->factor_level_names(factor_index)));
+    key_.reset(new CatKey(arm_map_->structure().levels(variable_name)));
 
     if (baseline_level_.empty()) {
       baseline_level_ = key_->labels().back();
     }
 
-    // Find the baseline level
     baseline_level_index_ = key_->findstr_or_neg(baseline_level_);
-    if (baseline_level_index_ <= 0) {
+    if (baseline_level_index_ < 0) {
       key_ = key_->clone();
       key_->add_label(baseline_level);
       baseline_level_index_ = key_->max_levels() - 1;
     }
-
     
   }
 
@@ -257,6 +255,10 @@ namespace BOOM {
     return dataset_encoder_->encode_row(context);
   }
 
+  Matrix LinearBanditEncoder::encode_dataset(const DataTable &data) const {
+    return dataset_encoder_->encode_dataset(data);
+  }
+  
   void LinearBanditEncoder::ensure_arm_coverage() {
 
     std::set<std::string> experiment_variable_names(
@@ -290,6 +292,7 @@ namespace BOOM {
       } 
     }
   }
+
   
   
 }  // namespace BOOM

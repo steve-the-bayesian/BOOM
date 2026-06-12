@@ -53,6 +53,10 @@ namespace BOOM {
 
     std::vector<std::string> factor_level_names(int arm) const;
 
+    const ExperimentStructure &structure() const {
+      return xp_;
+    }
+
     friend void intrusive_ptr_add_ref(ArmMap *am) {am->up_count();}
     friend void intrusive_ptr_release(ArmMap *am) {
       am->down_count();
@@ -139,7 +143,26 @@ namespace BOOM {
     //     encoder for each experiment factor present in arm_map.
     LinearBanditEncoder(const Ptr<ArmMap> &arm_map,
                         const Ptr<DatasetEncoder> &dataset_encoder);
+
+    // Args:
+    //   arm: The arm describing the values to assume for the action variables
+    //     in the experiment.
+    //   context: The collection of context variables for this experimental
+    //     unit.
+    //
+    // Returns:
+    //   The vector of predictors for this experimental unit under the
+    //   designated arm.
     Vector encode_row(int arm, const MixedMultivariateData &context);
+
+    // Args:
+    //   input_data: The data set to encode into a matrix of predictor
+    //     variables.  It is assumed that this data set contains past data,
+    //     including values for any action variables associated with each row.
+    //
+    // Returns:
+    //   A Matrix of predictor values.
+    Matrix encode_dataset(const DataTable &input_data) const;
 
     int number_of_arms() const {
       return arm_map_->number_of_arms();
