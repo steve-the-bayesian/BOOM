@@ -397,10 +397,12 @@ namespace BayesBoom {
              "  values: A list of strings, one per row.\n"
              "  name: The name of the variable.\n")
         .def_property_readonly(
-            "nrow", &DataTable::nobs,
+            "nrow",
+            &DataTable::nobs,
             "Number of rows (observations) in the table.")
         .def_property_readonly(
-            "ncol", &DataTable::nvars,
+            "ncol",
+            &DataTable::nvars,
             "Number of columns (variables) in the table.")
         .def_property_readonly(
             "variable_names",

@@ -167,6 +167,10 @@ namespace BOOM {
     int number_of_arms() const {
       return arm_map_->number_of_arms();
     }
+
+    std::vector<std::string> encoded_variable_names() const {
+      return dataset_encoder_->encoded_variable_names();
+    }
     
    private:
     // Loop over all the encoders in the data encoder.  Find all the

@@ -154,6 +154,11 @@ namespace BayesBoom {
              "Returns:\n"
              "  A boom.Vector suitable as input to the logistic regression "
              "model.\n")
+        .def_property_readonly(
+            "encoded_variable_names",
+            [](const LinearBanditEncoder &enc) {
+              return enc.encoded_variable_names();
+            })
         ;
 
     // =========================================================================

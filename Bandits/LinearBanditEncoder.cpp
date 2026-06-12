@@ -221,7 +221,7 @@ namespace BOOM {
       const CategoricalVariable &variable) const {
     Matrix ans(variable.size(), dim());
     for (size_t i = 0; i < variable.size(); ++i) {
-      encode_level(variable[i]->value(), ans.row(i));
+      encode_level(key_->findstr(variable[i]->label()), ans.row(i));
     }
     return ans;
   }
