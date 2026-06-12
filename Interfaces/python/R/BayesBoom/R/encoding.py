@@ -823,35 +823,56 @@ class DatasetEncoder(Encoder):
         return ans
 
 
+def serialize_encoder_list(encoder_list):
+    """
+    Return a JSON-serializable dictionary containing a list of encoder types
+    and a corresponding list of dictionaries containing serialized artifacts for
+    the individual encoders in the encoder list.
+    """
+    global JSON_ENCODER_REGISTRY
+    encoder_types = []
+    encoders = []
+    for enc in encoder_list:
+        etype = enc.__class__.__name__
+        encoder_types.append(etype)
+        json_encoder = JSON_ENCODER_REGISTRY[etype]()
+        encoders.append(json_encoder.default(enc))
+
+    # Note that the scheme used below ensures that the list of encoders can be
+    # reconstructed in the same order as given.  It may seem more obvious to
+    # store the encoder_types and encoder artifacts in a dictionary, but then
+    # for some versions of python order would not be guaranteed.
+    return {
+        "encoder_types": encoder_types,
+        "encoders": encoders,
+    }
+
+
+def deserialize_encoders(serialized_encoders):
+    global JSON_DECODER_REGISTRY
+    encoders = []
+    for i, enc in enumerate(serialized_encoders["encoders"]):
+        encoder_type = serialized_encoders["encoder_types"][i]
+        json_decoder = JSON_DECODER_REGISTRY[encoder_type]()
+        encoders.append(json_decoder.decode_from_dict(enc))
+    return encoders
+    
+
+    
 class DatasetEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
-        global JSON_ENCODER_REGISTRY
-        encoder_types = []
-        encoders = []
-        for enc in obj._encoders:
-            etype = enc.__class__.__name__
-            encoder_types.append(etype)
-            json_encoder = JSON_ENCODER_REGISTRY[etype]()
-            encoders.append(json_encoder.default(enc))
-        return {
-            "encoder_types": encoder_types,
-            "encoders": encoders,
-            "intercept": obj._force_intercept
-        }
+        ans = serialize_encoder_list(obj._encoders)
+        ans["intercept"] = obj._force_intercept
+        return ans
 
-
+    
 class DatasetEncoderJsonDecoder(json.JSONDecoder):
     def decode(self, json_string):
         return self.decode_from_dict(json.loads(json_string))
 
     def decode_from_dict(self, payload):
-        global JSON_DECODER_REGISTRY
+        encoders = deserialize_encoders(payload)
         intercept = bool(payload["intercept"])
-        encoders = []
-        for i, enc in enumerate(payload["encoders"]):
-            encoder_type = payload["encoder_types"][i]
-            json_decoder = JSON_DECODER_REGISTRY[encoder_type]()
-            encoders.append(json_decoder.decode_from_dict(enc))
         return DatasetEncoder(encoders, intercept)
 
 

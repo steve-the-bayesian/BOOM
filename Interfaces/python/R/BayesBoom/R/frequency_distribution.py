@@ -104,7 +104,7 @@ class FrequencyDistribution:
         "other" category with a name given by 'other_name'.
 
         """
-        if self._non_nan.shape[0] <= max_levels:
+        if (max_levels is None) or (self._non_nan.shape[0] <= max_levels):
             return
 
         top_k_values = self._non_nan.nlargest(max_levels)

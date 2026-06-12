@@ -588,7 +588,7 @@ class CategoricalSummary(UnivariateSummary):
         The largest number of categories a variable can have before we call
         it "high cardinality."  This is a heuristic.
         """
-        limit = max(5, int(np.cbrt(self.sample_size)))
+        limit = max(10, int(np.cbrt(self.sample_size)))
         return int(limit)
 
     @classmethod

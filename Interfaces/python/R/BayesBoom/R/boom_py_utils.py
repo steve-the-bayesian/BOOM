@@ -228,13 +228,18 @@ def to_boom_data_table(data: pd.DataFrame):
     """
     Create a BOOM DataTable object from a pandas DataFrame.
 
-    Pandas dtype → BOOM DataTable column type mapping:
-      numeric / bool          → numeric
-      pd.CategoricalDtype     → categorical (effects-encoded)
-      object (string-like)    → categorical (from labels)
-      pd.StringDtype          → high_cardinality (raw strings, not expanded)
-      datetime64              → datetime
+    Pandas dtype -> BOOM DataTable column type mapping:
+      numeric / bool                   -> numeric
+      datetime64                       -> datetime
+      object / pd.StringDtype /
+        pd.CategoricalDtype            -> categorical or high_cardinality,
+          chosen by running the column through CategoricalSummary (the
+          R summary() equivalent) and checking is_high_cardinality: if
+          the number of distinct values meets or exceeds the
+          cube-root-of-n heuristic the column is stored as
+          high_cardinality; otherwise it is stored as categorical.
     """
+    from BayesBoom.R.summary import CategoricalSummary
     dtypes = data.dtypes
     ans = boom.DataTable()
     for i in range(data.shape[1]):
@@ -243,22 +248,19 @@ def to_boom_data_table(data: pd.DataFrame):
         y = data.iloc[:, i]
         if is_numeric_dtype(dt) or is_bool_dtype(dt):
             ans.add_numeric(boom.Vector(y.values.astype("float")), vname)
-        elif isinstance(dt, pd.CategoricalDtype):
-            # Note the pandas function is_categorical_dtype is deprecated in
-            # favor of the isinstance call above.
-            ans.add_categorical(y.cat.codes, y.cat.categories, vname)
-        elif isinstance(dt, pd.StringDtype):
-            # Explicit pandas StringDtype signals high-cardinality data (e.g.
-            # user IDs) that should be stored as raw strings rather than
-            # expanded into indicator variables.
-            ans.add_high_cardinality(y.tolist(), vname)
-        elif is_object_dtype(dt):
-            # Object columns are treated as low-cardinality categoricals whose
-            # levels are their unique string values.
-            labels = y.astype("str")
-            ans.add_categorical_from_labels(labels.values, vname)
         elif is_datetime64_any_dtype(dt):
             ans.add_datetime(to_boom_datetime_vector(y), vname)
+        elif (
+            isinstance(dt, pd.CategoricalDtype)
+            or isinstance(dt, pd.StringDtype)
+            or is_object_dtype(dt)
+        ):
+            labels = y.astype(str)
+            cat_summary = CategoricalSummary(labels, max_levels=None)
+            if cat_summary.is_high_cardinality:
+                ans.add_high_cardinality(labels.tolist(), vname)
+            else:
+                ans.add_categorical_from_labels(labels.values, vname)
         else:
             raise Exception(
                 f"Only numeric, categorical, string, or datetime data are "
@@ -273,11 +275,11 @@ def to_boom_mixed_data(row) -> "boom.MixedMultivariateData":
     boom.MixedMultivariateData.
 
     Column dtype mapping follows to_boom_data_table:
-      numeric / bool          → numeric
-      pd.CategoricalDtype     → categorical
-      pd.StringDtype          → high_cardinality
-      object (string-like)    → categorical
-      datetime64              → datetime
+      numeric / bool                 -> numeric
+      datetime64                     -> datetime
+      object / StringDtype /
+        CategoricalDtype             -> categorical or high_cardinality
+          (determined by CategoricalSummary.is_high_cardinality)
 
     Args:
       row: A single-row pd.DataFrame, or a pd.Series (treated as one row

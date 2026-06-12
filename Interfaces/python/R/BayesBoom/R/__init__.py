@@ -64,6 +64,8 @@ from .empirical_distribution import NumericEmpiricalDistribution, ECDF
 
 from .encoding import (
     register_encoding_json_encoder,
+    serialize_encoder_list,
+    deserialize_encoders,
     Encoder,
     MainEffectEncoder,
     MainEffectEncoderJsonEncoder,
