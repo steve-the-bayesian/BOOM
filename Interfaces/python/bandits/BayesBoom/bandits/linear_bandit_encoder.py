@@ -4,15 +4,36 @@ import numpy as np
 import pandas as pd
 import json
 
-
 class ExperimentStructure:
+    """
+    A collection of all factor names and factor level values defining the
+    experiment.
+    """
     def __init__(self):
         self._factor_names = []
         self._factor_levels = []
         self._baseline_levels = []
         self._boom_experiment_structure = None
 
-    def add_factor(self, factor_name, factor_levels, baseline_level=""):
+    def add_factor(self,
+                   factor_name: str,
+                   factor_levels,
+                   baseline_level: str = ""):
+        """
+        Add a factor to the experiment.
+
+        Args:
+          factor_name: The name of the experimental factor.  Think of this as
+            the variable name in a data frame.
+          factor_levels: The possible values the factor can assume.  A list of
+            strings.
+          baseline_level: The level of the factor to leave out when creating
+            dummy variables.
+
+        Effects:
+          The internal structure is updated to reflect the additional factor and
+          levels.
+        """
         self._factor_names.append(str(factor_name))
         self._factor_levels.append([str(level) for level in factor_levels])
         self._baseline_levels.append(str(baseline_level))
@@ -22,6 +43,12 @@ class ExperimentStructure:
                 self._factor_names[-1],
                 self._factor_levels[-1])
 
+            
+    def __getitem__(self, factor_name):
+        pos = self._factor_names.index(factor_name)
+        return self._factor_levels[pos]
+
+            
     def boom(self):
         if not self._boom_experiment_structure:
             self._boom_experiment_structure = boom.ExperimentStructure()
@@ -58,7 +85,8 @@ class ExperimentStructureJSONDecoder(json.JSONDecoder):
             xp.add_factor(factor_name, factor_levels)
         return xp
 
-
+    
+# ===========================================================================    
 class ArmMap:
     def __init__(self, experiment_structure):
         self._experiment_structure = experiment_structure
@@ -71,6 +99,10 @@ class ArmMap:
     @property
     def map(self):
         return R.to_numpy(self.boom().factor_level_matrix)
+
+    @property
+    def structure(self):
+        return self._experiment_structure
 
     def boom(self):
         if not self._boom_arm_map:
@@ -100,6 +132,7 @@ class ArmMapJsonDecoder(json.JSONDecoder):
         return ArmMap(xp)
 
 
+# ===========================================================================    
 class ExperimentArmEncoder(R.Encoder):
     """
     Encodes one experimental factor as effects-coded predictors for use in a
@@ -125,8 +158,20 @@ class ExperimentArmEncoder(R.Encoder):
         return [f"{self._variable_name}[{i + 1}]" for i in range(self.dim)]
 
     def encode_dataset(self, data):
-        raise NotImplementedError(
-            "Use LinearBanditEncoder.encode_row to encode (arm, context) pairs.")
+        if self._variable_name not in data.columns:
+            raise Exception(
+                f"{self._variable_name} is not a named variable in the "
+                "data set.")
+        x = data.loc[:, self._variable_name]
+        levels = self._arm_map.structure[self._variable_name].copy()
+        levels.remove(self._baseline_level)
+        sample_size = x.shape[0]
+        ans = np.zeros((sample_size, self.dim))
+        for i in range(self.dim):
+            ans[:, i] = (x == levels[i]).astype(float)
+        baseline = x == self._baseline_level
+        ans[baseline, :] = -1
+        return ans
 
     @property
     def required_variables(self):
@@ -144,6 +189,38 @@ class ExperimentArmEncoder(R.Encoder):
             self._arm_map.boom(),
             self._baseline_level)
 
+        
+class ExperimentArmEncoderJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        arm_map_encoder = ArmMapJsonEncoder()
+        payload = {
+            "variable_name": str(obj._variable_name),
+            "arm_map": arm_map_encoder.default(obj._arm_map),
+            "baseline_level": str(obj._baseline_level)
+        }
+        return payload
+
+    
+class ExperimentArmEncoderJSONDecoder(json.JSONDecoder):
+    
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+    
+    def decode_from_dict(self, payload):
+        arm_map_decoder = ArmMapJsonDecoder()
+        arm_map = arm_map_decoder.decode_from_dict(payload["arm_map"])
+        return ExperimentArmEncoder(
+            payload["variable_name"],
+            arm_map,
+            payload["baseline_level"])
+
+    
+R.register_encoding_json_encoder(
+    "ExperimentArmEncoder",
+    ExperimentArmEncoderJSONEncoder,
+    ExperimentArmEncoderJSONDecoder)
+    
 
 class LinearBanditEncoder:
     """
@@ -185,7 +262,41 @@ class LinearBanditEncoder:
         """
         if context is None or (isinstance(context, pd.DataFrame)
                                 and context.shape[1] == 0):
-            ctx = boom.MixedMultivariateData()
+            boom_context = boom.MixedMultivariateData()
         else:
-            ctx = R.to_boom_mixed_data(context)
-        return R.to_numpy(self._boom_encoder.encode_row(int(arm), ctx))
+            boom_context = R.to_boom_mixed_data(context)
+        return R.to_numpy(self._boom_encoder.encode_row(int(arm), boom_context))
+
+    def encode_dataset(self, context):
+        """
+        """
+        return self._dataset_encoder.encode_dataset(context)
+            
+
+
+class LinearBanditEncoderJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        arm_map_encoder = ArmMapJsonEncoder()
+        dataset_json_encoder = R.DatasetEncoderJsonEncoder()
+        payload = {
+            "dataset_encoder": dataset_json_encoder.default(
+                obj._dataset_encoder),
+            "arm_map": arm_map_encoder.default(obj._arm_map)
+        }
+        return payload
+
+
+class LinearBanditEncoderJSONDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        return self.decode_from_dict(json.loads(json_string))
+    
+    def decode_from_dict(self, payload):
+        arm_map_decoder = ArmMapJsonDecoder()
+        dataset_encoder_json_decoder = R.DatasetEncoderJsonDecoder()
+        arm_map = arm_map_decoder.decode_from_dict(payload["arm_map"])
+        dataset_encoder = dataset_encoder_json_decoder.decode_from_dict(
+            payload["dataset_encoder"])
+        return LinearBanditEncoder(arm_map=arm_map,
+                                   dataset_encoder=dataset_encoder)
+        
+        
