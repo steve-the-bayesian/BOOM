@@ -53,7 +53,7 @@ namespace BOOM {
                       int num_trials,
                       const MixedMultivariateData &context);
     
-    double value(int arm, const MixedMultivariateData &context) const;
+    virtual double value(int arm, const MixedMultivariateData &context) const;
     
     void update_posterior(int ndraws);
 
@@ -67,11 +67,26 @@ namespace BOOM {
     
     // This can probably be optimized if it uses too much memory.  It also
     // encodes the same things over and over again, so serilization might help.
-    Vector optimal_arm_probabilities(const MixedMultivariateData &context,
-                                     RNG &rng = GlobalRng::rng) const;
+    virtual Vector optimal_arm_probabilities(
+        const MixedMultivariateData &context,
+        RNG &rng = GlobalRng::rng) const;
+
     
-    Vector value_remaining_distribution(const MixedMultivariateData &context,
-                                        RNG &rng = GlobalRng::rng) const;
+    virtual Vector value_remaining_distribution(
+        const MixedMultivariateData &context,
+        RNG &rng = GlobalRng::rng) const;
+
+    const Ptr<LinearBanditEncoder> &encoder() const {
+      return encoder_;
+    }
+
+    const Ptr<BinomialLogitModel> &model() const {
+      return model_;
+    }
+
+    const Matrix &draws() const {
+      return coefficient_draws_;
+    }
     
    private:
     Ptr<BinomialLogitModel> model_;

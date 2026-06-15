@@ -12,7 +12,7 @@ class LogitBandit:
     experimental subjects that cannot be changed by the experimenter).
     """
 
-    def __init__(self, arm_map, model_encoder):
+    def __init__(self, arm_map, model_encoder, value_function = None):
         """
         Args:
           arm_map: An ArmMap object describing the arms in the experiment.
@@ -23,6 +23,7 @@ class LogitBandit:
         """
         self._arm_map = arm_map
         self._encoder = model_encoder
+        self._value_function = value_function
         self._training_data = []
         self._boom_model = None
         self._boom_sampler = None
@@ -137,9 +138,15 @@ class LogitBandit:
             self._boom_model = self._define_model()
             self._boom_sampler = self._define_sampler(self._boom_model)
             self._boom_model.set_method(self._boom_sampler)
-            self._boom_bandit = boom.LogitBandit(
-                self._boom_model,
-                self._encoder.boom())
+            if self._value_function:
+                self._boom_bandit = boom.LogitBanditExternalValue(
+                    self._boom_model,
+                    self._encoder.boom(),
+                    self._value_function)
+            else:
+                self._boom_bandit = boom.LogitBandit(
+                    self._boom_model,
+                    self._encoder.boom())
         return self._boom_bandit
 
     def _define_model(self):

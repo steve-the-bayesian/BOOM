@@ -2,8 +2,13 @@
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 
+#include <functional>
+#include <pybind11/functional.h>
+#include <pybind11/stl.h>
+
 #include "Bandits/BinomialBandit.hpp"
 #include "Bandits/LogitBandit.hpp"
+#include "Bandits/LogitBanditExternalValue.hpp"
 #include "Bandits/LinearBanditEncoder.hpp"
 #include "Bandits/bandit_functions.hpp"
 
@@ -14,6 +19,8 @@
 
 #include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp"
+
+// #include "boom_functional.hpp"
 
 #include "stats/DataTable.hpp"
 #include "stats/Encoders.hpp"
@@ -331,7 +338,7 @@ namespace BayesBoom {
              },
              py::arg("context"),
              py::arg("rng") = BOOM::GlobalRng::rng,
-             "Compute the Thompson sampling probability that each arm is "
+             "Computes probability that each arm is "
              "optimal for the given context, using the posterior draws from "
              "the most recent update_posterior() call.\n\n"
              "Args:\n"
@@ -347,6 +354,77 @@ namespace BayesBoom {
              },
              py::arg("context"),
              py::arg("rng") = BOOM::GlobalRng::rng,
+             "Compute the distribution of value remaining given context.\n\n"
+             "Args:\n"
+             "  context: The context data for this subject.\n"
+             "  rng: Optional boom random number generator.\n\n"
+             "Returns:\n"
+             "  A boom.Vector of length ndraws, where each element is the "
+             "difference between the best arm's predicted success probability "
+             "and arm 0's predicted success probability in that posterior "
+             "draw.\n")
+        ;
+
+    py::class_<LogitBanditExternalValue,
+               LogitBandit,
+               Ptr<LogitBanditExternalValue>>(boom, "LogitBanditExternalValue")
+        .def(py::init(
+            [](const Ptr<BinomialLogitModel> &model,
+               const Ptr<LinearBanditEncoder> &encoder,
+               const LogitBanditExternalValue::ValueFunctionType &value_function) {
+              return new LogitBanditExternalValue(model, encoder, value_function);
+            }),
+             py::arg("model"),
+             py::arg("encoder"),
+             py::arg("value_function"),
+             "Args:\n"
+             "  model: A Boom.BinomialLogitModel describing the probability "
+             "of success.\n"
+             "  encoder:  A Boom.LinearBanditEncoder describing the 'model "
+             "formula' for the bandit.\n"
+             "  value_function:  A functor taking a 'prob' and an 'args' "
+             "argument giving the value of the bandit under a specified success"
+             " probability assuming the arms are defined with the given levels."
+             "  The order of the arguments is the order of the variables "
+             "defined in the ExperimentStructure object contained in the "
+             "encoder.\n")
+        .def("value",
+             [](const LogitBanditExternalValue &bandit,
+                int arm,
+                const MixedMultivariateData &context) {
+               return bandit.value(arm, context);
+             },
+             py::arg("arm"),
+             py::arg("context"),
+             "Args:\n"
+             "  arm: the integer valued index of the arm being evaluated.\n"
+             "  context:  The context data for the user.\n\n"
+             "Returns:\n"
+             "  The value of the given user under the specified arm.\n")
+        .def("optimal_arm_probabilities",
+             [](const LogitBanditExternalValue &bandit,
+                const MixedMultivariateData &context,
+                RNG &rng) {
+               return bandit.optimal_arm_probabilities(context, rng);
+             },
+             py::arg("context"),
+             py::arg("rng") = BOOM::GlobalRng::rng,
+             "Computes probability that each arm is "
+             "optimal for the given context, using the posterior draws from "
+             "the most recent update_posterior() call.\n\n"
+             "Args:\n"
+             "  context: The context data for this subject.\n"
+             "  rng: Optional boom random number generator.\n\n"
+             "Returns:\n"
+             "  A boom.Vector of probabilities, one per arm, summing to 1.\n")
+        .def("value_remaining_distribution",
+             [](const LogitBanditExternalValue &bandit,
+                const MixedMultivariateData &context,
+                RNG &rng) {
+               return bandit.value_remaining_distribution(context, rng);
+             },
+             py::arg("context"),
+             py::arg("rng") = GlobalRng::rng,
              "Compute the distribution of value remaining given context.\n\n"
              "Args:\n"
              "  context: The context data for this subject.\n"

@@ -51,6 +51,7 @@ namespace BOOM {
       return arm_values_[arm];
     }
 
+    // Return the factor levels associated with a given arm.
     std::vector<std::string> factor_level_names(int arm) const;
 
     const ExperimentStructure &structure() const {
@@ -170,6 +171,14 @@ namespace BOOM {
 
     std::vector<std::string> encoded_variable_names() const {
       return dataset_encoder_->encoded_variable_names();
+    }
+
+    const Ptr<ArmMap> &arm_map() const {
+      return arm_map_;
+    }
+
+    std::vector<std::string> arm_values(int arm) const {
+      return arm_map_->factor_level_names(arm);
     }
     
    private:

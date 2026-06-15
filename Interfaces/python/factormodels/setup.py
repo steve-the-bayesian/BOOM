@@ -18,6 +18,7 @@ setup(
     author='Steven L. Scott',
     author_email='steve.the.bayesian@gmail.com',
     url='https://github.com/steve-the-bayesian/BOOM',
+    license='MIT',
     description='Bayesian methods for models defined by latent factors.',
     long_description=read("README"),
     packages=find_namespace_packages(include=["BayesBoom.*"]),

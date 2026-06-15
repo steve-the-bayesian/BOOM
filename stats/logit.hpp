@@ -24,6 +24,7 @@
 #include <cmath>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
+#include "LinAlg/Matrix.hpp"
 #include "distributions/Rmath_dist.hpp"
 
 namespace BOOM {
@@ -48,7 +49,17 @@ namespace BOOM {
     }
     return ans;
   }
-
+  
+  inline Matrix logit(const Matrix &probs) {
+    Matrix ans(probs);
+    for (size_t i = 0; i < ans.nrow(); ++i) {
+      for (size_t j = 0; j < ans.ncol(); ++j) {
+        ans(i, j) = logit(probs(i, j));
+      }
+    }
+    return ans;
+  }
+  
   // Element-by-element application of the inverse logit function.
   // Args:
   //   logits: A vector of real numbers, each representing the chance of an
@@ -59,6 +70,16 @@ namespace BOOM {
   inline Vector logit_inv(const Vector &logits) {
     Vector ans(logits);
     for (size_t i = 0; i < ans.size(); ++i) ans[i] = logit_inv(ans[i]);
+    return ans;
+  }
+
+  inline Matrix logit_inv(const Matrix &logits) {
+    Matrix ans(logits);
+    for (size_t i = 0; i < ans.nrow(); ++i) {
+      for (size_t j = 0; j < ans.ncol(); ++j) {
+        ans(i, j) = logit_inv(logits(i, j));
+      }
+    }
     return ans;
   }
 

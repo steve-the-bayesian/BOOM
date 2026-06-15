@@ -16,3 +16,6 @@ __pycache__
 
 # Compiled Documentation
 docs/_build
+
+# Emacs lock files
+**/.#*
