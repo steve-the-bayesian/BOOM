@@ -18,4 +18,5 @@ qux
 *#*#
 #*
 .#*
+.clangd
 MODULE.bazel.lock
