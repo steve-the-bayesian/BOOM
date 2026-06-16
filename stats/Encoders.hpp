@@ -19,6 +19,9 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <functional>
+#include <unordered_map>
+
 #include "cpputil/RefCounted.hpp"
 #include "stats/DataTable.hpp"
 #include "LinAlg/Vector.hpp"
@@ -178,6 +181,58 @@ namespace BOOM {
 
     int dim() const override { return 1; }
     std::vector<std::string> encoded_variable_names() const override;
+  };
+
+  //===========================================================================
+  // An encoder that applies a named transformation (e.g. log, log1p, sqrt) to
+  // a single numeric variable before encoding it as a 1-column matrix.
+  //
+  // Named transforms from the built-in registry call the corresponding C++
+  // standard library function directly and are suitable for hot paths.  A
+  // Python functor may also be supplied (via pybind) under a user-chosen name;
+  // this is flexible but incurs Python call overhead on every row.
+  //
+  // Serialization stores the transform name.  Deserialization looks the name
+  // up in the registry; if not found, the caller is responsible for
+  // re-registering the functor before loading.
+  class TransformationEncoder : public MainEffectEncoder {
+   public:
+    using Transform = std::function<double(double)>;
+
+    // Construct from a named transform in the built-in registry.
+    // Throws if 'transform_name' is not registered.
+    TransformationEncoder(const std::string &variable_name,
+                          const std::string &transform_name);
+
+    // Construct with an explicit functor and a name used for serialization.
+    // The name need not be in the built-in registry, but must be re-registered
+    // (via register_transform) before any deserialization of this encoder.
+    TransformationEncoder(const std::string &variable_name,
+                          const std::string &transform_name,
+                          const Transform &transform);
+
+    TransformationEncoder * clone() const override;
+
+    const std::string &transform_name() const { return transform_name_; }
+
+    Matrix encode_dataset(const DataTable &data) const override;
+    Vector encode_row(const MixedMultivariateData &data) const override;
+    void encode_row(const MixedMultivariateData &data,
+                    VectorView view) const override;
+
+    int dim() const override { return 1; }
+    std::vector<std::string> encoded_variable_names() const override;
+
+    // Registry management.
+    static void register_transform(const std::string &name,
+                                   const Transform &fn);
+    static bool is_registered(const std::string &name);
+
+   private:
+    std::string transform_name_;
+    Transform transform_;
+
+    static std::unordered_map<std::string, Transform> &registry();
   };
 
   //===========================================================================

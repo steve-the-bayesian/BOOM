@@ -33,6 +33,29 @@ class LogitBandit:
     def number_of_arms(self):
         return self._encoder.number_of_arms
 
+    @property
+    def coefficient_draws(self):
+        if not self._boom_bandit:
+            return None
+        else:
+            return R.to_numpy(self._boom_bandit.coefficient_draws)
+
+    def observe_past_data(self, successes, trials, features):
+        if self._training_data:
+            raise Exception("Cannot mix calls to 'observe_past_data' with "
+                            "calls to 'observe_data'.")
+        if not isinstance(features, pd.DataFrame):
+            raise Exception("'features' argument must be a pandas data frame.")
+        self._training_data = features
+        self._training_data["successes"] = successes
+        self._training_data["trials"] = trials
+
+        if self._boom_model:
+            self._boom_model.add_dataset(
+                R.to_boom_vector(successes),
+                R.to_boom_vector(trials),
+                R.to_boom_matrix(predictors))
+    
     def observe_data(self, arm: int, successes: int, trials: int, context=None):
         """
         Record observed outcomes for a given arm.
@@ -152,7 +175,7 @@ class LogitBandit:
     def _define_model(self):
         xdim = self._encoder.dim
         model = boom.BinomialLogitModel(xdim)
-        if self._training_data:
+        if self._training_data and isinstance(self._training_data, list):
             n = len(self._training_data)
             predictor_matrix = np.zeros((n, xdim))
             successes = np.zeros(n)
@@ -166,6 +189,14 @@ class LogitBandit:
                 R.to_boom_vector(successes),
                 R.to_boom_vector(trials),
                 R.to_boom_matrix(predictor_matrix))
+        elif self._training_data and isinstance(
+                self._training_data, pd.DataFrame):
+            predictors = self._encoder.encode_dataset(self._training_data)
+            successes = self._training_data["successes"].astype(float)
+            trials = self._training_data["trials"].astype(float)
+            model.add_dataset(R.to_boom_vector(successes),
+                              R.to_boom_vector(trials),
+                              R.to_boom_matrix(predictors))
         return model
 
     def _define_sampler(self, model):

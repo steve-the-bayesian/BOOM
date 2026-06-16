@@ -315,9 +315,16 @@ namespace BayesBoom {
              "regression coefficients.\n\n"
              "Args:\n"
              "  ndraws: Number of posterior samples to draw.\n")
-        .def_property_readonly("ndraws", &LogitBandit::ndraws,
+        .def_property_readonly(
+            "ndraws",
+            &LogitBandit::ndraws,
              "The number of posterior draws from the most recent call to "
              "update_posterior().")
+        .def_property_readonly(
+            "coefficient_draws",
+            [](const LogitBandit &bandit) {return bandit.draws();},
+            "The matrix of MCMC draws of the model coefficients.  Row 'i' "
+            "is the coefficient vector for MCMC draw i.")
         .def("arm_predictors",
              [](const LogitBandit &bandit,
                 const MixedMultivariateData &context) {

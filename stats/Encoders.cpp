@@ -18,6 +18,8 @@
 
 #include "stats/Encoders.hpp"
 #include "cpputil/report_error.hpp"
+#include <cmath>
+#include <sstream>
 
 namespace BOOM {
 
@@ -213,6 +215,94 @@ namespace BOOM {
 
   std::vector<std::string> IdentityEncoder::encoded_variable_names() const {
     return std::vector<std::string>(1, variable_name());
+  }
+
+  //===========================================================================
+  namespace {
+    // Cast an overloaded math function to the double(double) signature so it
+    // can be stored in a std::function without ambiguity.
+    template <double(*Fn)(double)>
+    double math_fn(double x) { return Fn(x); }
+  }  // namespace
+
+  std::unordered_map<std::string, TransformationEncoder::Transform> &
+  TransformationEncoder::registry() {
+    static std::unordered_map<std::string, Transform> reg = {
+      {"identity", [](double x) { return x; }},
+      {"log",      math_fn<std::log>},
+      {"log1p",    math_fn<std::log1p>},
+      {"log2",     math_fn<std::log2>},
+      {"log10",    math_fn<std::log10>},
+      {"sqrt",     math_fn<std::sqrt>},
+      {"exp",      math_fn<std::exp>},
+      {"expm1",    math_fn<std::expm1>},
+      {"abs",      math_fn<std::fabs>},
+      {"square",   [](double x) { return x * x; }},
+    };
+    return reg;
+  }
+
+  TransformationEncoder::TransformationEncoder(
+      const std::string &variable_name,
+      const std::string &transform_name)
+      : MainEffectEncoder(variable_name),
+        transform_name_(transform_name)
+  {
+    auto &reg = registry();
+    auto it = reg.find(transform_name);
+    if (it == reg.end()) {
+      std::ostringstream err;
+      err << "TransformationEncoder: unknown transform '" << transform_name
+          << "'. Call register_transform() to add it.";
+      report_error(err.str());
+    }
+    transform_ = it->second;
+  }
+
+  TransformationEncoder::TransformationEncoder(
+      const std::string &variable_name,
+      const std::string &transform_name,
+      const Transform &transform)
+      : MainEffectEncoder(variable_name),
+        transform_name_(transform_name),
+        transform_(transform)
+  {}
+
+  TransformationEncoder * TransformationEncoder::clone() const {
+    return new TransformationEncoder(*this);
+  }
+
+  void TransformationEncoder::register_transform(const std::string &name,
+                                                 const Transform &fn) {
+    registry()[name] = fn;
+  }
+
+  bool TransformationEncoder::is_registered(const std::string &name) {
+    return registry().count(name) > 0;
+  }
+
+  Matrix TransformationEncoder::encode_dataset(const DataTable &data) const {
+    Vector raw = data.get_numeric(variable_name());
+    Matrix ans(raw.size(), 1);
+    for (int i = 0; i < raw.size(); ++i) {
+      ans(i, 0) = transform_(raw[i]);
+    }
+    return ans;
+  }
+
+  Vector TransformationEncoder::encode_row(
+      const MixedMultivariateData &data) const {
+    return Vector(1, transform_(data.numeric(variable_name()).value()));
+  }
+
+  void TransformationEncoder::encode_row(
+      const MixedMultivariateData &data, VectorView view) const {
+    view[0] = transform_(data.numeric(variable_name()).value());
+  }
+
+  std::vector<std::string> TransformationEncoder::encoded_variable_names()
+      const {
+    return {transform_name_ + "(" + variable_name() + ")"};
   }
 
   //===========================================================================

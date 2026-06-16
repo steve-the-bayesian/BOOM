@@ -131,6 +131,95 @@ class TestIdentityEncoder(unittest.TestCase):
         self.assertTrue(np.allclose(output, encoder2.encode(x)))
 
 
+class TestTransformationEncoder(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+        self.x = np.array([1.0, 2.0, 4.0, 9.0])
+
+    def test_identity(self):
+        enc = R.TransformationEncoder("price", "identity")
+        self.assertEqual(enc.variable_name, "price")
+        self.assertEqual(enc.transform_name, "identity")
+        self.assertEqual(enc.dim, 1)
+        self.assertEqual(enc.encoded_variable_names, ["identity(price)"])
+
+        out = enc.encode(self.x)
+        self.assertEqual(out.shape, (4, 1))
+        self.assertTrue(np.allclose(out.ravel(), self.x))
+
+    def test_log1p(self):
+        enc = R.TransformationEncoder("price", "log1p")
+        self.assertEqual(enc.encoded_variable_names, ["log1p(price)"])
+        out = enc.encode(self.x)
+        self.assertTrue(np.allclose(out.ravel(), np.log1p(self.x)))
+
+    def test_sqrt(self):
+        enc = R.TransformationEncoder("price", "sqrt")
+        out = enc.encode(self.x)
+        self.assertTrue(np.allclose(out.ravel(), np.sqrt(self.x)))
+
+    def test_log(self):
+        enc = R.TransformationEncoder("price", "log")
+        out = enc.encode(self.x)
+        self.assertTrue(np.allclose(out.ravel(), np.log(self.x)))
+
+    def test_all_builtin_names(self):
+        builtins = ["identity", "log", "log1p", "log2", "log10",
+                    "sqrt", "exp", "expm1", "abs", "square"]
+        for name in builtins:
+            enc = R.TransformationEncoder("x", name)
+            self.assertEqual(enc.transform_name, name)
+
+    def test_user_defined_functor(self):
+        cube = lambda x: x ** 3
+        enc = R.TransformationEncoder("x", ("cube", cube))
+        self.assertEqual(enc.transform_name, "cube")
+        out = enc.encode(self.x)
+        self.assertTrue(np.allclose(out.ravel(), self.x ** 3))
+
+    def test_register_transformation(self):
+        R.register_transformation("recip", lambda x: 1.0 / x)
+        enc = R.TransformationEncoder("x", "recip")
+        out = enc.encode(self.x)
+        self.assertTrue(np.allclose(out.ravel(), 1.0 / self.x))
+
+    def test_unknown_transform_raises(self):
+        with self.assertRaises(ValueError):
+            R.TransformationEncoder("x", "no_such_transform")
+
+    def test_json_roundtrip_builtin(self):
+        enc = R.TransformationEncoder("price", "log1p")
+        json_string = json.dumps(enc, cls=R.MainEffectEncoderJsonEncoder)
+        enc2 = json.loads(json_string, cls=R.MainEffectEncoderJsonDecoder)
+        self.assertIsInstance(enc2, R.TransformationEncoder)
+        self.assertEqual(enc2.variable_name, "price")
+        self.assertEqual(enc2.transform_name, "log1p")
+        self.assertTrue(np.allclose(enc2.encode(self.x), enc.encode(self.x)))
+
+    def test_json_roundtrip_user_defined(self):
+        # User-defined transform: must be in TRANSFORMATION_ENCODER_REGISTRY
+        # before the decoder runs (simulated here by registering first).
+        R.register_transformation("negate", lambda x: -x)
+        enc = R.TransformationEncoder("x", "negate")
+
+        json_string = json.dumps(enc, cls=R.MainEffectEncoderJsonEncoder)
+        enc2 = json.loads(json_string, cls=R.MainEffectEncoderJsonDecoder)
+        self.assertEqual(enc2.transform_name, "negate")
+        self.assertTrue(np.allclose(enc2.encode(self.x), -self.x))
+
+    def test_json_unknown_transform_raises_on_decode(self):
+        # Manually craft a JSON payload for a transform not in the registry.
+        payload = json.dumps({
+            "type": "TransformationEncoder",
+            "encoder": {
+                "variable_name": "x",
+                "transform": "__unregistered__",
+            },
+        })
+        with self.assertRaises(ValueError):
+            json.loads(payload, cls=R.MainEffectEncoderJsonDecoder)
+
+
 class TestMissingDummyEncoder(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)

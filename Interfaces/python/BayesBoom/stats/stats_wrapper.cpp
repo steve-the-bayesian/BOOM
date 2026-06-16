@@ -541,6 +541,57 @@ namespace BayesBoom {
         ;
 
     //=========================================================================
+    py::class_<TransformationEncoder, MainEffectEncoder,
+               Ptr<TransformationEncoder>>(boom, "TransformationEncoder")
+        .def(py::init(
+            [](const std::string &variable_name,
+               const std::string &transform_name) {
+              return new TransformationEncoder(variable_name, transform_name);
+            }),
+             py::arg("variable_name"),
+             py::arg("transform_name"),
+             "Construct from a named transform in the built-in registry.\n\n"
+             "Args:\n"
+             "  variable_name: The name of the variable to be encoded.\n"
+             "  transform_name: The name of the transform to apply.  Must be\n"
+             "    in the built-in registry or previously registered via\n"
+             "    TransformationEncoder.register_transform().\n")
+        .def(py::init(
+            [](const std::string &variable_name,
+               const std::string &transform_name,
+               const std::function<double(double)> &fn) {
+              return new TransformationEncoder(variable_name, transform_name, fn);
+            }),
+             py::arg("variable_name"),
+             py::arg("transform_name"),
+             py::arg("transform"),
+             "Construct with a user-supplied callable.\n\n"
+             "Args:\n"
+             "  variable_name: The name of the variable to be encoded.\n"
+             "  transform_name: A name used for serialization.  The caller is\n"
+             "    responsible for re-registering the callable under this name\n"
+             "    before deserializing any model that uses this encoder.\n"
+             "  transform: A Python callable mapping float -> float.\n")
+        .def_property_readonly("transform_name",
+            &TransformationEncoder::transform_name)
+        .def_static("register_transform",
+            [](const std::string &name,
+               const std::function<double(double)> &fn) {
+              TransformationEncoder::register_transform(name, fn);
+            },
+            py::arg("name"),
+            py::arg("transform"),
+            "Register a named transform in the global C++ registry.\n\n"
+            "Args:\n"
+            "  name: The string key used to look up this transform.\n"
+            "  transform: A Python callable mapping float -> float.\n")
+        .def_static("is_registered",
+            &TransformationEncoder::is_registered,
+            py::arg("name"),
+            "Return True if 'name' is in the transform registry.\n")
+        ;
+
+    //=========================================================================
     py::class_<EffectsEncoder, MainEffectEncoder, Ptr<EffectsEncoder>>(
         boom, "EffectsEncoder")
         .def(py::init(

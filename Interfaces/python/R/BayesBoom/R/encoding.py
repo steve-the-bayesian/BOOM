@@ -458,6 +458,134 @@ register_encoding_json_encoder(
 
 
 # ===========================================================================
+# Named transforms available to TransformationEncoder on the Python side.
+# Keys must match the names in the C++ registry in Encoders.cpp.
+TRANSFORMATION_ENCODER_REGISTRY = {
+    "identity": lambda x: x,
+    "log":      np.log,
+    "log1p":    np.log1p,
+    "log2":     np.log2,
+    "log10":    np.log10,
+    "sqrt":     np.sqrt,
+    "exp":      np.exp,
+    "expm1":    np.expm1,
+    "abs":      np.abs,
+    "square":   np.square,
+    "sin":      np.sin,
+    "cos":      np.cos,
+    "tan":      np.tan,
+    "asin":     np.asin,
+    "acos":     np.acos,
+    "atan":     np.atan,
+}
+
+
+def register_transformation(name, fn):
+    """
+    Register a named transform for use with TransformationEncoder.
+
+    Args:
+      name: A string key.  If this name is not in the C++ built-in registry,
+        the transform will still work from Python but C++ hot-path encoding
+        will call the Python callable (slower).  Use
+        boom.TransformationEncoder.register_transform(name, fn) to also
+        register a callable on the C++ side.
+      fn: A callable mapping a numpy array (or scalar) to a numpy array of
+        the same shape.
+    """
+    TRANSFORMATION_ENCODER_REGISTRY[name] = fn
+
+
+# ===========================================================================
+class TransformationEncoder(MainEffectEncoder):
+    """
+    Encodes a single numeric column by applying a named transformation and
+    returning an n x 1 matrix.
+
+    Args:
+      variable_name: The name of the variable to encode.
+      transform: Either a string key from TRANSFORMATION_ENCODER_REGISTRY, or
+        a (name, callable) tuple for user-defined transforms.  The callable
+        must accept a numpy array and return a numpy array of the same shape.
+    """
+
+    def __init__(self, variable_name, transform="identity"):
+        super().__init__(variable_name)
+        if isinstance(transform, str):
+            if transform not in TRANSFORMATION_ENCODER_REGISTRY:
+                raise ValueError(
+                    f"Unknown transform '{transform}'. Register it first with "
+                    "register_transformation().")
+            self._transform_name = transform
+            self._transform_fn = TRANSFORMATION_ENCODER_REGISTRY[transform]
+        else:
+            # Expect a (name, callable) tuple.
+            name, fn = transform
+            self._transform_name = name
+            self._transform_fn = fn
+            if name not in TRANSFORMATION_ENCODER_REGISTRY:
+                TRANSFORMATION_ENCODER_REGISTRY[name] = fn
+
+    @property
+    def transform_name(self):
+        return self._transform_name
+
+    @property
+    def dim(self):
+        return 1
+
+    def encode(self, x):
+        return self._transform_fn(np.array(x)).reshape(-1, 1)
+
+    @property
+    def encoded_variable_names(self):
+        return [f"{self._transform_name}({self.variable_name})"]
+
+    def simulate(self, sample_size):
+        rng = np.random.default_rng()
+        return rng.standard_normal(sample_size)
+
+    def _create_boom_encoder(self):
+        if boom.TransformationEncoder.is_registered(self._transform_name):
+            self._boom_encoder = boom.TransformationEncoder(
+                self.variable_name, self._transform_name)
+        else:
+            # Fall back to passing the Python callable to C++.
+            self._boom_encoder = boom.TransformationEncoder(
+                self.variable_name,
+                self._transform_name,
+                lambda x: float(self._transform_fn(np.array([x]))[0]))
+
+
+class TransformationEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        return {
+            "variable_name": obj.variable_name,
+            "transform": obj.transform_name,
+        }
+
+
+class TransformationEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        return self.decode_from_dict(json.loads(json_string))
+
+    def decode_from_dict(self, payload):
+        transform_name = payload["transform"]
+        if transform_name not in TRANSFORMATION_ENCODER_REGISTRY:
+            raise ValueError(
+                f"Cannot deserialize TransformationEncoder: transform "
+                f"'{transform_name}' is not registered. Call "
+                "register_transformation() before loading this encoder.")
+        return TransformationEncoder(payload["variable_name"], transform_name)
+
+
+register_encoding_json_encoder(
+    "TransformationEncoder",
+    TransformationEncoderJsonEncoder,
+    TransformationEncoderJsonDecoder)
+
+
+# ===========================================================================
 class MissingDummyEncoder(MainEffectEncoder):
     def __init__(self, base_encoder: MainEffectEncoder):
         self._base = base_encoder
