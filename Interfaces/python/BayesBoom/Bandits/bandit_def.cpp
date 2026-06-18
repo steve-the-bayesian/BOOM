@@ -325,6 +325,14 @@ namespace BayesBoom {
             [](const LogitBandit &bandit) {return bandit.draws();},
             "The matrix of MCMC draws of the model coefficients.  Row 'i' "
             "is the coefficient vector for MCMC draw i.")
+        .def("set_coefficient_draws",
+             [](LogitBandit &bandit, const Matrix &draws) {bandit.set_draws(draws);},
+             py::arg("draws"),
+             "Args:\n"
+             "  draws: A boom.Matrix, with each row containing a posterior "
+             "draw of the model coefficients.  It is an error to call this "
+             "function unless the number of columns in 'draws' matches the "
+             "number of predictors in the model.")
         .def("arm_predictors",
              [](const LogitBandit &bandit,
                 const MixedMultivariateData &context) {

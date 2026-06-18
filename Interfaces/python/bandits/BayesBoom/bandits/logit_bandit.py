@@ -2,6 +2,33 @@ import BayesBoom.boom as boom
 import BayesBoom.R as R
 import numpy as np
 import pandas as pd
+import json
+
+from .linear_bandit_encoder import (
+    ArmMapJsonEncoder,
+    ArmMapJsonDecoder,
+    LinearBanditEncoderJSONEncoder,
+    LinearBanditEncoderJSONDecoder,
+)
+    
+
+VALUE_FUNCTION_JSON_ENCODER_REGISTRY = {}
+VALUE_FUNCTION_JSON_DECODER_REGISTRY = {}
+
+def register_value_function_json_encoder(
+        encoder_name: str,
+        json_encoder_class,
+        json_decoder_class):
+    global VALUE_FUNCTION_JSON_ENCODER_REGISTRY
+    global VALUE_FUNCTION_JSON_DECODER_REGISTRY
+
+    if not issubclass(json_encoder_class, json.JSONEncoder):
+        raise Exception("Class must be a subclass of json.JSONEncoder")
+    if not issubclass(json_decoder_class, json.JSONDecoder):
+        raise Exception("Class must be a subclass of json.JSONDecoder")
+
+    VALUE_FUNCTION_JSON_ENCODER_REGISTRY[encoder_name] = json_encoder_class
+    VALUE_FUNCTION_JSON_DECODER_REGISTRY[encoder_name] = json_decoder_class
 
 
 class LogitBandit:
@@ -39,6 +66,9 @@ class LogitBandit:
             return None
         else:
             return R.to_numpy(self._boom_bandit.coefficient_draws)
+
+    def set_coefficient_draws(self, draws):
+        self.boom().set_coefficient_draws(R.to_boom_matrix(draws))
 
     def observe_past_data(self, successes, trials, features):
         if self._training_data:
@@ -175,7 +205,7 @@ class LogitBandit:
     def _define_model(self):
         xdim = self._encoder.dim
         model = boom.BinomialLogitModel(xdim)
-        if self._training_data and isinstance(self._training_data, list):
+        if isinstance(self._training_data, list) and self._training_data:
             n = len(self._training_data)
             predictor_matrix = np.zeros((n, xdim))
             successes = np.zeros(n)
@@ -189,8 +219,7 @@ class LogitBandit:
                 R.to_boom_vector(successes),
                 R.to_boom_vector(trials),
                 R.to_boom_matrix(predictor_matrix))
-        elif self._training_data and isinstance(
-                self._training_data, pd.DataFrame):
+        elif isinstance(self._training_data, pd.DataFrame):
             predictors = self._encoder.encode_dataset(self._training_data)
             successes = self._training_data["successes"].astype(float)
             trials = self._training_data["trials"].astype(float)
@@ -208,3 +237,82 @@ def _to_boom_context(context):
     if context is None:
         return boom.MixedMultivariateData()
     return R.to_boom_mixed_data(context)
+
+
+class ValueFunctionJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        value_function_type = obj.__class__.__name__
+        global VALUE_FUNCTION_JSON_ENCODER_REGISTRY
+        if value_function_type not in VALUE_FUNCTION_JSON_ENCODER_REGISTRY:
+            raise Exception(
+                f"{value_function_type} was not found in the value function "
+                "JSON encoder registry.  Please register the type, along with "
+                "its JSON encoder and decoder, using "
+                "register_value_function_json_encoder.")
+            
+        enc = VALUE_FUNCTION_JSON_ENCODER_REGISTRY[value_function_type]()
+        payload = {
+            "type": value_function_type,
+            "function": enc.default(obj)
+        }
+        return payload
+
+
+class ValueFunctionJsonDecoder(json.JSONDecoder):
+    def decode(self, json_str):
+        payload = json.loads(json_str)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        value_type = payload["type"]
+        global VALUE_FUNCTION_JSON_DECODER_REGISTRY
+        if value_type not in VALUE_FUNCTION_JSON_DECODER_REGISTRY:
+            raise Exception(
+                f"{value_type} was not found in the value function "
+                "JSON decoder registry.  Please register the type, along with "
+                "its JSON encoder and decoder, using "
+                "register_value_function_json_encoder.")
+
+        decoder = VALUE_FUNCTION_JSON_DECODER_REGISTRY[value_type]()
+        return decoder.decode_from_dict(payload["function"])
+    
+
+class LogitBanditJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        payload = {}
+        
+        arm_map_encoder = ArmMapJsonEncoder()
+        payload["arm_map"] = arm_map_encoder.default(obj._arm_map)
+        
+        encoder_encoder = LinearBanditEncoderJSONEncoder()
+        payload["encoder"] = encoder_encoder.default(obj._encoder)
+
+        if (obj._value_function is not None):
+            value_encoder = ValueFunctionJsonEncoder()
+            payload["value_function"] = value_encoder.default(
+                obj._value_function)
+
+        return payload
+
+    
+class LogitBanditJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        arm_map_decoder = ArmMapJsonDecoder()
+        arm_map = arm_map_decoder.decode_from_dict(payload["arm_map"])
+
+        encoder_decoder = LinearBanditEncoderJSONDecoder()
+        bandit_encoder = encoder_decoder.decode_from_dict(payload["encoder"])
+
+        if "value_function" in payload:
+            value_decoder = ValueFunctionJsonDecoder()
+            value_function = value_decoder.decode_from_dict(
+                payload["value_function"])
+        else:
+            value_function = None
+
+        ans = LogitBandit(arm_map, bandit_encoder, value_function)
+        return ans

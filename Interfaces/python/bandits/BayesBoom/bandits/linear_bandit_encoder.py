@@ -149,6 +149,9 @@ class ExperimentArmEncoder(R.Encoder):
         self._baseline_level = baseline_level
         self._boom_encoder = None
 
+        if baseline_level == "":
+            self._baseline_level = self.levels[-1]
+
     @property
     def dim(self):
         return self.boom().dim
@@ -156,6 +159,10 @@ class ExperimentArmEncoder(R.Encoder):
     @property
     def encoded_variable_names(self):
         return [f"{self._variable_name}[{i + 1}]" for i in range(self.dim)]
+
+    @property
+    def levels(self):
+        return self._arm_map.structure[self._variable_name].copy()
 
     def encode_dataset(self, data):
         if self._variable_name not in data.columns:
@@ -275,6 +282,7 @@ class LinearBanditEncoder:
 
 
 class LinearBanditEncoderJSONEncoder(json.JSONEncoder):
+
     def default(self, obj):
         arm_map_encoder = ArmMapJsonEncoder()
         dataset_json_encoder = R.DatasetEncoderJsonEncoder()
@@ -285,7 +293,7 @@ class LinearBanditEncoderJSONEncoder(json.JSONEncoder):
         }
         return payload
 
-
+    
 class LinearBanditEncoderJSONDecoder(json.JSONDecoder):
     def decode(self, json_string):
         return self.decode_from_dict(json.loads(json_string))
@@ -293,6 +301,7 @@ class LinearBanditEncoderJSONDecoder(json.JSONDecoder):
     def decode_from_dict(self, payload):
         arm_map_decoder = ArmMapJsonDecoder()
         dataset_encoder_json_decoder = R.DatasetEncoderJsonDecoder()
+        
         arm_map = arm_map_decoder.decode_from_dict(payload["arm_map"])
         dataset_encoder = dataset_encoder_json_decoder.decode_from_dict(
             payload["dataset_encoder"])
