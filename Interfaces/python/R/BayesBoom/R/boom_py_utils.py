@@ -67,7 +67,7 @@ def to_boom_matrix(m):
 
     if hasattr(m, "values") and hasattr(m, "dtypes") and is_all_numeric(m):
         # Handle pd.DataFrame and similar.
-        return boom.Matrix(m.values.astype("float"))
+        return boom.Matrix(m.values.astype("float").copy())
 
     if isinstance(m, Number):
         return boom.Matrix(np.full((1, 1), m, dtype="float"))
