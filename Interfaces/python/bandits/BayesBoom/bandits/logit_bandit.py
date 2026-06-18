@@ -154,6 +154,24 @@ class LogitBandit:
         return R.to_numpy(
             self.boom().optimal_arm_probabilities(_to_boom_context(context)))
 
+    def thompson(self, context=None):
+        """
+        Return one draw of Thompson sampling for the bandit.  This does not
+        update the posterior distribution.  It samples one set of model
+        parameters from the set of posterior draws, calls
+        'optimal_arm_probabilities' assuming that draw is the true set of
+        parameters, and returns the values of the chosen arm.
+
+        Args:
+          context: A single-row pandas DataFrame object.  It can also be None if
+            the bandit contains no contextual variables in its encoder.
+
+        Returns:
+          A list of strings giving the values of the action variables for the
+          chosen arm.
+        """
+        return self.boom().thompson(_to_boom_context(context))
+
     def value_remaining_distribution(self, context=None):
         """
         Return the distribution of value remaining given context.

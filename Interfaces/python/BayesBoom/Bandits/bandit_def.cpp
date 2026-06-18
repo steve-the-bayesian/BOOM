@@ -25,6 +25,8 @@
 #include "stats/DataTable.hpp"
 #include "stats/Encoders.hpp"
 
+#include "distributions/rng.hpp"
+
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
@@ -361,6 +363,17 @@ namespace BayesBoom {
              "  rng: Optional boom random number generator.\n\n"
              "Returns:\n"
              "  A boom.Vector of probabilities, one per arm, summing to 1.\n")
+        .def("thompson",
+             [](const LogitBandit &bandit,
+                const MixedMultivariateData &context,
+                RNG &rng) { return bandit.thompson(context, rng); },
+             py::arg("context"),
+             py::arg("rng") = GlobalRng::rng,
+             "Return one draw of Thompson sampling for the bandit.  This does "
+             "not update the posterior distribution.  It samples one set of "
+             "model parameters from the set of posterior draws, calls "
+             "'optimal_arm_probabilities' assuming that draw is the true set "
+             "of parameters, and returns the values of the chosen arm.")
         .def("value_remaining_distribution",
              [](const LogitBandit &bandit,
                 const MixedMultivariateData &context,

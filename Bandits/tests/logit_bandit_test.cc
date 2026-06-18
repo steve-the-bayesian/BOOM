@@ -226,4 +226,68 @@ namespace {
     }
   }
 
+  // Arm 0 has overwhelming success.  After training, thompson() should return
+  // arm 0's labels far more often than any other arm.
+  TEST_F(LogitBanditTest, ThompsonTest) {
+    MixedMultivariateData ctx;
+    bandit_->observe_data(0, 90, 100, ctx);
+    bandit_->observe_data(1, 10, 100, ctx);
+    bandit_->observe_data(2, 10, 100, ctx);
+    bandit_->observe_data(3, 10, 100, ctx);
+
+    bandit_->update_posterior(500);
+
+    const std::vector<std::string> arm0_labels = encoder_->arm_values(0);
+    int arm0_count = 0;
+    const int nsamples = 200;
+    for (int i = 0; i < nsamples; ++i) {
+      std::vector<std::string> chosen = bandit_->thompson(ctx);
+      ASSERT_EQ(arm0_labels.size(), chosen.size());
+      if (chosen == arm0_labels) {
+        ++arm0_count;
+      }
+    }
+    // With arm 0 strongly dominant, the vast majority of samples should pick it.
+    EXPECT_GT(arm0_count, nsamples / 2);
+  }
+
+  // thompson() with a context variable present.
+  TEST_F(LogitBanditWithContextTest, ThompsonWithContextTest) {
+    Ptr<MixedMultivariateData> ctx = make_context(1.5);
+    bandit_->observe_data(0, 90, 100, *ctx);
+    bandit_->observe_data(1, 10, 100, *ctx);
+    bandit_->observe_data(2, 10, 100, *ctx);
+    bandit_->observe_data(3, 10, 100, *ctx);
+
+    bandit_->update_posterior(500);
+
+    const std::vector<std::string> arm0_labels = encoder_->arm_values(0);
+    int arm0_count = 0;
+    const int nsamples = 200;
+    for (int i = 0; i < nsamples; ++i) {
+      std::vector<std::string> chosen = bandit_->thompson(*ctx);
+      ASSERT_EQ(arm0_labels.size(), chosen.size());
+      if (chosen == arm0_labels) {
+        ++arm0_count;
+      }
+    }
+    EXPECT_GT(arm0_count, nsamples / 2);
+  }
+
+  // thompson() must return a valid arm label vector even when ndraws == 1.
+  TEST_F(LogitBanditTest, ThompsonSingleDrawTest) {
+    MixedMultivariateData ctx;
+    bandit_->observe_data(0, 5, 10, ctx);
+    bandit_->update_posterior(1);
+    ASSERT_EQ(1, bandit_->ndraws());
+
+    std::vector<std::string> chosen = bandit_->thompson(ctx);
+    // The result should have one label per experiment factor.
+    EXPECT_EQ(2u, chosen.size());
+    // Labels must be non-empty strings.
+    for (const auto &label : chosen) {
+      EXPECT_FALSE(label.empty());
+    }
+  }
+
 }  // namespace

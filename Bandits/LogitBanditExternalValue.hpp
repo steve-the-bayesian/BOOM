@@ -47,6 +47,23 @@ namespace BOOM {
     Vector optimal_arm_probabilities(const MixedMultivariateData &context,
                                      RNG &rng = GlobalRng::rng) const override;
 
+    // Return one draw of Thompson sampling for the bandit.  This does not
+    // update the posterior distribution.  It samples one set of model
+    // parameters from the set of posterior draws, calls
+    // 'optimal_arm_probabilities' assuming that draw is the true set of
+    // parameters, and returns the values of the chosen arm.
+    //
+    // Args:
+    //   context: THe context data describing an individual subject.
+    //   rng:  The random number generator to use for sampling.
+    //
+    // Returns:
+    //   Vector of strings describing the levels of the action/experiment
+    //   variables for the chosen arm.
+    std::vector<std::string> thompson(const MixedMultivariateData &context,
+                                      RNG &rng = GlobalRng::rng) const override;
+    
+
     Vector value_remaining_distribution(const MixedMultivariateData &context,
                                         RNG &rng = GlobalRng::rng) const override;
     

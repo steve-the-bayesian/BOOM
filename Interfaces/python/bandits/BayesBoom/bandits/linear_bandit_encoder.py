@@ -48,6 +48,9 @@ class ExperimentStructure:
         pos = self._factor_names.index(factor_name)
         return self._factor_levels[pos]
 
+    @property
+    def factor_names(self):
+        return self._factor_names
             
     def boom(self):
         if not self._boom_experiment_structure:

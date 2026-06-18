@@ -19,6 +19,8 @@
 #include "Bandits/LogitBanditExternalValue.hpp"
 #include "Bandits/bandit_functions.hpp"
 #include "stats/logit.hpp"
+#include "stats/optimal_arm_probabilities.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   
@@ -46,6 +48,24 @@ namespace BOOM {
       }
     }
     return ComputeOptimalArmProbabilities(value_draws, rng);
+  }
+
+  std::vector<std::string> LogitBanditExternalValue::thompson(
+      const MixedMultivariateData &context,
+      RNG &rng) const {
+    Matrix predictors = arm_predictors(context);
+    int coefficients_index = rmulti_mt(rng, 0, draws().nrow() - 1);
+    Vector success_probs = logit_inv(
+        predictors * draws().row(coefficients_index));
+    Matrix value_draws(1, number_of_arms());
+    for (int arm = 0; arm < number_of_arms(); ++arm) {
+      value_draws(0, arm) = value_function_(
+          logit_inv(success_probs[arm]),
+          encoder()->arm_values(arm));
+    }
+    Vector probs = ComputeOptimalArmProbabilities(value_draws);
+    size_t chosen_arm = argmax_random_ties(probs, rng);
+    return encoder()->arm_values(chosen_arm);
   }
 
   Vector LogitBanditExternalValue::value_remaining_distribution(

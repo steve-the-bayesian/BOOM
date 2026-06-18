@@ -19,6 +19,8 @@
 #include "Bandits/LogitBandit.hpp"
 #include "Bandits/bandit_functions.hpp"
 #include "stats/logit.hpp"
+#include "stats/optimal_arm_probabilities.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -64,6 +66,20 @@ namespace BOOM {
     Matrix predictors = arm_predictors(context);
     Matrix value_draws = coefficient_draws_.multT(predictors);
     return ComputeOptimalArmProbabilities(value_draws, rng);
+  }
+
+  std::vector<std::string> LogitBandit::thompson(
+      const MixedMultivariateData &context,
+      RNG &rng) const {
+    Matrix predictors = arm_predictors(context);
+    int coefficients_index = rmulti_mt(rng, 0, draws().nrow() - 1);
+    const ConstVectorView coefficients = coefficient_draws_.row(
+        coefficients_index);
+    Matrix value_draws(1, number_of_arms());
+    value_draws.row(0) = predictors * coefficients;
+    Vector probs = ComputeOptimalArmProbabilities(value_draws, rng);
+    size_t arm = argmax_random_ties(probs, rng);
+    return encoder()->arm_values(arm);
   }
 
   Vector LogitBandit::value_remaining_distribution(

@@ -31,3 +31,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "logit_bandit_external_value_test",
+    size = "small",
+    srcs = ["logit_bandit_external_value_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
