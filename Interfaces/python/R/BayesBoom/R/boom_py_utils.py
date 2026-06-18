@@ -45,7 +45,7 @@ def to_boom_vector(v):
 
     if hasattr(v, "values"):
         # Handle pd.Series and similar.
-        return boom.Vector(v.to_numpy(dtype="float"))
+        return boom.Vector(v.to_numpy(dtype="float").copy())
 
     if isinstance(v, Number):
         return boom.Vector(np.array([v], dtype="float"))
