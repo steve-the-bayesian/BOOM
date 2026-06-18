@@ -87,6 +87,8 @@ namespace BOOM {
     const Matrix &draws() const {
       return coefficient_draws_;
     }
+
+    void set_draws(const Matrix &draws);
     
    private:
     Ptr<BinomialLogitModel> model_;

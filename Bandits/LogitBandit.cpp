@@ -79,4 +79,16 @@ namespace BOOM {
     return ValueRemainingDistribution(value_draws, rng);
   }
   
+  void LogitBandit::set_draws(const Matrix &draws) {
+    if (draws.ncol() != model_->xdim()) {
+      std::ostringstream err;
+      err << "A matrix with " << draws.ncol()
+          << " columns was pased to LogitBandit::set_draws, but the model "
+          << "has " << model_->xdim() << " predictors.";
+      report_error(err.str());
+    }
+    coefficient_draws_ = draws;
+    model_->set_Beta(draws.last_row());
+  }
+  
 }  // namespace BOOM
