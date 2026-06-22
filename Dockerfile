@@ -1,7 +1,8 @@
 # Use this base image from dockerhub.  This image is set up with the minimal
 # linux environment to support manylinux distribution.
-# FROM quay.io/pypa/manylinux2010_x86_64
-FROM quay.io/pypa/manylinux2014_x86_64
+# manylinux_2_28 (AlmaLinux 8, glibc 2.28) is the current best practice;
+# manylinux2014 (CentOS 7) reached EOL June 2024.
+FROM quay.io/pypa/manylinux_2_28_x86_64
 
 # Create the /output directory inside the container.
 RUN mkdir /output
@@ -15,8 +16,8 @@ WORKDIR /src/BOOM
 # Alias python3.9 on the container to 'python3'
 # RUN ln -sf /opt/python/cp39-cp39/bin/python /usr/local/bin/python3
 RUN rm -f /usr/bin/python
-RUN ln -sf /opt/python/cp310-cp310/bin/python3 /usr/bin/python
-RUN ln -sf /opt/python/cp310-cp310/bin/pip3 /usr/bin/pip
+RUN ln -sf /opt/python/cp314-cp314/bin/python3 /usr/bin/python
+RUN ln -sf /opt/python/cp314-cp314/bin/pip3 /usr/bin/pip
 
 # Code that was written to use /usr/bin/env shebangs doesn't work anymore.  The
 # solution is to hard-wire the python interpreter we want to use.
@@ -51,6 +52,6 @@ RUN auditwheel repair /output/bayesboom*.whl -w /output
 # Once the job is done run
 #      docker run -v /tmp:/export -i -t pyboom /bin/bash
 #      cd /output
-#      mv BayesBoom-0.2.0-cp310-cp310-*.whl /export
+#      mv BayesBoom-0.2.0-cp314-cp314-*.whl /export
 #      exit
 # Then the wheels will be in /tmp

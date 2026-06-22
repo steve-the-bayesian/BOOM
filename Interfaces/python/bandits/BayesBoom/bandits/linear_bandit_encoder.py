@@ -277,9 +277,11 @@ class LinearBanditEncoder:
             boom_context = R.to_boom_mixed_data(context)
         return R.to_numpy(self._boom_encoder.encode_row(int(arm), boom_context))
 
+    @property
+    def encoded_variable_names(self):
+        return self._dataset_encoder.encoded_variable_names
+    
     def encode_dataset(self, context):
-        """
-        """
         return self._dataset_encoder.encode_dataset(context)
             
 
