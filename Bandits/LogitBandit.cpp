@@ -27,7 +27,9 @@ namespace BOOM {
   LogitBandit::LogitBandit(const Ptr<BinomialLogitModel> &model,
                            const Ptr<LinearBanditEncoder> &encoder)
       : model_(model),
-        encoder_(encoder)
+        encoder_(encoder),
+        last_thompson_row_(-1),
+        last_thompson_arm_(-1)
   {}
   
   void LogitBandit::observe_data(int arm,
@@ -42,9 +44,11 @@ namespace BOOM {
 
   void LogitBandit::update_posterior(int ndraws) {
     coefficient_draws_.resize(ndraws, model_->xdim());
+    log_likelihood_.resize(ndraws);
     for (int i = 0; i < ndraws; ++i) {
       model_->sample_posterior();
       coefficient_draws_.row(i) = model_->Beta();
+      log_likelihood_[i] = model_->log_likelihood();
     }
   }
 
@@ -72,14 +76,14 @@ namespace BOOM {
       const MixedMultivariateData &context,
       RNG &rng) const {
     Matrix predictors = arm_predictors(context);
-    int coefficients_index = rmulti_mt(rng, 0, draws().nrow() - 1);
+    last_thompson_row_ = rmulti_mt(rng, 0, draws().nrow() - 1);
     const ConstVectorView coefficients = coefficient_draws_.row(
-        coefficients_index);
+        last_thompson_row_);
     Matrix value_draws(1, number_of_arms());
     value_draws.row(0) = predictors * coefficients;
     Vector probs = ComputeOptimalArmProbabilities(value_draws, rng);
-    size_t arm = argmax_random_ties(probs, rng);
-    return encoder()->arm_values(arm);
+    last_thompson_arm_ = argmax_random_ties(probs, rng);
+    return encoder()->arm_values(last_thompson_arm_);
   }
 
   Vector LogitBandit::value_remaining_distribution(

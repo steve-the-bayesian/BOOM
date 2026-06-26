@@ -88,6 +88,13 @@ namespace BOOM {
         const MixedMultivariateData &context,
         RNG &rng = GlobalRng::rng) const;
     
+    // Return the index of the MCMC draw selected in the most recent call to
+    // thompson().
+    int last_thompson_row() const {return last_thompson_row_;}
+    
+    // Return the index of the arm selected in the most recent call to thompson().
+    int last_thompson_arm() const {return last_thompson_arm_;}
+    
     virtual Vector value_remaining_distribution(
         const MixedMultivariateData &context,
         RNG &rng = GlobalRng::rng) const;
@@ -104,13 +111,27 @@ namespace BOOM {
       return coefficient_draws_;
     }
 
+    const Vector &log_likelihood() const {
+      return log_likelihood_;
+    }
+
     void set_draws(const Matrix &draws);
+
+   protected:
+    void set_thompson_row(int row) const {last_thompson_row_ = row;}
+    void set_thompson_arm(int arm) const {last_thompson_arm_ = arm;}
     
    private:
     Ptr<BinomialLogitModel> model_;
     Ptr<LinearBanditEncoder> encoder_;
 
     Matrix coefficient_draws_;
+
+    Vector log_likelihood_;
+
+    // These are for temporary record keeping during Thompson sampling.
+    mutable int last_thompson_row_;
+    mutable int last_thompson_arm_;
   };
   
 }  // namespace BOOM

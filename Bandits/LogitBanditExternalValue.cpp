@@ -55,6 +55,7 @@ namespace BOOM {
       RNG &rng) const {
     Matrix predictors = arm_predictors(context);
     int coefficients_index = rmulti_mt(rng, 0, draws().nrow() - 1);
+    set_thompson_row(coefficients_index);
     Vector success_probs = logit_inv(
         predictors * draws().row(coefficients_index));
     Matrix value_draws(1, number_of_arms());
@@ -65,6 +66,7 @@ namespace BOOM {
     }
     Vector probs = ComputeOptimalArmProbabilities(value_draws);
     size_t chosen_arm = argmax_random_ties(probs, rng);
+    set_thompson_arm(chosen_arm);
     return encoder()->arm_values(chosen_arm);
   }
 
