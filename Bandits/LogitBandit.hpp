@@ -117,6 +117,8 @@ namespace BOOM {
 
     void set_draws(const Matrix &draws);
 
+    void set_log_likelihood(const Vector &log_likelihood);
+
    protected:
     void set_thompson_row(int row) const {last_thompson_row_ = row;}
     void set_thompson_arm(int arm) const {last_thompson_arm_ = arm;}

@@ -335,6 +335,18 @@ namespace BayesBoom {
              "draw of the model coefficients.  It is an error to call this "
              "function unless the number of columns in 'draws' matches the "
              "number of predictors in the model.")
+        .def("set_log_likelihood",
+             [](LogitBandit &bandit, const Vector &log_likelihood){
+               bandit.set_log_likelihood(log_likelihood);
+             },
+             "Args: \n"
+             "  log_likelihood:  A Vector of log likelihood values from "
+             "a previous MCMC run.\n")
+        .def_property_readonly(
+            "log_likelihood",
+            [](const LogitBandit &bandit) {return bandit.log_likelihood();},
+            "The log likelihood of each draw in the simulated model "
+            "coefficients.")
         .def("arm_predictors",
              [](const LogitBandit &bandit,
                 const MixedMultivariateData &context) {
@@ -374,6 +386,12 @@ namespace BayesBoom {
              "model parameters from the set of posterior draws, calls "
              "'optimal_arm_probabilities' assuming that draw is the true set "
              "of parameters, and returns the values of the chosen arm.")
+        .def_property_readonly(
+            "last_thompson_row",
+            [](const LogitBandit &bandit) {return bandit.last_thompson_row();})
+        .def_property_readonly(
+            "last_thompson_arm",
+            [](const LogitBandit &bandit) {return bandit.last_thompson_arm();})
         .def("value_remaining_distribution",
              [](const LogitBandit &bandit,
                 const MixedMultivariateData &context,

@@ -110,5 +110,18 @@ namespace BOOM {
     coefficient_draws_ = draws;
     model_->set_Beta(draws.last_row());
   }
+
+  void LogitBandit::set_log_likelihood(const Vector &log_likelihood) {
+    if (coefficient_draws_.nrow() > 0
+        && coefficient_draws_.nrow() != log_likelihood.size()) {
+      std::ostringstream err;
+      err << "Each log likelihood value is associated with one MCMC "
+          "draw of a coefficient vector, but you have loaded a set of "
+          "log likelihood values with length that fails to match the "
+          "number of rows in coefficient_draws_.";
+      report_error(err.str());
+    }
+    log_likelihood_ = log_likelihood;
+  }
   
 }  // namespace BOOM

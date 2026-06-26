@@ -55,11 +55,17 @@ class LogitBandit:
         self._boom_model = None
         self._boom_sampler = None
         self._boom_bandit = None
+        self._prior = None
 
     @property
     def number_of_arms(self):
         return self._encoder.number_of_arms
 
+    def set_prior(self, prior):
+        """
+        """
+        pass
+    
     @property
     def coefficient_draws(self):
         if not self._boom_bandit:
@@ -67,8 +73,31 @@ class LogitBandit:
         else:
             return R.to_numpy(self._boom_bandit.coefficient_draws)
 
+    @property
+    def log_likelihood(self):
+        """
+        Return the log likelihood associated with each MCMC draw of model
+        coefficients.  If the internal model has not yet been instantiated then
+        return None.
+        """
+        if not self._boom_bandit:
+            return None
+        else:
+            return R.to_numpy(self._boom_bandit.log_likelihood)
+
     def set_coefficient_draws(self, draws):
+        """
+        Populate the internal model with a set of coefficient draws.  This
+        is mainly useful for deserializing a previously stored model.
+        """
         self.boom().set_coefficient_draws(R.to_boom_matrix(draws))
+
+    def set_log_likelihood(self, log_likelihood):
+        """
+        Populate the internal model with a set of log likelihood values
+        associated with a previous MCMC run.
+        """
+        self.boom().set_log_likelihood(R.to_boom_vector(log_likelihood))
 
     def observe_past_data(self, successes, trials, features):
         if self._training_data:
@@ -84,7 +113,7 @@ class LogitBandit:
             self._boom_model.add_dataset(
                 R.to_boom_vector(successes),
                 R.to_boom_vector(trials),
-                R.to_boom_matrix(predictors))
+                R.to_boom_matrix(self._encoder.encode_dataset(self._training_data)))
     
     def observe_data(self, arm: int, successes: int, trials: int, context=None):
         """
@@ -171,6 +200,14 @@ class LogitBandit:
           chosen arm.
         """
         return self.boom().thompson(_to_boom_context(context))
+        
+    @property
+    def last_thompson_row(self):
+        return self.boom().last_thompson_row
+
+    @property
+    def last_thompson_arm(self):
+        return self.boom().last_thompson_arm
 
     def value_remaining_distribution(self, context=None):
         """
@@ -305,6 +342,8 @@ class LogitBanditJsonEncoder(json.JSONEncoder):
         encoder_encoder = LinearBanditEncoderJSONEncoder()
         payload["encoder"] = encoder_encoder.default(obj._encoder)
 
+        payload["log_likelihood"] = obj.log_likelihood
+
         if (obj._value_function is not None):
             value_encoder = ValueFunctionJsonEncoder()
             payload["value_function"] = value_encoder.default(
@@ -333,4 +372,8 @@ class LogitBanditJsonDecoder(json.JSONDecoder):
             value_function = None
 
         ans = LogitBandit(arm_map, bandit_encoder, value_function)
+
+        if payload["log_likelihood"] is not None:
+            ans.set_log_likelihood(payload["log_likelihood"])
+        
         return ans
