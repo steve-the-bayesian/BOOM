@@ -7,7 +7,7 @@ import numpy as np
 from ..boom_utils import to_boom_vector, to_boom_matrix, to_boom_spd
 
 
-class BinaryLogitMvnPrior:
+class BinomialLogitMvnPrior:
     """
     Multivariate normal prior on logistic regression coefficients,
     leading to a boom.BinomialLogitAuxmixSampler posterior sampler.
@@ -51,7 +51,7 @@ class BinaryLogitMvnPrior:
             boom_model, mvn, self._clt_threshold, boom.GlobalRng.rng)
 
 
-class BinaryLogitSpikeSlabPrior:
+class BinomialLogitSpikeSlabPrior:
     """
     Spike-and-slab prior for logistic regression, producing a
     boom.BinomialLogitSpikeSlabSampler posterior sampler.
@@ -102,7 +102,7 @@ class BinaryLogitSpikeSlabPrior:
             boom_model, slab, spike, self._clt_threshold, boom.GlobalRng.rng)
 
 
-class BinaryLogitModel:
+class BinomialLogitModel:
     """
     Python wrapper for boom.BinomialLogitModel.
 
@@ -119,7 +119,7 @@ class BinaryLogitModel:
 
     Typical use::
 
-        model = BinaryLogitModel(X, y)            # binary 0/1 response
+        model = BinomialLogitModel(X, y)            # binary 0/1 response
         draws = np.zeros((niter, model.xdim))
         for i in range(niter):
             model.sample_posterior()
@@ -127,12 +127,12 @@ class BinaryLogitModel:
 
     For binomial (grouped) data::
 
-        model = BinaryLogitModel(X, y=successes, trials=trials)
+        model = BinomialLogitModel(X, y=successes, trials=trials)
 
     For spike-and-slab variable selection::
 
-        prior = BinaryLogitSpikeSlabPrior(expected_model_size=3)
-        model = BinaryLogitModel(X, y, prior=prior)
+        prior = BinomialLogitSpikeSlabPrior(expected_model_size=3)
+        model = BinomialLogitModel(X, y, prior=prior)
     """
 
     def __init__(self, X, y, trials=None, prior=None):
@@ -145,10 +145,10 @@ class BinaryLogitModel:
           trials: Trial counts per observation.  Defaults to all-ones
              (Bernoulli / binary data).
           prior: A prior object with a ``create_sampler(boom_model)``
-             method — either BinaryLogitMvnPrior (default) or
-             BinaryLogitSpikeSlabPrior.  For backward compatibility, a
+             method — either BinomialLogitMvnPrior (default) or
+             BinomialLogitSpikeSlabPrior.  For backward compatibility, a
              bare MvnPrior from BayesBoom.models is also accepted and
-             treated as a BinaryLogitMvnPrior with the same distribution.
+             treated as a BinomialLogitMvnPrior with the same distribution.
         """
         self._X = np.asarray(X, dtype=float)
         if self._X.ndim == 1:
@@ -197,7 +197,7 @@ class BinaryLogitModel:
             to_boom_matrix(self._X))
 
         if self._prior is None:
-            self._prior = BinaryLogitMvnPrior()
+            self._prior = BinomialLogitMvnPrior()
 
         if hasattr(self._prior, 'create_sampler'):
             self._boom_sampler = self._prior.create_sampler(self._boom_model)
