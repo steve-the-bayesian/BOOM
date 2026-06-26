@@ -48,6 +48,7 @@ cp -r Interfaces/python/impute/BayesBoom/impute $PACKAGE_DIR/impute
 cp -r Interfaces/python/spikeslab/BayesBoom/spikeslab $PACKAGE_DIR/spikeslab
 cp -r Interfaces/python/test_utils/BayesBoom/test_utils $PACKAGE_DIR/test_utils
 cp -r Interfaces/python/bandits/BayesBoom/bandits $PACKAGE_DIR/bandits
+cp -r Interfaces/python/models/BayesBoom/models $PACKAGE_DIR/models
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
