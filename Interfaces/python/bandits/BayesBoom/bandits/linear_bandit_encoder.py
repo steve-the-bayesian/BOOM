@@ -61,6 +61,19 @@ class ExperimentStructure:
                     self._factor_levels[i])
         return self._boom_experiment_structure
 
+    def __getstate__(self):
+        return {
+            "factor_names": self._factor_names,
+            "factor_levels": self._factor_levels,
+            "baseline_levels": self._baseline_levels,
+        }
+
+    def __setstate__(self, payload):
+        self._factor_names = payload["factor_names"]
+        self._factor_levels = payload["factor_levels"]
+        self._baseline_levels = payload["baseline_levels"]
+        self._boom_experiment_structure = None
+
 
 class ExperimentStructureJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -111,6 +124,13 @@ class ArmMap:
         if not self._boom_arm_map:
             self._boom_arm_map = boom.ArmMap(self._experiment_structure.boom())
         return self._boom_arm_map
+
+    def __getstate__(self):
+        return {"experiment_structure": self._experiment_structure}
+
+    def __setstate__(self, payload):
+        self._experiment_structure = payload["experiment_structure"]
+        self._boom_arm_map = None
 
 
 class ArmMapJsonEncoder(json.JSONEncoder):
@@ -199,7 +219,20 @@ class ExperimentArmEncoder(R.Encoder):
             self._arm_map.boom(),
             self._baseline_level)
 
-        
+    def __getstate__(self):
+        return {
+            "variable_name": self._variable_name,
+            "arm_map": self._arm_map,
+            "baseline_level": self._baseline_level,
+        }
+
+    def __setstate__(self, payload):
+        self._variable_name = payload["variable_name"]
+        self._arm_map = payload["arm_map"]
+        self._baseline_level = payload["baseline_level"]
+        self._boom_encoder = None
+
+
 class ExperimentArmEncoderJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         arm_map_encoder = ArmMapJsonEncoder()
@@ -242,9 +275,7 @@ class LinearBanditEncoder:
     def __init__(self, arm_map, dataset_encoder):
         self._arm_map = arm_map
         self._dataset_encoder = dataset_encoder
-        self._boom_encoder = boom.LinearBanditEncoder(
-            self._arm_map.boom(),
-            self._dataset_encoder.boom())
+        self._boom_encoder = None
 
     @property
     def number_of_arms(self):
@@ -256,6 +287,10 @@ class LinearBanditEncoder:
         return self._dataset_encoder.dim
 
     def boom(self):
+        if self._boom_encoder is None:
+            self._boom_encoder = boom.LinearBanditEncoder(
+                self._arm_map.boom(),
+                self._dataset_encoder.boom())
         return self._boom_encoder
 
     def encode_row(self, arm: int, context):
@@ -283,7 +318,17 @@ class LinearBanditEncoder:
     
     def encode_dataset(self, context):
         return self._dataset_encoder.encode_dataset(context)
-            
+
+    def __getstate__(self):
+        return {
+            "arm_map": self._arm_map,
+            "dataset_encoder": self._dataset_encoder,
+        }
+
+    def __setstate__(self, payload):
+        self._arm_map = payload["arm_map"]
+        self._dataset_encoder = payload["dataset_encoder"]
+        self._boom_encoder = None
 
 
 class LinearBanditEncoderJSONEncoder(json.JSONEncoder):

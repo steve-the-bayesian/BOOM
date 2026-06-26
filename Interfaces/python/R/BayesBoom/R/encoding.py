@@ -122,6 +122,14 @@ class Encoder(ABC):
             self._create_boom_encoder()
         return self._boom_encoder
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_boom_encoder"] = None
+        return state
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+
 
 # ===========================================================================
 class MainEffectEncoder(Encoder):
@@ -943,6 +951,18 @@ class DatasetEncoder(Encoder):
                     main_effect_indices = list(range(start, start + enc.dim))
             start += enc.dim
         return affected_indices, main_effect_indices
+
+    def __getstate__(self):
+        return {
+            "_encoders": self._encoders,
+            "_force_intercept": self._force_intercept,
+        }
+
+    def __setstate__(self, payload):
+        self._encoders = payload["_encoders"]
+        self._force_intercept = payload["_force_intercept"]
+        self._boom_encoder = None
+        self._initialize()
 
     def __repr__(self):
         ans = "A DatasetEncoder managing: \n"

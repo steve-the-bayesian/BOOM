@@ -287,6 +287,32 @@ class LogitBandit:
         prior = boom.MvnModel(self._encoder.dim, 0.0, 1.0)
         return boom.BinomialLogitAuxmixSampler(model, prior)
 
+    def __getstate__(self):
+        return {
+            "arm_map": self._arm_map,
+            "encoder": self._encoder,
+            "value_function": self._value_function,
+            "training_data": self._training_data,
+            "coefficient_draws": self.coefficient_draws,
+            "log_likelihood": self.log_likelihood,
+        }
+
+    def __setstate__(self, payload):
+        self._arm_map = payload["arm_map"]
+        self._encoder = payload["encoder"]
+        self._value_function = payload["value_function"]
+        self._training_data = payload["training_data"]
+        self._boom_model = None
+        self._boom_sampler = None
+        self._boom_bandit = None
+        self._prior = None
+        coef_draws = payload["coefficient_draws"]
+        log_lik = payload["log_likelihood"]
+        if coef_draws is not None:
+            self.set_coefficient_draws(coef_draws)
+        if log_lik is not None:
+            self.set_log_likelihood(log_lik)
+
 
 def _to_boom_context(context):
     if context is None:

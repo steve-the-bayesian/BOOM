@@ -1,3 +1,4 @@
+import pickle
 import unittest
 import numpy as np
 import pandas as pd
@@ -315,6 +316,79 @@ class TestLogitBanditExternalValue(unittest.TestCase):
         bandit.update_posterior(500)
         vr = bandit.value_remaining_distribution()
         self.assertTrue(np.all(vr <= 1e-6))
+
+
+class TestLogitBanditPickle(unittest.TestCase):
+
+    def _roundtrip(self, bandit):
+        return pickle.loads(pickle.dumps(bandit))
+
+    def test_pickle_before_update(self):
+        bandit = _make_bandit_no_context()
+        bandit.observe_data(0, 5, 10)
+        b2 = self._roundtrip(bandit)
+        self.assertEqual(bandit.number_of_arms, b2.number_of_arms)
+        self.assertEqual(len(bandit._training_data), len(b2._training_data))
+
+    def test_pickle_after_update_restores_draws(self):
+        bandit = _make_bandit_no_context()
+        bandit.observe_data(0, 90, 100)
+        bandit.observe_data(1, 30, 100)
+        bandit.update_posterior(200)
+        b2 = self._roundtrip(bandit)
+        self.assertEqual(bandit.ndraws, b2.ndraws)
+        np.testing.assert_array_almost_equal(
+            bandit.coefficient_draws, b2.coefficient_draws)
+
+    def test_pickle_after_update_restores_log_likelihood(self):
+        bandit = _make_bandit_no_context()
+        bandit.observe_data(0, 5, 10)
+        bandit.update_posterior(100)
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(
+            bandit.log_likelihood, b2.log_likelihood)
+
+    def test_pickle_preserves_training_data(self):
+        bandit = _make_bandit_no_context()
+        bandit.observe_data(0, 3, 5)
+        bandit.observe_data(1, 1, 5)
+        b2 = self._roundtrip(bandit)
+        self.assertEqual(2, len(b2._training_data))
+        self.assertEqual(bandit._training_data[0]["arm"],
+                         b2._training_data[0]["arm"])
+
+    def test_pickle_with_context(self):
+        bandit = _make_bandit_with_context()
+        ctx = pd.DataFrame({"x1": [1.5]})
+        bandit.observe_data(0, 5, 10, ctx)
+        bandit.update_posterior(100)
+        b2 = self._roundtrip(bandit)
+        self.assertEqual(bandit.ndraws, b2.ndraws)
+        np.testing.assert_array_almost_equal(
+            bandit.coefficient_draws, b2.coefficient_draws)
+
+    def test_pickle_with_value_function(self):
+        bandit = _make_bandit_with_external_value(_position_weighted)
+        for arm in range(4):
+            bandit.observe_data(arm, 50, 100)
+        bandit.update_posterior(200)
+        b2 = self._roundtrip(bandit)
+        self.assertEqual(bandit.ndraws, b2.ndraws)
+        probs = b2.optimal_arm_probabilities()
+        self.assertEqual(4, len(probs))
+        self.assertAlmostEqual(1.0, probs.sum(), places=10)
+
+    def test_pickle_optimal_arm_probs_consistent(self):
+        bandit = _make_bandit_no_context()
+        bandit.observe_data(0, 90, 100)
+        bandit.observe_data(1, 10, 100)
+        bandit.observe_data(2, 10, 100)
+        bandit.observe_data(3, 10, 100)
+        bandit.update_posterior(500)
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(
+            bandit.optimal_arm_probabilities(),
+            b2.optimal_arm_probabilities())
 
 
 class TestLinearBanditEncoderDim(unittest.TestCase):
