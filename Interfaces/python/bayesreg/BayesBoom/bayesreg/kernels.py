@@ -1,4 +1,5 @@
 import BayesBoom.R as R
+import BayesBoom.models as models
 import BayesBoom.boom as boom
 import numpy as np
 from abc import ABC, abstractmethod
@@ -61,7 +62,7 @@ class MahalanobisKernel(Kernel):
                  predictor_matrix: np.ndarray,
                  scale: float = 1.0,
                  diagonal_shrinkage: float = 0.05,
-                 scale_prior: R.DoubleModel = R.SdPrior(1.0, 1.0)):
+                 scale_prior: models.DoubleModel = models.SdPrior(1.0, 1.0)):
         """
         Args:
           predictor_matrix: A matrix

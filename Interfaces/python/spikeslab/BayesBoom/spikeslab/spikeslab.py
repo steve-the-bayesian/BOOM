@@ -6,7 +6,10 @@ import BayesBoom.R as R
 import scipy.sparse
 import matplotlib.pyplot as plt
 
-from .priors import RegressionSpikeSlabPrior, RegressionSlabPrior
+import BayesBoom.models as models
+import BayesBoom.models.glm as glm
+
+from BayesBoom.models.glm import RegressionSpikeSlabPrior, RegressionSlabPrior
 
 
 def sparsify(glm_coefs):
@@ -113,7 +116,7 @@ class lm_spike:
                  formula: str,
                  niter: int,
                  data: pd.DataFrame,
-                 prior: RegressionSpikeSlabPrior = None,
+                 prior: glm.RegressionSpikeSlabPrior = None,
                  ping: int = None,
                  seed: int = None,
                  xnames=None,
@@ -125,11 +128,12 @@ class lm_spike:
           formula: A model formula that can be interpreted by the 'patsy' module
             to produce a model matrix from 'data'.  The 'formula' argument is
             required but is only accessed if 'data' is a data frame.  If 'data'
-            is an R.RegSuf object then 'formula' is not used.
+            is a models.RegressionSuf object then 'formula' is not used.
           niter: The desired number of MCMC iterations.
           data: In the typical case, this is a pd.DataFrame containing the data
             with which to train the model.  The code also accepts 'data' as an
-            R.RegSuf containing the sufficient statistics for the model.
+            models.RegressionSuf containing the sufficient statistics for the
+            model.
           prior: A SpikeSlabPrior object providing the prior distribution over
             the inclusion indicators, the coefficients, and the residual
             variance parameter.
@@ -164,11 +168,12 @@ class lm_spike:
             self._model = boom.RegressionModel(X, y, False)
 
             if prior is None:
-                prior = RegressionSpikeSlabPrior(predictors,
-                                                 response,
-                                                 **kwargs)
+                prior = glm.RegressionSpikeSlabPrior(
+                    predictors,
+                    response,
+                    **kwargs)
 
-        elif isinstance(data, R.RegSuf):
+        elif isinstance(data, glm.RegressionSuf):
             predictors = None
             response = None
 
@@ -187,7 +192,8 @@ class lm_spike:
         if seed is not None:
             boom.GlobalRng.rng.seed(int(seed))
 
-        prior.create_sampler(self._model, assign=True)
+        sampler = prior.create_sampler(self._model)
+        self._model.set_method(sampler)
 
         # A "lil" matrix is a "linked list" matrix.  This is an efficient method
         # for constructing matrices.  It should be converted to a different
@@ -831,7 +837,7 @@ class BigAssSpikeSlab:
                  force_intercept: bool = True,
                  spike=None,
                  slab: RegressionSlabPrior = None,
-                 residual_sd_prior: R.SdPrior = None,
+                 residual_sd_prior: models.SdPrior = None,
                  expected_model_size=1.0,
                  expected_Rsqure=0.5,
                  prior_sample_size=1.0,
@@ -867,8 +873,8 @@ class BigAssSpikeSlab:
 
         self._residual_sd_prior = residual_sd_prior
         if residual_sd_prior is not None:
-            if not isinstance(residual_sd_prior, R.SdPrior):
-                raise Exception("residual_sd_prior must be an R.SdPrior")
+            if not isinstance(residual_sd_prior, models.SdPrior):
+                raise Exception("residual_sd_prior must be an models.SdPrior")
 
         self._response_suf = boom.GaussianSuf()
 
@@ -927,7 +933,7 @@ class BigAssSpikeSlab:
         if self._residual_sd_prior is None:
             sample_var = self._response_suf.sample_var
             residual_var = (1 - self._expected_Rsqure) * sample_var
-            self._residual_sd_prior = R.SdPrior(
+            self._residual_sd_prior = models.SdPrior(
                 np.sqrt(residual_var), self._prior_sample_size)
 
         if self._sampler is None:

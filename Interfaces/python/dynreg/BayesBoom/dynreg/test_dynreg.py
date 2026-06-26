@@ -5,6 +5,7 @@ import BayesBoom.boom as boom
 import BayesBoom.dynreg as dynreg
 import BayesBoom.spikeslab as ss
 import BayesBoom.R as R
+import BayesBoom.models as models
 import matplotlib.pyplot as plt
 
 # pylint: disable=unused-import
@@ -79,7 +80,7 @@ class TestDynamicRegression(unittest.TestCase):
             data=data,
             timestamps="timestamp",
             niter=100,
-            residual_precision_prior=R.SdPrior(true_residual_sd, 1),
+            residual_precision_prior=models.SdPrior(true_residual_sd, 1),
             seed=8675309)
 
         model.plot()

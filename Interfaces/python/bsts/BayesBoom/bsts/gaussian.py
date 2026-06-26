@@ -6,6 +6,8 @@ import scipy
 import BayesBoom.boom as boom
 import BayesBoom.R as R
 import BayesBoom.spikeslab as spikeslab
+import BayesBoom.models as models
+import BayesBoom.models.glm as glm
 
 
 class GaussianStateSpaceModelFactory:
@@ -18,10 +20,10 @@ class GaussianStateSpaceModelFactory:
         self._model = None
         self.predictor_names = None
 
-    def create_model(self, prior: R.SdPrior, data: pd.Series, rng):
+    def create_model(self, prior: models.SdPrior, data: pd.Series, rng):
         """
         Args:
-          prior: an R.SdPrior object describing the prior distribution on the
+          prior: an models.SdPrior object describing the prior distribution on the
             residual variance paramter.
           data:  The time series of observations as a Pandas Series.
           rng: The boom random number generator.
@@ -42,13 +44,13 @@ class GaussianStateSpaceModelFactory:
             if data is None:
                 raise Exception("One of 'prior' or 'data' must be given")
             sdy = np.std(data, ddof=1)
-            prior = R.SdPrior(sigma_guess=sdy,
+            prior = models.SdPrior(sigma_guess=sdy,
                               upper_limit=sdy * 1.2,
                               initial_value=sdy / 2.0)
 
-        if not isinstance(prior, R.SdPrior):
+        if not isinstance(prior, models.SdPrior):
             raise Exception(
-                "I expected a prior of type R.SdPrior on the residual variance"
+                "I expected a prior of type models.SdPrior on the residual variance"
                 " parameter."
             )
         self._prior = prior
@@ -91,7 +93,7 @@ class StateSpaceRegressionModelFactory:
           formula:  A model formula describing the regression component.
           data: A pandas DataFrame containing the variables appearing
             'formula'.
-          prior: A spikeslab.RegressionSpikeSlabPrior describing the prior
+          prior: A glm.RegressionSpikeSlabPrior describing the prior
             distribution on the regression coefficients and the residual
             standard deviation.
 
@@ -103,14 +105,14 @@ class StateSpaceRegressionModelFactory:
         boom_response = boom.Vector(response)
         boom_predictors = boom.Matrix(predictors)
         if prior is None:
-            prior = spikeslab.RegressionSpikeSlabPrior(
+            prior = glm.RegressionSpikeSlabPrior(
                 boom_predictors.to_numpy(),
                 boom_response.to_numpy(),
                 **kwargs)
 
         self._prior = prior
 
-        if not isinstance(prior, spikeslab.RegressionSpikeSlabPrior):
+        if not isinstance(prior, glm.RegressionSpikeSlabPrior):
             raise Exception("Unexpected type for prior.")
         is_observed = np.isfinite(response)
         self._model = boom.StateSpaceRegressionModel(

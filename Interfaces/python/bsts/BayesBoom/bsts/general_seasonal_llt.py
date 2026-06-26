@@ -1,6 +1,7 @@
 import BayesBoom.boom as boom
 import numpy as np
 import BayesBoom.R as R
+import BayesBoom.models as models
 from .state_models import StateModel
 
 
@@ -21,14 +22,14 @@ class GeneralSeasonalLLT(StateModel):
           y: The time series to be modeled.  This can be "None" if 'sdy' is
             supplied.
           nseasons: The number of seasons in a cycle.
-          initial_state_prior: An R.NormalPrior object describing the initial
+          initial_state_prior: An models.NormalModel object describing the initial
             distribution of the state at time 0.  If None then a default prior
             will be assumed.
-          level_precision_priors: A list of R.SdPrior objects describing the
+          level_precision_priors: A list of models.SdPrior objects describing the
             prior distribution on the innovation standard deviations for the
             level portion of the model.  There is one such prior for each
             season in the cycle.
-          slope_precision_priors: A list of R.SdPrior objects describing the
+          slope_precision_priors: A list of models.SdPrior objects describing the
             prior distribution on the innovation standard deviations for the
             slope portion of the model.  There is one such prior for each
             season in the cycle.
@@ -46,44 +47,44 @@ class GeneralSeasonalLLT(StateModel):
                 sdy = self._compute_sdy(y, "initial_state_prior")
             initial_state_prior = self._default_initial_state_prior(sdy)
 
-        if isinstance(initial_state_prior, R.NormalPrior):
+        if isinstance(initial_state_prior, models.NormalModel):
             dim = 2 * self._nseasons
             mu = np.zeros(dim)
             sigma = initial_state_prior.sd
             Sigma = np.diag(np.ones(dim) * sigma ** 2)
-            self._initial_state_prior = R.MvnPrior(mu, Sigma)
+            self._initial_state_prior = models.MvnModel(mu, Sigma)
         else:
             self._initial_state_prior = initial_state_prior
 
-        if not isinstance(self._initial_state_prior, R.MvnPrior):
-            raise Exception("intial_state_prior must be an R.MvnPrior")
+        if not isinstance(self._initial_state_prior, models.MvnModel):
+            raise Exception("intial_state_prior must be an models.MvnModel")
 
         if level_precision_priors is None:
             if sdy is None:
                 sdy = self._compute_sdy(y, "level_precision_priors")
-            self._level_precision_priors = [R.SdPrior(
+            self._level_precision_priors = [models.SdPrior(
                 sdy / 100, .1, upper_limit=sdy) for i in range(self.nseasons)]
         else:
             self._level_precision_priors = level_precision_priors
-        msg = "level_precision_priors must be a list of R.SdPrior objects"
+        msg = "level_precision_priors must be a list of models.SdPrior objects"
         if not isinstance(self._level_precision_priors, list):
             raise Exception(msg)
         for x in self._level_precision_priors:
-            if not isinstance(x, R.SdPrior):
+            if not isinstance(x, models.SdPrior):
                 raise Exception(msg)
 
         if slope_precision_priors is None:
             if sdy is None:
                 sdy = self._compute_sdy(y, "slope_precision_priors")
-            self._slope_precision_priors = [R.SdPrior(
+            self._slope_precision_priors = [models.SdPrior(
                 sdy / 100, .1, upper_limit=sdy) for i in range(self.nseasons)]
         else:
             self._slope_precision_priors = slope_precision_priors
-        msg = "slope_precision_priors must be a list of R.SdPrior objects"
+        msg = "slope_precision_priors must be a list of models.SdPrior objects"
         if not isinstance(self._slope_precision_priors, list):
             raise Exception(msg)
         for x in self._slope_precision_priors:
-            if not isinstance(x, R.SdPrior):
+            if not isinstance(x, models.SdPrior):
                 raise Exception(msg)
 
         self._build_model()
@@ -165,7 +166,7 @@ class GeneralSeasonalLLT(StateModel):
         dim = 2 * self._nseasons
         mean = np.zeros(dim)
         variance = np.diag(np.ones(dim) * sdy)
-        return R.MvnPrior(mean, variance)
+        return models.MvnModel(mean, variance)
 
     def _compute_sdy(self, y, which_prior: str):
         if y is None:

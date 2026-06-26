@@ -1,8 +1,10 @@
 import BayesBoom.boom as boom
+import BayesBoom.models as models
 import BayesBoom.R as R
 import numpy as np
 import pandas as pd
 import json
+
 
 from .linear_bandit_encoder import (
     ArmMapJsonEncoder,
@@ -63,9 +65,20 @@ class LogitBandit:
 
     def set_prior(self, prior):
         """
+        Set the prior distribution for the model to one of the standard
+        priors for binomial logit models.  Accepted families of priors include
+        MvnModel, BinomialLogitMvnPrior, and BinomialLogitSpikeSlabPrior.
         """
-        pass
-    
+        if not isinstance(prior,
+                          (models.MvnModel,
+                           models.BinomialLogitMvnPrior,
+                           models.BinomialLogitSpikeSlabPrior)):
+            raise Exception("""
+            Unrecognized class of prior distribution passed to
+            'LogitBandit.set_prior'.
+            """)
+        self._prior = prior
+
     @property
     def coefficient_draws(self):
         if not self._boom_bandit:
@@ -135,13 +148,6 @@ class LogitBandit:
             "trials": int(trials),
             "context": context,
         })
-
-        # Reset boom objects so they are rebuilt from the complete training data
-        # on the next call to boom().  BinomialLogitAuxmixSampler does not
-        # support incremental data addition after sampling has started.
-        self._boom_bandit = None
-        self._boom_model = None
-        self._boom_sampler = None
 
     def update_posterior(self, ndraws: int):
         """
@@ -284,8 +290,30 @@ class LogitBandit:
         return model
 
     def _define_sampler(self, model):
-        prior = boom.MvnModel(self._encoder.dim, 0.0, 1.0)
-        return boom.BinomialLogitAuxmixSampler(model, prior)
+        if self._prior is None:
+            # default value: This is not a great default.
+            dim = self._encoder.dim
+            mu = np.zeros(dim)
+            Sigma = np.diag(np.ones(dim))
+            self._prior = models.MvnModel(mu, Sigma)
+            return boom.BinomialLogitAuxmixSampler(model, self._prior.boom())
+        
+        if isinstance(self._prior, models.MvnModel):
+            return boom.BinomialLogitAuxmixSampler(model, self._prior.boom())
+
+        elif isinstance(self._prior, models.BinomialLogitMvnPrior):
+            return self._prior.create_sampler(model)
+
+        elif isinstance(self._prior, models.BinomialLogitSpikeSlabPrior):
+            return self._prior.create_sampler(model)
+
+        else:
+            raise Exception(
+                """
+                Unrecognized self._prior model family in call to
+                _define_sampler.
+                """)
+                        
 
     def __getstate__(self):
         return {

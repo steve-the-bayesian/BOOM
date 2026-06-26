@@ -9,6 +9,7 @@ import pdb
 import matplotlib.pyplot as plt
 
 import BayesBoom.R as R
+import BayesBoom.models as models
 
 from BayesBoom.bayesreg import (
     MahalanobisKernel,
@@ -35,13 +36,13 @@ class TestGaussianProcessRegression(unittest.TestCase):
         y = intercept + 3 * X[:, 0] + np.random.randn(nobs) * residual_sd
 
         mean_function = ZeroFunction()
-        kernel = MahalanobisKernel(X, scale_prior = R.SdPrior(1, 1))
+        kernel = MahalanobisKernel(X, scale_prior = models.SdPrior(1, 1))
         model = GaussianProcessRegression(
             mean_function,
             kernel,
             100.0)
 
-        model.set_prior(R.SdPrior(7.0, 1.0))
+        model.set_prior(models.SdPrior(7.0, 1.0))
         model.add_data(X, y)
         model.mcmc(20, ping=5)
 

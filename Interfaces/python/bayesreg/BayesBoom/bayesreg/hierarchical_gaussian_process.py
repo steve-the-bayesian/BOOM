@@ -3,6 +3,7 @@ import pandas as pd
 
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.models as models
 
 import copy
 # import matplotlib.pyplot as plt
@@ -162,15 +163,15 @@ class HierarchicalGaussianProcessRegression:
         sdy = np.std(self._y, ddof=1)
         self._prior = self._create_prior_mean_function()
         if self._prior._residual_sd_prior is None:
-            self._prior.set_prior(R.SdPrior(
+            self._prior.set_prior(models.SdPrior(
                 sdy * np.sqrt(1 - self._expected_R2)))
 
         model = boom.HierarchicalGpRegressionModel(self._prior.boom())
         self._add_data_models(model)
         if self._X is not None:
             model.add_data(
-                R.to_boom_vector(self._y),
-                R.to_boom_matrix(self._X),
+                models.to_boom_vector(self._y),
+                models.to_boom_matrix(self._X),
                 self._group
             )
         else:
@@ -205,7 +206,7 @@ class HierarchicalGaussianProcessRegression:
                 copy.deepcopy(self._data_kernel_prototype),
                 residual_sd)
             self._group_models[group] = py_data_model
-            py_data_model.set_prior(R.SdPrior(residual_sd))
+            py_data_model.set_prior(models.SdPrior(residual_sd))
 
             #
             boom_data_model = py_data_model.boom()
@@ -248,7 +249,8 @@ class HierarchicalGaussianProcessRegression:
         if self._X is None:
             raise Exception("No data has been assigned.")
         reg = R.lm(self._y, self._X)
-        prior = R.ScottZellnerMvnPrior(R.RegSuf.from_data(self._X, self._y))
+        prior = models.ScottZellnerMvnPrior(
+            models.RegressionSuf.from_data(self._X, self._y))
         return LinearMeanFunction(reg.coefficients, prior)
 
     def _create_prior_kernel(self):

@@ -38,7 +38,7 @@ class MvnBase(ABC):
         return VectorDataBuilder()
 
 
-class MvnPrior(MvnBase):
+class MvnModel(MvnBase):
     """Multivariate normal distribution with fixed mean and variance."""
 
     def __init__(self, mu, Sigma):

@@ -1,6 +1,7 @@
 import numpy as np
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.models as models
 from numbers import Number
 from .state_models import StateModel
 
@@ -13,8 +14,8 @@ class ArStateModel(StateModel):
     def __init__(self,
                  y,
                  lags: int = 1,
-                 sigma_prior: R.SdPrior = None,
-                 initial_state_prior: R.MvnPrior = None,
+                 sigma_prior: models.SdPrior = None,
+                 initial_state_prior: models.MvnModel = None,
                  sdy: float = None):
         """
         Args:
@@ -74,16 +75,16 @@ class ArStateModel(StateModel):
 
     def _validate_prior(self, prior, sdy):
         if prior is None:
-            prior = R.SdPrior(sdy * .01, upper_limit=sdy)
-        if not isinstance(prior, R.SdPrior):
+            prior = models.SdPrior(sdy * .01, upper_limit=sdy)
+        if not isinstance(prior, models.SdPrior):
             raise Exception("Wrong type for prior.")
         self._sigma_prior = prior
 
     def _validate_initial_distribution(self, initial_state_prior, sdy):
         if initial_state_prior is None:
             dim = self.state_dimension
-            initial_state_prior = R.MvnPrior(np.zeros(dim), np.eye(dim) * sdy)
-        if not isinstance(initial_state_prior, R.MvnPrior):
+            initial_state_prior = models.MvnModel(np.zeros(dim), np.eye(dim) * sdy)
+        if not isinstance(initial_state_prior, models.MvnModel):
             raise Exception("Wrong type for initial_state_prior.")
         if initial_state_prior.dim != self.state_dimension:
             raise Exception(
@@ -162,7 +163,7 @@ class SpikeSlabArPrior:
             self._prior_sd = np.array(prior_sd, dtype=float)
 
         sigsq_guess = sdy * expected_r2
-        self._residual_precision = R.SdPrior(
+        self._residual_precision = models.SdPrior(
             sigma_guess=np.sqrt(sigsq_guess),
             sample_size=prior_df,
             upper_limit=sigma_upper_limit)
@@ -204,7 +205,7 @@ class AutoArStateModel(ArStateModel):
                  y,
                  lags: int = 1,
                  prior: SpikeSlabArPrior = None,
-                 initial_state_prior: R.MvnPrior = None,
+                 initial_state_prior: models.MvnModel = None,
                  sdy: float = None,
                  **kwargs):
         if sdy is None:

@@ -51,6 +51,135 @@ class BinomialLogitMvnPrior:
             boom_model, mvn, self._clt_threshold, boom.GlobalRng.rng)
 
 
+def logit(p):
+    ans = np.log(p / (1 - p))
+    return float(ans)
+
+
+def trimmed_logit(p):
+    """
+    Returns the logit (log (p / (1-p)) )of each element of p.  If an element of
+    p is either 0 or 1.  The absolute return value is capped at 7.
+
+    Args:
+      p: Either a numeric scalar probability, or a numpy array of probabilities,
+        or an object convertible to a numpy array by calling np.array(p).
+
+    Returns:
+      A scalar (if p is a scalar) or numpy array of the same shape as p.  Each
+      element is the trimmed logit transform of the corresponding input.
+    """
+
+    p = np.array(p)
+    p[p > .999] = .999
+    p[p < .001] = .001
+    return np.log(p / (1 - p))
+
+
+class LogitZellnerPrior:
+    def __init__(self,
+                 predictors,
+                 successes=None,
+                 trials=None,
+                 prior_success_probability=0.5,
+                 expected_model_size=1.0,
+                 prior_information_weight=1.0,
+                 diagonal_shrinkage=.5,
+                 optional_coefficient_estimate=None,
+                 max_flips=-1,
+                 prior_inclusion_probabilities=None):
+        """
+        Args:
+          predictors: A matrix of predictor variables, denoted X below.
+          successes:  A vector of success counts.
+          trials: A vector of trial counts.  If successes and trials are given,
+            they must satisfy 0 <= successes <= trials.  If successes is given
+            and trials is None, then successes must only contain 0's and 1's.
+
+          prior_success_probability: If 'successes' is not given,
+            then prior_success_probability is used to scale the prior mean of
+            the intercept term.  Otherwise
+        """
+
+        self._max_flips = max_flips
+        sample_size = predictors.shape[0]
+        xdim = predictors.shape[1]
+
+        xtx = predictors.T @ predictors * prior_information_weight / sample_size
+        xtx_diagonal = np.diagonal(xtx).copy()
+        xtx *= 1 - diagonal_shrinkage
+        np.fill_diagonal(xtx, xtx_diagonal)
+
+        self._precision = xtx
+        self._mean = np.zeros(xdim)
+        if successes is None:
+            self._mean[0] = trimmed_logit(prior_success_probability)
+        else:
+            if trials is None:
+                trials = np.ones(sample_size)
+            p_hat = np.nanmean(successes / trials)
+            self._mean[0] = trimmed_logit(p_hat)
+        if not np.isfinite(self._mean[0]):
+            self._mean[0] = 0.0
+
+        if prior_inclusion_probabilities is None:
+            prior_inclusion_probabilities = np.full(
+                xdim, expected_model_size / xdim)
+        self._prior_inclusion_probabilities = prior_inclusion_probabilities
+
+    @classmethod
+    def from_parameters(self, mean, precision, prior_inclusion_probabilities,
+                        max_flips=-1):
+        xdim = len(mean)
+        predictors = np.random.randn(xdim, xdim)
+        y = np.full(xdim, 0.5)
+        trials = np.ones(xdim)
+        ans = LogitZellnerPrior(predictors, y, trials, max_flips=max_flips)
+        ans._prior_inclusion_probabilities = prior_inclusion_probabilities
+        ans._mean = mean
+        ans._precision = precision
+        return ans
+
+    @property
+    def slab(self):
+        return boom.MvnModel(
+            boom.Vector(self._mean),
+            boom.SpdMatrix(self._precision),
+            True)
+
+    @property
+    def spike(self):
+        return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
+
+    @property
+    def max_flips(self):
+        return self._max_flips
+
+    def create_sampler(self, boom_model):
+        """
+        Args:
+          boom_model: A boom.BinomialLogitModel object to use as a sampling
+            target.
+        
+        Returns:
+          A BinomialLogitSpikeSlabSampler with this object as a prior, and with
+          boom_model as a sampling target.  It is the responsibility of calling
+          code to assign the sampler to a model.
+        """
+        if not isinstance(boom_model, boom.BinomialLogitModel):
+            raise Exception(
+                "Expected 'boom_model' to be a boom.BinomialLogitModel.")
+        sampler = boom.BinomialLogitSpikeSlabSampler(
+            model=boom_model,
+            slab=self.slab,
+            spike=self.spike,
+            clt_threshold=5,
+            seeding_rng=boom.GlobalRng.rng)
+        if self._max_flips > 0 and np.isfinite(self._max_flips):
+            sampler.limit_model_selection(self._max_flips)
+        return sampler
+
+
 class BinomialLogitSpikeSlabPrior:
     """
     Spike-and-slab prior for logistic regression, producing a
@@ -70,8 +199,12 @@ class BinomialLogitSpikeSlabPrior:
         inside the sampler.
     """
 
-    def __init__(self, mu=None, Sigma=None, variance_scale: float = 1.0,
-                 expected_model_size: float = 1.0, clt_threshold: int = 5):
+    def __init__(self,
+                 mu=None,
+                 Sigma=None,
+                 variance_scale: float = 1.0,
+                 expected_model_size: float = 1.0,
+                 clt_threshold: int = 5):
         self._mu = np.asarray(mu, dtype=float) if mu is not None else None
         self._Sigma = np.asarray(Sigma, dtype=float) if Sigma is not None else None
         self._variance_scale = float(variance_scale)

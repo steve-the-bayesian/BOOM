@@ -1,6 +1,7 @@
 import BayesBoom.boom as boom
 import numpy as np
 import BayesBoom.R as R
+import BayesBoom.models as models
 from .state_models import StateModel
 
 
@@ -14,7 +15,7 @@ class SeasonalStateModel(StateModel):
                  nseasons: int,
                  season_duration: int = 1,
                  initial_state_prior=None,
-                 innovation_sd_prior: R.SdPrior = None,
+                 innovation_sd_prior: models.SdPrior = None,
                  sdy: float = None):
         """
         Args:
@@ -46,18 +47,18 @@ class SeasonalStateModel(StateModel):
                 sdy = np.nanstd(y, ddof=1)
             initial_state_prior = self._default_initial_state_prior(sdy)
 
-        if isinstance(initial_state_prior, R.NormalPrior):
+        if isinstance(initial_state_prior, models.NormalModel):
             dim = nseasons - 1
             mu = initial_state_prior.mean
             sigma = initial_state_prior.sd
-            initial_state_prior = R.MvnPrior(
+            initial_state_prior = models.MvnModel(
                 mu=np.fill(dim, mu),
                 Sigma=np.diag(np.fill(dim, sigma * sigma)))
 
-        if not isinstance(initial_state_prior, R.MvnPrior):
+        if not isinstance(initial_state_prior, models.MvnModel):
             raise Exception("Unexpected type for 'initial_state_prior'.  "
-                            "Acceptable types include R.NormalPrior or "
-                            "R.MvnPrior.")
+                            "Acceptable types include models.NormalModel or "
+                            "models.MvnModel.")
         self._initial_state_prior = initial_state_prior
 
         if innovation_sd_prior is None:
@@ -67,8 +68,8 @@ class SeasonalStateModel(StateModel):
                                     "'innovation_sd_prior' must be supplied.")
                 sdy = np.nanstd(y, ddof=1)
             innovation_sd_prior = self._default_sigma_prior(sdy)
-        if not isinstance(innovation_sd_prior, R.SdPrior):
-            raise Exception("Expected an R.SdPrior for innovation_sd_prior.")
+        if not isinstance(innovation_sd_prior, models.SdPrior):
+            raise Exception("Expected an models.SdPrior for innovation_sd_prior.")
         self._innovation_sd_prior = innovation_sd_prior
 
         self._build_model()
@@ -153,9 +154,9 @@ class SeasonalStateModel(StateModel):
         """
         The default prior to use for the innovation standard deviation.
         """
-        return R.SdPrior(.01 * sdy, upper_limit=sdy)
+        return models.SdPrior(.01 * sdy, upper_limit=sdy)
 
-    def _assign_posterior_sampler(self, innovation_sd_prior: R.SdPrior):
+    def _assign_posterior_sampler(self, innovation_sd_prior: models.SdPrior):
         state_model_sampler = boom.ZeroMeanGaussianConjSampler(
             self._state_model,
             innovation_sd_prior.boom(),
@@ -169,7 +170,7 @@ class SeasonalStateModel(StateModel):
         The default prior to use for the initial state vector.
         """
         dim = self.nseasons - 1
-        return R.MvnPrior(np.zeros(dim),
+        return models.MvnModel(np.zeros(dim),
                           np.diag(np.full(dim, float(sdy))))
 
     def _plot_day_of_week_cycle(

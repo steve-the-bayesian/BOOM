@@ -2,6 +2,7 @@ import BayesBoom.boom as boom
 import numpy as np
 from .state_models import StateModel
 import BayesBoom.R as R
+import BayesBoom.models as models
 
 
 class SemilocalLinearTrendStateModel(StateModel):
@@ -10,12 +11,12 @@ class SemilocalLinearTrendStateModel(StateModel):
 
     def __init__(self,
                  y=None,
-                 level_sigma_prior: R.SdPrior = None,
-                 slope_mean_prior: R.NormalPrior = None,
-                 slope_ar1_prior: R.Ar1CoefficientPrior = None,
-                 slope_sigma_prior: R.SdPrior = None,
-                 initial_level_prior: R.NormalPrior = None,
-                 initial_slope_prior: R.NormalPrior = None,
+                 level_sigma_prior: models.SdPrior = None,
+                 slope_mean_prior: models.NormalModel = None,
+                 slope_ar1_prior: models.Ar1CoefficientPrior = None,
+                 slope_sigma_prior: models.SdPrior = None,
+                 initial_level_prior: models.NormalModel = None,
+                 initial_slope_prior: models.NormalModel = None,
                  sdy: float = None,
                  initial_y: float = None):
         """
@@ -113,55 +114,55 @@ class SemilocalLinearTrendStateModel(StateModel):
     @staticmethod
     def _validate_level_sigma_prior(level_sigma_prior, sdy):
         if level_sigma_prior is None:
-            level_sigma_prior = R.SdPrior(.01 * sdy, upper_limit=sdy)
-        if not isinstance(level_sigma_prior, R.SdPrior):
+            level_sigma_prior = models.SdPrior(.01 * sdy, upper_limit=sdy)
+        if not isinstance(level_sigma_prior, models.SdPrior):
             raise Exception("Wrong type passed for level_sigma_prior.  "
-                            "Expected an R.SdPrior")
+                            "Expected an models.SdPrior")
         return level_sigma_prior
 
     @staticmethod
     def _validate_slope_sigma_prior(slope_sigma_prior, sdy):
         if slope_sigma_prior is None:
-            slope_sigma_prior = R.SdPrior(.01 * sdy, upper_limit=sdy)
-        if not isinstance(slope_sigma_prior, R.SdPrior):
+            slope_sigma_prior = models.SdPrior(.01 * sdy, upper_limit=sdy)
+        if not isinstance(slope_sigma_prior, models.SdPrior):
             raise Exception("Wrong type passed for slope_sigma_prior.  "
-                            "Expected an R.SdPrior")
+                            "Expected an models.SdPrior")
         return slope_sigma_prior
 
     @staticmethod
     def _validate_slope_ar1_prior(slope_ar1_prior, sdy):
         if slope_ar1_prior is None:
-            slope_ar1_prior = R.Ar1CoefficientPrior()
-        if not isinstance(slope_ar1_prior, R.Ar1CoefficientPrior):
+            slope_ar1_prior = models.Ar1CoefficientPrior()
+        if not isinstance(slope_ar1_prior, models.Ar1CoefficientPrior):
             raise Exception("Wrong type passed for slope_ar1_prior.  "
-                            "Expected an R.Ar1CoefficientPrior")
+                            "Expected an models.Ar1CoefficientPrior")
         return slope_ar1_prior
 
     @staticmethod
     def _validate_slope_mean_prior(slope_mean_prior, sdy):
         if slope_mean_prior is None:
-            slope_mean_prior = R.NormalPrior(0, sdy)
-        if not isinstance(slope_mean_prior, R.NormalPrior):
+            slope_mean_prior = models.NormalModel(0, sdy)
+        if not isinstance(slope_mean_prior, models.NormalModel):
             raise Exception("Wrong type passed for slope_mean_prior.  "
-                            "Expected an R.NormalPrior")
+                            "Expected an models.NormalModel")
         return slope_mean_prior
 
     @staticmethod
     def _validate_initial_slope_prior(initial_slope_prior, sdy):
         if initial_slope_prior is None:
-            initial_slope_prior = R.NormalPrior(0, sdy)
-        if not isinstance(initial_slope_prior, R.NormalPrior):
+            initial_slope_prior = models.NormalModel(0, sdy)
+        if not isinstance(initial_slope_prior, models.NormalModel):
             raise Exception("Wrong type for initial_slope_prior.  "
-                            "Expected an R.NormalPrior.")
+                            "Expected an models.NormalModel.")
         return initial_slope_prior
 
     @staticmethod
     def _validate_initial_level_prior(initial_level_prior, initial_y, sdy):
         if initial_level_prior is None:
-            initial_level_prior = R.NormalPrior(initial_y, sdy)
-        if not isinstance(initial_level_prior, R.NormalPrior):
+            initial_level_prior = models.NormalModel(initial_y, sdy)
+        if not isinstance(initial_level_prior, models.NormalModel):
             raise Exception("Wrong type for initial_level_prior.  "
-                            "Expected an R.NormalPrior.")
+                            "Expected an models.NormalModel.")
         return initial_level_prior
 
     def __getstate__(self):
@@ -191,10 +192,10 @@ class SemilocalLinearTrendStateModel(StateModel):
         return payload
 
     def __setstate__(self, payload):
-        self.level_sigma_prior = R.SdPrior(1, 1)
-        self.slope_sigma_prior = R.SdPrior(1, 1)
-        self.slope_ar1_prior = R.Ar1CoefficientPrior()
-        self.slope_mean_prior = R.NormalPrior(0, 1)
+        self.level_sigma_prior = models.SdPrior(1, 1)
+        self.slope_sigma_prior = models.SdPrior(1, 1)
+        self.slope_ar1_prior = models.Ar1CoefficientPrior()
+        self.slope_mean_prior = models.NormalModel(0, 1)
         self.level_sigma_prior.__setstate__(payload["level_sigma_prior"])
         self.slope_sigma_prior.__setstate__(payload["slope_sigma_prior"])
         self.slope_ar1_prior.__setstate__(payload["slope_ar1_prior"])
@@ -204,9 +205,9 @@ class SemilocalLinearTrendStateModel(StateModel):
         initial_state_mean = payload["initial_state_mean"]
         initial_state_variance = payload["initial_state_variance"]
         self._set_initial_state_distribution(
-            initial_level_prior=R.NormalPrior(
+            initial_level_prior=models.NormalModel(
                 initial_state_mean[0], np.sqrt(initial_state_variance[0, 0])),
-            initial_slope_prior=R.NormalPrior(
+            initial_slope_prior=models.NormalModel(
                 initial_state_mean[0], np.sqrt(initial_state_variance[0, 0]))
         )
 

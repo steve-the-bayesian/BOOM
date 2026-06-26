@@ -2,7 +2,6 @@ import unittest
 import os
 
 from BayesBoom.spikeslab import mlogit_spike
-from BayesBoom.test_utils import find_project_root
 
 import numpy as np
 import pandas as pd
@@ -13,7 +12,7 @@ class MlogitTest(unittest.TestCase):
         np.random.seed(8675309)
 
     def test_mcmc(self):
-        dirname = os.path.join(find_project_root(), "BayesBoom", "spikeslab")
+        dirname = os.path.dirname(os.path.abspath(__file__))
         fname = os.path.join(dirname, "autopref.txt")
         data = pd.read_csv(fname)
 

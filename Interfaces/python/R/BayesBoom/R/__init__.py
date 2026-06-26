@@ -28,32 +28,6 @@ from .base import (
     which,
 )
 
-from .bayes import (
-    Ar1CoefficientPrior,
-    BetaPrior,
-    DirichletPrior,
-    DoubleModel,
-    GammaModel,
-    GaussianSuf,
-    MarkovModel,
-    MarkovConjugatePrior,
-    MarkovSuf,
-    MixtureComponent,
-    MultilevelMultinomialModel,
-    MultinomialModel,
-    MvnBase,
-    MvnPrior,
-    MvnGivenSigma,
-    NormalPrior,
-    NormalInverseGammaModel,
-    PoissonModel,
-    RegSuf,
-    ScottZellnerMvnPrior,
-    SdPrior,
-    UniformPrior,
-    WishartPrior,
-)
-
 from .cbind import cbind
 
 from .density import Density

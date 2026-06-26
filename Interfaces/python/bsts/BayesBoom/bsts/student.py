@@ -2,7 +2,7 @@ from .bsts import ObservationModelManager
 import patsy
 import numpy as np
 import BayesBoom.boom as boom
-import BayesBoom.R as R
+import BayesBoom.models as models
 import BayesBoom.spikeslab as spikeslab
 import scipy
 
@@ -57,9 +57,9 @@ class StateSpaceStudentModelFactory:
                 response, predictors = patsy.dmatrices(self._formula, data)
                 self.predictor_names = predictors.design_info.term_names
                 
-            response = R.to_numpy(response)
-            boom_response = boom.Vector(response)
-            boom_predictors = boom.Matrix(R.to_numpy(predictors))
+            response = np.array(response, dtype=float).ravel()
+            boom_response = models.to_boom_vector(response)
+            boom_predictors = models.to_boom_matrix(predictors)
             response_is_observed = np.isfinite(response).ravel()
 
             self._model = boom.StateSpaceStudentRegressionModel(

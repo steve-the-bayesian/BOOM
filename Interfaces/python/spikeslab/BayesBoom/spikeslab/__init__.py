@@ -1,4 +1,11 @@
 
+from BayesBoom.models.glm import (
+    LogitZellnerPrior,
+    MultinomialLogitSpikeSlabPrior,
+    RegressionSpikeSlabPrior,
+    StudentSpikeSlabPrior,
+)
+
 from .spikeslab import (
     BigAssSpikeSlab,
     compute_inclusion_probabilities,
@@ -14,20 +21,9 @@ from .spikeslab import (
 
 from .mlogit_spike import mlogit_spike
 
-from .priors import (
-    LogitZellnerPrior,
-    MultinomialLogitSpikeSlabPrior,
-    RegressionSlabPrior,
-    RegressionSpikeSlabPrior,
-    StudentSpikeSlabPrior,
-)
 
 __all__ = [
     "BigAssSpikeSlab",
-    "LogitZellnerPrior",
-    "MultinomialLogitSpikeSlabPrior",
-    "RegressionSpikeSlabPrior",
-    "StudentSpikeSlabPrior",
     "coefficient_positive_probability",
     "compute_inclusion_probabilities",
     "dot",

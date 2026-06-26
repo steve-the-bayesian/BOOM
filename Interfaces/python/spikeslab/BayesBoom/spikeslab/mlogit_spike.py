@@ -5,7 +5,7 @@ import BayesBoom.boom as boom
 import BayesBoom.R as R
 import scipy.sparse
 
-from .priors import MultinomialLogitSpikeSlabPrior
+from BayesBoom.models.glm import MultinomialLogitSpikeSlabPrior
 from .spikeslab import sparsify
 
 

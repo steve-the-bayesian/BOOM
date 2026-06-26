@@ -1,6 +1,7 @@
 import numpy as np
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.models as models
 from .state_models import StateModel
 
 
@@ -22,12 +23,12 @@ class TrigStateModel(StateModel):
           sigma_prior: The prior distribution for the standard deviations of
             the changes in the sinusoid coefficients at each new time point.
             This can be None (in which case a default prior will be used), or a
-            single object of class R.SdPrior (which will be repeated for each
+            single object of class models.SdPrior (which will be repeated for each
             sinusoid independently).
           initial_state_prior: The prior distribution for the values of the
             sinusoid coefficients at time 0.  This can either be None (in which
             case a default prior will be used), or an object of class
-            R.MvnPrior.  If the prior is specified directly its dimension must
+            models.MvnModel.  If the prior is specified directly its dimension must
             be twice the number of frequencies.
           sdy: The standard deviation of the time series to be modeled.  This
             argument is ignored if y is provided.
@@ -83,18 +84,18 @@ class TrigStateModel(StateModel):
 
     def _validate_prior(self, sigma_prior, sdy):
         if sigma_prior is None:
-            sigma_prior = R.SdPrior(sdy * .01, upper_limit=sdy)
-        if not isinstance(sigma_prior, R.SdPrior):
+            sigma_prior = models.SdPrior(sdy * .01, upper_limit=sdy)
+        if not isinstance(sigma_prior, models.SdPrior):
             raise Exception("Wrong type for sigma_prior.")
         self._sigma_prior = sigma_prior
 
     def _validate_initial_distribution(self, initial_state_prior, sdy):
         if initial_state_prior is None:
             dim = self.state_dimension
-            initial_state_prior = R.MvnPrior(
+            initial_state_prior = models.MvnModel(
                 np.zeros(dim),
                 np.diag(np.ones(dim) * sdy ** 2))
-        if not isinstance(initial_state_prior, R.MvnPrior):
+        if not isinstance(initial_state_prior, models.MvnModel):
             raise Exception("Wrong type for initial_state_prior.")
         if len(initial_state_prior.mean) != self.state_dimension:
             raise Exception(

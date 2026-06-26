@@ -3,6 +3,7 @@ import numpy as np
 
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.models as models
 # import BayesBoom.spikeslab as spikeslab
 
 # import matplotlib.pyplot as plt
@@ -60,7 +61,7 @@ class GaussianProcessRegression:
         self._X = None
         self._y = None
 
-    def set_prior(self, prior: R.SdPrior):
+    def set_prior(self, prior: models.SdPrior):
         self._residual_sd_prior = prior
 
     def add_data(self, response: np.ndarray, predictors: np.ndarray):
@@ -113,7 +114,7 @@ class GaussianProcessRegression:
         kernel_sampler = self._kernel.create_sampler(boom_model)
         mean_function_sampler = self._mean_function.create_sampler(boom_model)
         if self._residual_sd_prior is None:
-            self._residual_sd_prior = R.SdPrior(
+            self._residual_sd_prior = models.SdPrior(
                 .5 * np.std(self._y, ddof=1))
 
         sampler = boom.GaussianProcessRegressionPosteriorSampler(

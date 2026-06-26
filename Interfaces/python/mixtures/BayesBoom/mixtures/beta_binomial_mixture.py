@@ -2,6 +2,7 @@ import BayesBoom.boom as boom
 import pandas as pd
 import numpy as np
 import BayesBoom.R as R
+import BayesBoom.models as models
 from scipy.stats import betabinom
 
 
@@ -35,7 +36,7 @@ class BetaBinomialMixture:
 
     def add_component(self,
                       mean_prior: R.BetaPrior,
-                      sample_size_prior: R.DoubleModel,
+                      sample_size_prior: models.DoubleModel,
                       prior_count: float = 1.0):
         """
         Add a beta-binomial mixture component to the model.  The beta-binomial

@@ -2,6 +2,7 @@ import BayesBoom.boom as boom
 import numpy as np
 import patsy
 import BayesBoom.R as R
+import BayesBoom.models as models
 from numbers import Number
 import matplotlib.pyplot as plt
 # import BayesBoom.spikeslab as spikeslab
@@ -356,9 +357,9 @@ class SparseDynamicRegressionModel:
         """
 
         unique_time_points = sorted(set(timestamps))
-        self._response_suf = R.GaussianSuf()
+        self._response_suf = models.GaussianSuf()
         xdim = self.xdim
-        self._predictor_suf = [R.GaussianSuf()] * xdim
+        self._predictor_suf = [models.GaussianSuf()] * xdim
         for time_stamp in unique_time_points:
             subset = timestamps == time_stamp
             response, predictors = patsy.dmatrices(
@@ -384,12 +385,12 @@ class SparseDynamicRegressionModel:
         Preconditions:
             self._set_data must have been run.
         """
-        if isinstance(self._residual_precision_prior, R.SdPrior):
+        if isinstance(self._residual_precision_prior, models.SdPrior):
             return
 
         # Assume an expected R^2 of 50%.
         target_variance = self._response_suf.sample_variance / 2.0
-        self._residual_precision_prior = R.SdPrior(
+        self._residual_precision_prior = models.SdPrior(
             sigma_guess=np.sqrt(target_variance),
             sample_size=1.0)
 
@@ -398,22 +399,22 @@ class SparseDynamicRegressionModel:
         Ensure that self._coefficient_innovation_priors are a list of SdPriors.
         """
         if (isinstance(self._coefficient_innovation_priors, list) and np.all(
-                [isinstance(x, R.SdPrior) for x in
+                [isinstance(x, models.SdPrior) for x in
                  self._coefficient_innovation_priors])):
             return
 
-        if isinstance(self._coefficient_innovation_priors, R.SdPrior):
+        if isinstance(self._coefficient_innovation_priors, models.SdPrior):
             self._coefficient_innovation_priors = [
                 self._coefficient_innovation_priors] * self.xdim
             return
 
         if self._coefficient_innovation_priors is not None:
             raise Exception("coefficient_innovation_priors must either be an "
-                            "R.SdPrior or a list of such priors.")
+                            "models.SdPrior or a list of such priors.")
 
         sdy = self._response_suf.sample_sd
         self._coefficient_innovation_priors = [
-            R.SdPrior(.01 * sdy / self._predictor_suf[i].sample_sd, 1)
+            models.SdPrior(.01 * sdy / self._predictor_suf[i].sample_sd, 1)
             for i in range(self.xdim)
         ]
 

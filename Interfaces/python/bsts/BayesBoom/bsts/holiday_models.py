@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.models as models
 from .state_models import StateModel
 from .holiday import Holiday, HolidayFactory
 
@@ -18,7 +19,7 @@ class RegressionHolidayStateModel(StateModel):
                  y,
                  parent_model,
                  time0=None,
-                 prior: R.NormalPrior = None,
+                 prior: models.NormalModel = None,
                  sdy: float = None):
         """
         Args:
@@ -95,9 +96,9 @@ class RegressionHolidayStateModel(StateModel):
 
     def _validate_prior(self, prior, sdy):
         if prior is None:
-            prior = R.NormalPrior(0, sdy)
-        if not isinstance(prior, R.NormalPrior):
-            raise Exception("Expected a prior of type R.NormalPrior.")
+            prior = models.NormalModel(0, sdy)
+        if not isinstance(prior, models.NormalModel):
+            raise Exception("Expected a prior of type models.NormalModel.")
         return prior
 
     def _build_state_model(self):

@@ -1,6 +1,7 @@
 import BayesBoom.boom as boom
 import numpy as np
 import BayesBoom.R as R
+import BayesBoom.models as models
 from .state_models import StateModel
 
 
@@ -77,11 +78,11 @@ class LocalLevelStateModel(StateModel):
         if sigma_prior is None:
             if sdy is None:
                 sdy = np.nanstd(y, ddof=1)
-            sigma_prior = R.SdPrior(sigma_guess=.01 * sdy,
+            sigma_prior = models.SdPrior(sigma_guess=.01 * sdy,
                                     sample_size=.01,
                                     upper_limit=sdy)
-            if not isinstance(sigma_prior, R.SdPrior):
-                raise Exception("sigma_prior should be an R.SdPrior.")
+            if not isinstance(sigma_prior, models.SdPrior):
+                raise Exception("sigma_prior should be an models.SdPrior.")
         self._sigma_prior = sigma_prior
 
     def _validate_initial_distributions(self, initial_state_prior, y, sdy,
@@ -91,10 +92,10 @@ class LocalLevelStateModel(StateModel):
                 initial_y = y[0]
             if sdy is None:
                 sdy = np.nanstd(y, ddof=1)
-            initial_state_prior = R.NormalPrior(float(initial_y), float(sdy))
-        if not isinstance(initial_state_prior, R.NormalPrior):
+            initial_state_prior = models.NormalModel(float(initial_y), float(sdy))
+        if not isinstance(initial_state_prior, models.NormalModel):
             raise Exception(
-                "initial_state_prior should be an R.NormalPrior.")
+                "initial_state_prior should be an models.NormalModel.")
         self._initial_state_prior = initial_state_prior
 
     def _build_state_model(self):

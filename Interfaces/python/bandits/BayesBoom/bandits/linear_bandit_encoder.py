@@ -310,7 +310,7 @@ class LinearBanditEncoder:
             boom_context = boom.MixedMultivariateData()
         else:
             boom_context = R.to_boom_mixed_data(context)
-        return R.to_numpy(self._boom_encoder.encode_row(int(arm), boom_context))
+        return R.to_numpy(self.boom().encode_row(int(arm), boom_context))
 
     @property
     def encoded_variable_names(self):

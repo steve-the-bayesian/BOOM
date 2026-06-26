@@ -1,6 +1,7 @@
 import BayesBoom.boom as boom
 import numpy as np
 import BayesBoom.R as R
+import BayesBoom.models as models
 from .state_models import StateModel
 import patsy
 
@@ -109,10 +110,10 @@ class DynamicRegressionStateModel(StateModel):
         if initial_state_prior is None:
             if sdy is None:
                 sdy = np.nanstd(y, ddof=1)
-            initial_state_prior = R.NormalPrior(0.0, float(sdy))
-        if not isinstance(initial_state_prior, R.NormalPrior):
+            initial_state_prior = models.NormalModel(0.0, float(sdy))
+        if not isinstance(initial_state_prior, models.NormalModel):
             raise Exception(
-                "initial_state_prior should be an R.NormalPrior.")
+                "initial_state_prior should be an models.NormalModel.")
         self._initial_state_prior = initial_state_prior
 
     def _build_state_model(self):
@@ -136,15 +137,15 @@ class DynamicRegressionStateModel(StateModel):
     def _verify_prior(self, sigma_prior, sdy, sdx):
         if sigma_prior is None:
             self._sigma_prior = [
-                R.SdPrior(.01 * sdy / sdxi, 1) for sdxi in sdx]
-        elif isinstance(sigma_prior, R.SdPrior):
+                models.SdPrior(.01 * sdy / sdxi, 1) for sdxi in sdx]
+        elif isinstance(sigma_prior, models.SdPrior):
             self._sigma_prior = [sigma_prior] * len(sdx)
 
         if not R.is_iterable(self._sigma_prior) and all(
-            [isinstance(x, R.SdPrior) for x in self._sigma_prior]
+            [isinstance(x, models.SdPrior) for x in self._sigma_prior]
         ):
             raise Exception(
-                "sigma_prior must be a list-like of R.SdPrior objects."
+                "sigma_prior must be a list-like of models.SdPrior objects."
             )
 
         return self._sigma_prior
@@ -157,26 +158,26 @@ class DynamicRegressionStateModel(StateModel):
                 if not np.all(np.finite(beta_hat)):
                     raise Exception("Least squares initializer failed.")
 
-                self._initial_state_prior = R.MvnPrior(
+                self._initial_state_prior = models.MvnModel(
                     beta_hat, sdy * sdy * np.linalg.inv(xtx))
             except Exception:
-                self._initial_state_prior = R.MvnPrior(
+                self._initial_state_prior = models.MvnModel(
                     np.zeros(self.xdim),
                     sdy * sdy * np.diag(1.0 / np.diagonal(xtx)))
 
-        elif isinstance(initial_state_prior, R.NormalPrior):
+        elif isinstance(initial_state_prior, models.NormalModel):
             mean = np.full(initial_state_prior.mean, self.xdim)
             var = np.full(initial_state_prior.sd ** 2, self.xdim)
-            self._initial_state_prior = R.MvnPrior(mean, np.diag(var))
+            self._initial_state_prior = models.MvnModel(mean, np.diag(var))
 
         elif isinstance(initial_state_prior, list) and all(
-                [isinstance(x, R.NormalPrior) for x in initial_state_prior]):
+                [isinstance(x, models.NormalModel) for x in initial_state_prior]):
             mean = np.array([x.mean for x in initial_state_prior])
             var = np.array([x.sd ** 2 for x in initial_state_prior])
-            self._initial_state_prior = R.MvnPrior(mean, np.diag(var))
+            self._initial_state_prior = models.MvnModel(mean, np.diag(var))
 
         else:
-            if not isinstance(initial_state_prior, R.MvnPrior):
+            if not isinstance(initial_state_prior, models.MvnModel):
                 raise Exception("Unrecognized type for initial_state_prior.")
             self._initial_state_prior = initial_state_prior
 

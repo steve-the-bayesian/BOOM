@@ -11,6 +11,8 @@ from BayesBoom.spikeslab import (
 
 from BayesBoom.R import delete_if_present
 import BayesBoom.R as R
+import BayesBoom.models as models
+import BayesBoom.models.glm as glm
 
 import numpy as np
 import pandas as pd
@@ -129,11 +131,11 @@ class SpikeSlabTest(unittest.TestCase):
 
         sample_sd = np.std(y, ddof=1)
         xbar = np.mean(x, axis=0)
-        suf = R.RegSuf(xtx,
-                       xty,
-                       sample_sd=sample_sd,
-                       sample_size=self._sample_size,
-                       xbar=xbar)
+        suf = glm.RegressionSuf(xtx,
+                                xty,
+                                sample_sd=sample_sd,
+                                sample_size=self._sample_size,
+                                xbar=xbar)
         model = lm_spike(formula=None, data=suf, niter=niter, xnames=xnames)
 
         raw_model = lm_spike("y ~ " + dot(X, "y"), niter=niter, data=X)

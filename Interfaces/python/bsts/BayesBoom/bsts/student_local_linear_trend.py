@@ -2,6 +2,7 @@ import BayesBoom.boom as boom
 import numpy as np
 from .state_models import StateModel
 import BayesBoom.R as R
+import BayesBoom.models as models
 
 
 class StudentLocalLinearTrendStateModel(StateModel):
@@ -23,12 +24,12 @@ class StudentLocalLinearTrendStateModel(StateModel):
     def __init__(self,
                  y=None,
                  save_weights: bool = False,
-                 level_sigma_prior: R.SdPrior = None,
-                 level_nu_prior: R.DoubleModel = None,
-                 slope_sigma_prior: R.SdPrior = None,
-                 slope_nu_prior: R.DoubleModel = None,
-                 initial_level_prior: R.NormalPrior = None,
-                 initial_slope_prior: R.NormalPrior = None,
+                 level_sigma_prior: models.SdPrior = None,
+                 level_nu_prior: models.DoubleModel = None,
+                 slope_sigma_prior: models.SdPrior = None,
+                 slope_nu_prior: models.DoubleModel = None,
+                 initial_level_prior: models.NormalModel = None,
+                 initial_slope_prior: models.NormalModel = None,
                  sdy: float = None,
                  initial_y: float = None):
         """
@@ -130,28 +131,28 @@ class StudentLocalLinearTrendStateModel(StateModel):
                          y, sdy):
         if level_sigma_prior is None:
             sdy = self._compute_sdy(sdy, y, "level_sigma_prior")
-            level_sigma_prior = R.SdPrior(
+            level_sigma_prior = models.SdPrior(
                 sigma_guess=.01 * sdy,
                 upper_limit=sdy)
-        if not isinstance(level_sigma_prior, R.SdPrior):
+        if not isinstance(level_sigma_prior, models.SdPrior):
             raise Exception("Unexpected type for level_sigma_prior.")
 
         if slope_sigma_prior is None:
             sdy = self._compute_sdy(sdy, y, "slope_sigma_prior")
-            slope_sigma_prior = R.SdPrior(
+            slope_sigma_prior = models.SdPrior(
                 sigma_guess=.01 * sdy,
                 upper_limit=sdy)
-        if not isinstance(slope_sigma_prior, R.SdPrior):
+        if not isinstance(slope_sigma_prior, models.SdPrior):
             raise Exception("Unexpected type for slope_sigma_prior.")
 
         if level_nu_prior is None:
-            level_nu_prior = R.UniformPrior(0.1, 100)
-        if not isinstance(level_nu_prior, R.DoubleModel):
+            level_nu_prior = models.UniformPrior(0.1, 100)
+        if not isinstance(level_nu_prior, models.DoubleModel):
             raise Exception("Unexpected type for level_nu_prior.")
 
         if slope_nu_prior is None:
-            slope_nu_prior = R.UniformPrior(0.1, 100)
-        if not isinstance(slope_nu_prior, R.DoubleModel):
+            slope_nu_prior = models.UniformPrior(0.1, 100)
+        if not isinstance(slope_nu_prior, models.DoubleModel):
             raise Exception("Unexpected type for slope_nu_prior.")
 
         self._level_sigma_prior = level_sigma_prior
@@ -171,15 +172,15 @@ class StudentLocalLinearTrendStateModel(StateModel):
                         "specified.")
                 else:
                     initial_y = y[0]
-            initial_level_prior = R.NormalPrior(initial_y, sdy)
-        if not isinstance(initial_level_prior, R.NormalPrior):
+            initial_level_prior = models.NormalModel(initial_y, sdy)
+        if not isinstance(initial_level_prior, models.NormalModel):
             raise Exception("Unexpected type for initial_level_prior.")
         self._initial_level_prior = initial_level_prior
 
         if initial_slope_prior is None:
             sdy = self._compute_sdy(sdy, y, "initial_slope_prior")
-            initial_slope_prior = R.NormalPrior(0, sdy)
-        if not isinstance(initial_slope_prior, R.NormalPrior):
+            initial_slope_prior = models.NormalModel(0, sdy)
+        if not isinstance(initial_slope_prior, models.NormalModel):
             raise Exception("Unexpected type for initial_slope_prior.")
         self._initial_slope_prior = initial_slope_prior
 

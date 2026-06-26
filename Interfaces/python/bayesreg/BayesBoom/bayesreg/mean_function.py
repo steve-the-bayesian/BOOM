@@ -1,5 +1,6 @@
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.models as models
 import numpy as np
 from abc import ABC, abstractmethod
 
@@ -43,11 +44,11 @@ class ZeroFunction(MeanFunction):
 
 
 class LinearMeanFunction(MeanFunction):
-    def __init__(self, coefficients, prior: R.MvnBase):
+    def __init__(self, coefficients, prior: models.MvnBase):
         self._coefficients = np.array(coefficients).ravel()
-        if not isinstance(prior, R.MvnBase):
+        if not isinstance(prior, models.MvnBase):
             raise Exception("prior distribution must be an object inheriting "
-                            "from R.MvnBase.")
+                            "from models.MvnBase.")
         if prior.dim != len(self._coefficients):
             raise Exception(
                 f"coefficients are of length {len(self._coefficients)} but "
