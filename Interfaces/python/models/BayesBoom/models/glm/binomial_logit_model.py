@@ -128,6 +128,39 @@ class LogitZellnerPrior:
         self._prior_inclusion_probabilities = prior_inclusion_probabilities
 
     @classmethod
+    def from_model(cls,
+                   model,
+                   prior_success_probability=0.5,
+                   expected_model_size=1.0,
+                   prior_information_weight=1.0,
+                   diagonal_shrinkage=0.5,
+                   optional_coefficient_estimate=None,
+                   max_flips=-1,
+                   prior_inclusion_probabilities=None):
+        """
+        Args:
+          model: A BinomialLogitModel (Python wrapper) whose stored predictor
+            matrix, success counts, and trial counts are used to build the
+            prior matrices.
+          prior_success_probability: Fallback estimate of the overall success
+            rate when 'successes' is None; used to set the intercept prior mean.
+          expected_model_size: Prior guess at the number of non-zero
+            coefficients.
+        """
+        return LogitZellnerPrior(
+            predictors=model._X,
+            successes=model._y,
+            trials=model._trials,
+            prior_success_probability=prior_success_probability,
+            expected_model_size=expected_model_size,
+            prior_information_weight=prior_information_weight,
+            diagonal_shrinkage=diagonal_shrinkage,
+            optional_coefficient_estimate=optional_coefficient_estimate,
+            max_flips=max_flips,
+            prior_inclusion_probabilities=prior_inclusion_probabilities)
+            
+        
+    @classmethod
     def from_parameters(self, mean, precision, prior_inclusion_probabilities,
                         max_flips=-1):
         xdim = len(mean)
@@ -142,14 +175,17 @@ class LogitZellnerPrior:
 
     @property
     def slab(self):
+        import BayesBoom.boom as boom
         return boom.MvnModel(
-            boom.Vector(self._mean),
-            boom.SpdMatrix(self._precision),
+            to_boom_vector(self._mean),
+            to_boom_spd(self._precision),
             True)
 
     @property
     def spike(self):
-        return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
+        import BayesBoom.boom as boom
+        return boom.VariableSelectionPrior(
+            to_boom_vector(self._prior_inclusion_probabilities))
 
     @property
     def max_flips(self):
@@ -160,12 +196,13 @@ class LogitZellnerPrior:
         Args:
           boom_model: A boom.BinomialLogitModel object to use as a sampling
             target.
-        
+
         Returns:
           A BinomialLogitSpikeSlabSampler with this object as a prior, and with
           boom_model as a sampling target.  It is the responsibility of calling
           code to assign the sampler to a model.
         """
+        import BayesBoom.boom as boom
         if not isinstance(boom_model, boom.BinomialLogitModel):
             raise Exception(
                 "Expected 'boom_model' to be a boom.BinomialLogitModel.")

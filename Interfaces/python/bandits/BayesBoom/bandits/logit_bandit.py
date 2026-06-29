@@ -290,6 +290,14 @@ class LogitBandit:
         return model
 
     def _define_sampler(self, model):
+        """
+
+        Args:
+          model:  A boom.BinomialLogitModel object to use as a sampling target.
+
+        Returns:
+          A boom posterior sampler object that can be assigned to the model.
+        """
         if self._prior is None:
             # default value: This is not a great default.
             dim = self._encoder.dim
@@ -323,6 +331,7 @@ class LogitBandit:
             "training_data": self._training_data,
             "coefficient_draws": self.coefficient_draws,
             "log_likelihood": self.log_likelihood,
+            "prior": self._prior,
         }
 
     def __setstate__(self, payload):
@@ -333,7 +342,8 @@ class LogitBandit:
         self._boom_model = None
         self._boom_sampler = None
         self._boom_bandit = None
-        self._prior = None
+        # Restore prior before boom() is first called so _define_sampler picks it up.
+        self._prior = payload.get("prior", None)
         coef_draws = payload["coefficient_draws"]
         log_lik = payload["log_likelihood"]
         if coef_draws is not None:
@@ -386,17 +396,81 @@ class ValueFunctionJsonDecoder(json.JSONDecoder):
         return decoder.decode_from_dict(payload["function"])
     
 
+class BinomialLogitPriorJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, models.MvnModel):
+            return {
+                "type": "MvnModel",
+                "mu": obj._mu.tolist(),
+                "Sigma": obj._Sigma.tolist(),
+            }
+        elif isinstance(obj, models.BinomialLogitMvnPrior):
+            return {
+                "type": "BinomialLogitMvnPrior",
+                "mu": obj._mu.tolist() if obj._mu is not None else None,
+                "Sigma": obj._Sigma.tolist() if obj._Sigma is not None else None,
+                "variance_scale": obj._variance_scale,
+                "clt_threshold": obj._clt_threshold,
+            }
+        elif isinstance(obj, models.BinomialLogitSpikeSlabPrior):
+            return {
+                "type": "BinomialLogitSpikeSlabPrior",
+                "mu": obj._mu.tolist() if obj._mu is not None else None,
+                "Sigma": obj._Sigma.tolist() if obj._Sigma is not None else None,
+                "variance_scale": obj._variance_scale,
+                "expected_model_size": obj._expected_model_size,
+                "clt_threshold": obj._clt_threshold,
+            }
+        else:
+            raise ValueError(f"Unsupported prior type: {type(obj).__name__}")
+
+
+class BinomialLogitPriorJsonDecoder(json.JSONDecoder):
+    def decode(self, json_str):
+        return self.decode_from_dict(json.loads(json_str))
+
+    def decode_from_dict(self, payload):
+        type_name = payload["type"]
+        if type_name == "MvnModel":
+            return models.MvnModel(
+                np.array(payload["mu"]),
+                np.array(payload["Sigma"]),
+            )
+        elif type_name == "BinomialLogitMvnPrior":
+            return models.BinomialLogitMvnPrior(
+                mu=np.array(payload["mu"]) if payload["mu"] is not None else None,
+                Sigma=(np.array(payload["Sigma"])
+                       if payload["Sigma"] is not None else None),
+                variance_scale=payload["variance_scale"],
+                clt_threshold=payload["clt_threshold"],
+            )
+        elif type_name == "BinomialLogitSpikeSlabPrior":
+            return models.BinomialLogitSpikeSlabPrior(
+                mu=np.array(payload["mu"]) if payload["mu"] is not None else None,
+                Sigma=(np.array(payload["Sigma"])
+                       if payload["Sigma"] is not None else None),
+                variance_scale=payload["variance_scale"],
+                expected_model_size=payload["expected_model_size"],
+                clt_threshold=payload["clt_threshold"],
+            )
+        else:
+            raise ValueError(f"Unsupported prior type: {type_name}")
+
+
 class LogitBanditJsonEncoder(json.JSONEncoder):
     def default(self, obj):
         payload = {}
-        
+
         arm_map_encoder = ArmMapJsonEncoder()
         payload["arm_map"] = arm_map_encoder.default(obj._arm_map)
-        
+
         encoder_encoder = LinearBanditEncoderJSONEncoder()
         payload["encoder"] = encoder_encoder.default(obj._encoder)
 
         payload["log_likelihood"] = obj.log_likelihood
+
+        if obj._prior is not None:
+            payload["prior"] = BinomialLogitPriorJsonEncoder().default(obj._prior)
 
         if (obj._value_function is not None):
             value_encoder = ValueFunctionJsonEncoder()
@@ -405,7 +479,7 @@ class LogitBanditJsonEncoder(json.JSONEncoder):
 
         return payload
 
-    
+
 class LogitBanditJsonDecoder(json.JSONDecoder):
     def decode(self, json_string):
         payload = json.loads(json_string)
@@ -427,7 +501,11 @@ class LogitBanditJsonDecoder(json.JSONDecoder):
 
         ans = LogitBandit(arm_map, bandit_encoder, value_function)
 
+        # Restore prior before set_log_likelihood so boom()/_define_sampler picks it up.
+        if "prior" in payload:
+            ans._prior = BinomialLogitPriorJsonDecoder().decode_from_dict(payload["prior"])
+
         if payload["log_likelihood"] is not None:
             ans.set_log_likelihood(payload["log_likelihood"])
-        
+
         return ans

@@ -84,6 +84,14 @@ class MvnModel(MvnBase):
                 to_boom_spd(self._Sigma))
         return self._boom_model
 
+    def __getstate__(self):
+        return {"_mu": self._mu, "_Sigma": self._Sigma}
+
+    def __setstate__(self, state):
+        self._mu = state["_mu"]
+        self._Sigma = state["_Sigma"]
+        self._boom_model = None
+
 
 class MvnGivenSigma(MvnBase):
     """

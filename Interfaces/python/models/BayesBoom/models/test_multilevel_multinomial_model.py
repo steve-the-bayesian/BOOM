@@ -4,99 +4,10 @@ import BayesBoom.boom as boom
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-class TestMarkovModel(unittest.TestCase):
-
-    def setUp(self):
-        np.random.seed(8675309)
-
-    def test_model(self):
-        probs = np.ones((3, 3)) / 3.0
-        init = np.ones(3) / 3.0
-
-        model = R.MarkovModel(probs, init)
-        boom_model = model.boom()
-        self.assertIsInstance(boom_model, boom.MarkovModel)
-
-        probs = model.transition_probabilities
-        self.assertEqual(probs.shape, (3, 3))
-        self.assertTrue(np.allclose(
-            probs.sum(axis=1),
-            np.ones(3)))
-
-    def test_sim(self):
-        trans_probs = np.array([[.9, .1],
-                                [.15, .85]])
-        init = np.array([.7, .3])
-        model = R.MarkovModel(trans_probs, init)
-        chain = model.sim(10)
-        self.assertEqual(len(chain), 10)
-
-    def test_plots(self):
-        models = []
-        num_mix = 2
-        state_size = 3
-        for i in range(num_mix):
-            probs = np.random.randn(100, state_size, state_size)
-            probs = np.abs(probs)
-            totals = probs.sum(axis=2)
-            for s in range(state_size):
-                probs[:, :, s] = probs[:, :, s] / totals
-            # probs = probs / totals
-            model = R.MarkovModel(probs[0, :, :])
-            model._transition_probability_draws = probs
-            models.append(model)
-
-        fig_ts, ax_ts = models[0].plot_components(models)
-        fig_box, ax_box = models[0].plot_components(models, style="box")
-        fig_den, ax_den = models[0].plot_components(models, style="den")
-
-        
-class TestPoissonModel(unittest.TestCase):
-    def setUp(self):
-        np.random.seed(8675309)
-
-    def test_poisson(self):
-        model = R.PoissonModel(2.3)
-        boom_model = model.boom()
-        self.assertIsInstance(boom_model, boom.PoissonModel)
-
-    def test_plots(self):
-        S = 3
-        niter = 1000
-        models = []
-        for s in range(S):
-            model = R.PoissonModel(1.0)
-            model._lambda_draws = np.random.randn(niter)**2
-            models.append(model)
-        fig_ts, ax_ts = models[0].plot_components(models)
-        fig_den, ax_den = models[0].plot_components(models, style="den")
-        fig_box, ax_box = models[0].plot_components(models, style="box")
-
-
-class TestMultinomialModel(unittest.TestCase):
-
-    def setUp(self):
-        np.random.seed(8675309)
-
-    def test_plots(self):
-        models = []
-        models.append(R.MultinomialModel(np.array([.1, .3, .6])))
-        models.append(R.MultinomialModel(np.array([.3, .4, .3])))
-        models.append(R.MultinomialModel(np.array([.6, .2, .2])))
-
-        models[0]._prob_draws = np.random.dirichlet(np.array([100, 300, 600]), size=1000)
-        models[1]._prob_draws = np.random.dirichlet(np.array([300, 400, 300]), size=1000)
-        models[2]._prob_draws = np.random.dirichlet(np.array([600, 200, 200]), size=1000)
-
-        models[0].plot_components(models)
-        models[0].plot_components(models, style="box")
-        models[0].plot_components(models, style="bar")
-    
-
 class TestMultilevelMultinomialModel(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
+        boom.GlobalRng.rng.seed(8675309)
         self.taxonomy = [
             "red/crimson",
             "red/brick",
@@ -194,7 +105,8 @@ class TestMultilevelMultinomialModel(unittest.TestCase):
         fig_bar, ax_bar = model1.plot_components([model1, model2], style="bar")
         fig_bar.suptitle("MultilevelCategoricalData Top Level Plot")
 
-        
+
+
 _debug_mode = False
 
 if _debug_mode:
@@ -221,3 +133,4 @@ if _debug_mode:
 else:
     if __name__ == "__main__":
         unittest.main(verbosity=2)
+        

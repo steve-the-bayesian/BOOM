@@ -347,6 +347,9 @@ namespace BayesBoom {
             [](const LogitBandit &bandit) {return bandit.log_likelihood();},
             "The log likelihood of each draw in the simulated model "
             "coefficients.")
+        .def_property_readonly(
+            "model",
+            [](const LogitBandit &bandit){return bandit.model();})
         .def("arm_predictors",
              [](const LogitBandit &bandit,
                 const MixedMultivariateData &context) {

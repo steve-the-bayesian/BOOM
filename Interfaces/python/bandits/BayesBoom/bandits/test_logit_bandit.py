@@ -1,16 +1,22 @@
+import json
 import pickle
 import unittest
 import numpy as np
 import pandas as pd
 
 import BayesBoom.R as R
+import BayesBoom.models as models
 from BayesBoom.bandits.linear_bandit_encoder import (
     ExperimentStructure,
     ArmMap,
     ExperimentArmEncoder,
     LinearBanditEncoder,
 )
-from BayesBoom.bandits.logit_bandit import LogitBandit
+from BayesBoom.bandits.logit_bandit import (
+    LogitBandit,
+    LogitBanditJsonEncoder,
+    LogitBanditJsonDecoder,
+)
 
 
 def _make_bandit_no_context():
@@ -389,6 +395,186 @@ class TestLogitBanditPickle(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             bandit.optimal_arm_probabilities(),
             b2.optimal_arm_probabilities())
+
+
+class TestLogitBanditPicklePrior(unittest.TestCase):
+    """Pickle round-trip preserves _prior for all supported prior types."""
+
+    def _roundtrip(self, bandit):
+        return pickle.loads(pickle.dumps(bandit))
+
+    def test_pickle_restores_none_prior(self):
+        bandit = _make_bandit_no_context()
+        b2 = self._roundtrip(bandit)
+        self.assertIsNone(b2._prior)
+
+    def test_pickle_restores_mvn_model_prior_type(self):
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(models.MvnModel(np.zeros(3), np.eye(3)))
+        b2 = self._roundtrip(bandit)
+        self.assertIsInstance(b2._prior, models.MvnModel)
+
+    def test_pickle_restores_mvn_model_prior_values(self):
+        bandit = _make_bandit_no_context()
+        mu = np.array([0.1, -0.2, 0.3])
+        Sigma = np.diag([2.0, 3.0, 4.0])
+        bandit.set_prior(models.MvnModel(mu, Sigma))
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(mu, b2._prior._mu)
+        np.testing.assert_array_almost_equal(Sigma, b2._prior._Sigma)
+
+    def test_pickle_restores_binomial_logit_mvn_prior(self):
+        bandit = _make_bandit_no_context()
+        prior = models.BinomialLogitMvnPrior(variance_scale=4.0, clt_threshold=7)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        self.assertIsInstance(b2._prior, models.BinomialLogitMvnPrior)
+        self.assertAlmostEqual(4.0, b2._prior._variance_scale)
+        self.assertEqual(7, b2._prior._clt_threshold)
+
+    def test_pickle_restores_binomial_logit_mvn_prior_with_explicit_mu(self):
+        bandit = _make_bandit_no_context()
+        mu = np.array([0.5, -0.5, 0.0])
+        prior = models.BinomialLogitMvnPrior(mu=mu, variance_scale=2.0)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(mu, b2._prior._mu)
+
+    def test_pickle_restores_spike_slab_prior(self):
+        bandit = _make_bandit_no_context()
+        prior = models.BinomialLogitSpikeSlabPrior(
+            variance_scale=0.5, expected_model_size=2.0, clt_threshold=3)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        self.assertIsInstance(b2._prior, models.BinomialLogitSpikeSlabPrior)
+        self.assertAlmostEqual(0.5, b2._prior._variance_scale)
+        self.assertAlmostEqual(2.0, b2._prior._expected_model_size)
+        self.assertEqual(3, b2._prior._clt_threshold)
+
+    def test_pickle_prior_drives_update_posterior(self):
+        """After pickle round-trip the restored prior is used by update_posterior."""
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(models.BinomialLogitMvnPrior(variance_scale=2.0))
+        bandit.observe_data(0, 5, 10)
+        bandit.observe_data(1, 2, 10)
+        bandit.update_posterior(50)
+        b2 = self._roundtrip(bandit)
+        # Reset boom objects so update_posterior re-builds using the restored prior.
+        b2._boom_bandit = None
+        b2._boom_model = None
+        b2._boom_sampler = None
+        b2.update_posterior(50)
+        self.assertEqual(50, b2.ndraws)
+
+    def test_pickle_spike_slab_prior_drives_update_posterior(self):
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(
+            models.BinomialLogitSpikeSlabPrior(expected_model_size=1.0))
+        bandit.observe_data(0, 5, 10)
+        bandit.observe_data(1, 2, 10)
+        b2 = self._roundtrip(bandit)
+        b2.update_posterior(50)
+        self.assertEqual(50, b2.ndraws)
+
+
+class TestLogitBanditJsonPrior(unittest.TestCase):
+    """JSON round-trip preserves _prior for all supported prior types."""
+
+    def _roundtrip(self, bandit):
+        payload = LogitBanditJsonEncoder().default(bandit)
+        json_string = json.dumps(payload)
+        return LogitBanditJsonDecoder().decode_from_dict(json.loads(json_string))
+
+    def test_json_round_trip_no_prior(self):
+        bandit = _make_bandit_no_context()
+        b2 = self._roundtrip(bandit)
+        self.assertIsNone(b2._prior)
+
+    def test_json_round_trip_mvn_model_prior_type(self):
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(models.MvnModel(np.zeros(3), np.eye(3)))
+        b2 = self._roundtrip(bandit)
+        self.assertIsInstance(b2._prior, models.MvnModel)
+
+    def test_json_round_trip_mvn_model_prior_values(self):
+        bandit = _make_bandit_no_context()
+        mu = np.array([0.1, -0.2, 0.3])
+        Sigma = np.diag([2.0, 3.0, 4.0])
+        bandit.set_prior(models.MvnModel(mu, Sigma))
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(mu, b2._prior._mu)
+        np.testing.assert_array_almost_equal(Sigma, b2._prior._Sigma)
+
+    def test_json_round_trip_binomial_logit_mvn_prior_defaults(self):
+        bandit = _make_bandit_no_context()
+        prior = models.BinomialLogitMvnPrior(variance_scale=3.0, clt_threshold=5)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        self.assertIsInstance(b2._prior, models.BinomialLogitMvnPrior)
+        self.assertIsNone(b2._prior._mu)
+        self.assertIsNone(b2._prior._Sigma)
+        self.assertAlmostEqual(3.0, b2._prior._variance_scale)
+        self.assertEqual(5, b2._prior._clt_threshold)
+
+    def test_json_round_trip_binomial_logit_mvn_prior_explicit_mu(self):
+        bandit = _make_bandit_no_context()
+        mu = np.array([0.5, -0.5, 0.0])
+        prior = models.BinomialLogitMvnPrior(mu=mu, variance_scale=2.0)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(mu, b2._prior._mu)
+
+    def test_json_round_trip_spike_slab_prior(self):
+        bandit = _make_bandit_no_context()
+        prior = models.BinomialLogitSpikeSlabPrior(
+            variance_scale=0.5, expected_model_size=2.0, clt_threshold=3)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        self.assertIsInstance(b2._prior, models.BinomialLogitSpikeSlabPrior)
+        self.assertAlmostEqual(0.5, b2._prior._variance_scale)
+        self.assertAlmostEqual(2.0, b2._prior._expected_model_size)
+        self.assertEqual(3, b2._prior._clt_threshold)
+
+    def test_json_round_trip_spike_slab_prior_explicit_mu_sigma(self):
+        bandit = _make_bandit_no_context()
+        mu = np.array([1.0, 0.0, -1.0])
+        Sigma = np.diag([0.5, 0.5, 0.5])
+        prior = models.BinomialLogitSpikeSlabPrior(mu=mu, Sigma=Sigma)
+        bandit.set_prior(prior)
+        b2 = self._roundtrip(bandit)
+        np.testing.assert_array_almost_equal(mu, b2._prior._mu)
+        np.testing.assert_array_almost_equal(Sigma, b2._prior._Sigma)
+
+    def test_json_prior_absent_when_none(self):
+        bandit = _make_bandit_no_context()
+        payload = LogitBanditJsonEncoder().default(bandit)
+        self.assertNotIn("prior", payload)
+
+    def test_json_prior_present_when_set(self):
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(models.BinomialLogitMvnPrior())
+        payload = LogitBanditJsonEncoder().default(bandit)
+        self.assertIn("prior", payload)
+
+    def test_json_prior_drives_update_posterior(self):
+        """Restored prior from JSON is used by update_posterior."""
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(models.BinomialLogitMvnPrior(variance_scale=2.0))
+        b2 = self._roundtrip(bandit)
+        b2.observe_data(0, 5, 10)
+        b2.observe_data(1, 2, 10)
+        b2.update_posterior(50)
+        self.assertEqual(50, b2.ndraws)
+
+    def test_json_spike_slab_prior_drives_update_posterior(self):
+        bandit = _make_bandit_no_context()
+        bandit.set_prior(
+            models.BinomialLogitSpikeSlabPrior(expected_model_size=1.0))
+        b2 = self._roundtrip(bandit)
+        b2.observe_data(0, 5, 10)
+        b2.observe_data(1, 2, 10)
+        b2.update_posterior(50)
+        self.assertEqual(50, b2.ndraws)
 
 
 class TestLinearBanditEncoderDim(unittest.TestCase):

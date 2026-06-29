@@ -589,6 +589,40 @@ namespace BayesBoom {
              "  trials:  A boom.Vector containing trial counts.\n"
              "  predictors:  A boom.Matrix containing (as rows) the "
              "predictors for each observation.\n\n")
+
+        .def_property_readonly(
+            "predictors",
+            [](const BinomialLogitModel &model) {
+              size_t sample_size = model.sample_size();
+              Matrix X(sample_size, model.xdim());
+              for (size_t i = 0; i < sample_size; ++i) {
+                const Ptr<BinomialRegressionData> &dp(model.dat()[i]);
+                X.row(i) = dp->x();
+              }
+              return X;
+            })
+        .def_property_readonly(
+            "response",
+            [](const BinomialLogitModel &model) {
+              size_t sample_size = model.sample_size();
+              Vector response(sample_size);
+              for (size_t i = 0; i < sample_size; ++i) {
+                const Ptr<BinomialRegressionData> &dp(model.dat()[i]);
+                response[i] = dp->y();
+              }
+              return response;
+            })
+        .def_property_readonly(
+            "trials",
+            [](const BinomialLogitModel &model) {
+              size_t sample_size = model.sample_size();
+              Vector trials(sample_size);
+              for (size_t i = 0; i < sample_size; ++i) {
+                const Ptr<BinomialRegressionData> &dp(model.dat()[i]);
+                trials[i] = dp->n();
+              }
+              return trials;
+            })
         ;
 
     py::class_<PoissonRegressionModel,
