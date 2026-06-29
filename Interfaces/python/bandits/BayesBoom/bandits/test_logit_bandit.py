@@ -137,12 +137,12 @@ class TestLogitBanditNoContext(unittest.TestCase):
                 self.assertFalse(np.allclose(pred[i], pred[j]))
 
     def test_observe_after_boom_initialized(self):
-        # Adding data after the first update_posterior resets the boom objects
-        # so the next update_posterior rebuilds from all training data.
+        # Data added after update_posterior is fed directly to the existing
+        # boom model, so the next update_posterior samples from all data.
         self.bandit.observe_data(0, 3, 5)
         self.bandit.update_posterior(10)
-        self.bandit.observe_data(1, 1, 5)  # resets _boom_bandit
-        self.bandit.update_posterior(10)   # rebuilds and resamples
+        self.bandit.observe_data(1, 1, 5)  # added to live boom model
+        self.bandit.update_posterior(10)   # resamples with full data
         self.assertEqual(10, self.bandit.ndraws)
 
 

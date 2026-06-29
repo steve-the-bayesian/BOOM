@@ -149,6 +149,13 @@ class LogitBandit:
             "context": context,
         })
 
+        if self._boom_model:
+            self._boom_model.add_data(
+                boom.BinomialRegressionData(
+                    int(successes),
+                    int(trials),
+                    models.to_boom_vector(self._encoder.encode_row(arm, context))))
+
     def update_posterior(self, ndraws: int):
         """
         Draw samples from the posterior distribution of the logistic

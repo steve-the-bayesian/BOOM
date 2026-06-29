@@ -28,6 +28,11 @@ from .base import (
     which,
 )
 
+# Model classes (MvnPrior / MvnModel, SdPrior, NormalPrior, GammaModel,
+# BetaPrior, DirichletPrior, WishartPrior, MarkovModel, PoissonModel, …) were
+# previously exported from this module.  They now live in BayesBoom.models.
+# Import them from there:  import BayesBoom.models as models
+
 from .cbind import cbind
 
 from .density import Density
