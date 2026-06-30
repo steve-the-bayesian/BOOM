@@ -3,6 +3,7 @@ import patsy
 import numpy as np
 import BayesBoom.boom as boom
 import BayesBoom.spikeslab as spikeslab
+import BayesBoom.models as bayes
 import scipy
 from numbers import Number
 
@@ -63,7 +64,7 @@ class StateSpaceLogitModelFactory:
 
     def _verify_prior(self, prior, response, predictors, trials, **kwargs):
         if prior is None:
-            prior = spikeslab.LogitZellnerPrior(
+            prior = bayes.LogitZellnerPrior(
                 predictors=predictors,
                 response=response,
                 trials=trials,

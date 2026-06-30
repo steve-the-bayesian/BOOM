@@ -56,6 +56,7 @@ from .glm import (
     BinomialLogitMvnPrior,
     BinomialLogitSpikeSlabPrior,
     BinomialLogitModel,
+    LogitZellnerPrior,
 )
 
 from .boom_utils import (

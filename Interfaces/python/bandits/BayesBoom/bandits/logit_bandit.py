@@ -72,7 +72,8 @@ class LogitBandit:
         if not isinstance(prior,
                           (models.MvnModel,
                            models.BinomialLogitMvnPrior,
-                           models.BinomialLogitSpikeSlabPrior)):
+                           models.BinomialLogitSpikeSlabPrior,
+                           models.LogitZellnerPrior)):
             raise Exception("""
             Unrecognized class of prior distribution passed to
             'LogitBandit.set_prior'.
@@ -322,6 +323,9 @@ class LogitBandit:
         elif isinstance(self._prior, models.BinomialLogitSpikeSlabPrior):
             return self._prior.create_sampler(model)
 
+        elif isinstance(self._prior, models.LogitZellnerPrior):
+            return self._prior.create_sampler(model)
+
         else:
             raise Exception(
                 """
@@ -428,6 +432,14 @@ class BinomialLogitPriorJsonEncoder(json.JSONEncoder):
                 "expected_model_size": obj._expected_model_size,
                 "clt_threshold": obj._clt_threshold,
             }
+        elif isinstance(obj, models.LogitZellnerPrior):
+            return {
+                "type": "LogitZellnerPrior",
+                "mean": obj._mean.tolist(),
+                "precision": obj._precision.tolist(),
+                "prior_inclusion_probabilities": obj._prior_inclusion_probabilities.tolist(),
+                "max_flips": obj._max_flips,
+            }
         else:
             raise ValueError(f"Unsupported prior type: {type(obj).__name__}")
 
@@ -460,6 +472,14 @@ class BinomialLogitPriorJsonDecoder(json.JSONDecoder):
                 expected_model_size=payload["expected_model_size"],
                 clt_threshold=payload["clt_threshold"],
             )
+        elif type_name == "LogitZellnerPrior":
+            return models.LogitZellnerPrior.from_parameters(
+                mean=np.array(payload["mean"]),
+                precision=np.array(payload["precision"]),
+                prior_inclusion_probabilities=np.array(
+                    payload["prior_inclusion_probabilities"]),
+                max_flips=payload["max_flips"],
+            )
         else:
             raise ValueError(f"Unsupported prior type: {type_name}")
 
@@ -474,7 +494,8 @@ class LogitBanditJsonEncoder(json.JSONEncoder):
         encoder_encoder = LinearBanditEncoderJSONEncoder()
         payload["encoder"] = encoder_encoder.default(obj._encoder)
 
-        payload["log_likelihood"] = obj.log_likelihood
+        payload["log_likelihood"] = (
+            obj.log_likelihood.tolist() if obj.log_likelihood is not None else None)
 
         if obj._prior is not None:
             payload["prior"] = BinomialLogitPriorJsonEncoder().default(obj._prior)

@@ -602,7 +602,7 @@ namespace BayesBoom {
               return X;
             })
         .def_property_readonly(
-            "response",
+            "successes",
             [](const BinomialLogitModel &model) {
               size_t sample_size = model.sample_size();
               Vector response(sample_size);

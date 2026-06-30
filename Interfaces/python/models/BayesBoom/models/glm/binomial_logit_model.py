@@ -4,7 +4,7 @@ Python wrapper for boom.BinomialLogitModel (logistic regression).
 
 import numpy as np
 
-from ..boom_utils import to_boom_vector, to_boom_matrix, to_boom_spd
+from ..boom_utils import to_boom_vector, to_boom_matrix, to_boom_spd, to_numpy
 
 
 class BinomialLogitMvnPrior:
@@ -27,7 +27,8 @@ class BinomialLogitMvnPrior:
     def __init__(self, mu=None, Sigma=None, variance_scale: float = 1.0,
                  clt_threshold: int = 10):
         self._mu = np.asarray(mu, dtype=float) if mu is not None else None
-        self._Sigma = np.asarray(Sigma, dtype=float) if Sigma is not None else None
+        self._Sigma = np.asarray(
+            Sigma, dtype=float) if Sigma is not None else None
         self._variance_scale = float(variance_scale)
         self._clt_threshold = int(clt_threshold)
 
@@ -129,7 +130,7 @@ class LogitZellnerPrior:
 
     @classmethod
     def from_model(cls,
-                   model,
+                   boom_model,
                    prior_success_probability=0.5,
                    expected_model_size=1.0,
                    prior_information_weight=1.0,
@@ -139,7 +140,7 @@ class LogitZellnerPrior:
                    prior_inclusion_probabilities=None):
         """
         Args:
-          model: A BinomialLogitModel (Python wrapper) whose stored predictor
+          boom_model: A BinomialLogitModel whose stored predictor
             matrix, success counts, and trial counts are used to build the
             prior matrices.
           prior_success_probability: Fallback estimate of the overall success
@@ -148,9 +149,9 @@ class LogitZellnerPrior:
             coefficients.
         """
         return LogitZellnerPrior(
-            predictors=model._X,
-            successes=model._y,
-            trials=model._trials,
+            predictors=to_numpy(boom_model.predictors),
+            successes=to_numpy(boom_model.successes),
+            trials=to_numpy(boom_model.trials),
             prior_success_probability=prior_success_probability,
             expected_model_size=expected_model_size,
             prior_information_weight=prior_information_weight,
@@ -158,8 +159,7 @@ class LogitZellnerPrior:
             optional_coefficient_estimate=optional_coefficient_estimate,
             max_flips=max_flips,
             prior_inclusion_probabilities=prior_inclusion_probabilities)
-            
-        
+
     @classmethod
     def from_parameters(self, mean, precision, prior_inclusion_probabilities,
                         max_flips=-1):
@@ -243,7 +243,8 @@ class BinomialLogitSpikeSlabPrior:
                  expected_model_size: float = 1.0,
                  clt_threshold: int = 5):
         self._mu = np.asarray(mu, dtype=float) if mu is not None else None
-        self._Sigma = np.asarray(Sigma, dtype=float) if Sigma is not None else None
+        self._Sigma = np.asarray(
+            Sigma, dtype=float) if Sigma is not None else None
         self._variance_scale = float(variance_scale)
         self._expected_model_size = float(expected_model_size)
         self._clt_threshold = int(clt_threshold)
