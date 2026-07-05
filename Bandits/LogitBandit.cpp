@@ -42,9 +42,11 @@ namespace BOOM {
 
   void LogitBandit::update_posterior(int ndraws) {
     coefficient_draws_.resize(ndraws, model_->xdim());
+    log_likelihood_draws_.resize(ndraws);
     for (int i = 0; i < ndraws; ++i) {
       model_->sample_posterior();
       coefficient_draws_.row(i) = model_->Beta();
+      log_likelihood_draws_[i] = model_->log_likelihood();
     }
   }
 
@@ -104,6 +106,7 @@ namespace BOOM {
       report_error(err.str());
     }
     coefficient_draws_ = draws;
+    log_likelihood_draws_.clear();
     model_->set_Beta(draws.last_row());
   }
   

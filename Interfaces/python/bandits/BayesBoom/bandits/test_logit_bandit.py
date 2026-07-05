@@ -68,6 +68,20 @@ class TestLogitBanditNoContext(unittest.TestCase):
         self.bandit.update_posterior(200)
         self.assertEqual(200, self.bandit.ndraws)
 
+    def test_log_likelihood_draws_before_update(self):
+        self.bandit.observe_data(0, 5, 10)
+        self.assertIsNone(self.bandit.log_likelihood_draws)
+
+    def test_log_likelihood_draws(self):
+        self.bandit.observe_data(0, 5, 10)
+        self.bandit.observe_data(1, 2, 10)
+        self.bandit.update_posterior(200)
+        loglike = self.bandit.log_likelihood_draws
+        self.assertEqual(200, len(loglike))
+        self.assertTrue(np.all(np.isfinite(loglike)))
+        # The sampler wanders, so the log likelihood varies across draws.
+        self.assertGreater(np.std(loglike), 0.0)
+
     def test_optimal_arm_probabilities_shape_and_sum(self):
         self.bandit.observe_data(0, 90, 100)
         self.bandit.observe_data(1, 30, 100)
@@ -154,6 +168,15 @@ class TestLogitBanditWithContext(unittest.TestCase):
         self.assertEqual(0, self.bandit.ndraws)
         self.bandit.update_posterior(200)
         self.assertEqual(200, self.bandit.ndraws)
+
+    def test_log_likelihood_draws_with_context(self):
+        ctx = self._ctx(1.5)
+        self.bandit.observe_data(0, 5, 10, ctx)
+        self.bandit.observe_data(1, 2, 10, ctx)
+        self.bandit.update_posterior(200)
+        loglike = self.bandit.log_likelihood_draws
+        self.assertEqual(200, len(loglike))
+        self.assertTrue(np.all(np.isfinite(loglike)))
 
     def test_optimal_arm_probs_with_context_sums_to_one(self):
         ctx = self._ctx(1.5)

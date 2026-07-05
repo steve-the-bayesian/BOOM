@@ -327,6 +327,15 @@ namespace BayesBoom {
             [](const LogitBandit &bandit) {return bandit.draws();},
             "The matrix of MCMC draws of the model coefficients.  Row 'i' "
             "is the coefficient vector for MCMC draw i.")
+        .def_property_readonly(
+            "log_likelihood_draws",
+            [](const LogitBandit &bandit) {
+              return bandit.log_likelihood_draws();
+            },
+            "The log likelihood of the training data evaluated at each MCMC "
+            "draw from the most recent call to update_posterior().  Element "
+            "'i' corresponds to row i of coefficient_draws.  Empty if the "
+            "draws were supplied by set_coefficient_draws.")
         .def("set_coefficient_draws",
              [](LogitBandit &bandit, const Matrix &draws) {bandit.set_draws(draws);},
              py::arg("draws"),

@@ -67,6 +67,20 @@ class LogitBandit:
         else:
             return R.to_numpy(self._boom_bandit.coefficient_draws)
 
+    @property
+    def log_likelihood_draws(self):
+        """
+        The log likelihood of the training data evaluated at each MCMC draw
+        from the most recent call to update_posterior.  Element i corresponds
+        to row i of coefficient_draws.  None before the first call to
+        update_posterior; empty if the draws were supplied by
+        set_coefficient_draws.
+        """
+        if not self._boom_bandit:
+            return None
+        else:
+            return R.to_numpy(self._boom_bandit.log_likelihood_draws)
+
     def set_coefficient_draws(self, draws):
         self.boom().set_coefficient_draws(R.to_boom_matrix(draws))
 

@@ -104,13 +104,23 @@ namespace BOOM {
       return coefficient_draws_;
     }
 
+    // The log likelihood of the training data evaluated at each MCMC draw,
+    // produced by the most recent call to update_posterior().  Element i
+    // corresponds to row i of draws().  Empty if the draws were supplied by
+    // set_draws(), because externally supplied draws have no recorded log
+    // likelihood.
+    const Vector &log_likelihood_draws() const {
+      return log_likelihood_draws_;
+    }
+
     void set_draws(const Matrix &draws);
-    
+
    private:
     Ptr<BinomialLogitModel> model_;
     Ptr<LinearBanditEncoder> encoder_;
 
     Matrix coefficient_draws_;
+    Vector log_likelihood_draws_;
   };
   
 }  // namespace BOOM
