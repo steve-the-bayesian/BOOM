@@ -7,7 +7,7 @@ How code is written in BOOM. These conventions are described from the existing c
 ### Files
 
 - One class per `Foo.hpp`/`Foo.cpp` pair named after the class; free-function utilities are lowercase (`cpputil/report_error.hpp`). Tests are `snake_case_test.cc` in a `tests/` subdirectory next to the code.
-- Every file starts with the standard copyright block (Google line + Steven L. Scott LGPL block). Copy it verbatim from a neighboring file onto new files.
+- Most files start with the standard copyright block (Google line + Steven L. Scott LGPL block). Copy it verbatim from a neighboring file onto new files.
 - Include guards are `#ifndef BOOM_<NAME>_HPP_` style, never `#pragma once`. Close with `#endif  // BOOM_<NAME>_HPP_`.
 - In-repo headers are included with root-relative quoted paths (`#include "Models/Glm/Glm.hpp"`); a `.cpp` includes its own header first.
 
@@ -18,7 +18,7 @@ How code is written in BOOM. These conventions are described from the existing c
 
 ### Ownership and errors
 
-- Heap objects use the intrusive `Ptr<T>` smart pointer with `RefCounted`, allocated via the `NEW(Type, var)(args)` macro. Never `std::shared_ptr`. Cast through `.dcast<>()` / `.scast<>()`, not raw `dynamic_cast`.
+- Objects in the model hierarchy (`RefCounted` subclasses) use the intrusive `Ptr<T>` smart pointer, allocated via the `NEW(Type, var)(args)` macro; `std::shared_ptr` appears only for internal helpers that don't participate in reference counting. Cast through `.dcast<>()` / `.scast<>()`, not raw `dynamic_cast`.
 - Errors: build the message in a local `ostringstream err;` and call `report_error(err.str())`. Don't throw `std::runtime_error` directly.
 
 ### Documentation
@@ -50,7 +50,7 @@ googletest fixtures that seed the global RNG in the constructor (`GlobalRng::rng
 ### Object model
 
 - **Two-tier pattern.** Every model/bandit/encoder is a pure-Python class that is the source of truth for its own state, holding lazily-built `self._boom_*` handles. A `boom()` method constructs the C++ object on demand. `__setstate__` resets the `_boom_*` handles to `None`.
-- **Conversions go through the converters.** Use `R.to_boom_vector` / `R.to_boom_matrix` / `R.to_boom_spd` / `R.to_numpy` at the numpy/pandas ⇄ boom boundary; never construct `boom.Vector(...)` directly. Coerce scalars explicitly at the C++ boundary (`int(arm)`, `float(x)`).
+- **Conversions go through the converters.** In the newer subpackages (`bandits`, `models`), the numpy/pandas ⇄ boom boundary goes through `R.to_boom_vector` / `R.to_boom_matrix` / `R.to_boom_spd` / `R.to_numpy`; older subpackages construct `boom.Vector(...)` directly. Prefer the converters in new code. Coerce scalars explicitly at the C++ boundary (`int(arm)`, `float(x)`).
 - **Serialization:** user-facing classes implement `__getstate__`/`__setstate__` and a paired `<Thing>JsonEncoder` / `<Thing>JsonDecoder`, registered in the module-level registry where one exists. Tests round-trip both.
 
 ### Docstrings
