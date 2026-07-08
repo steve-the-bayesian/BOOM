@@ -162,6 +162,11 @@ namespace BayesBoom {
             [](const GlmModel &m) {return m.Beta();},
             "A BayesBoom.Vector containing the model coefficients, including "
             "any 0's if sparse modeling is being used.")
+        .def("set_coefficients", [](GlmModel &m,
+                                    const Vector &coefficients) {
+          m.set_Beta(coefficients);
+        })
+
         ;
 
     py::class_<RegSuf,
@@ -276,10 +281,6 @@ namespace BayesBoom {
         //     },
         //     "The parameter object representing the model coefficients.  "
         //     "boom.GlmCoefs")
-        .def("set_coefficients", [](RegressionModel &m,
-                                    const Vector &coefficients) {
-          m.set_Beta(coefficients);
-        })
         .def_property_readonly(
             "sigma",
             [](const RegressionModel &m){
@@ -512,10 +513,6 @@ namespace BayesBoom {
             },
             "The parameter object representing the model coefficients.  "
             "boom.GlmCoefs")
-        .def("set_coefficients", [](TRegressionModel &m,
-                                    const Vector &coefficients) {
-          m.set_Beta(coefficients);
-        })
         .def_property_readonly(
             "residual_sd", [] (const TRegressionModel &m) {return m.sigma();
             })
@@ -907,7 +904,7 @@ namespace BayesBoom {
              "parameter to (0, sigma_max).\n\n"
              "Args:\n\n"
              "  sigma_max:  Any non-negative value, including zero and "
-             "infinity() is allowed.")       
+             "infinity() is allowed.")
         ;
 
     py::class_<TRegressionSpikeSlabSampler,
