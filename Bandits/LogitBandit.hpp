@@ -33,7 +33,7 @@ namespace BOOM {
   class LogitBandit : public GenericBanditBase {
    public:
     LogitBandit(const Ptr<BinomialLogitModel> &model,
-                const Ptr<LinearBanditEncoder> &encoder); 
+                const Ptr<LinearBanditEncoder> &encoder);
 
     // The number of arms the bandit is tracking.  This is determined by the
     // ArmMap component of the encoder.
@@ -42,19 +42,19 @@ namespace BOOM {
     // The number of draws representing the posterior distribution.  This is
     // determined by the most recent call to update_posterior().
     int ndraws() const {return coefficient_draws_.nrow();}
-    
+
     // Record the outcomes of a particular arm being used with a particular set
     // of context.
     //
     // Args:
-    //   arm:  Which 
+    //   arm:  Which
     void observe_data(int arm,
                       int num_successes,
                       int num_trials,
                       const MixedMultivariateData &context);
-    
+
     virtual double value(int arm, const MixedMultivariateData &context) const;
-    
+
     void update_posterior(int ndraws);
 
     // Args:
@@ -64,7 +64,7 @@ namespace BOOM {
     //   A matrix, where row i contains the predictor vector for arm i under the
     //   supplied context.
     Matrix arm_predictors(const MixedMultivariateData &context) const;
-    
+
     // This can probably be optimized if it uses too much memory.  It also
     // encodes the same things over and over again, so serilization might help.
     virtual Vector optimal_arm_probabilities(
@@ -78,23 +78,23 @@ namespace BOOM {
     // parameters, and returns the values of the chosen arm.
     //
     // Args:
-    //   context: THe context data describing an individual subject.
+    //   context: The context data describing an individual subject.
     //   rng:  The random number generator to use for sampling.
-    // 
+    //
     // Returns:
     //   Vector of strings describing the levels of the action/experiment
     //   variables for the chosen arm.
     virtual std::vector<std::string> thompson(
         const MixedMultivariateData &context,
         RNG &rng = GlobalRng::rng) const;
-    
+
     // Return the index of the MCMC draw selected in the most recent call to
     // thompson().
     int last_thompson_row() const {return last_thompson_row_;}
-    
+
     // Return the index of the arm selected in the most recent call to thompson().
     int last_thompson_arm() const {return last_thompson_arm_;}
-    
+
     virtual Vector value_remaining_distribution(
         const MixedMultivariateData &context,
         RNG &rng = GlobalRng::rng) const;
@@ -122,7 +122,7 @@ namespace BOOM {
    protected:
     void set_thompson_row(int row) const {last_thompson_row_ = row;}
     void set_thompson_arm(int arm) const {last_thompson_arm_ = arm;}
-    
+
    private:
     Ptr<BinomialLogitModel> model_;
     Ptr<LinearBanditEncoder> encoder_;
@@ -135,7 +135,7 @@ namespace BOOM {
     mutable int last_thompson_row_;
     mutable int last_thompson_arm_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_BANDITS_LOGIT_BANDIT_HPP_
