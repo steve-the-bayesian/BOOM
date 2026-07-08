@@ -11,7 +11,7 @@ MAJOR = 0
 MINOR = 2
 
 # Bump the patch version when making bug fixes.
-PATCH = 4
+PATCH = 5
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -354,7 +354,7 @@ ext_modules = [
         sources=boom_sources,
         depends=boom_headers,
         include_dirs=[
-            BOOM_DIR, 
+            BOOM_DIR,
             get_pybind_include(),
             get_pybind_include(user=True)
         ],
