@@ -71,6 +71,12 @@ namespace BOOM {
     Ptr<MlvsDataImputer> create_worker(std::mutex &m) override;
     void assign_data_to_workers() override;
 
+    // Fingerprint the model's data vector so the base class can detect when
+    // observations have been added or removed (which invalidates the iterators
+    // the imputation workers hold) and reassign data before the next draw.
+    const void *observed_data_address() const override;
+    int number_of_data_points() const override;
+
     // Part of the implementation for draw().
     void draw_beta();
 

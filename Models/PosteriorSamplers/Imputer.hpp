@@ -251,6 +251,25 @@ namespace BOOM {
     // Allocate the vector of observed data among the workers.
     virtual void assign_data_to_workers() = 0;
 
+    // The workers hold iterators into the observed-data vector, captured the
+    // last time data was assigned.  If that vector is reallocated (e.g. by
+    // adding observations) the iterators dangle, and dereferencing them is
+    // undefined behavior.  The two functions below let the base class detect
+    // this by fingerprinting the data vector: its storage address (which
+    // changes on reallocation, exactly when iterators are invalidated) and its
+    // size (which catches additions or removals that happen without
+    // reallocation).  When either differs from the value recorded at the last
+    // assignment, the data is reassigned before imputing.
+    //
+    // The defaults return values that never change from what is recorded,
+    // disabling the check.  Derived classes that manage a model whose data set
+    // can change between draws should override both to report the model's
+    // current data vector.
+    virtual const void *observed_data_address() const {
+      return recorded_data_address_;
+    }
+    virtual int number_of_data_points() const { return recorded_data_size_; }
+
     // Empty the complete data sufficient statistics or other object
     // being used to hold the complete data.
     virtual void clear_latent_data() = 0;
@@ -269,7 +288,7 @@ namespace BOOM {
         workers_.push_back(worker);
       }
       imputer_.set_number_of_threads(n == 1 ? 0 : n);
-      assign_data_to_workers();
+      assign_data_to_workers_and_record();
     }
 
     // By default, this class updates its own latent data through a call to
@@ -305,9 +324,8 @@ namespace BOOM {
     virtual void impute_latent_data() {
       if (!latent_data_fixed_) {
         clear_latent_data();
-        if (reassign_data_each_time_ ||
-            imputer_.number_of_observations_managed() == 0) {
-          assign_data_to_workers();
+        if (reassign_data_each_time_ || data_assignment_is_stale()) {
+          assign_data_to_workers_and_record();
         }
         imputer_.impute_latent_data();
       }
@@ -317,6 +335,24 @@ namespace BOOM {
     std::vector<Ptr<WORKER>> &workers() { return workers_; }
 
    private:
+    // Assign the observed data to the workers, then record a fingerprint of the
+    // data vector so future draws can tell whether it has changed.
+    void assign_data_to_workers_and_record() {
+      assign_data_to_workers();
+      recorded_data_address_ = observed_data_address();
+      recorded_data_size_ = number_of_data_points();
+    }
+
+    // True if the observed-data vector has changed (been reallocated, grown, or
+    // shrunk) since data was last assigned to the workers, which invalidates
+    // the iterators the workers hold.  Also true if no data is currently
+    // assigned, matching the original lazy-assignment behavior.
+    bool data_assignment_is_stale() const {
+      return imputer_.number_of_observations_managed() == 0 ||
+             observed_data_address() != recorded_data_address_ ||
+             number_of_data_points() != recorded_data_size_;
+    }
+
     // If this flag is set then latent data will not be changed from its current
     // values.
     bool latent_data_fixed_;
@@ -340,6 +376,13 @@ namespace BOOM {
 
     // The latent data imputer does the actual drawing.
     ParallelLatentDataImputer imputer_;
+
+    // A fingerprint of the observed-data vector, taken the last time data was
+    // assigned to the workers.  Compared against the current fingerprint to
+    // detect a changed data set.  See observed_data_address() /
+    // number_of_data_points().
+    const void *recorded_data_address_ = nullptr;
+    int recorded_data_size_ = 0;
   };
 
   //======================================================================

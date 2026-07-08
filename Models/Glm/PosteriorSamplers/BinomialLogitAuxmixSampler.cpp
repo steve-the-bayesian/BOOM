@@ -141,4 +141,14 @@ namespace BOOM {
     BOOM::assign_data_to_workers(model_->dat(), workers());
   }
 
+  const void *BLAMS::observed_data_address() const {
+    // The start of the data vector's storage.  A reallocation moves it, which
+    // is exactly when the iterators held by the workers are invalidated.
+    return model_->dat().data();
+  }
+
+  int BLAMS::number_of_data_points() const {
+    return static_cast<int>(model_->dat().size());
+  }
+
 }  // namespace BOOM

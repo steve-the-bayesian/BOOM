@@ -73,6 +73,14 @@ namespace BOOM {
     BOOM::assign_data_to_workers(model_->dat(), workers());
   }
 
+  const void *QRPS::observed_data_address() const {
+    return model_->dat().data();
+  }
+
+  int QRPS::number_of_data_points() const {
+    return static_cast<int>(model_->dat().size());
+  }
+
   //======================================================================
   QRSSS::QuantileRegressionSpikeSlabSampler(
       QuantileRegressionModel *model, const Ptr<MvnBase> &slab,

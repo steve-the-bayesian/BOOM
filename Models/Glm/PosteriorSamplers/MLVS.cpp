@@ -84,6 +84,14 @@ namespace BOOM {
     BOOM::assign_data_to_workers(model_->dat(), workers());
   }
 
+  const void *MLVS::observed_data_address() const {
+    return model_->dat().data();
+  }
+
+  int MLVS::number_of_data_points() const {
+    return static_cast<int>(model_->dat().size());
+  }
+
   double MLVS::logpri() const {
     const Selector &g = model_->coef().inc();
     double ans = spike_->logp(g);
