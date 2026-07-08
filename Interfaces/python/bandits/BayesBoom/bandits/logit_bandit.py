@@ -159,14 +159,21 @@ class LogitBandit:
                     models.to_boom_vector(self._encoder.encode_row(
                         arm, context))))
 
-    def update_posterior(self, ndraws: int):
+    def update_posterior(self, ndraws: int, initial_value=None):
         """
         Draw samples from the posterior distribution of the logistic
         regression coefficients.
 
         Args:
           ndraws: Number of posterior samples to draw.
+          initial_value: If not None, initial_value must be an object
+            convertible to a boom.Vector containing the desired coefficients
+            from which to start the MCMC algorithm.
         """
+        if initial_value is not None:
+            self.boom().model.set_coefficients(
+                models.to_boom_vector(initial_value))
+
         self.boom().update_posterior(int(ndraws))
 
     @property

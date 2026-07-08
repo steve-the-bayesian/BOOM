@@ -145,6 +145,56 @@ class TestLogitBanditNoContext(unittest.TestCase):
         self.bandit.update_posterior(10)   # resamples with full data
         self.assertEqual(10, self.bandit.ndraws)
 
+    def test_repeated_observe_after_boom_initialized(self):
+        # Adding data to a live boom model reallocates the model's data vector,
+        # which invalidates the iterators the auxmix sampler's imputation
+        # workers cache.  The sampler must notice the data set changed and
+        # reassign before drawing; otherwise it dereferences dangling iterators
+        # and segfaults.  Add enough observations across several update cycles
+        # to force multiple reallocations.
+        self.bandit.observe_data(0, 3, 5)
+        self.bandit.update_posterior(10)
+        for arm in range(1, 4):
+            for _ in range(5):
+                self.bandit.observe_data(arm, 2, 5)
+            self.bandit.update_posterior(10)
+        self.assertEqual(10, self.bandit.ndraws)
+        # The larger data set now drives a well-defined posterior.
+        probs = self.bandit.optimal_arm_probabilities()
+        self.assertEqual(4, len(probs))
+        self.assertAlmostEqual(1.0, probs.sum(), places=10)
+
+
+class TestUpdatePosteriorInitialValue(unittest.TestCase):
+    """update_posterior(..., initial_value=v) starts the MCMC from v.
+
+    A single Gibbs step from an extreme starting vector has not had time to
+    converge, so the resulting draw still carries a strong imprint of where the
+    sampler started.  Starting from a strongly negative coefficient vector
+    yields a negative first draw; starting from a strongly positive vector
+    yields a positive one.  If update_posterior ignored initial_value the two
+    runs would be statistically identical, and neither imprint would appear.
+    """
+
+    def _first_draw(self, initial_value):
+        bandit = _make_bandit_no_context()
+        bandit.observe_data(0, 5, 10)
+        bandit.observe_data(1, 2, 10)
+        bandit.update_posterior(1, initial_value=initial_value)
+        # dim = intercept(1) + ButtonPosition(1) + ButtonColor(1) = 3
+        return bandit.coefficient_draws[0]
+
+    def test_initial_value_moves_mcmc_start(self):
+        low = self._first_draw(np.full(3, -6.0))
+        high = self._first_draw(np.full(3, 6.0))
+        # After a single draw each chain still sits near its (very different)
+        # starting point: the negative start stays clearly negative and the
+        # positive start clearly positive.  The margins are conservative; the
+        # observed separation is roughly [-5, -3] vs [3, 5].
+        self.assertLess(low.mean(), -1.0)
+        self.assertGreater(high.mean(), 1.0)
+        self.assertLess(low.mean(), high.mean())
+
 
 class TestLogitBanditWithContext(unittest.TestCase):
 
