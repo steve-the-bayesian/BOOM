@@ -76,6 +76,44 @@ histabunch <- function(x, gap = 1, same.scale = FALSE, boxes = FALSE,
     return(TRUE)
   }
 
+  as.datetime <- function(x) {
+    ## Interpret x as a vector of Date or POSIXt timestamps, if possible.
+    ##
+    ## Args:
+    ##   x: A variable from the data being plotted.
+    ##
+    ## Returns:
+    ##   A vector of class 'Date' or 'POSIXt' when x already carries such a
+    ##   class, or when x is a character or factor vector whose values parse
+    ##   cleanly as date-times or dates.  Returns NULL when x cannot be
+    ##   interpreted as a sequence of timestamps.
+    if (inherits(x, "POSIXt") || inherits(x, "Date")) {
+      return(x)
+    }
+    if (!is.character(x) && !is.factor(x)) {
+      return(NULL)
+    }
+    vals <- as.character(x)
+    present <- !is.na(vals) & trimws(vals) != ""
+    if (!any(present)) {
+      return(NULL)
+    }
+    ## Prefer a date-time interpretation, trying each candidate format in turn
+    ## and accepting the first one under which every present value parses.
+    for (fmt in DefaultPosixctFormats()) {
+      parsed <- as.POSIXct(vals, format = fmt, tz = "UTC")
+      if (all(!is.na(parsed[present]))) {
+        return(parsed)
+      }
+    }
+    ## Fall back to a pure Date interpretation (values with no time of day).
+    parsed <- tryCatch(as.Date(vals), error = function(e) NULL)
+    if (!is.null(parsed) && all(!is.na(parsed[present]))) {
+      return(parsed)
+    }
+    return(NULL)
+  }
+
   hist.continuous <- function(x, xlim=NULL, title="", ...) {
     fin <- is.finite(x)
     x <- x[fin]
@@ -88,6 +126,17 @@ histabunch <- function(x, gap = 1, same.scale = FALSE, boxes = FALSE,
     ## A stub plot indicating that all data are missing.
     plot(c(0,0), type = "n", main=title, axes=FALSE)
     text(x=1.5, y=0, lab="MISSING")
+  }
+
+  hist.datetime <- function(x, title="", ...) {
+    ## Plot the intensity function of a Date or POSIXt variable, in place of a
+    ## histogram, so that the density of events over time is visible.
+    if (sum(is.finite(as.numeric(x))) < 2) {
+      plot.all.missing(title)
+      return()
+    }
+    plot(Intensity(x), main = title, xlab = "", ylab = "", axes = FALSE, ...)
+    axis(1)
   }
 
   hist.factor <- function(x, title="", ...) {
@@ -107,6 +156,12 @@ histabunch <- function(x, gap = 1, same.scale = FALSE, boxes = FALSE,
   }
 
   hist.variable <- function(x, title, xlim, ...){
+    datetime <- as.datetime(x)
+    if (!is.null(datetime)) {
+      hist.datetime(datetime, title, ...)
+      if (boxes) box()
+      return()
+    }
     if (!any(is.finite(x))) {
       plot.all.missing(title)
       return()

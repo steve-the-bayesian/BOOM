@@ -9,6 +9,11 @@
   Plot a bunch of histograms describing the marginal distributions the
   columns in a data frame.
 
+  Columns that are (or can be converted to) \code{Date} or \code{POSIXt}
+  timestamps are summarized by a plot of their \code{\link{Intensity}}
+  function rather than a histogram, so that the density of events over
+  time is visible.
+
 }
 
 \usage{
@@ -49,7 +54,7 @@ histabunch(x, gap = 1, same.scale = FALSE, boxes = FALSE,
   Steven L. Scott
 }
 \seealso{
-  \code{\link{hist}} \code{\link{barplot}}
+  \code{\link{hist}} \code{\link{barplot}} \code{\link{Intensity}}
 }
 \examples{
   data(airquality)
