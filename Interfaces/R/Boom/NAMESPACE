@@ -12,12 +12,16 @@ export(
   CompareManyDensities,
   CompareManyTs,
   CompareVectorBoxplots,
+  ConvertPosixct,
+  DefaultPosixctFormats,
+  DetectPosixct,
   DirichletPrior,
   DiscreteUniformPrior,
   ExternalLegendLayout,
   GammaPrior,
   GaussianSuf,
   GenerateFactorData,
+  Intensity,
   InverseWishartPrior,
   IsEven,
   IsOdd,
@@ -93,3 +97,4 @@ importFrom("utils", "capture.output", "head", "tail")
 
 S3method(ToString, default)
 S3method(ToString, table)
+S3method(plot, Intensity)
