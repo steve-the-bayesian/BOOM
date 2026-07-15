@@ -1,6 +1,5 @@
 import BayesBoom.boom as boom
 import BayesBoom.models as models
-import BayesBoom.R as R
 import numpy as np
 import pandas as pd
 import json
@@ -56,6 +55,7 @@ class LogitBandit:
         self._boom_sampler = None
         self._boom_bandit = None
         self._prior = None
+        self._previous_coefficient_draws = None
 
     @property
     def number_of_arms(self):
@@ -66,6 +66,10 @@ class LogitBandit:
         Set the prior distribution for the model to one of the standard
         priors for binomial logit models.  Accepted families of priors include
         MvnModel, BinomialLogitMvnPrior, and BinomialLogitSpikeSlabPrior.
+
+        Setting a prior discards any cached boom objects, including posterior
+        draws from a previous update_posterior call, so the next boom() call
+        rebuilds the sampler under the new prior.
         """
         if not isinstance(prior,
                           (models.MvnModel,
@@ -77,13 +81,20 @@ class LogitBandit:
             'LogitBandit.set_prior'.
             """)
         self._prior = prior
+        # Discard boom objects built under a previous prior (including the
+        # default prior installed when boom() is called before set_prior), so
+        # the next boom() call rebuilds the sampler with this one.
+        self._previous_coefficient_draws = self.coefficient_draws
+        self._boom_model = None
+        self._boom_sampler = None
+        self._boom_bandit = None
 
     @property
     def coefficient_draws(self):
         if not self._boom_bandit:
             return None
         else:
-            return R.to_numpy(self._boom_bandit.coefficient_draws)
+            return models.to_numpy(self._boom_bandit.coefficient_draws)
 
     @property
     def log_likelihood(self):
@@ -95,21 +106,21 @@ class LogitBandit:
         if not self._boom_bandit:
             return None
         else:
-            return R.to_numpy(self._boom_bandit.log_likelihood)
+            return models.to_numpy(self._boom_bandit.log_likelihood)
 
     def set_coefficient_draws(self, draws):
         """
         Populate the internal model with a set of coefficient draws.  This
         is mainly useful for deserializing a previously stored model.
         """
-        self.boom().set_coefficient_draws(R.to_boom_matrix(draws))
+        self.boom().set_coefficient_draws(models.to_boom_matrix(draws))
 
     def set_log_likelihood(self, log_likelihood):
         """
         Populate the internal model with a set of log likelihood values
         associated with a previous MCMC run.
         """
-        self.boom().set_log_likelihood(R.to_boom_vector(log_likelihood))
+        self.boom().set_log_likelihood(models.to_boom_vector(log_likelihood))
 
     def observe_past_data(self, successes, trials, features):
         if self._training_data:
@@ -123,9 +134,9 @@ class LogitBandit:
 
         if self._boom_model:
             self._boom_model.add_dataset(
-                R.to_boom_vector(successes),
-                R.to_boom_vector(trials),
-                R.to_boom_matrix(self._encoder.encode_dataset(
+                models.to_boom_vector(successes),
+                models.to_boom_vector(trials),
+                models.to_boom_matrix(self._encoder.encode_dataset(
                     self._training_data)))
 
     def observe_data(self, arm: int, successes: int, trials: int,
@@ -206,7 +217,7 @@ class LogitBandit:
         Returns:
           A numpy array of probabilities, one per arm, summing to 1.
         """
-        return R.to_numpy(
+        return models.to_numpy(
             self.boom().optimal_arm_probabilities(_to_boom_context(context)))
 
     def thompson(self, context=None):
@@ -248,7 +259,7 @@ class LogitBandit:
           between the best arm's predicted probability and arm 0's probability
           in that posterior draw.
         """
-        return R.to_numpy(
+        return models.to_numpy(
             self.boom().value_remaining_distribution(
                 _to_boom_context(context)))
 
@@ -262,7 +273,7 @@ class LogitBandit:
         Returns:
           A numpy array with one row per arm and one column per predictor.
         """
-        return R.to_numpy(
+        return models.to_numpy(
             self.boom().arm_predictors(_to_boom_context(context)))
 
     def boom(self):
@@ -283,6 +294,11 @@ class LogitBandit:
                 self._boom_bandit = boom.LogitBandit(
                     self._boom_model,
                     self._encoder.boom())
+
+            if (self._previous_coefficient_draws is not None
+                    and self._previous_coefficient_draws.size > 0):
+                self._boom_bandit.set_coefficient_draws(
+                    models.to_boom_matrix(self._previous_coefficient_draws))
         return self._boom_bandit
 
     def _define_model(self):
@@ -299,16 +315,17 @@ class LogitBandit:
                 successes[i] = obs["successes"]
                 trials[i] = obs["trials"]
             model.add_dataset(
-                R.to_boom_vector(successes),
-                R.to_boom_vector(trials),
-                R.to_boom_matrix(predictor_matrix))
+                models.to_boom_vector(successes),
+                models.to_boom_vector(trials),
+                models.to_boom_matrix(predictor_matrix))
         elif isinstance(self._training_data, pd.DataFrame):
             predictors = self._encoder.encode_dataset(self._training_data)
             successes = self._training_data["successes"].astype(float)
             trials = self._training_data["trials"].astype(float)
-            model.add_dataset(R.to_boom_vector(successes),
-                              R.to_boom_vector(trials),
-                              R.to_boom_matrix(predictors))
+            model.add_dataset(models.to_boom_vector(successes),
+                              models.to_boom_vector(trials),
+                              models.to_boom_matrix(predictors))
+
         return model
 
     def _define_sampler(self, model):
@@ -366,6 +383,7 @@ class LogitBandit:
         self._boom_model = None
         self._boom_sampler = None
         self._boom_bandit = None
+        self._previous_coefficient_draws = None
         # Restore prior before boom() is first called so _define_sampler picks
         # it up.
         self._prior = payload.get("prior", None)
@@ -380,7 +398,7 @@ class LogitBandit:
 def _to_boom_context(context):
     if context is None:
         return boom.MixedMultivariateData()
-    return R.to_boom_mixed_data(context)
+    return models.to_boom_mixed_data(context)
 
 
 class ValueFunctionJsonEncoder(json.JSONEncoder):

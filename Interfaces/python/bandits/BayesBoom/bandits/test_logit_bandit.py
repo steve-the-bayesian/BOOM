@@ -665,5 +665,89 @@ class TestLinearBanditEncoderDim(unittest.TestCase):
         self.assertEqual(encoder.dim, len(row))
 
 
+class TestSetPriorAfterBoom(unittest.TestCase):
+
+    def test_set_prior_after_boom_rebuilds_sampler(self):
+        bandit = _make_bandit_with_context()
+        rng = np.random.default_rng(8675309)
+        n = 100
+        frame = pd.DataFrame({
+            "ButtonPosition": rng.choice(["Left", "Right"], n),
+            "ButtonColor": rng.choice(["Red", "Blue"], n),
+            "x1": rng.normal(size=n),
+        })
+        successes = pd.Series(rng.integers(0, 2, n))
+        trials = pd.Series(np.ones(n, dtype=int))
+        bandit.observe_past_data(
+            successes=successes, trials=trials, features=frame)
+
+        # Building a data-scaled prior requires the boom model, so boom() is
+        # touched before set_prior.
+        prior = models.LogitZellnerPrior.from_model(
+            bandit.boom().model, expected_model_size=1)
+        bandit.set_prior(prior)
+        bandit.update_posterior(200)
+
+        draws = np.asarray(bandit.coefficient_draws)
+        # The spike and slab sampler produces exact zeros.  The default
+        # Gaussian sampler installed by the first boom() call does not.
+        self.assertTrue(np.any(draws == 0))
+
+    def _observe_data(self, bandit, seed=42, n=100):
+        rng = np.random.default_rng(seed)
+        frame = pd.DataFrame({
+            "ButtonPosition": rng.choice(["Left", "Right"], n),
+            "ButtonColor": rng.choice(["Red", "Blue"], n),
+            "x1": rng.normal(size=n),
+        })
+        bandit.observe_past_data(
+            successes=pd.Series(rng.integers(0, 2, n)),
+            trials=pd.Series(np.ones(n, dtype=int)),
+            features=frame)
+
+    def test_set_prior_preserves_existing_draws(self):
+        # When draws already exist, set_prior discards and rebuilds the boom
+        # objects; the coefficient-draw history must survive the rebuild.
+        bandit = _make_bandit_with_context()
+        self._observe_data(bandit)
+        bandit.update_posterior(200)
+        draws_before = np.array(bandit.coefficient_draws)
+        self.assertEqual((200, 4), draws_before.shape)
+
+        prior = models.LogitZellnerPrior.from_model(
+            bandit.boom().model, expected_model_size=1)
+        bandit.set_prior(prior)
+        # Rebuilding the boom object must restore the saved draws exactly.
+        bandit.boom()
+        restored = np.array(bandit.coefficient_draws)
+        np.testing.assert_allclose(draws_before, restored)
+
+    def test_set_prior_before_any_draws_does_not_error(self):
+        # set_prior after boom() but before update_posterior saves an empty
+        # draw matrix.  Rebuilding must not choke on the empty history.
+        bandit = _make_bandit_with_context()
+        self._observe_data(bandit)
+        prior = models.LogitZellnerPrior.from_model(
+            bandit.boom().model, expected_model_size=1)
+        bandit.set_prior(prior)
+        bandit.boom()
+        bandit.update_posterior(50)
+        self.assertEqual((50, 4), np.array(bandit.coefficient_draws).shape)
+
+    def test_pickle_after_set_prior_round_trips(self):
+        # A bandit whose boom objects were discarded by set_prior must still
+        # unpickle and rebuild without an AttributeError.
+        bandit = _make_bandit_with_context()
+        self._observe_data(bandit)
+        bandit.update_posterior(200)
+        prior = models.LogitZellnerPrior.from_model(
+            bandit.boom().model, expected_model_size=1)
+        bandit.set_prior(prior)
+
+        restored = pickle.loads(pickle.dumps(bandit))
+        restored.update_posterior(50)
+        self.assertEqual((50, 4), np.array(restored.coefficient_draws).shape)
+
+
 if __name__ == "__main__":
     unittest.main()
