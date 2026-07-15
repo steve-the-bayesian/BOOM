@@ -66,6 +66,10 @@ class LogitBandit:
         Set the prior distribution for the model to one of the standard
         priors for binomial logit models.  Accepted families of priors include
         MvnModel, BinomialLogitMvnPrior, and BinomialLogitSpikeSlabPrior.
+
+        Setting a prior discards any cached boom objects, including posterior
+        draws from a previous update_posterior call, so the next boom() call
+        rebuilds the sampler under the new prior.
         """
         if not isinstance(prior,
                           (models.MvnModel,
@@ -77,6 +81,12 @@ class LogitBandit:
             'LogitBandit.set_prior'.
             """)
         self._prior = prior
+        # Discard boom objects built under a previous prior (including the
+        # default prior installed when boom() is called before set_prior), so
+        # the next boom() call rebuilds the sampler with this one.
+        self._boom_model = None
+        self._boom_sampler = None
+        self._boom_bandit = None
 
     @property
     def coefficient_draws(self):
