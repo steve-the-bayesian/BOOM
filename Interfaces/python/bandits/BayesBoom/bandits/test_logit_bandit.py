@@ -665,5 +665,34 @@ class TestLinearBanditEncoderDim(unittest.TestCase):
         self.assertEqual(encoder.dim, len(row))
 
 
+class TestSetPriorAfterBoom(unittest.TestCase):
+
+    def test_set_prior_after_boom_rebuilds_sampler(self):
+        bandit = _make_bandit_with_context()
+        rng = np.random.default_rng(8675309)
+        n = 100
+        frame = pd.DataFrame({
+            "ButtonPosition": rng.choice(["Left", "Right"], n),
+            "ButtonColor": rng.choice(["Red", "Blue"], n),
+            "x1": rng.normal(size=n),
+        })
+        successes = pd.Series(rng.integers(0, 2, n))
+        trials = pd.Series(np.ones(n, dtype=int))
+        bandit.observe_past_data(
+            successes=successes, trials=trials, features=frame)
+
+        # Building a data-scaled prior requires the boom model, so boom() is
+        # touched before set_prior.
+        prior = models.LogitZellnerPrior.from_model(
+            bandit.boom().model, expected_model_size=1)
+        bandit.set_prior(prior)
+        bandit.update_posterior(200)
+
+        draws = np.asarray(bandit.coefficient_draws)
+        # The spike and slab sampler produces exact zeros.  The default
+        # Gaussian sampler installed by the first boom() call does not.
+        self.assertTrue(np.any(draws == 0))
+
+
 if __name__ == "__main__":
     unittest.main()
