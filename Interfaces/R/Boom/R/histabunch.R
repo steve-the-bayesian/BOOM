@@ -136,7 +136,14 @@ histabunch <- function(x, gap = 1, same.scale = FALSE, boxes = FALSE,
       return()
     }
     plot(Intensity(x), main = title, xlab = "", ylab = "", axes = FALSE, ...)
-    axis(1)
+    ## Draw a time-aware horizontal axis.  A plain axis(1) would label the axis
+    ## with the raw numeric time values, so dispatch to the Date or POSIXct
+    ## axis method, which formats the tick labels as dates/times.
+    if (inherits(x, "POSIXt")) {
+      axis.POSIXct(1, x = x)
+    } else {
+      axis.Date(1, x = x)
+    }
   }
 
   hist.factor <- function(x, title="", ...) {
@@ -156,6 +163,16 @@ histabunch <- function(x, gap = 1, same.scale = FALSE, boxes = FALSE,
   }
 
   hist.variable <- function(x, title, xlim, ...){
+    ## Variables with only a handful of distinct values are shown as a barplot
+    ## of their value counts, regardless of data type.  This keeps the display
+    ## meaningful for things like small integers or sparse timestamps, which a
+    ## histogram or intensity plot would render poorly.
+    n.unique <- length(unique(x[!is.na(x)]))
+    if (n.unique >= 1 && n.unique < 5) {
+      hist.factor(x, title, ...)
+      if (boxes) box()
+      return()
+    }
     datetime <- as.datetime(x)
     if (!is.null(datetime)) {
       hist.datetime(datetime, title, ...)

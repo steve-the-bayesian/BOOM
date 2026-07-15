@@ -3,8 +3,9 @@ Intensity <- function(x, ...) {
   ##
   ## Args:
   ##   x: An object representing a vector of time points.  This must be an
-  ##     object of class 'POSIXt' or 'Date', both of which can be coerced to
-  ##     numeric.
+  ##     object of class 'POSIXt', 'Date', or 'yearmon', all of which can be
+  ##     coerced to numeric.  'yearmon' support requires the optional 'zoo'
+  ##     package.
   ##   ...: Extra arguments passed to 'density'.
   ##
   ## Returns:
@@ -13,8 +14,14 @@ Intensity <- function(x, ...) {
   ##   under the curve is 'n' (the number of events) instead of 1, and made
   ##   aware of the timestamps' original class.  The returned object has class
   ##   'Intensity', for which a plot method is provided.
-  if (!inherits(x, "POSIXt") && !inherits(x, "Date")) {
-    stop("Intensity only supports POSIXt and Date classes.")
+  if (!inherits(x, c("POSIXt", "Date", "yearmon"))) {
+    stop("Intensity only supports POSIXt, Date, and yearmon classes.")
+  }
+  ## 'yearmon' support is provided by the optional 'zoo' package (listed under
+  ## Suggests in DESCRIPTION), so require it only when it is actually needed.
+  if (inherits(x, "yearmon") && !requireNamespace("zoo", quietly = TRUE)) {
+    stop("Handling 'yearmon' objects requires the 'zoo' package.  ",
+         "Please install it with install.packages(\"zoo\").")
   }
   ## Capture the name of 'x' before it is evaluated, for use as a default axis
   ## label.  'deparse' (rather than the R >= 4.0.0 'deparse1') is used so the
@@ -30,8 +37,12 @@ Intensity <- function(x, ...) {
   ## draw a meaningful (time-aware) horizontal axis.
   if (inherits(x, "POSIXt")) {
     d$x <- as.POSIXct(d$x)
-  } else {
+  } else if (inherits(x, "Date")) {
     d$x <- as.Date(d$x)
+  } else if (inherits(x, "yearmon")) {
+    d$x <- zoo::as.yearmon(d$x)
+  } else {
+    stop("Intensity() could not interpret the date/time class of x.")
   }
 
   d$data.name <- data.name

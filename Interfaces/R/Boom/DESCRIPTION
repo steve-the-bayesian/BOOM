@@ -20,7 +20,7 @@ Description: A C++ library for Bayesian modeling, with an emphasis on Markov
 License: LGPL-2.1 | file LICENSE
 Depends: R(>= 3.5.0)
 Imports: MASS
-Suggests: testthat
+Suggests: testthat, zoo
 Encoding: UTF-8
 SystemRequirements: GNU Make
 BugReports: https://github.com/steve-the-bayesian/BOOM/issues
