@@ -19,8 +19,10 @@
 */
 
 #include <chrono>
-#include <ostream>
 #include <iomanip>
+#include <map>
+#include <ostream>
+#include <string>
 #include "LinAlg/Vector.hpp"
 #include "math/Permutation.hpp"
 

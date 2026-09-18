@@ -129,6 +129,18 @@ elif [[ $OSTYPE =~ "linux" ]]; then
     SED=sed
 fi
 
+## The long-filename renaming below moves headers with 'mv' and then rewrites
+## the #include lines with $SED.  If $SED is missing the moves still succeed, so
+## the script would quietly emit a tarball whose includes point at files that no
+## longer exist.  Refuse to continue instead.
+if ! command -v "$SED" > /dev/null 2>&1; then
+    echo "ERROR: '$SED' not found, but it is required to rewrite #include lines." >&2
+    if [ "$SED" = "gsed" ]; then
+        echo "       On macOS install it with: brew install gnu-sed" >&2
+    fi
+    exit 1
+fi
+
 $SED -i 's|#pragma GCC|// #pragma GCC|g' $fname
 $SED -i 's|#pragma GCC|// #pragma GCC|g' $fname
 

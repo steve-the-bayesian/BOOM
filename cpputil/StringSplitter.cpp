@@ -19,6 +19,7 @@
 #include "cpputil/StringSplitter.hpp"
 #include <cctype>
 #include <string>
+#include <utility>
 #include <vector>
 #include "cpputil/report_error.hpp"
 #include "cpputil/string_utils.hpp"

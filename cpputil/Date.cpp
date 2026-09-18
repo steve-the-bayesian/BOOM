@@ -23,6 +23,7 @@
 #include <cmath>
 #include <ctime>
 #include <sstream>
+#include <utility>
 #include "cpputil/report_error.hpp"
 #include "cpputil/string_utils.hpp"
 

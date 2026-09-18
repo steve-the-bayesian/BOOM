@@ -18,6 +18,7 @@
 */
 
 #include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
+#include <exception>
 #include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"

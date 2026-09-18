@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <iostream>
 #include <sstream>
 #include "cpputil/math_utils.hpp"

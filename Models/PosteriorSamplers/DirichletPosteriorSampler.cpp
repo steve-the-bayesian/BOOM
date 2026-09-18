@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/PosteriorSamplers/DirichletPosteriorSampler.hpp"
+#include <exception>
 #include <utility>
 #include "Samplers/ScalarSliceSampler.hpp"
 #include "cpputil/math_utils.hpp"

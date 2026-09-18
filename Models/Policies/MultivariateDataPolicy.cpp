@@ -17,6 +17,7 @@
 */
 
 #include "Models/Policies/MultivariateDataPolicy.hpp"
+#include <exception>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {

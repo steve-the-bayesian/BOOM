@@ -20,6 +20,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -27,6 +28,8 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <utility>
+#include <vector>
 
 // The main object defined here is the ThreadWorkerPool.  Before defining that
 // object, we must first define some building blocks.

@@ -87,7 +87,7 @@ namespace BOOM {
         err << "non-positive sum in rdirichlet_impl.  sum = " << sum << endl
             << "x = " << x << endl
             << "nu = " << nu << endl;
-        std::runtime_error(err.str());
+        report_error(err.str());
       }
       x /= sum;
       return x;

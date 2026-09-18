@@ -18,6 +18,8 @@
 */
 #ifndef BOOM_PORTABLE_MATH_HPP_
 #define BOOM_PORTABLE_MATH_HPP_
+#include <cmath>
+#include <limits>
 
 #ifdef _MSC_VER
 namespace std {

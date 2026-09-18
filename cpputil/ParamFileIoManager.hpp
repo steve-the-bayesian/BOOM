@@ -21,6 +21,7 @@
 #define BOOM_PARAM_FILE_IO_MANAGER_HPP_
 
 #include <deque>
+#include <fstream>
 #include <memory>
 #include <string>
 #include "Models/ParamTypes.hpp"
@@ -89,8 +90,8 @@ namespace BOOM {
       std::deque<double> buffer_;
       int buffer_limit_;
 
-      ifstream input_;
-      ofstream output_;
+      std::ifstream input_;
+      std::ofstream output_;
     };
 
   }  // namespace ParameterFileIO

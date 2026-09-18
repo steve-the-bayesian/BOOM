@@ -19,6 +19,7 @@
 
 #include <cmath>
 #include <iomanip>
+#include <ostream>
 
 #include "LinAlg/EigenMap.hpp"
 #include "LinAlg/Givens.hpp"

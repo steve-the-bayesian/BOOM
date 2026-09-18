@@ -21,7 +21,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iterator>
 #include <stdexcept>
+#include <utility>
 
 using std::vector;
 typedef vector<double>::iterator IT;
@@ -87,9 +89,9 @@ namespace BOOM {
     //    if(data_buffer_.size()>0) update_cdf();
     CIT b = probs_.begin();
     CIT e = probs_.end();
-    CIT lower = lower_bound(b, e, prob);
+    CIT lower = std::lower_bound(b, e, prob);
     if (lower == probs_.end()) return quantiles_.back();
-    CIT upper = upper_bound(b, e, prob);
+    CIT upper = std::upper_bound(b, e, prob);
 
     uint lo = lower - b;
     uint hi = upper - b;
@@ -175,7 +177,7 @@ namespace BOOM {
     data_buffer_.reserve(sorted_data.size() + quantiles_.size());
     data_buffer_.clear();
     std::merge(sorted_data.begin(), sorted_data.end(), quantiles_.begin(),
-               quantiles_.end(), back_inserter(data_buffer_));
+               quantiles_.end(), std::back_inserter(data_buffer_));
     // now data buffer includes quantiles and new data
     uint n = data_buffer_.size();
     Fplus_.resize(n);

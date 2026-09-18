@@ -18,6 +18,7 @@
 */
 #include "LinAlg/SubMatrix.hpp"
 #include "cpputil/report_error.hpp"
+#include <algorithm>
 #include <iomanip>
 
 namespace BOOM {

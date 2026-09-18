@@ -24,7 +24,9 @@
 #include <functional>
 #include <initializer_list>
 #include <iosfwd>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cpputil/math_utils.hpp"

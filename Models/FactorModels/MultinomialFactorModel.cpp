@@ -17,6 +17,7 @@
 */
 
 #include "Models/FactorModels/MultinomialFactorModel.hpp"
+#include <exception>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {

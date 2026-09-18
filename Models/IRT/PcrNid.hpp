@@ -19,6 +19,7 @@
 #define BOOM_PCR_NID_HPP
 
 #include "Models/IRT/PartialCreditModel.hpp"
+#include <string>
 
 namespace BOOM {
   namespace IRT {
@@ -41,10 +42,10 @@ namespace BOOM {
         ------------------------------------------------------------*/
 
      public:
-      PcrNid(const string &Id, uint Mscore, uint which_sub, uint Nscales,
-             const string &Name = "");
-      PcrNid(const string &Id, uint Mscore, uint which_sub, uint Nscales,
-             double a, double b, const Vector &d, const string &Name = "");
+      PcrNid(const std::string &Id, uint Mscore, uint which_sub, uint Nscales,
+             const std::string &Name = "");
+      PcrNid(const std::string &Id, uint Mscore, uint which_sub, uint Nscales,
+             double a, double b, const Vector &d, const std::string &Name = "");
       PcrNid(const PcrNid &rhs);
       PcrNid *clone() const override;
 

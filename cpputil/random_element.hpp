@@ -21,15 +21,17 @@
 #define BOOM_RANDOM_ELEMENT
 
 #include <algorithm>
+#include <iterator>
 #include "distributions.hpp"
 namespace BOOM {
   template <class ForwardIt>
   typename ForwardIt::reference random_element(ForwardIt b, ForwardIt e) {
     uint N = std::distance(b, e);
     uint n = random_int(0, N - 1);
-    advance(b, n);
+    std::advance(b, n);
     return *b;
   }
 
-#endif
-}
+}  // namespace BOOM
+
+#endif  // BOOM_RANDOM_ELEMENT

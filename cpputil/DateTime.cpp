@@ -149,7 +149,7 @@ namespace BOOM {
 
   int64_t DateTime::nanoseconds_since_epoch() const {
     long days = d_.days_after_jan_1_1970();
-    if (fabs(days) > 106751) {
+    if (std::abs(days) > 106751) {
       std::ostringstream err;
       err << "DateTime " << *this << " cannot be expressed as a "
           "number of nanoseconds since Jan 1, 1970.";

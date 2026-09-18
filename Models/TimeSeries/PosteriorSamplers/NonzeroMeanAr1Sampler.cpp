@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/TimeSeries/PosteriorSamplers/NonzeroMeanAr1Sampler.hpp"
+#include <exception>
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 #include "distributions/trun_gamma.hpp"

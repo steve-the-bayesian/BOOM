@@ -19,6 +19,10 @@
 #ifndef BOOM_REPORT_ERROR_HPP_
 #define BOOM_REPORT_ERROR_HPP_
 #include <iomanip>
+#include <ios>
+#include <iosfwd>
+#include <istream>
+#include <ostream>
 #include <sstream>
 #include <string>
 

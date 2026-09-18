@@ -19,6 +19,7 @@
 
 #include "distributions/trun_gamma.hpp"
 #include <cmath>  // log
+#include <exception>
 #include <sstream>
 #include "cpputil/math_utils.hpp"  // infinity
 #include "cpputil/report_error.hpp"

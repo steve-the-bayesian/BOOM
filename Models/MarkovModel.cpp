@@ -18,6 +18,7 @@
 */
 
 #include "Models/MarkovModel.hpp"
+#include <algorithm>
 #include <cmath>
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/VectorView.hpp"
@@ -94,7 +95,7 @@ namespace BOOM {
   //------------------------------------------------------------
   Ptr<TimeSeries<MarkovData>> make_markov_data(
       const std::vector<uint> &raw_data) {
-    int max = *max_element(raw_data.begin(), raw_data.end());
+    int max = *std::max_element(raw_data.begin(), raw_data.end());
     NEW(TimeSeries<MarkovData>, series)();
     series->reserve(raw_data.size());
     for (int i = 0; i < raw_data.size(); ++i) {

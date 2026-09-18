@@ -226,7 +226,7 @@ namespace BOOM {
         std::vector<MixtureComponent *> mixture_storage(mixture_components);
         std::sort(mixture_storage.begin(), mixture_storage.end());
         std::unique_copy(mixture_storage.begin(), mixture_storage.end(),
-                         back_inserter(minimal_mixture_components_));
+                         std::back_inserter(minimal_mixture_components_));
 
         // Now minimal_mixture_components_ is sorted.  We still
         // need to build the map between process_id

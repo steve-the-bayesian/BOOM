@@ -18,6 +18,7 @@
 */
 
 #include "cpputil/ThreadTools.hpp"
+#include <utility>
 
 namespace BOOM {
 

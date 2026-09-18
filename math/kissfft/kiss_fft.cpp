@@ -61,7 +61,9 @@
 
 #include "math/kissfft/kiss_fft.hpp"
 #include <iomanip>
+#include <limits>
 #include <ostream>
+#include <string>
 
 namespace BOOM {
   void report_error(const std::string &message);

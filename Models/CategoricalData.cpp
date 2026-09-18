@@ -20,6 +20,7 @@
 #include "Models/CategoricalData.hpp"
 #include <algorithm>
 #include <fstream>
+#include <iterator>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -132,7 +133,7 @@ namespace BOOM {
       return labs_.size();
     }
     found = true;
-    return distance(labs_.begin(), it);
+    return std::distance(labs_.begin(), it);
   }
 
   uint CatKey::findstr(const std::string &lab) const {

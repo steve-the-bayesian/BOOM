@@ -20,8 +20,9 @@
 #ifndef BOOM_SMART_PTR_H
 #define BOOM_SMART_PTR_H
 
-#include <memory>
 #include <cassert>
+#include <memory>
+#include <utility>
 
 #define NEW(T, y) Ptr<T> y = new T
 // NEW(very_long_type_name, variable_name)(constructor, arguments)

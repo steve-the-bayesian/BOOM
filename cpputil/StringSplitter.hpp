@@ -20,6 +20,7 @@
 #define BOOM_STRING_SPLIT_HPP
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace BOOM {

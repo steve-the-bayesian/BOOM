@@ -25,9 +25,12 @@
 // insert operations) is a drop-in replacement for std::set.  His arguments are
 // given in https://lafstern.org/matt/col1.pdf
 
-#include <vector>
 #include <algorithm>
 #include <initializer_list>
+#include <iterator>
+#include <vector>
+
+#include "uint.hpp"
 
 namespace BOOM {
 

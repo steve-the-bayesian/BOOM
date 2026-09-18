@@ -37,6 +37,23 @@ by the warning do not generate ASAN warnings.
 
 ----------------------------------------------------------------------
 Temporary notes:
+Boom_0.9.17.tar.gz
+
+This update fixes the installation failure reported by the 'clang23' additional
+check (https://www.stats.ox.ac.uk/pub/bdr/clang23/Boom.log).  clang 23's libc++
+dropped a number of transitive includes, so headers that BOOM had been getting
+for free are now required explicitly.  The reported errors were
+
+  stats/hexbin.cpp        std::lower_bound   without <algorithm>
+  cpputil/ThreadTools.hpp std::atomic_bool   without <atomic>
+  cpputil/parse_range.cpp back_inserter      without <iterator>
+
+The same class of latent problem was swept for across the whole library (by
+compiling with -D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES, and by auditing every
+translation unit for std:: names whose owning header was not in the include
+closure), and the missing includes were added.  Calls that had been resolving
+through argument-dependent lookup are now explicitly std::-qualified.
+
 Boom_0.9.12.tar.gz
 This update silences a compiler warning recently turned on by CRAN.
 

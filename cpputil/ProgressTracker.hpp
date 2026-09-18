@@ -20,32 +20,34 @@
 #define BOOM_PROGRESS_TRACKER_CLASS_HPP
 
 #include "uint.hpp"
+#include <iosfwd>
+#include <string>
 #include "cpputil/Ptr.hpp"
 #include "cpputil/RefCounted.hpp"
 
 namespace BOOM {
   class ProgressTracker : private RefCounted {
-    string fname;
-    ostream *msg_;
+    std::string fname;
+    std::ostream *msg_;
     uint nskip;
     uint n;
-    string sep;
+    std::string sep;
     bool owns_msg;
-    void start(const string &prog_name);
+    void start(const std::string &prog_name);
     ProgressTracker(const ProgressTracker &) : RefCounted() {}
 
    public:
     // Write progress messages to a file named "msg" in directory dname.
-    explicit ProgressTracker(const string &dname, uint nskip = 100, bool restart = false,
-                    const string &prog_name = "",
+    explicit ProgressTracker(const std::string &dname, uint nskip = 100, bool restart = false,
+                    const std::string &prog_name = "",
                     bool keep_existing_msg = false);
 
     // Write progress messages to std::cout
-    explicit ProgressTracker(uint nskip = 100, const string &prog_name = "");
+    explicit ProgressTracker(uint nskip = 100, const std::string &prog_name = "");
 
     // Write progress to an arbitrary stream
-    explicit ProgressTracker(ostream &out, uint nskip = 100,
-                    const string &prog_name = "");
+    explicit ProgressTracker(std::ostream &out, uint nskip = 100,
+                    const std::string &prog_name = "");
     ~ProgressTracker() override;
     ProgressTracker &operator++() {
       update();
@@ -59,7 +61,7 @@ namespace BOOM {
     uint restart();
     void set_niter(uint n);
 
-    ostream &msg();
+    std::ostream &msg();
 
     friend void intrusive_ptr_add_ref(ProgressTracker *m);
     friend void intrusive_ptr_release(ProgressTracker *m);

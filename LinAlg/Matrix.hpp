@@ -18,9 +18,11 @@
 */
 #ifndef BOOM_NEWLA_MATRIX_HPP
 #define BOOM_NEWLA_MATRIX_HPP
+#include <cassert>
 #include <iosfwd>
-#include <vector>
+#include <iterator>
 #include <tuple>
+#include <vector>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 
@@ -416,7 +418,7 @@ namespace BOOM {
 
   template <class FwdIt>
   FwdIt Matrix::assign(FwdIt b, FwdIt e) {
-    assert(distance(b, e) == size());
+    assert(std::distance(b, e) == size());
     data_.assign(b, e);
     return e;
   }

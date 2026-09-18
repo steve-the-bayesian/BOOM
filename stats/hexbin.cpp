@@ -17,6 +17,7 @@
 */
 
 #include "stats/hexbin.hpp"
+#include <algorithm>
 #include "cpputil/report_error.hpp"
 #include "cpputil/seq.hpp"
 

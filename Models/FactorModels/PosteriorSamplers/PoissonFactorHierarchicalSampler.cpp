@@ -17,6 +17,7 @@
 */
 
 #include "Models/FactorModels/PosteriorSamplers/PoissonFactorHierarchicalSampler.hpp"
+#include <exception>
 #include "TargetFun/SumMultinomialLogitTransform.hpp"
 #include "distributions.hpp"
 #include "Samplers/UnivariateSliceSampler.hpp"

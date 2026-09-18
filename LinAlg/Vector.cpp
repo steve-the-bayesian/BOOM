@@ -411,7 +411,7 @@ namespace BOOM {
     return *this;
   }
 
-  double Vector::min() const { return *min_element(begin(), end()); }
+  double Vector::min() const { return *std::min_element(begin(), end()); }
   double Vector::max() const { return *std::max_element(begin(), end()); }
 
   uint Vector::imax() const {
@@ -420,7 +420,7 @@ namespace BOOM {
   }
 
   uint Vector::imin() const {
-    const_iterator it = min_element(begin(), end());
+    const_iterator it = std::min_element(begin(), end());
     return it - begin();
   }
 

@@ -19,6 +19,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <vector>
+
 namespace BOOM {
 
   namespace StateSpaceUtilities {

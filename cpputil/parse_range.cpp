@@ -20,6 +20,7 @@
 #include "cpputil/parse_range.hpp"
 #include <algorithm>
 #include <cstdlib>
+#include <iterator>
 #include <sstream>
 #include "cpputil/report_error.hpp"
 #include "cpputil/seq.hpp"
@@ -68,7 +69,7 @@ namespace BOOM {
       uint from, to;
       in >> from >> dash >> to;
       std::vector<uint> irng = seq(from, to);
-      std::copy(irng.begin(), irng.end(), back_inserter(ans));
+      std::copy(irng.begin(), irng.end(), std::back_inserter(ans));
     }
   }
 

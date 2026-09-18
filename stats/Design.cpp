@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <set>
 #include <tuple>
 
@@ -295,10 +296,10 @@ namespace BOOM {
   Effect::Effect(const Effect &first, const Effect &second) {
     // Add the factors from first.
     std::copy(first.factors_.begin(), first.factors_.end(),
-              back_inserter(factors_));
+              std::back_inserter(factors_));
     // Add the factors from second.
     std::copy(second.factors_.begin(), second.factors_.end(),
-              back_inserter(factors_));
+              std::back_inserter(factors_));
     // Remove any duplicates.
     std::sort(factors_.begin(), factors_.end());
     std::vector<FactorDummy>::iterator it =

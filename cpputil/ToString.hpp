@@ -20,8 +20,10 @@
 #ifndef BOOM_TO_STRING_HPP_
 #define BOOM_TO_STRING_HPP_
 
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace BOOM {
   // Convert "object" to a string using its streaming operator.  This is a

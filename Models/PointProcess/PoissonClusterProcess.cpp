@@ -17,6 +17,7 @@
 */
 
 #include "Models/PointProcess/PoissonClusterProcess.hpp"
+#include <exception>
 #include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
 #include "cpputil/lse.hpp"
 #include "cpputil/math_utils.hpp"

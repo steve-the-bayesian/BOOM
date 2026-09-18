@@ -20,6 +20,8 @@
 #ifndef BOOM_CPP_FILE_UTILS_H
 #define BOOM_CPP_FILE_UTILS_H
 
+#include <iosfwd>
+#include <string>
 #include <vector>
 #include "uint.hpp"
 #include "cpputil/gll.hpp"
@@ -37,8 +39,8 @@ namespace BOOM {
   bool check_directory(const std::string &);
   void mkdir(const std::string &);
   void check_empty(const std::string &dir);
-  std::vector<string> read_file(const string &fname);
-  std::vector<string> read_file(istream &);
+  std::vector<std::string> read_file(const std::string &fname);
+  std::vector<std::string> read_file(std::istream &);
 
 }  // namespace BOOM
 #endif  // BOOM_CPP_FILE_UTILS_H

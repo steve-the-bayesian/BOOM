@@ -16,9 +16,10 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include <vector>
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
+#include <vector>
 #include "cpputil/ToString.hpp"
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/SufstatAbstractCombineImpl.hpp"
@@ -126,7 +127,7 @@ namespace BOOM {
                enc1_->which_variables().end(),
                enc2_->which_variables().begin(),
                enc2_->which_variables().end(),
-               back_inserter(which_variables_));
+               std::back_inserter(which_variables_));
 
     // Build "nlevels".
     for (const auto &el : which_variables_) {
